@@ -1,0 +1,24 @@
+{
+    "dependencies": [
+        {
+            "name": "kube-thanos",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/metalmatze/kube-thanos",
+                    "subdir": "jsonnet/kube-thanos"
+                }
+            },
+            "version": "a951e87244ac0b052e7dd0a472a913d94cb68d4d"
+        },
+        {
+            "name": "ksonnet",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/ksonnet/ksonnet-lib",
+                    "subdir": ""
+                }
+            },
+            "version": "0d2f82676817bbf9e4acf6495b2090205f323b9f"
+        }
+    ]
+}

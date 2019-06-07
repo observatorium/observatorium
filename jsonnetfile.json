@@ -1,0 +1,14 @@
+{
+    "dependencies": [
+        {
+            "name": "kube-thanos",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/metalmatze/kube-thanos",
+                    "subdir": "jsonnet/kube-thanos"
+                }
+            },
+            "version": "master"
+        }
+    ]
+}
