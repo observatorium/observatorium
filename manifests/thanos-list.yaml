@@ -79,6 +79,7 @@ objects:
         - args:
           - store
           - --data-dir=/var/thanos/store
+          - --grpc-address=0.0.0.0:10901
           - --objstore.config=$(OBJSTORE_CONFIG)
           env:
           - name: OBJSTORE_CONFIG
