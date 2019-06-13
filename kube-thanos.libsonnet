@@ -6,7 +6,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 (import 'kube-thanos/kube-thanos-querier.libsonnet') +
 (import 'kube-thanos/kube-thanos-store.libsonnet') +
 (import 'kube-thanos/kube-thanos-receive.libsonnet') +
-(import 'kube-thanos/kube-thanos-pvc.libsonnet') +
+// (import 'kube-thanos/kube-thanos-pvc.libsonnet') +
 {
   _config+:: {
     namespace: 'monitoring',
