@@ -5,6 +5,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 
 (import 'kube-thanos/kube-thanos-querier.libsonnet') +
 (import 'kube-thanos/kube-thanos-store.libsonnet') +
+(import 'kube-thanos/kube-thanos-receive.libsonnet') +
 (import 'kube-thanos/kube-thanos-pvc.libsonnet') +
 {
   _config+:: {
@@ -30,6 +31,7 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
 
     list:
+      // TODO: Iterate over thanos objects too
       local querier = {
         ['thanos-querier-' + name]: t.querier[name]
         for name in std.objectFields(t.querier)
