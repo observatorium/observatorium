@@ -7,7 +7,7 @@ objects:
   kind: Deployment
   metadata:
     name: thanos-querier
-    namespace: monitoring
+    namespace: observability-platform
   spec:
     replicas: 1
     selector:
@@ -22,7 +22,7 @@ objects:
         - args:
           - query
           - --query.replica-label=replica
-          - --store=dnssrv+thanos-store.monitoring.svc.cluster.local:10901
+          - --store=dnssrv+thanos-store.observability-platform.svc.cluster.local:10901
           image: improbable/thanos:v0.5.0
           name: thanos-querier
 - apiVersion: v1
@@ -31,7 +31,7 @@ objects:
     labels:
       app: thanos-querier
     name: thanos-querier
-    namespace: monitoring
+    namespace: observability-platform
   spec:
     ports:
     - name: grpc
@@ -48,7 +48,7 @@ objects:
     labels:
       app: thanos-store
     name: thanos-store
-    namespace: monitoring
+    namespace: observability-platform
   spec:
     clusterIP: None
     ports:
@@ -63,7 +63,7 @@ objects:
     labels:
       app: thanos-store
     name: thanos-store
-    namespace: monitoring
+    namespace: observability-platform
   spec:
     replicas: 3
     selector:

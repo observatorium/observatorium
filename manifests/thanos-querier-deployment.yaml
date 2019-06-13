@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: thanos-querier
-  namespace: monitoring
+  namespace: observability-platform
 spec:
   replicas: 3
   selector:
@@ -17,6 +17,6 @@ spec:
       - args:
         - query
         - --query.replica-label=replica
-        - --store=dnssrv+thanos-store.monitoring.svc.cluster.local:10901
+        - --store=dnssrv+thanos-store.observability-platform.svc.cluster.local:10901
         image: improbable/thanos:v0.5.0
         name: thanos-querier
