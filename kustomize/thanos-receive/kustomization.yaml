@@ -1,0 +1,6 @@
+commonLabels:
+  app.kubernetes.io/name: thanos-receive
+resources:
+- resources/thanos-receive-statefulSet.yaml
+- resources/thanos-receive-service.yaml
+

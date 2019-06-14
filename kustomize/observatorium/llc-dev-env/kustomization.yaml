@@ -1,0 +1,9 @@
+resources:
+  - resources/receive-ingress.yaml
+bases:
+- ../base
+
+
+images:
+- name: improbable/thanos
+  newTag: v0.6.0
