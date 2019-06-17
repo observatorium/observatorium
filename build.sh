@@ -8,9 +8,13 @@ set -x
 set -o pipefail
 
 # Make sure to start with a clean 'manifests' dir
-rm -rf manifests
-mkdir manifests
+rm -rf environments/kubernetes/manifests
+mkdir environments/kubernetes/manifests
 
-                                               # optional, but we would like to generate yaml, not json
-jsonnet -J vendor -m manifests "${1-main.jsonnet}" | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}
+jsonnet -J vendor -m environments/kubernetes/manifests environments/kubernetes/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}
 
+# Make sure to start with a clean 'manifests' dir
+rm -rf environments/openshift/manifests
+mkdir environments/openshift/manifests
+
+jsonnet -J vendor environments/openshift/main.jsonnet | gojsontoyaml > environments/openshift/manifests/thanos-template.yaml
