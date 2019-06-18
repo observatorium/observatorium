@@ -19,6 +19,17 @@ objects:
           app: thanos-querier
       spec:
         containers:
+        - env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: telemeter-thanos-stage-s3
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: telemeter-thanos-stage-s3
         - args:
           - query
           - --query.replica-label=replica
@@ -87,7 +98,7 @@ objects:
             valueFrom:
               secretKeyRef:
                 key: thanos.yaml
-                name: thanos-objectstorage
+                name: telemeter-thanos-config
           image: $IMAGE
           name: thanos-store
           ports:

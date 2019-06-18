@@ -12,6 +12,13 @@ local app =
       images+: {
         thanos: '$IMAGE',
       },
+
+      thanos+: {
+        objectStorageConfig: {
+          name: 'telemeter-thanos-config',
+          key: 'thanos.yaml',
+        },
+      },
     },
 
     // This generates the Template kind that OpenShift requires
