@@ -8,6 +8,16 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
+            "version": "variables"
+        },
+        {
+            "name": "telemeter",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/openshift/telemeter",
+                    "subdir": "jsonnet/telemeter"
+                }
+            },
             "version": "master"
         }
     ]

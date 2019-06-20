@@ -1,12 +1,24 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
+local service = k.core.v1.service;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
 
 (import '../kubernetes/kube-thanos.libsonnet') +
 {
   thanos+:: {
+    variables+: {
+      image: '${IMAGE}',
+    },
+
+    local namespace = '${NAMESPACE}',
+
     querier+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
       deployment+: {
+        metadata+: {
+          namespace: namespace,
+        },
         spec+: {
           replicas: '${THANOS_QUERIER_REPLICAS}',
 
@@ -30,8 +42,18 @@ local deployment = k.apps.v1.deployment;
       },
     },
     store+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
       statefulSet+:
-        deployment.mixin.spec.withReplicas('${THANOS_STORE_REPLICAS}'),
+        sts.mixin.metadata.withNamespace(namespace) +
+        sts.mixin.spec.withReplicas('${THANOS_STORE_REPLICAS}'),
+    },
+    receive+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      statefulSet+:
+        sts.mixin.metadata.withNamespace(namespace) +
+        sts.mixin.spec.withReplicas('${THANOS_RECEIVE_REPLICAS}'),
     },
   },
 }

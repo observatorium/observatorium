@@ -19,8 +19,8 @@ spec:
       containers:
       - args:
         - receive
-        - --remote-write.address=0.0.0.0:19291
         - --grpc-address=0.0.0.0:10901
+        - --remote-write.address=0.0.0.0:19291
         - --objstore.config=$(OBJSTORE_CONFIG)
         env:
         - name: OBJSTORE_CONFIG
@@ -29,7 +29,7 @@ spec:
               key: thanos.yaml
               name: thanos-objectstorage
         image: improbable/thanos:v0.5.0
-        name: thanos-store
+        name: thanos-receive
         ports:
         - containerPort: 10901
           name: grpc

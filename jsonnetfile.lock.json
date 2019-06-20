@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "8c5a4a5f7049c39ebaae1ada85650b09ccf779e4"
+            "version": "485a9c4574afbefa26a80746da73f2fe61c9ccef"
         },
         {
             "name": "ksonnet",
@@ -19,6 +19,26 @@
                 }
             },
             "version": "0d2f82676817bbf9e4acf6495b2090205f323b9f"
+        },
+        {
+            "name": "telemeter",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/openshift/telemeter",
+                    "subdir": "jsonnet/telemeter"
+                }
+            },
+            "version": "ce206ba40660c4ff39d4d01c795049724d60eff3"
+        },
+        {
+            "name": "prometheus-operator",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/coreos/prometheus-operator",
+                    "subdir": "jsonnet/prometheus-operator"
+                }
+            },
+            "version": "f05d5228fe02bcd370acaa234c15f3d9fdef4a60"
         }
     ]
 }

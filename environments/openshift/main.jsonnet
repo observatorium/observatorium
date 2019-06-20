@@ -6,23 +6,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 local app =
   (import 'kube-thanos.libsonnet') +
   {
-    _config+:: {
-      namespace: '{$NAMESPACE}',
-
-      images+: {
-        thanos: '$IMAGE',
-      },
-
-      thanos+: {
-        objectStorageConfig: {
-          name: 'telemeter-thanos-config',
-          key: 'thanos.yaml',
-        },
-      },
-    },
-
     // This generates the Template kind that OpenShift requires
-
     local t = super.thanos,
     thanos+:: {
       template:
@@ -32,6 +16,9 @@ local app =
         } + {
           ['store-' + name]: t.store[name]
           for name in std.objectFields(t.store)
+        } + {
+          ['receive-' + name]: t.receive[name]
+          for name in std.objectFields(t.receive)
         };
 
         list.asList('thanos', objects, [
@@ -49,6 +36,10 @@ local app =
           },
           {
             name: 'THANOS_STORE_REPLICAS',
+            value: 5,
+          },
+          {
+            name: 'THANOS_RECEIVE_REPLICAS',
             value: 5,
           },
         ]),
