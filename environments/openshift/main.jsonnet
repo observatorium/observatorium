@@ -32,15 +32,15 @@ local app =
           },
           {
             name: 'THANOS_QUERIER_REPLICAS',
-            value: 3,
+            value: '3',
           },
           {
             name: 'THANOS_STORE_REPLICAS',
-            value: 5,
+            value: '5',
           },
           {
             name: 'THANOS_RECEIVE_REPLICAS',
-            value: 5,
+            value: '5',
           },
           {
             name: 'THANOS_CONFIG_SECRET',
