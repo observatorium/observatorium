@@ -2,24 +2,24 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
-    app: thanos-receive
-  name: thanos-receive
+    app: thanos-store
+  name: thanos-store
   namespace: observability-platform
 spec:
-  replicas: 3
+  replicas: 5
   selector:
     matchLabels:
-      app: thanos-receive
-  serviceName: thanos-receive
+      app: thanos-store
+  serviceName: thanos-store
   template:
     metadata:
       labels:
-        app: thanos-receive
+        app: thanos-store
     spec:
       containers:
       - args:
-        - receive
-        - --remote-write.address=0.0.0.0:19291
+        - store
+        - --data-dir=/var/thanos/store
         - --grpc-address=0.0.0.0:10901
         - --objstore.config=$(OBJSTORE_CONFIG)
         env:
@@ -33,6 +33,11 @@ spec:
         ports:
         - containerPort: 10901
           name: grpc
-        - containerPort: 19291
-          name: remote-write
+        volumeMounts:
+        - mountPath: /var/thanos/store
+          name: data
+          readOnly: false
+      volumes:
+      - emptyDir: {}
+        name: data
   volumeClaimTemplates: []

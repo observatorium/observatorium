@@ -1,46 +1,44 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
+local service = k.core.v1.service;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
-local list = import 'telemeter/lib/list.libsonnet';
 
 (import 'kube-thanos/kube-thanos-querier.libsonnet') +
 (import 'kube-thanos/kube-thanos-store.libsonnet') +
 (import 'kube-thanos/kube-thanos-receive.libsonnet') +
 // (import 'kube-thanos/kube-thanos-pvc.libsonnet') +
 {
-  _config+:: {
-    namespace: 'monitoring',
-
-    thanos+: {
+  thanos+:: {
+    variables+:: {
+      image: 'improbable/thanos:v0.5.0',
       objectStorageConfig+: {
         name: 'thanos-objectstorage',
         key: 'thanos.yaml',
       },
     },
-  },
 
-  local t = super.thanos,
-  thanos+:: {
+    local namespace = 'observability-platform',
+
     querier+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
       deployment+:
+        deployment.mixin.metadata.withNamespace(namespace) +
         deployment.mixin.spec.withReplicas(3),
     },
     store+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
       statefulSet+:
+        sts.mixin.metadata.withNamespace(namespace) +
         sts.mixin.spec.withReplicas(5),
     },
-
-    list:
-      // TODO: Iterate over thanos objects too
-      local querier = {
-        ['thanos-querier-' + name]: t.querier[name]
-        for name in std.objectFields(t.querier)
-      };
-      local store = {
-        ['thanos-store-' + name]: t.store[name]
-        for name in std.objectFields(t.store)
-      };
-
-      list.asList('thanos', querier + store, []),
+    receive+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      statefulSet+:
+        sts.mixin.metadata.withNamespace(namespace) +
+        sts.mixin.spec.withReplicas(3),
+    },
   },
 }
