@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "variables"
+            "version": "master"
         },
         {
             "name": "telemeter",
