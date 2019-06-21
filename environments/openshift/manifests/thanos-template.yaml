@@ -11,7 +11,7 @@ objects:
     name: thanos-querier
     namespace: ${NAMESPACE}
   spec:
-    replicas: ${THANOS_QUERIER_REPLICAS}
+    replicas: ${{THANOS_QUERIER_REPLICAS}}
     selector:
       matchLabels:
         app: thanos-querier
@@ -82,7 +82,7 @@ objects:
     name: thanos-receive
     namespace: ${NAMESPACE}
   spec:
-    replicas: ${THANOS_RECEIVE_REPLICAS}
+    replicas: ${{THANOS_RECEIVE_REPLICAS}}
     selector:
       matchLabels:
         app: thanos-receive
@@ -135,7 +135,7 @@ objects:
     name: thanos-store
     namespace: ${NAMESPACE}
   spec:
-    replicas: ${THANOS_STORE_REPLICAS}
+    replicas: ${{THANOS_STORE_REPLICAS}}
     selector:
       matchLabels:
         app: thanos-store

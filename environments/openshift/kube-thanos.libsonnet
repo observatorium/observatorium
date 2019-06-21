@@ -24,7 +24,7 @@ local deployment = k.apps.v1.deployment;
           namespace: namespace,
         },
         spec+: {
-          replicas: '${THANOS_QUERIER_REPLICAS}',
+          replicas: '${{THANOS_QUERIER_REPLICAS}}',
 
           // As we use Vault and want to be able to use rotation of credentials,
           // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
@@ -50,14 +50,14 @@ local deployment = k.apps.v1.deployment;
         service.mixin.metadata.withNamespace(namespace),
       statefulSet+:
         sts.mixin.metadata.withNamespace(namespace) +
-        sts.mixin.spec.withReplicas('${THANOS_STORE_REPLICAS}'),
+        sts.mixin.spec.withReplicas('${{THANOS_STORE_REPLICAS}}'),
     },
     receive+: {
       service+:
         service.mixin.metadata.withNamespace(namespace),
       statefulSet+:
         sts.mixin.metadata.withNamespace(namespace) +
-        sts.mixin.spec.withReplicas('${THANOS_RECEIVE_REPLICAS}'),
+        sts.mixin.spec.withReplicas('${{THANOS_RECEIVE_REPLICAS}}'),
     },
   },
 }
