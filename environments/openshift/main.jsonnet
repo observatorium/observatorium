@@ -42,6 +42,14 @@ local app =
             name: 'THANOS_RECEIVE_REPLICAS',
             value: 5,
           },
+          {
+            name: 'THANOS_CONFIG_SECRET',
+            value: 'thanos-objectstorage',
+          },
+          {
+            name: 'THANOS_S3_SECRET',
+            value: 'telemeter-thanos-stage-s3',
+          },
         ]),
     },
   };

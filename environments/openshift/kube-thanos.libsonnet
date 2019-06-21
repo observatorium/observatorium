@@ -8,6 +8,10 @@ local deployment = k.apps.v1.deployment;
   thanos+:: {
     variables+: {
       image: '${IMAGE}',
+      objectStorageConfig+: {
+        name: '${THANOS_CONFIG_SECRET}',
+        key: 'thanos.yaml',
+      },
     },
 
     local namespace = '${NAMESPACE}',
@@ -31,8 +35,8 @@ local deployment = k.apps.v1.deployment;
                 local env = container.envType;
 
                 container.withEnv([
-                  env.fromSecretRef('AWS_ACCESS_KEY_ID', 'telemeter-thanos-stage-s3', 'aws_access_key_id'),
-                  env.fromSecretRef('AWS_SECRET_ACCESS_KEY', 'telemeter-thanos-stage-s3', 'aws_secret_access_key'),
+                  env.fromSecretRef('AWS_ACCESS_KEY_ID', '${THANOS_S3_SECRET}', 'aws_access_key_id'),
+                  env.fromSecretRef('AWS_SECRET_ACCESS_KEY', '${THANOS_S3_SECRET}', 'aws_secret_access_key'),
                 ]),
                 super.containers[0],
               ],

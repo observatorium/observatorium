@@ -26,12 +26,12 @@ objects:
             valueFrom:
               secretKeyRef:
                 key: aws_access_key_id
-                name: telemeter-thanos-stage-s3
+                name: ${THANOS_S3_SECRET}
           - name: AWS_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
                 key: aws_secret_access_key
-                name: telemeter-thanos-stage-s3
+                name: ${THANOS_S3_SECRET}
         - args:
           - query
           - --query.replica-label=replica
@@ -103,7 +103,7 @@ objects:
             valueFrom:
               secretKeyRef:
                 key: thanos.yaml
-                name: thanos-objectstorage
+                name: ${THANOS_CONFIG_SECRET}
           image: ${IMAGE}
           name: thanos-receive
           ports:
@@ -156,7 +156,7 @@ objects:
             valueFrom:
               secretKeyRef:
                 key: thanos.yaml
-                name: thanos-objectstorage
+                name: ${THANOS_CONFIG_SECRET}
           image: ${IMAGE}
           name: thanos-store
           ports:
@@ -181,3 +181,7 @@ parameters:
   value: 5
 - name: THANOS_RECEIVE_REPLICAS
   value: 5
+- name: THANOS_CONFIG_SECRET
+  value: thanos-objectstorage
+- name: THANOS_S3_SECRET
+  value: telemeter-thanos-stage-s3
