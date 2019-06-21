@@ -26,17 +26,6 @@ objects:
           - --query.replica-label=replica
           - --store=dnssrv+thanos-store.${NAMESPACE}.svc.cluster.local:10901
           - --store=dnssrv+thanos-receive.${NAMESPACE}.svc.cluster.local:10901
-          env:
-          - name: AWS_ACCESS_KEY_ID
-            valueFrom:
-              secretKeyRef:
-                key: aws_access_key_id
-                name: ${THANOS_S3_SECRET}
-          - name: AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                key: aws_secret_access_key
-                name: ${THANOS_S3_SECRET}
           image: ${IMAGE}
           name: thanos-querier
 - apiVersion: v1
@@ -105,6 +94,16 @@ objects:
               secretKeyRef:
                 key: thanos.yaml
                 name: ${THANOS_CONFIG_SECRET}
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: ${THANOS_S3_SECRET}
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: ${THANOS_S3_SECRET}
           image: ${IMAGE}
           name: thanos-receive
           ports:
@@ -165,6 +164,16 @@ objects:
               secretKeyRef:
                 key: thanos.yaml
                 name: ${THANOS_CONFIG_SECRET}
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: ${THANOS_S3_SECRET}
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: ${THANOS_S3_SECRET}
           image: ${IMAGE}
           name: thanos-store
           ports:

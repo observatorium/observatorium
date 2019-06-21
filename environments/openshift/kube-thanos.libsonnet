@@ -15,49 +15,62 @@ local deployment = k.apps.v1.deployment;
     },
 
     local namespace = '${NAMESPACE}',
+    local s3Envvars = {
+      spec+: {
+        containers: [
+          local container = sts.mixin.spec.template.spec.containersType;
+          local env = container.envType;
+
+          super.containers[0] {
+            env+: [
+              env.fromSecretRef('AWS_ACCESS_KEY_ID', '${THANOS_S3_SECRET}', 'aws_access_key_id'),
+              env.fromSecretRef('AWS_SECRET_ACCESS_KEY', '${THANOS_S3_SECRET}', 'aws_secret_access_key'),
+            ],
+          },
+        ],
+      },
+    },
 
     querier+: {
       service+:
         service.mixin.metadata.withNamespace(namespace),
-      deployment+: {
+      deployment+:
+        deployment.mixin.metadata.withNamespace(namespace) +
+        deployment.mixin.spec.withReplicas('${{THANOS_QUERIER_REPLICAS}}'),
+    },
+
+    store+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      statefulSet+: {
         metadata+: {
           namespace: namespace,
         },
         spec+: {
-          replicas: '${{THANOS_QUERIER_REPLICAS}}',
+          replicas: '${{THANOS_STORE_REPLICAS}}',
 
           // As we use Vault and want to be able to use rotation of credentials,
           // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
-          template+: {
-            spec+: {
-              containers: [
-                local container = deployment.mixin.spec.template.spec.containersType;
-                local env = container.envType;
-
-                super.containers[0] +
-                container.withEnv([
-                  env.fromSecretRef('AWS_ACCESS_KEY_ID', '${THANOS_S3_SECRET}', 'aws_access_key_id'),
-                  env.fromSecretRef('AWS_SECRET_ACCESS_KEY', '${THANOS_S3_SECRET}', 'aws_secret_access_key'),
-                ]),
-              ],
-            },
-          },
+          template+: s3Envvars,
         },
       },
     },
-    store+: {
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
-      statefulSet+:
-        sts.mixin.metadata.withNamespace(namespace) +
-        sts.mixin.spec.withReplicas('${{THANOS_STORE_REPLICAS}}'),
-    },
+
     receive+: {
       service+:
         service.mixin.metadata.withNamespace(namespace),
-      statefulSet+:
-        sts.mixin.metadata.withNamespace(namespace) +
-        sts.mixin.spec.withReplicas('${{THANOS_RECEIVE_REPLICAS}}'),
+      statefulSet+: {
+        metadata+: {
+          namespace: namespace,
+        },
+        spec+: {
+          replicas: '${{THANOS_RECEIVE_REPLICAS}}',
+
+          // As we use Vault and want to be able to use rotation of credentials,
+          // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
+          template+: s3Envvars,
+        },
+      },
     },
   },
 }
