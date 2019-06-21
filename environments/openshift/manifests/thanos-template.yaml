@@ -21,7 +21,12 @@ objects:
           app: thanos-querier
       spec:
         containers:
-        - env:
+        - args:
+          - query
+          - --query.replica-label=replica
+          - --store=dnssrv+thanos-store.${NAMESPACE}.svc.cluster.local:10901
+          - --store=dnssrv+thanos-receive.${NAMESPACE}.svc.cluster.local:10901
+          env:
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
@@ -32,11 +37,6 @@ objects:
               secretKeyRef:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
-        - args:
-          - query
-          - --query.replica-label=replica
-          - --store=dnssrv+thanos-store.${NAMESPACE}.svc.cluster.local:10901
-          - --store=dnssrv+thanos-receive.${NAMESPACE}.svc.cluster.local:10901
           image: ${IMAGE}
           name: thanos-querier
 - apiVersion: v1

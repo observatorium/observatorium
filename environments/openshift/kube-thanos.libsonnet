@@ -34,11 +34,11 @@ local deployment = k.apps.v1.deployment;
                 local container = deployment.mixin.spec.template.spec.containersType;
                 local env = container.envType;
 
+                super.containers[0] +
                 container.withEnv([
                   env.fromSecretRef('AWS_ACCESS_KEY_ID', '${THANOS_S3_SECRET}', 'aws_access_key_id'),
                   env.fromSecretRef('AWS_SECRET_ACCESS_KEY', '${THANOS_S3_SECRET}', 'aws_secret_access_key'),
                 ]),
-                super.containers[0],
               ],
             },
           },
