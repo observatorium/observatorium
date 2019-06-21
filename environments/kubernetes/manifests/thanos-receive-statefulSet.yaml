@@ -22,6 +22,7 @@ spec:
         - --grpc-address=0.0.0.0:10901
         - --remote-write.address=0.0.0.0:19291
         - --objstore.config=$(OBJSTORE_CONFIG)
+        - --tsdb.path=/var/thanos/tsdb
         env:
         - name: OBJSTORE_CONFIG
           valueFrom:
@@ -35,4 +36,11 @@ spec:
           name: grpc
         - containerPort: 19291
           name: remote-write
+        volumeMounts:
+        - mountPath: /var/thanos/tsdb
+          name: data
+          readOnly: false
+      volumes:
+      - emptyDir: {}
+        name: data
   volumeClaimTemplates: []
