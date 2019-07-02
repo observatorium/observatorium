@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Route
+metadata:
+  name: telemeter-server
+  namespace: observatorium
+spec:
+  port:
+    targetPort: external
+  tls:
+    insecureEdgeTerminationPolicy: Allow
+    termination: edge
+  to:
+    kind: Service
+    name: telemeter-server

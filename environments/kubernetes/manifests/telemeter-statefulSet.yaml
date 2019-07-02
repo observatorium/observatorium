@@ -1,0 +1,77 @@
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: telemeter-server
+  namespace: observatorium
+spec:
+  podManagementPolicy: Parallel
+  replicas: 10
+  selector:
+    matchLabels:
+      k8s-app: telemeter-server
+  serviceName: telemeter-server
+  template:
+    metadata:
+      labels:
+        k8s-app: telemeter-server
+    spec:
+      containers:
+      - command:
+        - /usr/bin/telemeter-server
+        - --join=telemeter-server
+        - --name=$(NAME)
+        - --listen=0.0.0.0:8080
+        - --listen-internal=0.0.0.0:8081
+        - --listen-cluster=0.0.0.0:8082
+        - --shared-key=/etc/pki/service/tls.key
+        - --authorize=http://localhost:8083
+        - --whitelist-file=/etc/telemeter/whitelist
+        env:
+        - name: NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: quay.io/openshift/origin-telemeter:v4.0
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
+        name: telemeter-server
+        ports:
+        - containerPort: 8080
+          name: external
+        - containerPort: 8081
+          name: internal
+        - containerPort: 8082
+          name: cluster
+        readinessProbe:
+          httpGet:
+            path: /healthz/ready
+            port: 8080
+            scheme: HTTP
+        volumeMounts:
+        - mountPath: /etc/telemeter
+          name: secret-telemeter-server
+          readOnly: false
+        - mountPath: /etc/pki/service
+          name: telemeter-server-tls
+          readOnly: false
+      - command:
+        - /usr/bin/authorization-server
+        - localhost:8083
+        - /etc/telemeter/tokens.json
+        image: quay.io/openshift/origin-telemeter:v4.0
+        name: authorization-server
+        volumeMounts:
+        - mountPath: /etc/telemeter
+          name: secret-telemeter-server
+          readOnly: false
+      serviceAccountName: telemeter-server
+      volumes:
+      - name: secret-telemeter-server
+        secret:
+          secretName: telemeter-server
+      - name: telemeter-server-tls
+        secret:
+          secretName: telemeter-server-shared
