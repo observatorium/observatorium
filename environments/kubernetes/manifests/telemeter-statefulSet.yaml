@@ -26,6 +26,7 @@ spec:
         - --shared-key=/etc/pki/service/tls.key
         - --authorize=http://localhost:8083
         - --whitelist-file=/etc/telemeter/whitelist
+        - --forward-url=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
         env:
         - name: NAME
           valueFrom:
