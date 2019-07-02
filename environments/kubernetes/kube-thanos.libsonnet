@@ -17,7 +17,7 @@ local deployment = k.apps.v1.deployment;
       },
     },
 
-    local namespace = 'observability-platform',
+    local namespace = 'observatorium',
 
     querier+: {
       service+:

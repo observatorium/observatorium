@@ -4,7 +4,7 @@ metadata:
   labels:
     app: thanos-querier
   name: thanos-querier
-  namespace: observability-platform
+  namespace: observatorium
 spec:
   ports:
   - name: grpc
