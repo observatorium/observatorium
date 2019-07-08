@@ -10,7 +10,7 @@ local deployment = k.apps.v1.deployment;
 {
   thanos+:: {
     variables+:: {
-      image: 'improbable/thanos:v0.5.0',
+      image: 'quay.io/metalmatze/thanos:45da18cb6505',
       objectStorageConfig+: {
         name: 'thanos-objectstorage',
         key: 'thanos.yaml',
@@ -31,7 +31,7 @@ local deployment = k.apps.v1.deployment;
         service.mixin.metadata.withNamespace(namespace),
       statefulSet+:
         sts.mixin.metadata.withNamespace(namespace) +
-        sts.mixin.spec.withReplicas(5),
+        sts.mixin.spec.withReplicas(3),
     },
     receive+: {
       service+:

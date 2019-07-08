@@ -24,8 +24,8 @@ objects:
         - args:
           - query
           - --query.replica-label=replica
-          - --store=dnssrv+thanos-store.${NAMESPACE}.svc.cluster.local:10901
-          - --store=dnssrv+thanos-receive.${NAMESPACE}.svc.cluster.local:10901
+          - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.thanos-receive.${NAMESPACE}.svc.cluster.local
           image: ${IMAGE}
           name: thanos-querier
 - apiVersion: v1

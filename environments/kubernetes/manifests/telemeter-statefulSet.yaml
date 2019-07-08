@@ -5,7 +5,7 @@ metadata:
   namespace: observatorium
 spec:
   podManagementPolicy: Parallel
-  replicas: 10
+  replicas: 3
   selector:
     matchLabels:
       k8s-app: telemeter-server
@@ -32,7 +32,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: quay.io/openshift/origin-telemeter:v4.0
+        image: quay.io/metalmatze/telemeter:4799e07
         livenessProbe:
           httpGet:
             path: /healthz
@@ -62,7 +62,7 @@ spec:
         - /usr/bin/authorization-server
         - localhost:8083
         - /etc/telemeter/tokens.json
-        image: quay.io/openshift/origin-telemeter:v4.0
+        image: quay.io/metalmatze/telemeter:4799e07
         name: authorization-server
         volumeMounts:
         - mountPath: /etc/telemeter

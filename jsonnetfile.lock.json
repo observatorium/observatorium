@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "f2f463c10a3f2b3634e34940691c5238c8f4dc9c"
+            "version": "918a1371eeb3583179a98aaa4e549d2c1a9ac793"
         },
         {
             "name": "ksonnet",
@@ -38,7 +38,7 @@
                     "subdir": "jsonnet/prometheus-operator"
                 }
             },
-            "version": "f05d5228fe02bcd370acaa234c15f3d9fdef4a60"
+            "version": "6efd4e5e12213021516c10b3ebd0699260ddd804"
         }
     ]
 }
