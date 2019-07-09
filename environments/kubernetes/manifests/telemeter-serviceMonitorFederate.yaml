@@ -8,14 +8,18 @@ metadata:
   namespace: observatorium
 spec:
   endpoints:
-  - honorLabels: true
+  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    honorLabels: true
     interval: 15s
     params:
       match[]:
       - '{__name__=~".*"}'
     path: /federate
     port: internal
-    scheme: http
+    scheme: https
+    tlsConfig:
+      caFile: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+      serverName: telemeter-server.observatorium.svc
   jobLabel: k8s-app
   selector:
     matchLabels:

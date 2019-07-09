@@ -1,4 +1,4 @@
-(import 'telemeter/benchmark/kubernetes.libsonnet') +
+(import 'telemeter/server/kubernetes.libsonnet') +
 (import 'telemeter/prometheus/kubernetes.libsonnet') +
 {
   _config+:: {
@@ -6,7 +6,7 @@
   },
 
   telemeterServer+:: {
-    local image = 'quay.io/metalmatze/telemeter:4799e07',
+    local image = 'quay.io/metalmatze/telemeter:62c8659',
 
     statefulSet+: {
       spec+: {
@@ -23,10 +23,6 @@
                     $.thanos.receive.service.spec.ports[1].port,
                   ],
                 ],
-              },
-            ] + [
-              super.containers[1] {
-                image: image,
               },
             ],
           },

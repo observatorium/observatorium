@@ -11,7 +11,7 @@ spec:
   clusterIP: None
   ports:
   - name: external
-    port: 8080
+    port: 8443
     targetPort: external
   - name: internal
     port: 8081

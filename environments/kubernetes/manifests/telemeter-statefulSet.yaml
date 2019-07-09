@@ -20,27 +20,54 @@ spec:
         - /usr/bin/telemeter-server
         - --join=telemeter-server
         - --name=$(NAME)
-        - --listen=0.0.0.0:8080
+        - --listen=0.0.0.0:8443
         - --listen-internal=0.0.0.0:8081
         - --listen-cluster=0.0.0.0:8082
         - --shared-key=/etc/pki/service/tls.key
-        - --authorize=http://localhost:8083
-        - --whitelist-file=/etc/telemeter/whitelist
+        - --tls-key=/etc/pki/service/tls.key
+        - --tls-crt=/etc/pki/service/tls.crt
+        - --internal-tls-key=/etc/pki/service/tls.key
+        - --internal-tls-crt=/etc/pki/service/tls.crt
+        - --authorize=https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
+        - --authorize-issuer-url=$(RHD_URL)
+        - --authorize-client-id=$(RHD_CLIENT_ID)
+        - --authorize-username=$(RHD_USERNAME)
+        - --authorize-password=$(RHD_PASSWORD)
         - --forward-url=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
         env:
         - name: NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: quay.io/metalmatze/telemeter:4799e07
+        - name: RHD_URL
+          valueFrom:
+            secretKeyRef:
+              key: rhd.url
+              name: telemeter-server
+        - name: RHD_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: rhd.username
+              name: telemeter-server
+        - name: RHD_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: rhd.password
+              name: telemeter-server
+        - name: RHD_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              key: rhd.client_id
+              name: telemeter-server
+        image: quay.io/metalmatze/telemeter:62c8659
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 8080
-            scheme: HTTP
+            port: 8443
+            scheme: HTTPS
         name: telemeter-server
         ports:
-        - containerPort: 8080
+        - containerPort: 8443
           name: external
         - containerPort: 8081
           name: internal
@@ -49,24 +76,14 @@ spec:
         readinessProbe:
           httpGet:
             path: /healthz/ready
-            port: 8080
-            scheme: HTTP
+            port: 8443
+            scheme: HTTPS
+        resources:
+          limits: {}
+          requests: {}
         volumeMounts:
-        - mountPath: /etc/telemeter
-          name: secret-telemeter-server
-          readOnly: false
         - mountPath: /etc/pki/service
           name: telemeter-server-tls
-          readOnly: false
-      - command:
-        - /usr/bin/authorization-server
-        - localhost:8083
-        - /etc/telemeter/tokens.json
-        image: quay.io/metalmatze/telemeter:4799e07
-        name: authorization-server
-        volumeMounts:
-        - mountPath: /etc/telemeter
-          name: secret-telemeter-server
           readOnly: false
       serviceAccountName: telemeter-server
       volumes:
