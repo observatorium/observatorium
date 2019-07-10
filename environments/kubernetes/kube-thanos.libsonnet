@@ -10,7 +10,7 @@ local deployment = k.apps.v1.deployment;
 {
   thanos+:: {
     variables+:: {
-      image: 'quay.io/metalmatze/thanos:45da18cb6505',
+      image: 'improbable/thanos:v0.5.0',
       objectStorageConfig+: {
         name: 'thanos-objectstorage',
         key: 'thanos.yaml',
