@@ -4,9 +4,9 @@ metadata:
   labels:
     app: thanos-store
   name: thanos-store
-  namespace: observability-platform
+  namespace: observatorium
 spec:
-  replicas: 5
+  replicas: 3
   selector:
     matchLabels:
       app: thanos-store

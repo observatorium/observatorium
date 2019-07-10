@@ -17,7 +17,7 @@ local deployment = k.apps.v1.deployment;
       },
     },
 
-    local namespace = 'observability-platform',
+    local namespace = 'observatorium',
 
     querier+: {
       service+:
@@ -31,7 +31,7 @@ local deployment = k.apps.v1.deployment;
         service.mixin.metadata.withNamespace(namespace),
       statefulSet+:
         sts.mixin.metadata.withNamespace(namespace) +
-        sts.mixin.spec.withReplicas(5),
+        sts.mixin.spec.withReplicas(3),
     },
     receive+: {
       service+:

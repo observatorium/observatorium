@@ -4,7 +4,7 @@ metadata:
   labels:
     app: thanos-querier
   name: thanos-querier
-  namespace: observability-platform
+  namespace: observatorium
 spec:
   replicas: 3
   selector:
@@ -19,7 +19,7 @@ spec:
       - args:
         - query
         - --query.replica-label=replica
-        - --store=dnssrv+thanos-store.observability-platform.svc.cluster.local:10901
-        - --store=dnssrv+thanos-receive.observability-platform.svc.cluster.local:10901
+        - --store=dnssrv+_grpc._tcp.thanos-store.observatorium.svc.cluster.local
+        - --store=dnssrv+_grpc._tcp.thanos-receive.observatorium.svc.cluster.local
         image: improbable/thanos:v0.5.0
         name: thanos-querier

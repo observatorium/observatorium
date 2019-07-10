@@ -4,7 +4,7 @@ metadata:
   labels:
     app: thanos-receive
   name: thanos-receive
-  namespace: observability-platform
+  namespace: observatorium
 spec:
   clusterIP: None
   ports:
