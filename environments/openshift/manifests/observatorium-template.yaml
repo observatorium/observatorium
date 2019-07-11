@@ -187,12 +187,159 @@ objects:
         - emptyDir: {}
           name: data
     volumeClaimTemplates: []
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      service.alpha.openshift.io/serving-cert-secret-name: telemeter-server-shared
+    labels:
+      k8s-app: telemeter-server
+    name: telemeter-server
+    namespace: ${NAMESPACE}
+  spec:
+    clusterIP: None
+    ports:
+    - name: external
+      port: 8443
+      targetPort: external
+    - name: internal
+      port: 8081
+      targetPort: internal
+    - name: cluster
+      port: 8082
+      targetPort: cluster
+    selector:
+      k8s-app: telemeter-server
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: telemeter-server
+    namespace: ${NAMESPACE}
+- apiVersion: apps/v1beta2
+  kind: StatefulSet
+  metadata:
+    name: telemeter-server
+    namespace: ${NAMESPACE}
+  spec:
+    podManagementPolicy: Parallel
+    replicas: 3
+    selector:
+      matchLabels:
+        k8s-app: telemeter-server
+    serviceName: telemeter-server
+    template:
+      metadata:
+        labels:
+          k8s-app: telemeter-server
+      spec:
+        containers:
+        - command:
+          - /usr/bin/telemeter-server
+          - --join=telemeter-server
+          - --name=$(NAME)
+          - --listen=0.0.0.0:8443
+          - --listen-internal=0.0.0.0:8081
+          - --listen-cluster=0.0.0.0:8082
+          - --shared-key=/etc/pki/service/tls.key
+          - --tls-key=/etc/pki/service/tls.key
+          - --tls-crt=/etc/pki/service/tls.crt
+          - --internal-tls-key=/etc/pki/service/tls.key
+          - --internal-tls-crt=/etc/pki/service/tls.crt
+          - --authorize=${AUTHORIZE_URL}
+          - --authorize-issuer-url=$(RHD_URL)
+          - --authorize-client-id=$(RHD_CLIENT_ID)
+          - --authorize-username=$(RHD_USERNAME)
+          - --authorize-password=$(RHD_PASSWORD)
+          - --whitelist={__name__="up"}
+          - --whitelist={__name__="cluster_version"}
+          - --whitelist={__name__="cluster_version_available_updates"}
+          - --whitelist={__name__="cluster_operator_up"}
+          - --whitelist={__name__="cluster_operator_conditions"}
+          - --whitelist={__name__="cluster_version_payload"}
+          - --whitelist={__name__="cluster_version_payload_errors"}
+          - --whitelist={__name__="instance:etcd_object_counts:sum"}
+          - --whitelist={__name__="alerts",alertstate="firing"}
+          - --whitelist={__name__="code:apiserver_request_count:rate:sum"}
+          - --whitelist={__name__="kube_pod_status_ready:etcd:sum"}
+          - --whitelist={__name__="kube_pod_status_ready:image_registry:sum"}
+          - --whitelist={__name__="cluster:capacity_cpu_cores:sum"}
+          - --whitelist={__name__="cluster:capacity_memory_bytes:sum"}
+          - --whitelist={__name__="cluster:cpu_usage_cores:sum"}
+          - --whitelist={__name__="cluster:memory_usage_bytes:sum"}
+          - --whitelist={__name__="openshift:cpu_usage_cores:sum"}
+          - --whitelist={__name__="openshift:memory_usage_bytes:sum"}
+          - --whitelist={__name__="cluster:node_instance_type_count:sum"}
+          - --elide-label=prometheus_replica
+          - --forward-url=http://thanos-receive.${NAMESPACE}.svc.cluster.local:19291/api/v1/receive
+          env:
+          - name: NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: RHD_URL
+            valueFrom:
+              secretKeyRef:
+                key: rhd.url
+                name: telemeter-server
+          - name: RHD_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: rhd.username
+                name: telemeter-server
+          - name: RHD_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: rhd.password
+                name: telemeter-server
+          - name: RHD_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: rhd.client_id
+                name: telemeter-server
+          image: ${IMAGE}:${IMAGE_TAG}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8443
+              scheme: HTTPS
+          name: telemeter-server
+          ports:
+          - containerPort: 8443
+            name: external
+          - containerPort: 8081
+            name: internal
+          - containerPort: 8082
+            name: cluster
+          readinessProbe:
+            httpGet:
+              path: /healthz/ready
+              port: 8443
+              scheme: HTTPS
+          resources:
+            limits:
+              cpu: ${TELEMETER_SERVER_CPU_LIMIT}
+              memory: ${TELEMETER_SERVER_MEMORY_LIMIT}
+            requests:
+              cpu: ${TELEMETER_SERVER_CPU_REQUEST}
+              memory: ${TELEMETER_SERVER_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /etc/pki/service
+            name: telemeter-server-tls
+            readOnly: false
+        serviceAccountName: telemeter-server
+        volumes:
+        - name: secret-telemeter-server
+          secret:
+            secretName: telemeter-server
+        - name: telemeter-server-tls
+          secret:
+            secretName: telemeter-server-shared
 parameters:
 - name: NAMESPACE
   value: telemeter
-- name: IMAGE
+- name: THAONS_IMAGE
   value: improbable/thanos:v0.5.0
-- name: IMAGE_TAG
+- name: THANOS_IMAGE_TAG
   value: dummy
 - name: THANOS_QUERIER_REPLICAS
   value: "3"
@@ -204,3 +351,19 @@ parameters:
   value: thanos-objectstorage
 - name: THANOS_S3_SECRET
   value: telemeter-thanos-stage-s3
+- name: AUTHORIZE_URL
+  value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
+- name: NAMESPACE
+  value: observatorium
+- name: IMAGE
+  value: quay.io/openshift/origin-telemeter
+- name: IMAGE_TAG
+  value: v4.0
+- name: TELEMETER_SERVER_CPU_REQUEST
+  value: 100m
+- name: TELEMETER_SERVER_CPU_LIMIT
+  value: "1"
+- name: TELEMETER_SERVER_MEMORY_REQUEST
+  value: 500Mi
+- name: TELEMETER_SERVER_MEMORY_LIMIT
+  value: 1Gi
