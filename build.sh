@@ -17,4 +17,4 @@ jsonnet -J vendor -m environments/kubernetes/manifests environments/kubernetes/m
 rm -rf environments/openshift/manifests
 mkdir environments/openshift/manifests
 
-jsonnet -J vendor environments/openshift/main.jsonnet | gojsontoyaml > environments/openshift/manifests/thanos-template.yaml
+jsonnet -J vendor environments/openshift/main.jsonnet | gojsontoyaml > environments/openshift/manifests/observatorium-template.yaml
