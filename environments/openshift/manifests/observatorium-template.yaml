@@ -88,6 +88,7 @@ objects:
           - --remote-write.address=0.0.0.0:19291
           - --objstore.config=$(OBJSTORE_CONFIG)
           - --tsdb.path=/var/thanos/tsdb
+          - --tsdb.retention=6h
           env:
           - name: OBJSTORE_CONFIG
             valueFrom:
