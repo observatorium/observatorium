@@ -2,12 +2,13 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local service = k.core.v1.service;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
+local list = import 'telemeter/lib/list.libsonnet';
 
 (import '../kubernetes/kube-thanos.libsonnet') +
 {
   thanos+:: {
     variables+: {
-      image: '${IMAGE}',
+      image: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
       objectStorageConfig+: {
         name: '${THANOS_CONFIG_SECRET}',
         key: 'thanos.yaml',
@@ -72,5 +73,55 @@ local deployment = k.apps.v1.deployment;
         },
       },
     },
+  },
+} + {
+  local thanos = super.thanos,
+  thanos+:: {
+    template+:
+      local objects = {
+        ['querier-' + name]: thanos.querier[name]
+        for name in std.objectFields(thanos.querier)
+      } + {
+        ['store-' + name]: thanos.store[name]
+        for name in std.objectFields(thanos.store)
+      } + {
+        ['receive-' + name]: thanos.receive[name]
+        for name in std.objectFields(thanos.receive)
+      };
+
+      list.asList('thanos', objects, [
+        {
+          name: 'NAMESPACE',
+          value: 'telemeter',
+        },
+        {
+          name: 'THANOS_IMAGE',
+          value: 'improbable/thanos',
+        },
+        {
+          name: 'THANOS_IMAGE_TAG',
+          value: 'v0.6.0-rc.0',
+        },
+        {
+          name: 'THANOS_QUERIER_REPLICAS',
+          value: '3',
+        },
+        {
+          name: 'THANOS_STORE_REPLICAS',
+          value: '5',
+        },
+        {
+          name: 'THANOS_RECEIVE_REPLICAS',
+          value: '5',
+        },
+        {
+          name: 'THANOS_CONFIG_SECRET',
+          value: 'thanos-objectstorage',
+        },
+        {
+          name: 'THANOS_S3_SECRET',
+          value: 'telemeter-thanos-stage-s3',
+        },
+      ]),
   },
 }

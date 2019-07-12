@@ -30,16 +30,4 @@
       },
     },
   },
-} + {
-  local ts = super.telemeterServer,
-  telemeterServer:: {
-    [k]: ts[k]
-    for k in std.objectFields(ts)
-    // This array must be sorted for `std.setMember` to work.
-    if !std.setMember(k, [
-      'secret',
-      'serviceMonitor',
-      'serviceMonitorFederate',
-    ])
-  },
 }

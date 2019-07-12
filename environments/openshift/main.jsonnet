@@ -5,58 +5,23 @@ local list = import 'telemeter/lib/list.libsonnet';
 
 local app =
   (import 'kube-thanos.libsonnet') +
+  (import 'telemeter.libsonnet') +
   {
-    // This generates the Template kind that OpenShift requires
-    local t = super.thanos,
-    thanos+:: {
-      template:
-        local objects = {
-          ['querier-' + name]: t.querier[name]
-          for name in std.objectFields(t.querier)
-        } + {
-          ['store-' + name]: t.store[name]
-          for name in std.objectFields(t.store)
-        } + {
-          ['receive-' + name]: t.receive[name]
-          for name in std.objectFields(t.receive)
-        };
+    local thanos = super.thanos,
 
-        list.asList('thanos', objects, [
-          {
-            name: 'NAMESPACE',
-            value: 'telemeter',
-          },
-          {
-            name: 'IMAGE',
-            value: 'improbable/thanos:v0.5.0',
-          },
-          {
-            name: 'IMAGE_TAG',
-            value: 'dummy',  // We don't actually use this, but need it for OpenShift.
-          },
-          {
-            name: 'THANOS_QUERIER_REPLICAS',
-            value: '3',
-          },
-          {
-            name: 'THANOS_STORE_REPLICAS',
-            value: '5',
-          },
-          {
-            name: 'THANOS_RECEIVE_REPLICAS',
-            value: '5',
-          },
-          {
-            name: 'THANOS_CONFIG_SECRET',
-            value: 'thanos-objectstorage',
-          },
-          {
-            name: 'THANOS_S3_SECRET',
-            value: 'telemeter-thanos-stage-s3',
-          },
-        ]),
-    },
+    template:
+      list.asList('observatorium', {}, []) + {
+        objects:
+          $.thanos.template.objects +
+          $.telemeterServer.list.objects,
+
+        parameters:
+          $.thanos.template.parameters +
+          $.telemeterServer.list.parameters + [
+            { name: 'TELEMETER_FORWARD_URL', value: '' },
+          ],
+      },
   };
 
 // Output only the template
-app.thanos.template
+app.template

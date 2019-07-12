@@ -36,9 +36,26 @@ local deployment = k.apps.v1.deployment;
     receive+: {
       service+:
         service.mixin.metadata.withNamespace(namespace),
-      statefulSet+:
-        sts.mixin.metadata.withNamespace(namespace) +
-        sts.mixin.spec.withReplicas(3),
+      statefulSet+: {
+        metadata+: {
+          namespace: namespace,
+        },
+        spec+: {
+          replicas: 3,
+          template+: {
+            spec+: {
+              // This patch should probably move upstream to kube-thanos
+              containers: [
+                super.containers[0] {
+                  args+: [
+                    '--tsdb.retention=6h',
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
     },
   },
 }
