@@ -95,12 +95,12 @@ local list = import 'telemeter/lib/list.libsonnet';
           value: 'telemeter',
         },
         {
-          name: 'THAONS_IMAGE',
-          value: 'improbable/thanos:v0.5.0',
+          name: 'THANOS_IMAGE',
+          value: 'improbable/thanos',
         },
         {
           name: 'THANOS_IMAGE_TAG',
-          value: 'dummy',  // We don't actually use this, but need it for OpenShift.
+          value: 'v0.6.0-rc.0',
         },
         {
           name: 'THANOS_QUERIER_REPLICAS',

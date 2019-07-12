@@ -397,10 +397,10 @@ objects:
 parameters:
 - name: NAMESPACE
   value: telemeter
-- name: THAONS_IMAGE
-  value: improbable/thanos:v0.5.0
+- name: THANOS_IMAGE
+  value: improbable/thanos
 - name: THANOS_IMAGE_TAG
-  value: dummy
+  value: v0.6.0-rc.0
 - name: THANOS_QUERIER_REPLICAS
   value: "3"
 - name: THANOS_STORE_REPLICAS
