@@ -21,6 +21,11 @@ local app =
             { name: 'TELEMETER_FORWARD_URL', value: '' },
           ],
       },
+  } + {
+    template+: {
+      parameters:
+        std.filter(function(param) !(param.name == 'NAMESPACE' && param.value == 'observatorium'), super.parameters),
+    },
   };
 
 // Output only the template

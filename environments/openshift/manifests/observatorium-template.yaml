@@ -414,8 +414,6 @@ parameters:
   value: telemeter-thanos-stage-s3
 - name: AUTHORIZE_URL
   value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
-- name: NAMESPACE
-  value: observatorium
 - name: IMAGE
   value: quay.io/openshift/origin-telemeter
 - name: IMAGE_TAG
