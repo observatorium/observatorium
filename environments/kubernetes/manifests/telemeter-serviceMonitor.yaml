@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    endpoint: metrics
+    k8s-app: telemeter-server
+  name: telemeter-server
+  namespace: observatorium
+spec:
+  endpoints:
+  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    interval: 30s
+    port: internal
+    scheme: https
+    tlsConfig:
+      caFile: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+      serverName: telemeter-server.observatorium.svc
+  jobLabel: k8s-app
+  selector:
+    matchLabels:
+      k8s-app: telemeter-server
