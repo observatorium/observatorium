@@ -17,7 +17,9 @@ local app =
 
         parameters:
           $.thanos.template.parameters +
-          $.telemeterServer.list.parameters,
+          $.telemeterServer.list.parameters + [
+            { name: 'TELEMETER_FORWARD_URL', value: '' },
+          ],
       },
   };
 

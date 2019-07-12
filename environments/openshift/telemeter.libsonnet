@@ -6,6 +6,20 @@ local list = import 'telemeter/lib/list.libsonnet';
     statefulSet+: {
       spec+: {
         replicas: 10,
+
+        template+: {
+          spec+: {
+            containers: [
+              c {
+                command: [
+                  if std.startsWith(c, '--forward-url=') then '--forward-url=${TELEMETER_FORWARD_URL}' else c
+                  for c in super.command
+                ],
+              }
+              for c in super.containers
+            ],
+          },
+        },
       },
     },
   },

@@ -331,7 +331,7 @@ objects:
           - --whitelist={__name__="openshift:memory_usage_bytes:sum"}
           - --whitelist={__name__="cluster:node_instance_type_count:sum"}
           - --elide-label=prometheus_replica
-          - --forward-url=http://thanos-receive.${NAMESPACE}.svc.cluster.local:19291/api/v1/receive
+          - --forward-url=${TELEMETER_FORWARD_URL}
           env:
           - name: NAME
             valueFrom:
@@ -428,3 +428,5 @@ parameters:
   value: 500Mi
 - name: TELEMETER_SERVER_MEMORY_LIMIT
   value: 1Gi
+- name: TELEMETER_FORWARD_URL
+  value: ""
