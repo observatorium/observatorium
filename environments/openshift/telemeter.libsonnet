@@ -2,6 +2,14 @@ local list = import 'telemeter/lib/list.libsonnet';
 
 (import '../kubernetes/telemeter.libsonnet') +
 {
+  telemeterServer+:: {
+    statefulSet+: {
+      spec+: {
+        replicas: 10,
+      },
+    },
+  },
+} + {
   local ts = super.telemeterServer,
   telemeterServer+:: {
     list: list.asList('telemeter', ts, [])
