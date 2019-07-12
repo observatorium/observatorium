@@ -26,7 +26,7 @@ objects:
           - --query.replica-label=replica
           - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
           - --store=dnssrv+_grpc._tcp.thanos-receive.${NAMESPACE}.svc.cluster.local
-          image: ${IMAGE}
+          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           name: thanos-querier
 - apiVersion: v1
   kind: Service
@@ -105,7 +105,7 @@ objects:
               secretKeyRef:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
-          image: ${IMAGE}
+          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           name: thanos-receive
           ports:
           - containerPort: 10901
@@ -175,7 +175,7 @@ objects:
               secretKeyRef:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
-          image: ${IMAGE}
+          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           name: thanos-store
           ports:
           - containerPort: 10901

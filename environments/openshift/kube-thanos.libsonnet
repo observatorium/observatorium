@@ -8,7 +8,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 {
   thanos+:: {
     variables+: {
-      image: '${IMAGE}',
+      image: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
       objectStorageConfig+: {
         name: '${THANOS_CONFIG_SECRET}',
         key: 'thanos.yaml',
