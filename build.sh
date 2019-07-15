@@ -17,4 +17,10 @@ jsonnet -J vendor -m environments/kubernetes/manifests environments/kubernetes/m
 rm -rf environments/openshift/manifests
 mkdir environments/openshift/manifests
 
-jsonnet -J vendor environments/openshift/main.jsonnet | gojsontoyaml > environments/openshift/manifests/observatorium-template.yaml
+jsonnet -J vendor environments/openshift/main.jsonnet | gojsontoyaml >environments/openshift/manifests/observatorium-template.yaml
+
+# Make sure to start with a clean 'servicemonitors' dir
+rm -rf environments/sre/servicemonitors
+mkdir environments/sre/servicemonitors
+
+jsonnet -J vendor -m environments/sre/servicemonitors environments/sre/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}
