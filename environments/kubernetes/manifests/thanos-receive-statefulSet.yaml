@@ -23,8 +23,14 @@ spec:
         - --remote-write.address=0.0.0.0:19291
         - --objstore.config=$(OBJSTORE_CONFIG)
         - --tsdb.path=/var/thanos/tsdb
+        - --labels=replica="$(NAME)"
+        - --labels=receive="true"
         - --tsdb.retention=6h
         env:
+        - name: NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: OBJSTORE_CONFIG
           valueFrom:
             secretKeyRef:
@@ -35,6 +41,8 @@ spec:
         ports:
         - containerPort: 10901
           name: grpc
+        - containerPort: 10902
+          name: http
         - containerPort: 19291
           name: remote-write
         volumeMounts:
