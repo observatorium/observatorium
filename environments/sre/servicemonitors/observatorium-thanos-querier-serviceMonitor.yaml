@@ -8,7 +8,7 @@ spec:
   endpoints:
   - port: http
   namespaceSelector:
-    matchLabels:
+    matchNames:
     - telemeter-stage
   selector:
     matchLabels:

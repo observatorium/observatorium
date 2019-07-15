@@ -13,7 +13,7 @@ local sm =
               matchLabels: { app: 'thanos-querier' },
             },
             namespaceSelector: {
-              matchLabels: ['telemeter-stage'],
+              matchNames: ['telemeter-stage'],
             },
           },
         },
@@ -29,7 +29,7 @@ local sm =
               matchLabels: { app: 'thanos-store' },
             },
             namespaceSelector: {
-              matchLabels: ['telemeter-stage'],
+              matchNames: ['telemeter-stage'],
             },
           },
         },
@@ -45,7 +45,7 @@ local sm =
               matchLabels: { app: 'thanos-receive' },
             },
             namespaceSelector: {
-              matchLabels: ['telemeter-stage'],
+              matchNames: ['telemeter-stage'],
             },
           },
         },
