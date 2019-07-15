@@ -58,6 +58,9 @@ objects:
     - name: grpc
       port: 10901
       targetPort: 10901
+    - name: http
+      port: 10902
+      targetPort: 10902
     - name: remote-write
       port: 19291
       targetPort: 19291
@@ -88,8 +91,14 @@ objects:
           - --remote-write.address=0.0.0.0:19291
           - --objstore.config=$(OBJSTORE_CONFIG)
           - --tsdb.path=/var/thanos/tsdb
+          - --labels=replica="$(NAME)"
+          - --labels=receive="true"
           - --tsdb.retention=6h
           env:
+          - name: NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
           - name: OBJSTORE_CONFIG
             valueFrom:
               secretKeyRef:
@@ -110,6 +119,8 @@ objects:
           ports:
           - containerPort: 10901
             name: grpc
+          - containerPort: 10902
+            name: http
           - containerPort: 19291
             name: remote-write
           volumeMounts:
@@ -133,6 +144,9 @@ objects:
     - name: grpc
       port: 10901
       targetPort: 10901
+    - name: http
+      port: 10902
+      targetPort: 10902
     selector:
       app: thanos-store
 - apiVersion: apps/v1
