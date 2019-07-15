@@ -118,11 +118,13 @@ objects:
       targetPort: 19291
     selector:
       app: thanos-receive
+      controller.receive.thanos.io: thanos-receive-controller
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
     labels:
       app: thanos-receive
+      controller.receive.thanos.io: thanos-receive-controller
     name: thanos-receive
     namespace: ${NAMESPACE}
   spec:
@@ -130,11 +132,13 @@ objects:
     selector:
       matchLabels:
         app: thanos-receive
+        controller.receive.thanos.io: thanos-receive-controller
     serviceName: thanos-receive
     template:
       metadata:
         labels:
           app: thanos-receive
+          controller.receive.thanos.io: thanos-receive-controller
       spec:
         containers:
         - args:
@@ -146,6 +150,7 @@ objects:
           - --labels=replica="$(NAME)"
           - --labels=receive="true"
           - --tsdb.retention=6h
+          - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
           env:
           - name: NAME
             valueFrom:
@@ -179,9 +184,15 @@ objects:
           - mountPath: /var/thanos/tsdb
             name: data
             readOnly: false
+          - mountPath: /var/lib/thanos-receive
+            name: observatorium-tenants
         volumes:
-        - emptyDir: {}
-          name: data
+        - configMap:
+            items:
+            - hashrings.json
+            name: observatorium-tenants-generated
+          name: observatorium-tenants
+    volumeClaimTemplates: []
 - apiVersion: v1
   kind: Service
   metadata:

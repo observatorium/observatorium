@@ -40,6 +40,9 @@ local deployment = k.apps.v1.deployment;
       statefulSet+: {
         metadata+: {
           namespace: namespace,
+          labels+: {
+            'controller.receive.thanos.io': 'thanos-receive-controller',
+          },
         },
         spec+: {
           replicas: 3,
@@ -50,8 +53,21 @@ local deployment = k.apps.v1.deployment;
                 super.containers[0] {
                   args+: [
                     '--tsdb.retention=6h',
+                    '--receive.hashrings-file=/var/lib/thanos-receive/hashrings.json',
+                  ],
+                  volumeMounts+: [
+                    { name: 'observatorium-tenants', mountPath: '/var/lib/thanos-receive' },
                   ],
                 },
+              ],
+
+              local volume = sts.mixin.spec.template.spec.volumesType,
+              volumes: [
+                volume.fromConfigMap(
+                  'observatorium-tenants',
+                  '%s-generated' % $.thanos.receiveController.configmap.metadata.name,
+                  ['hashrings.json'],
+                ),
               ],
             },
           },

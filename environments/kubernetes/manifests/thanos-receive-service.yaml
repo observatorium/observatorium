@@ -19,3 +19,4 @@ spec:
     targetPort: 19291
   selector:
     app: thanos-receive
+    controller.receive.thanos.io: thanos-receive-controller
