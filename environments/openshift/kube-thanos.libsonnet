@@ -87,6 +87,9 @@ local list = import 'telemeter/lib/list.libsonnet';
       } + {
         ['receive-' + name]: thanos.receive[name]
         for name in std.objectFields(thanos.receive)
+      } + {
+        ['receive-controller-' + name]: thanos.receiveController[name]
+        for name in std.objectFields(thanos.receiveController)
       };
 
       list.asList('thanos', objects, [

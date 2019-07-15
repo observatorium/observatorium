@@ -46,6 +46,58 @@ objects:
     selector:
       app: thanos-querier
 - apiVersion: v1
+  data: |-
+    [
+      {
+        "hashring": "thanos-receive",
+        "tenants": [
+
+        ]
+      }
+    ]
+  kind: ConfigMap
+  metadata:
+    labels:
+      app.kubernetes.io/name: thanos-receive-controller
+    name: observatorium-tenants
+    namespace: observatorium
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app.kubernetes.io/name: thanos-receive-controller
+    name: thanos-receive-controller
+    namespace: observatorium
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: thanos-receive-controller
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: thanos-receive-controller
+      spec:
+        containers:
+        - args:
+          - --configmap-name=observatorium-tenants
+          - --configmap-generated-name=observatorium-tenants-generated
+          - --file-name=hashrings.json
+          image: quay.io/observatorium/thanos-receive-controller:latest
+          name: thanos-receive-controller
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: thanos-receive-controller
+    namespace: observatorium
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    selector:
+      app.kubernetes.io/name: thanos-receive-controller
+- apiVersion: v1
   kind: Service
   metadata:
     labels:
