@@ -54,7 +54,7 @@ local sm =
   };
 
 {
-  'telemeter-thanos-querier-serviceMonitor': sm.thanos.querier.serviceMonitor,
-  'telemeter-thanos-store-serviceMonitor': sm.thanos.store.serviceMonitor,
-  'telemeter-thanos-receive-serviceMonitor': sm.thanos.receive.serviceMonitor,
+  'observatorium-thanos-querier-serviceMonitor': sm.thanos.querier.serviceMonitor,
+  'observatorium-thanos-store-serviceMonitor': sm.thanos.store.serviceMonitor,
+  'observatorium-thanos-receive-serviceMonitor': sm.thanos.receive.serviceMonitor,
 }
