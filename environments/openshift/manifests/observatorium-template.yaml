@@ -130,7 +130,6 @@ objects:
         volumes:
         - emptyDir: {}
           name: data
-    volumeClaimTemplates: []
 - apiVersion: v1
   kind: Service
   metadata:
@@ -201,7 +200,6 @@ objects:
         volumes:
         - emptyDir: {}
           name: data
-    volumeClaimTemplates: []
 - apiVersion: v1
   data:
     rhd.client_id: ""
