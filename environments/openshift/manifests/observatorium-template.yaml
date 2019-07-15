@@ -60,14 +60,14 @@ objects:
     labels:
       app.kubernetes.io/name: thanos-receive-controller
     name: observatorium-tenants
-    namespace: observatorium
+    namespace: ${NAMESPACE}
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
       app.kubernetes.io/name: thanos-receive-controller
     name: thanos-receive-controller
-    namespace: observatorium
+    namespace: ${NAMESPACE}
   spec:
     replicas: 1
     selector:
@@ -89,7 +89,7 @@ objects:
   kind: Service
   metadata:
     name: thanos-receive-controller
-    namespace: observatorium
+    namespace: ${NAMESPACE}
   spec:
     ports:
     - name: http

@@ -1,5 +1,6 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local service = k.core.v1.service;
+local configmap = k.core.v1.configMap;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
 local list = import 'telemeter/lib/list.libsonnet';
@@ -72,6 +73,15 @@ local list = import 'telemeter/lib/list.libsonnet';
           template+: s3Envvars,
         },
       },
+    },
+
+    receiveController+:{
+      configmap+:
+        configmap.mixin.metadata.withNamespace(namespace),
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      deployment+:
+        deployment.mixin.metadata.withNamespace(namespace),
     },
   },
 } + {
