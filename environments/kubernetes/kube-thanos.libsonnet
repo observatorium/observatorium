@@ -1,7 +1,11 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local service = k.core.v1.service;
+local configmap = k.core.v1.configMap;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
+local sa = k.core.v1.serviceAccount;
+local role = k.rbac.v1.role;
+local rolebinding = k.rbac.v1.roleBinding;
 
 (import 'kube-thanos/kube-thanos-querier.libsonnet') +
 (import 'kube-thanos/kube-thanos-store.libsonnet') +
@@ -62,17 +66,28 @@ local deployment = k.apps.v1.deployment;
               ],
 
               local volume = sts.mixin.spec.template.spec.volumesType,
-              volumes: [
-                volume.fromConfigMap(
-                  'observatorium-tenants',
-                  '%s-generated' % $.thanos.receiveController.configmap.metadata.name,
-                  ['hashrings.json'],
-                ),
+              volumes+: [
+                volume.withName('observatorium-tenants') +
+                volume.mixin.configMap.withName('%s-generated' % $.thanos.receiveController.configmap.metadata.name),
               ],
             },
           },
         },
       },
+    },
+    receiveController+: {
+      serviceAccount+:
+        sa.mixin.metadata.withNamespace(namespace),
+      role+:
+        role.mixin.metadata.withNamespace(namespace),
+      roleBinding+:
+        rolebinding.mixin.metadata.withNamespace(namespace),
+      configmap+:
+        configmap.mixin.metadata.withNamespace(namespace),
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      deployment+:
+        deployment.mixin.metadata.withNamespace(namespace),
     },
   },
 }

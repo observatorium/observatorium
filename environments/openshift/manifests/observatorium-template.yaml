@@ -46,15 +46,16 @@ objects:
     selector:
       app: thanos-querier
 - apiVersion: v1
-  data: |-
-    [
-      {
-        "hashring": "thanos-receive",
-        "tenants": [
+  data:
+    hashrings.json: |-
+      [
+        {
+          "hashring": "thanos-receive",
+          "tenants": [
 
-        ]
-      }
-    ]
+          ]
+        }
+      ]
   kind: ConfigMap
   metadata:
     labels:
@@ -83,8 +84,52 @@ objects:
           - --configmap-name=observatorium-tenants
           - --configmap-generated-name=observatorium-tenants-generated
           - --file-name=hashrings.json
+          - --namespace=$(NAMESPACE)
+          env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
           image: quay.io/observatorium/thanos-receive-controller:latest
           name: thanos-receive-controller
+        serviceAccount: thanos-receive-controller
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: thanos-receive-controller
+    namespace: observatorium
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    verbs:
+    - list
+    - watch
+    - get
+    - create
+    - update
+  - apiGroups:
+    - apps
+    resources:
+    - statefulsets
+    verbs:
+    - list
+    - watch
+    - get
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: thanos-receive-controller
+    namespace: observatorium
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: thanos-receive-controller
+  subjects:
+  - kind: ServiceAccount
+    name: thanos-receive-controller
+    namespace: observatorium
 - apiVersion: v1
   kind: Service
   metadata:
@@ -97,6 +142,11 @@ objects:
       targetPort: 8080
     selector:
       app.kubernetes.io/name: thanos-receive-controller
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: thanos-receive-controller
+    namespace: observatorium
 - apiVersion: v1
   kind: Service
   metadata:
@@ -187,9 +237,9 @@ objects:
           - mountPath: /var/lib/thanos-receive
             name: observatorium-tenants
         volumes:
+        - emptyDir: {}
+          name: data
         - configMap:
-            items:
-            - hashrings.json
             name: observatorium-tenants-generated
           name: observatorium-tenants
     volumeClaimTemplates: []

@@ -56,9 +56,9 @@ spec:
         - mountPath: /var/lib/thanos-receive
           name: observatorium-tenants
       volumes:
+      - emptyDir: {}
+        name: data
       - configMap:
-          items:
-          - hashrings.json
           name: observatorium-tenants-generated
         name: observatorium-tenants
   volumeClaimTemplates: []

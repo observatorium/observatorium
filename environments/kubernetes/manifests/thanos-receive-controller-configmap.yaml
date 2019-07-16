@@ -1,13 +1,14 @@
 apiVersion: v1
-data: |-
-  [
-    {
-      "hashring": "thanos-receive",
-      "tenants": [
+data:
+  hashrings.json: |-
+    [
+      {
+        "hashring": "thanos-receive",
+        "tenants": [
 
-      ]
-    }
-  ]
+        ]
+      }
+    ]
 kind: ConfigMap
 metadata:
   labels:
