@@ -1,5 +1,6 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local service = k.core.v1.service;
+local configmap = k.core.v1.configMap;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
 local list = import 'telemeter/lib/list.libsonnet';
@@ -73,6 +74,15 @@ local list = import 'telemeter/lib/list.libsonnet';
         },
       },
     },
+
+    receiveController+:{
+      configmap+:
+        configmap.mixin.metadata.withNamespace(namespace),
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      deployment+:
+        deployment.mixin.metadata.withNamespace(namespace),
+    },
   },
 } + {
   local thanos = super.thanos,
@@ -87,6 +97,9 @@ local list = import 'telemeter/lib/list.libsonnet';
       } + {
         ['receive-' + name]: thanos.receive[name]
         for name in std.objectFields(thanos.receive)
+      } + {
+        ['receive-controller-' + name]: thanos.receiveController[name]
+        for name in std.objectFields(thanos.receiveController)
       };
 
       list.asList('thanos', objects, [
