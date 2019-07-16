@@ -15,7 +15,7 @@ local rolebinding = k.rbac.v1.roleBinding;
 {
   thanos+:: {
     variables+:: {
-      image: 'improbable/thanos:v0.5.0',
+      image: 'improbable/thanos:v0.6.0-rc.0',
       objectStorageConfig+: {
         name: 'thanos-objectstorage',
         key: 'thanos.yaml',
