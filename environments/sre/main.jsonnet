@@ -5,7 +5,7 @@ local sm =
       querier+: {
         serviceMonitor+: {
           metadata: {
-            name: 'thanos-querier',
+            name: 'observatorium-thanos-querier',
             labels: { prometheus: 'app-sre' },
           },
           spec+: {
@@ -21,7 +21,7 @@ local sm =
       store+: {
         serviceMonitor+: {
           metadata: {
-            name: 'thanos-store',
+            name: 'observatorium-thanos-store',
             labels: { prometheus: 'app-sre' },
           },
           spec+: {
@@ -37,7 +37,7 @@ local sm =
       receive+: {
         serviceMonitor+: {
           metadata: {
-            name: 'thanos-receive',
+            name: 'observatorium-thanos-receive',
             labels: { prometheus: 'app-sre' },
           },
           spec+: {

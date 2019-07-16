@@ -3,7 +3,7 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: thanos-store
+  name: observatorium-thanos-store
 spec:
   endpoints:
   - port: http
