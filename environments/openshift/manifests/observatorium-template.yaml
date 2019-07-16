@@ -330,6 +330,7 @@ objects:
           - --whitelist={__name__="cluster_operator_conditions"}
           - --whitelist={__name__="cluster_version_payload"}
           - --whitelist={__name__="cluster_version_payload_errors"}
+          - --whitelist={__name__="cluster_installer"}
           - --whitelist={__name__="instance:etcd_object_counts:sum"}
           - --whitelist={__name__="alerts",alertstate="firing"}
           - --whitelist={__name__="code:apiserver_request_count:rate:sum"}
