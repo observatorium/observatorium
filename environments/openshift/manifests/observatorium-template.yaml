@@ -242,7 +242,6 @@ objects:
         - configMap:
             name: observatorium-tenants-generated
           name: observatorium-tenants
-    volumeClaimTemplates: []
 - apiVersion: v1
   kind: Service
   metadata:

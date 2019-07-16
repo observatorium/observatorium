@@ -61,4 +61,3 @@ spec:
       - configMap:
           name: observatorium-tenants-generated
         name: observatorium-tenants
-  volumeClaimTemplates: []
