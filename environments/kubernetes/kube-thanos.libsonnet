@@ -43,6 +43,7 @@ local rolebinding = k.rbac.v1.roleBinding;
         service.mixin.metadata.withNamespace(namespace),
       statefulSet+: {
         metadata+: {
+          name: 'thanos-receive-default',
           namespace: namespace,
           labels+: {
             'controller.receive.thanos.io': 'thanos-receive-controller',

@@ -2,21 +2,21 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
-    app: thanos-receive
+    app: thanos-receive-default
     controller.receive.thanos.io: thanos-receive-controller
-  name: thanos-receive
+  name: thanos-receive-default
   namespace: observatorium
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: thanos-receive
+      app: thanos-receive-default
       controller.receive.thanos.io: thanos-receive-controller
   serviceName: thanos-receive
   template:
     metadata:
       labels:
-        app: thanos-receive
+        app: thanos-receive-default
         controller.receive.thanos.io: thanos-receive-controller
     spec:
       containers:
@@ -41,7 +41,7 @@ spec:
               key: thanos.yaml
               name: thanos-objectstorage
         image: improbable/thanos:v0.6.0-rc.0
-        name: thanos-receive
+        name: thanos-receive-default
         ports:
         - containerPort: 10901
           name: grpc
