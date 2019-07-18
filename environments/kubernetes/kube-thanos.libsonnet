@@ -59,9 +59,18 @@ local rolebinding = k.rbac.v1.roleBinding;
                   args+: [
                     '--tsdb.retention=6h',
                     '--receive.hashrings-file=/var/lib/thanos-receive/hashrings.json',
+                    '--receive.local-endpoint=http://$(NAME).%s.$(NAMESPACE).svc.cluster.local:%d/api/v1/receive' % [
+                      $.thanos.receive.service.metadata.name,
+                      $.thanos.receive.service.spec.ports[2].port,
+                    ],
                   ],
                   volumeMounts+: [
                     { name: 'observatorium-tenants', mountPath: '/var/lib/thanos-receive' },
+                  ],
+                  env+: [
+                    local env = sts.mixin.spec.template.spec.containersType.envType;
+
+                    env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
                   ],
                 },
               ],
