@@ -1,8 +1,16 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local service = k.core.v1.service;
 local configmap = k.core.v1.configMap;
+local secret = k.core.v1.secret;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
+local container = deployment.mixin.spec.template.spec.containersType;
+local volume = k.apps.v1beta2.statefulSet.mixin.spec.template.spec.volumesType;
+local volumeMount = container.volumeMountsType;
+local serviceAccount = k.core.v1.serviceAccount;
+local clusterRole = k.rbac.v1.clusterRole;
+local policyRule = clusterRole.rulesType;
+local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
 local list = import 'telemeter/lib/list.libsonnet';
 
 (import '../kubernetes/kube-thanos.libsonnet') +
@@ -10,9 +18,14 @@ local list = import 'telemeter/lib/list.libsonnet';
   thanos+:: {
     variables+: {
       image: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
+      proxyImage: '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}',
       objectStorageConfig+: {
         name: '${THANOS_CONFIG_SECRET}',
         key: 'thanos.yaml',
+      },
+      proxyConfig+: {
+        htpasswd: '',
+        sessionSecret: '',
       },
     },
 
@@ -34,11 +47,117 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
 
     querier+: {
+      // The proxy secret is there to encrypt session created by the oauth proxy.
+      proxySecret:
+        secret.new('querier-proxy', {
+          session_secret: std.base64($.thanos.variables.proxyConfig.sessionSecret),
+        }) +
+        secret.mixin.metadata.withNamespace(namespace) +
+        secret.mixin.metadata.withLabels({ app: 'thanos-querier' }),
+
+      htpasswdSecret:
+        secret.new('querier-htpasswd', {
+          auth: std.base64($.thanos.variables.proxyConfig.htpasswd),
+        }) +
+        secret.mixin.metadata.withNamespace(namespace) +
+        secret.mixin.metadata.withLabels({ app: 'thanos-querier' }),
+
+      serviceAccount:
+        serviceAccount.new('thanos-querier') +
+        serviceAccount.mixin.metadata.withNamespace(namespace) +
+        serviceAccount.mixin.metadata.withAnnotations({
+          'serviceaccounts.openshift.io/oauth-redirectreference.querier': '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"thanos-querier"}}',
+        }),
+
+      clusterRole:
+        local authenticationRule =
+          policyRule.new() +
+          policyRule.withApiGroups(['authentication.k8s.io']) +
+          policyRule.withResources([
+            'tokenreviews',
+          ]) +
+          policyRule.withVerbs(['create']);
+
+        local authorizationRule =
+          policyRule.new() +
+          policyRule.withApiGroups(['authorization.k8s.io']) +
+          policyRule.withResources([
+            'subjectaccessreviews',
+          ]) +
+          policyRule.withVerbs(['create']);
+
+        clusterRole.new() +
+        clusterRole.mixin.metadata.withName('thanos-querier') +
+        clusterRole.withRules([authenticationRule, authorizationRule]),
+
+      clusterRoleBinding:
+        clusterRoleBinding.new() +
+        clusterRoleBinding.mixin.metadata.withName('thanos-querier') +
+        clusterRoleBinding.mixin.roleRef.withApiGroup('rbac.authorization.k8s.io') +
+        clusterRoleBinding.mixin.roleRef.withName('thanos-querier') +
+        clusterRoleBinding.mixin.roleRef.mixinInstance({ kind: 'ClusterRole' }) +
+        clusterRoleBinding.withSubjects([{ kind: 'ServiceAccount', name: 'thanos-querier', namespace: namespace }]),
+
       service+:
-        service.mixin.metadata.withNamespace(namespace),
+        service.mixin.metadata.withNamespace(namespace) +
+        service.mixin.metadata.withAnnotations({
+          'service.alpha.openshift.io/serving-cert-secret-name': 'querier-tls',
+        }) + {
+          spec+: {
+            ports+: [
+              service.mixin.spec.portsType.newNamed('https', 9091, 'https'),
+            ],
+          },
+        },
+
       deployment+:
+        {
+          spec+: {
+            template+: {
+              spec+: {
+                containers+: [
+                  container.new('proxy', $.thanos.variables.proxyImage) +
+                  container.withArgs([
+                    '-provider=openshift',
+                    '-https-address=:%d' % $.thanos.querier.service.spec.ports[2].port,
+                    '-http-address=',
+                    '-email-domain=*',
+                    '-upstream=http://localhost:%d' % $.thanos.querier.service.spec.ports[1].port,
+                    '-htpasswd-file=/etc/proxy/htpasswd/auth',
+                    '-openshift-service-account=querier',
+                    '-openshift-sar={"resource": "namespaces", "verb": "get"}',
+                    '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}',
+                    '-tls-cert=/etc/tls/private/tls.crt',
+                    '-tls-key=/etc/tls/private/tls.key',
+                    '-client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token',
+                    '-cookie-secret-file=/etc/proxy/secrets/session_secret',
+                    '-openshift-ca=/etc/pki/tls/cert.pem',
+                    '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+                    '-skip-auth-regex=^/metrics',
+                  ]) +
+                  container.withPorts([
+                    { name: 'https', containerPort: $.thanos.querier.service.spec.ports[2].port },
+                  ]) +
+                  container.withVolumeMounts(
+                    [
+                      volumeMount.new('secret-querier-tls', '/etc/tls/private'),
+                      volumeMount.new('secret-querier-proxy', '/etc/proxy/secrets'),
+                      volumeMount.new('secret-querier-htpasswd', '/etc/proxy/htpasswd'),
+                    ]
+                  ),
+                ],
+              },
+            },
+          },
+        } +
         deployment.mixin.metadata.withNamespace(namespace) +
-        deployment.mixin.spec.withReplicas('${{THANOS_QUERIER_REPLICAS}}'),
+        deployment.mixin.spec.withReplicas('${{THANOS_QUERIER_REPLICAS}}') +
+        deployment.mixin.spec.template.spec.withServiceAccount('thanos-querier') +
+        deployment.mixin.spec.template.spec.withVolumes([
+          volume.fromSecret('secret-querier-tls', 'querier-tls'),
+          volume.fromSecret('secret-querier-proxy', 'querier-proxy'),
+          volume.fromSecret('secret-querier-htpasswd', 'querier-htpasswd'),
+        ]),
     },
 
     store+: {
@@ -75,7 +194,7 @@ local list = import 'telemeter/lib/list.libsonnet';
       },
     },
 
-    receiveController+:{
+    receiveController+: {
       configmap+:
         configmap.mixin.metadata.withNamespace(namespace),
       service+:
@@ -114,6 +233,14 @@ local list = import 'telemeter/lib/list.libsonnet';
         {
           name: 'THANOS_IMAGE_TAG',
           value: 'v0.6.0-rc.0',
+        },
+        {
+          name: 'PROXY_IMAGE',
+          value: 'openshift/oauth-proxy',
+        },
+        {
+          name: 'PROXY_IMAGE_TAG',
+          value: 'v1.1.0',
         },
         {
           name: 'THANOS_QUERIER_REPLICAS',

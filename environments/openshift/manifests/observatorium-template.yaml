@@ -3,6 +3,35 @@ kind: Template
 metadata:
   name: observatorium
 objects:
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: thanos-querier
+  rules:
+  - apiGroups:
+    - authentication.k8s.io
+    resources:
+    - tokenreviews
+    verbs:
+    - create
+  - apiGroups:
+    - authorization.k8s.io
+    resources:
+    - subjectaccessreviews
+    verbs:
+    - create
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: thanos-querier
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: thanos-querier
+  subjects:
+  - kind: ServiceAccount
+    name: thanos-querier
+    namespace: ${NAMESPACE}
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -28,9 +57,74 @@ objects:
           - --store=dnssrv+_grpc._tcp.thanos-receive.${NAMESPACE}.svc.cluster.local
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           name: thanos-querier
+        - args:
+          - -provider=openshift
+          - -https-address=:9091
+          - -http-address=
+          - -email-domain=*
+          - -upstream=http://localhost:9090
+          - -htpasswd-file=/etc/proxy/htpasswd/auth
+          - -openshift-service-account=querier
+          - '-openshift-sar={"resource": "namespaces", "verb": "get"}'
+          - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
+          - -tls-cert=/etc/tls/private/tls.crt
+          - -tls-key=/etc/tls/private/tls.key
+          - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
+          - -cookie-secret-file=/etc/proxy/secrets/session_secret
+          - -openshift-ca=/etc/pki/tls/cert.pem
+          - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          - -skip-auth-regex=^/metrics
+          image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
+          name: proxy
+          ports:
+          - containerPort: 9091
+            name: https
+          volumeMounts:
+          - mountPath: /etc/tls/private
+            name: secret-querier-tls
+            readOnly: false
+          - mountPath: /etc/proxy/secrets
+            name: secret-querier-proxy
+            readOnly: false
+          - mountPath: /etc/proxy/htpasswd
+            name: secret-querier-htpasswd
+            readOnly: false
+        serviceAccount: thanos-querier
+        volumes:
+        - name: secret-querier-tls
+          secret:
+            secretName: querier-tls
+        - name: secret-querier-proxy
+          secret:
+            secretName: querier-proxy
+        - name: secret-querier-htpasswd
+          secret:
+            secretName: querier-htpasswd
+- apiVersion: v1
+  data:
+    auth: ""
+  kind: Secret
+  metadata:
+    labels:
+      app: thanos-querier
+    name: querier-htpasswd
+    namespace: ${NAMESPACE}
+  type: Opaque
+- apiVersion: v1
+  data:
+    session_secret: ""
+  kind: Secret
+  metadata:
+    labels:
+      app: thanos-querier
+    name: querier-proxy
+    namespace: ${NAMESPACE}
+  type: Opaque
 - apiVersion: v1
   kind: Service
   metadata:
+    annotations:
+      service.alpha.openshift.io/serving-cert-secret-name: querier-tls
     labels:
       app: thanos-querier
     name: thanos-querier
@@ -43,8 +137,18 @@ objects:
     - name: http
       port: 9090
       targetPort: 10902
+    - name: https
+      port: 9091
+      targetPort: https
     selector:
       app: thanos-querier
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      serviceaccounts.openshift.io/oauth-redirectreference.querier: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"thanos-querier"}}'
+    name: thanos-querier
+    namespace: ${NAMESPACE}
 - apiVersion: v1
   data:
     hashrings.json: |-
@@ -527,6 +631,10 @@ parameters:
   value: improbable/thanos
 - name: THANOS_IMAGE_TAG
   value: v0.6.0-rc.0
+- name: PROXY_IMAGE
+  value: openshift/oauth-proxy
+- name: PROXY_IMAGE_TAG
+  value: v1.1.0
 - name: THANOS_QUERIER_REPLICAS
   value: "3"
 - name: THANOS_STORE_REPLICAS
