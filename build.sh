@@ -23,4 +23,10 @@ jsonnet -J vendor environments/openshift/main.jsonnet | gojsontoyaml >environmen
 rm -rf environments/sre/servicemonitors
 mkdir environments/sre/servicemonitors
 
-jsonnet -J vendor -m environments/sre/servicemonitors environments/sre/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}
+jsonnet -J vendor -m environments/sre/servicemonitors environments/sre/servicemonitors.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}
+
+# Make sure to start with a clean 'prometheusrules' dir
+rm -rf environments/sre/prometheusrules
+mkdir environments/sre/prometheusrules
+
+jsonnet -J vendor -m environments/sre/prometheusrules environments/sre/prometheusrules.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}

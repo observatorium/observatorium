@@ -11,6 +11,16 @@
             "version": "master"
         },
         {
+            "name": "thanos-mixin",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/metalmatze/kube-thanos",
+                    "subdir": "jsonnet/thanos-mixin"
+                }
+            },
+            "version": "master"
+        },
+        {
             "name": "telemeter",
             "source": {
                 "git": {
