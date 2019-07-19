@@ -24,7 +24,6 @@ local list = import 'telemeter/lib/list.libsonnet';
         key: 'thanos.yaml',
       },
       proxyConfig+: {
-        htpasswd: '',
         sessionSecret: '',
       },
     },
@@ -51,13 +50,6 @@ local list = import 'telemeter/lib/list.libsonnet';
       proxySecret:
         secret.new('querier-proxy', {
           session_secret: std.base64($.thanos.variables.proxyConfig.sessionSecret),
-        }) +
-        secret.mixin.metadata.withNamespace(namespace) +
-        secret.mixin.metadata.withLabels({ app: 'thanos-querier' }),
-
-      htpasswdSecret:
-        secret.new('querier-htpasswd', {
-          auth: std.base64($.thanos.variables.proxyConfig.htpasswd),
         }) +
         secret.mixin.metadata.withNamespace(namespace) +
         secret.mixin.metadata.withLabels({ app: 'thanos-querier' }),
@@ -123,7 +115,6 @@ local list = import 'telemeter/lib/list.libsonnet';
                     '-http-address=',
                     '-email-domain=*',
                     '-upstream=http://localhost:%d' % $.thanos.querier.service.spec.ports[1].port,
-                    '-htpasswd-file=/etc/proxy/htpasswd/auth',
                     '-openshift-service-account=querier',
                     '-openshift-sar={"resource": "namespaces", "verb": "get"}',
                     '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}',
@@ -142,7 +133,6 @@ local list = import 'telemeter/lib/list.libsonnet';
                     [
                       volumeMount.new('secret-querier-tls', '/etc/tls/private'),
                       volumeMount.new('secret-querier-proxy', '/etc/proxy/secrets'),
-                      volumeMount.new('secret-querier-htpasswd', '/etc/proxy/htpasswd'),
                     ]
                   ),
                 ],
@@ -156,7 +146,6 @@ local list = import 'telemeter/lib/list.libsonnet';
         deployment.mixin.spec.template.spec.withVolumes([
           volume.fromSecret('secret-querier-tls', 'querier-tls'),
           volume.fromSecret('secret-querier-proxy', 'querier-proxy'),
-          volume.fromSecret('secret-querier-htpasswd', 'querier-htpasswd'),
         ]),
     },
 

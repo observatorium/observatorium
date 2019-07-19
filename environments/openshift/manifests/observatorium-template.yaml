@@ -70,7 +70,6 @@ objects:
           - -http-address=
           - -email-domain=*
           - -upstream=http://localhost:9090
-          - -htpasswd-file=/etc/proxy/htpasswd/auth
           - -openshift-service-account=querier
           - '-openshift-sar={"resource": "namespaces", "verb": "get"}'
           - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
@@ -93,9 +92,6 @@ objects:
           - mountPath: /etc/proxy/secrets
             name: secret-querier-proxy
             readOnly: false
-          - mountPath: /etc/proxy/htpasswd
-            name: secret-querier-htpasswd
-            readOnly: false
         serviceAccount: thanos-querier
         volumes:
         - name: secret-querier-tls
@@ -104,19 +100,6 @@ objects:
         - name: secret-querier-proxy
           secret:
             secretName: querier-proxy
-        - name: secret-querier-htpasswd
-          secret:
-            secretName: querier-htpasswd
-- apiVersion: v1
-  data:
-    auth: ""
-  kind: Secret
-  metadata:
-    labels:
-      app: thanos-querier
-    name: querier-htpasswd
-    namespace: ${NAMESPACE}
-  type: Opaque
 - apiVersion: v1
   data:
     session_secret: ""
