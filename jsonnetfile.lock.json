@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "fc2ec1e9b3e583db5afaaf6f2249761e660ff356"
+            "version": "e757aaf6a28c8afa8607f9f134bc03d1a53da171"
         },
         {
             "name": "ksonnet",
@@ -19,6 +19,16 @@
                 }
             },
             "version": "0d2f82676817bbf9e4acf6495b2090205f323b9f"
+        },
+        {
+            "name": "thanos-mixin",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/metalmatze/kube-thanos",
+                    "subdir": "jsonnet/thanos-mixin"
+                }
+            },
+            "version": "e757aaf6a28c8afa8607f9f134bc03d1a53da171"
         },
         {
             "name": "telemeter",
