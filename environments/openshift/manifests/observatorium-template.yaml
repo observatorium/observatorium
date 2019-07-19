@@ -53,10 +53,17 @@ objects:
         - args:
           - query
           - --query.replica-label=replica
+          - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:9090
           - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
           - --store=dnssrv+_grpc._tcp.thanos-receive.${NAMESPACE}.svc.cluster.local
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           name: thanos-querier
+          ports:
+          - containerPort: 10901
+            name: grpc
+          - containerPort: 9090
+            name: http
         - args:
           - -provider=openshift
           - -https-address=:9091
@@ -298,6 +305,7 @@ objects:
         - args:
           - receive
           - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:10902
           - --remote-write.address=0.0.0.0:19291
           - --objstore.config=$(OBJSTORE_CONFIG)
           - --tsdb.path=/var/thanos/tsdb
@@ -392,6 +400,7 @@ objects:
           - store
           - --data-dir=/var/thanos/store
           - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:10902
           - --objstore.config=$(OBJSTORE_CONFIG)
           env:
           - name: OBJSTORE_CONFIG
@@ -414,6 +423,8 @@ objects:
           ports:
           - containerPort: 10901
             name: grpc
+          - containerPort: 10902
+            name: http
           volumeMounts:
           - mountPath: /var/thanos/store
             name: data
