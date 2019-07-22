@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "e757aaf6a28c8afa8607f9f134bc03d1a53da171"
+            "version": "d0d2e5f62a922bc39d29eae4ee386cca4d0f15b6"
         },
         {
             "name": "ksonnet",
@@ -28,7 +28,7 @@
                     "subdir": "jsonnet/thanos-mixin"
                 }
             },
-            "version": "e757aaf6a28c8afa8607f9f134bc03d1a53da171"
+            "version": "d0d2e5f62a922bc39d29eae4ee386cca4d0f15b6"
         },
         {
             "name": "telemeter",
