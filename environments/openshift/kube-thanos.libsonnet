@@ -79,7 +79,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                     '-http-address=',
                     '-email-domain=*',
                     '-upstream=http://localhost:%d' % $.thanos.querier.service.spec.ports[1].port,
-                    '-openshift-service-account=telemeter-server',
+                    '-openshift-service-account=prometheus-telemeter',
                     '-openshift-sar={"resource": "namespaces", "verb": "get"}',
                     '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}',
                     '-tls-cert=/etc/tls/private/tls.crt',
@@ -106,7 +106,8 @@ local list = import 'telemeter/lib/list.libsonnet';
         } +
         deployment.mixin.metadata.withNamespace(namespace) +
         deployment.mixin.spec.withReplicas('${{THANOS_QUERIER_REPLICAS}}') +
-        deployment.mixin.spec.template.spec.withServiceAccount('telemeter-server') +
+        deployment.mixin.spec.template.spec.withServiceAccount('prometheus-telemeter') +
+        deployment.mixin.spec.template.spec.withServiceAccountName('prometheus-telemeter') +
         deployment.mixin.spec.template.spec.withVolumes([
           volume.fromSecret('secret-querier-tls', 'querier-tls'),
           volume.fromSecret('secret-querier-proxy', 'querier-proxy'),
