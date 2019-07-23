@@ -54,42 +54,6 @@ local list = import 'telemeter/lib/list.libsonnet';
         secret.mixin.metadata.withNamespace(namespace) +
         secret.mixin.metadata.withLabels({ app: 'thanos-querier' }),
 
-      serviceAccount:
-        serviceAccount.new('thanos-querier') +
-        serviceAccount.mixin.metadata.withNamespace(namespace) +
-        serviceAccount.mixin.metadata.withAnnotations({
-          'serviceaccounts.openshift.io/oauth-redirectreference.querier': '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"thanos-querier"}}',
-        }),
-
-      clusterRole:
-        local authenticationRule =
-          policyRule.new() +
-          policyRule.withApiGroups(['authentication.k8s.io']) +
-          policyRule.withResources([
-            'tokenreviews',
-          ]) +
-          policyRule.withVerbs(['create']);
-
-        local authorizationRule =
-          policyRule.new() +
-          policyRule.withApiGroups(['authorization.k8s.io']) +
-          policyRule.withResources([
-            'subjectaccessreviews',
-          ]) +
-          policyRule.withVerbs(['create']);
-
-        clusterRole.new() +
-        clusterRole.mixin.metadata.withName('thanos-querier') +
-        clusterRole.withRules([authenticationRule, authorizationRule]),
-
-      clusterRoleBinding:
-        clusterRoleBinding.new() +
-        clusterRoleBinding.mixin.metadata.withName('thanos-querier') +
-        clusterRoleBinding.mixin.roleRef.withApiGroup('rbac.authorization.k8s.io') +
-        clusterRoleBinding.mixin.roleRef.withName('thanos-querier') +
-        clusterRoleBinding.mixin.roleRef.mixinInstance({ kind: 'ClusterRole' }) +
-        clusterRoleBinding.withSubjects([{ kind: 'ServiceAccount', name: 'thanos-querier', namespace: namespace }]),
-
       service+:
         service.mixin.metadata.withNamespace(namespace) +
         service.mixin.metadata.withAnnotations({
@@ -115,7 +79,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                     '-http-address=',
                     '-email-domain=*',
                     '-upstream=http://localhost:%d' % $.thanos.querier.service.spec.ports[1].port,
-                    '-openshift-service-account=querier',
+                    '-openshift-service-account=telemeter-server',
                     '-openshift-sar={"resource": "namespaces", "verb": "get"}',
                     '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}',
                     '-tls-cert=/etc/tls/private/tls.crt',
@@ -142,7 +106,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         } +
         deployment.mixin.metadata.withNamespace(namespace) +
         deployment.mixin.spec.withReplicas('${{THANOS_QUERIER_REPLICAS}}') +
-        deployment.mixin.spec.template.spec.withServiceAccount('thanos-querier') +
+        deployment.mixin.spec.template.spec.withServiceAccount('telemeter-server') +
         deployment.mixin.spec.template.spec.withVolumes([
           volume.fromSecret('secret-querier-tls', 'querier-tls'),
           volume.fromSecret('secret-querier-proxy', 'querier-proxy'),
