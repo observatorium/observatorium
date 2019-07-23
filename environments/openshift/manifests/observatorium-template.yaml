@@ -3,35 +3,6 @@ kind: Template
 metadata:
   name: observatorium
 objects:
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRole
-  metadata:
-    name: thanos-querier
-  rules:
-  - apiGroups:
-    - authentication.k8s.io
-    resources:
-    - tokenreviews
-    verbs:
-    - create
-  - apiGroups:
-    - authorization.k8s.io
-    resources:
-    - subjectaccessreviews
-    verbs:
-    - create
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    name: thanos-querier
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: thanos-querier
-  subjects:
-  - kind: ServiceAccount
-    name: thanos-querier
-    namespace: ${NAMESPACE}
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -70,7 +41,7 @@ objects:
           - -http-address=
           - -email-domain=*
           - -upstream=http://localhost:9090
-          - -openshift-service-account=querier
+          - -openshift-service-account=telemeter-server
           - '-openshift-sar={"resource": "namespaces", "verb": "get"}'
           - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
           - -tls-cert=/etc/tls/private/tls.crt
@@ -92,7 +63,7 @@ objects:
           - mountPath: /etc/proxy/secrets
             name: secret-querier-proxy
             readOnly: false
-        serviceAccount: thanos-querier
+        serviceAccount: telemeter-server
         volumes:
         - name: secret-querier-tls
           secret:
@@ -132,13 +103,6 @@ objects:
       targetPort: https
     selector:
       app: thanos-querier
-- apiVersion: v1
-  kind: ServiceAccount
-  metadata:
-    annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.querier: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"thanos-querier"}}'
-    name: thanos-querier
-    namespace: ${NAMESPACE}
 - apiVersion: v1
   data:
     hashrings.json: |-
