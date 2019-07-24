@@ -42,8 +42,10 @@ objects:
           - -email-domain=*
           - -upstream=http://localhost:9090
           - -openshift-service-account=prometheus-telemeter
-          - '-openshift-sar={"resource": "namespaces", "verb": "get"}'
-          - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
+          - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
+            "namespace": "${NAMESPACE}"}'
+          - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",
+            "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}'
           - -tls-cert=/etc/tls/private/tls.crt
           - -tls-key=/etc/tls/private/tls.key
           - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
