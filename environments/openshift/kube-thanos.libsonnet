@@ -8,6 +8,8 @@ local container = deployment.mixin.spec.template.spec.containersType;
 local volume = k.apps.v1beta2.statefulSet.mixin.spec.template.spec.volumesType;
 local volumeMount = container.volumeMountsType;
 local serviceAccount = k.core.v1.serviceAccount;
+local role = k.rbac.v1.role;
+local roleBinding = k.rbac.v1.roleBinding;
 local clusterRole = k.rbac.v1.clusterRole;
 local policyRule = clusterRole.rulesType;
 local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
@@ -149,12 +151,21 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
 
     receiveController+: {
+      local setSubjectNamespace(object) = {
+        subjects: [
+          s { namespace: '${NAMESPACE}' }
+          for s in super.subjects
+        ],
+      },
       configmap+:
         configmap.mixin.metadata.withNamespace(namespace),
       service+:
         service.mixin.metadata.withNamespace(namespace),
       deployment+:
         deployment.mixin.metadata.withNamespace(namespace),
+      role+:
+        role.mixin.metadata.withNamespace(namespace),
+      roleBinding+: setSubjectNamespace(super.roleBinding) + roleBinding.mixin.metadata.withNamespace(namespace),
     },
   },
 } + {
