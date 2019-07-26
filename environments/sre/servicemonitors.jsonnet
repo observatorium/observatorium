@@ -12,9 +12,6 @@ local sm =
             selector+: {
               matchLabels: { 'app.kubernetes.io/name': 'thanos-querier' },
             },
-            namespaceSelector: {
-              matchNames: ['telemeter-stage'],
-            },
           },
         },
       },
@@ -27,9 +24,6 @@ local sm =
           spec+: {
             selector+: {
               matchLabels: { 'app.kubernetes.io/name': 'thanos-store' },
-            },
-            namespaceSelector: {
-              matchNames: ['telemeter-stage'],
             },
           },
         },
@@ -44,9 +38,6 @@ local sm =
             selector+: {
               matchLabels: { 'app.kubernetes.io/name': 'thanos-receive' },
             },
-            namespaceSelector: {
-              matchNames: ['telemeter-stage'],
-            },
           },
         },
       },
@@ -54,7 +45,22 @@ local sm =
   };
 
 {
-  'observatorium-thanos-querier-serviceMonitor': sm.thanos.querier.serviceMonitor,
-  'observatorium-thanos-store-serviceMonitor': sm.thanos.store.serviceMonitor,
-  'observatorium-thanos-receive-serviceMonitor': sm.thanos.receive.serviceMonitor,
+  'observatorium-thanos-querier-stage.servicemonitor': sm.thanos.querier.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  },
+  'observatorium-thanos-store-stage.servicemonitor': sm.thanos.store.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  },
+  'observatorium-thanos-receive-stage.servicemonitor': sm.thanos.receive.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  },
+  'observatorium-thanos-querier-production.servicemonitor': sm.thanos.querier.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
+  },
+  'observatorium-thanos-store-production.servicemonitor': sm.thanos.store.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
+  },
+  'observatorium-thanos-receive-production.servicemonitor': sm.thanos.receive.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
+  },
 }
