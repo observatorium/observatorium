@@ -512,6 +512,8 @@ objects:
           - --whitelist={__name__="cluster_operator_conditions"}
           - --whitelist={__name__="cluster_version_payload"}
           - --whitelist={__name__="cluster_installer"}
+          - --whitelist={__name__="cluster_infrastructure_provider"}
+          - --whitelist={__name__="cluster_feature_set"}
           - --whitelist={__name__="instance:etcd_object_counts:sum"}
           - --whitelist={__name__="alerts",alertstate="firing"}
           - --whitelist={__name__="code:apiserver_request_count:rate:sum"}
@@ -524,6 +526,14 @@ objects:
           - --whitelist={__name__="cluster:node_instance_type_count:sum"}
           - --whitelist={__name__="cnv:vmi_status_running:count"}
           - --whitelist={__name__="subscription_sync_total"}
+          - --whitelist={__name__="ceph_cluster_total_bytes"}
+          - --whitelist={__name__="ceph_cluster_total_used_raw_bytes"}
+          - --whitelist={__name__="ceph_health_status"}
+          - --whitelist={__name__="job:ceph_osd_metadata:count"}
+          - --whitelist={__name__="job:kube_pv:count"}
+          - --whitelist={__name__="job:ceph_pools_iops:total"}
+          - --whitelist={__name__="job:ceph_pools_iops_bytes:total"}
+          - --whitelist={__name__="job:ceph_versions_running:count"}
           - --elide-label=prometheus_replica
           - --forward-url=${TELEMETER_FORWARD_URL}
           env:
