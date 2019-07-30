@@ -7,18 +7,18 @@ objects:
   kind: Deployment
   metadata:
     labels:
-      app: thanos-querier
+      app.kubernetes.io/name: thanos-querier
     name: thanos-querier
     namespace: ${NAMESPACE}
   spec:
     replicas: ${{THANOS_QUERIER_REPLICAS}}
     selector:
       matchLabels:
-        app: thanos-querier
+        app.kubernetes.io/name: thanos-querier
     template:
       metadata:
         labels:
-          app: thanos-querier
+          app.kubernetes.io/name: thanos-querier
       spec:
         containers:
         - args:
@@ -80,7 +80,7 @@ objects:
   kind: Secret
   metadata:
     labels:
-      app: thanos-querier
+      app.kubernetes.io/name: thanos-querier
     name: querier-proxy
     namespace: ${NAMESPACE}
   type: Opaque
@@ -90,22 +90,22 @@ objects:
     annotations:
       service.alpha.openshift.io/serving-cert-secret-name: querier-tls
     labels:
-      app: thanos-querier
+      app.kubernetes.io/name: thanos-querier
     name: thanos-querier
     namespace: ${NAMESPACE}
   spec:
     ports:
     - name: grpc
       port: 10901
-      targetPort: 10901
+      targetPort: grpc
     - name: http
       port: 9090
-      targetPort: 10902
+      targetPort: http
     - name: https
       port: 9091
       targetPort: https
     selector:
-      app: thanos-querier
+      app.kubernetes.io/name: thanos-querier
 - apiVersion: v1
   data:
     hashrings.json: |-
@@ -212,7 +212,7 @@ objects:
   kind: Service
   metadata:
     labels:
-      app: thanos-receive
+      app.kubernetes.io/name: thanos-receive
     name: thanos-receive
     namespace: ${NAMESPACE}
   spec:
@@ -228,13 +228,13 @@ objects:
       port: 19291
       targetPort: 19291
     selector:
-      app: thanos-receive-default
+      app.kubernetes.io/name: thanos-receive-default
       controller.receive.thanos.io: thanos-receive-controller
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
     labels:
-      app: thanos-receive-default
+      app.kubernetes.io/name: thanos-receive-default
       controller.receive.thanos.io: thanos-receive-controller
     name: thanos-receive-default
     namespace: ${NAMESPACE}
@@ -242,13 +242,13 @@ objects:
     replicas: ${{THANOS_RECEIVE_REPLICAS}}
     selector:
       matchLabels:
-        app: thanos-receive-default
+        app.kubernetes.io/name: thanos-receive-default
         controller.receive.thanos.io: thanos-receive-controller
     serviceName: thanos-receive
     template:
       metadata:
         labels:
-          app: thanos-receive-default
+          app.kubernetes.io/name: thanos-receive-default
           controller.receive.thanos.io: thanos-receive-controller
       spec:
         containers:
@@ -313,7 +313,7 @@ objects:
   kind: Service
   metadata:
     labels:
-      app: thanos-store
+      app.kubernetes.io/name: thanos-store
     name: thanos-store
     namespace: ${NAMESPACE}
   spec:
@@ -326,24 +326,24 @@ objects:
       port: 10902
       targetPort: 10902
     selector:
-      app: thanos-store
+      app.kubernetes.io/name: thanos-store
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
     labels:
-      app: thanos-store
+      app.kubernetes.io/name: thanos-store
     name: thanos-store
     namespace: ${NAMESPACE}
   spec:
     replicas: ${{THANOS_STORE_REPLICAS}}
     selector:
       matchLabels:
-        app: thanos-store
+        app.kubernetes.io/name: thanos-store
     serviceName: thanos-store
     template:
       metadata:
         labels:
-          app: thanos-store
+          app.kubernetes.io/name: thanos-store
       spec:
         containers:
         - args:

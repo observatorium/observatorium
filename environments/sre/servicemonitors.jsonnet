@@ -10,7 +10,7 @@ local sm =
           },
           spec+: {
             selector+: {
-              matchLabels: { app: 'thanos-querier' },
+              matchLabels: { 'app.kubernetes.io/name': 'thanos-querier' },
             },
             namespaceSelector: {
               matchNames: ['telemeter-stage'],
@@ -26,7 +26,7 @@ local sm =
           },
           spec+: {
             selector+: {
-              matchLabels: { app: 'thanos-store' },
+              matchLabels: { 'app.kubernetes.io/name': 'thanos-store' },
             },
             namespaceSelector: {
               matchNames: ['telemeter-stage'],
@@ -42,7 +42,7 @@ local sm =
           },
           spec+: {
             selector+: {
-              matchLabels: { app: 'thanos-receive' },
+              matchLabels: { 'app.kubernetes.io/name': 'thanos-receive' },
             },
             namespaceSelector: {
               matchNames: ['telemeter-stage'],
