@@ -1,3 +1,4 @@
+local tenants = import '../../tenants.libsonnet';
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local service = k.core.v1.service;
 local configmap = k.core.v1.configMap;
@@ -134,9 +135,12 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
 
     receive+: {
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
-      statefulSet+: {
+      service+: service.mixin.metadata.withNamespace(namespace),
+    } + {
+      ['service-' + tenant.hashring]+: service.mixin.metadata.withNamespace(namespace)
+      for tenant in tenants
+    } + {
+      ['statefulSet-' + tenant.hashring]+: {
         metadata+: {
           namespace: namespace,
         },
@@ -147,7 +151,8 @@ local list = import 'telemeter/lib/list.libsonnet';
           // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
           template+: s3Envvars,
         },
-      },
+      }
+      for tenant in tenants
     },
 
     receiveController+: {
@@ -159,6 +164,8 @@ local list = import 'telemeter/lib/list.libsonnet';
       },
       configmap+:
         configmap.mixin.metadata.withNamespace(namespace),
+      serviceAccount+:
+        serviceAccount.mixin.metadata.withNamespace(namespace),
       service+:
         service.mixin.metadata.withNamespace(namespace),
       deployment+:

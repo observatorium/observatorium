@@ -111,7 +111,7 @@ objects:
     hashrings.json: |-
       [
         {
-          "hashring": "thanos-receive-default",
+          "hashring": "default",
           "tenants": [
 
           ]
@@ -207,7 +207,7 @@ objects:
   kind: ServiceAccount
   metadata:
     name: thanos-receive-controller
-    namespace: observatorium
+    namespace: ${NAMESPACE}
 - apiVersion: v1
   kind: Service
   metadata:
@@ -228,13 +228,36 @@ objects:
       port: 19291
       targetPort: 19291
     selector:
-      app.kubernetes.io/name: thanos-receive-default
-      controller.receive.thanos.io: thanos-receive-controller
+      app.kubernetes.io/name: thanos-receive
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/instance: default
+      app.kubernetes.io/name: thanos-receive
+    name: thanos-receive-default
+    namespace: ${NAMESPACE}
+  spec:
+    clusterIP: None
+    ports:
+    - name: grpc
+      port: 10901
+      targetPort: 10901
+    - name: http
+      port: 10902
+      targetPort: 10902
+    - name: remote-write
+      port: 19291
+      targetPort: 19291
+    selector:
+      app.kubernetes.io/instance: default
+      app.kubernetes.io/name: thanos-receive
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
     labels:
-      app.kubernetes.io/name: thanos-receive-default
+      app.kubernetes.io/instance: default
+      app.kubernetes.io/name: thanos-receive
       controller.receive.thanos.io: thanos-receive-controller
     name: thanos-receive-default
     namespace: ${NAMESPACE}
@@ -242,14 +265,14 @@ objects:
     replicas: ${{THANOS_RECEIVE_REPLICAS}}
     selector:
       matchLabels:
-        app.kubernetes.io/name: thanos-receive-default
-        controller.receive.thanos.io: thanos-receive-controller
+        app.kubernetes.io/instance: default
+        app.kubernetes.io/name: thanos-receive
     serviceName: thanos-receive
     template:
       metadata:
         labels:
-          app.kubernetes.io/name: thanos-receive-default
-          controller.receive.thanos.io: thanos-receive-controller
+          app.kubernetes.io/instance: default
+          app.kubernetes.io/name: thanos-receive
       spec:
         containers:
         - args:
@@ -263,7 +286,7 @@ objects:
           - --labels=receive="true"
           - --tsdb.retention=6h
           - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
-          - --receive.local-endpoint=http://$(NAME).thanos-receive.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
+          - --receive.local-endpoint=http://$(NAME).thanos-receive-default.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
           env:
           - name: NAME
             valueFrom:
@@ -289,7 +312,7 @@ objects:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
-          name: thanos-receive-default
+          name: thanos-receive
           ports:
           - containerPort: 10901
             name: grpc

@@ -3,7 +3,7 @@ data:
   hashrings.json: |-
     [
       {
-        "hashring": "thanos-receive-default",
+        "hashring": "default",
         "tenants": [
 
         ]
