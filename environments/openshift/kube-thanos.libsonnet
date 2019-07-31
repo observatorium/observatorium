@@ -54,7 +54,7 @@ local list = import 'telemeter/lib/list.libsonnet';
           session_secret: std.base64($.thanos.variables.proxyConfig.sessionSecret),
         }) +
         secret.mixin.metadata.withNamespace(namespace) +
-        secret.mixin.metadata.withLabels({ app: 'thanos-querier' }),
+        secret.mixin.metadata.withLabels({ 'app.kubernetes.io/name': 'thanos-querier' }),
 
       service+:
         service.mixin.metadata.withNamespace(namespace) +
