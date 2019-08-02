@@ -2,7 +2,8 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
-    app.kubernetes.io/name: thanos-receive-default
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/name: thanos-receive
     controller.receive.thanos.io: thanos-receive-controller
   name: thanos-receive-default
   namespace: observatorium
@@ -10,14 +11,14 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-      app.kubernetes.io/name: thanos-receive-default
-      controller.receive.thanos.io: thanos-receive-controller
+      app.kubernetes.io/instance: default
+      app.kubernetes.io/name: thanos-receive
   serviceName: thanos-receive
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: thanos-receive-default
-        controller.receive.thanos.io: thanos-receive-controller
+        app.kubernetes.io/instance: default
+        app.kubernetes.io/name: thanos-receive
     spec:
       containers:
       - args:
@@ -31,7 +32,7 @@ spec:
         - --labels=receive="true"
         - --tsdb.retention=6h
         - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
-        - --receive.local-endpoint=http://$(NAME).thanos-receive.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
+        - --receive.local-endpoint=http://$(NAME).thanos-receive-default.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
         env:
         - name: NAME
           valueFrom:
@@ -47,7 +48,7 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         image: improbable/thanos:v0.6.0-rc.0
-        name: thanos-receive-default
+        name: thanos-receive
         ports:
         - containerPort: 10901
           name: grpc

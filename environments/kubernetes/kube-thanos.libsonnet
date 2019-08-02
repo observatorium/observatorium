@@ -1,3 +1,4 @@
+local tenants = import '../../tenants.libsonnet';
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local service = k.core.v1.service;
 local configmap = k.core.v1.configMap;
@@ -39,51 +40,70 @@ local rolebinding = k.rbac.v1.roleBinding;
         sts.mixin.spec.withReplicas(3),
     },
     receive+: {
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
-      statefulSet+: {
-        metadata+: {
-          name: 'thanos-receive-default',
-          namespace: namespace,
-          labels+: {
-            'controller.receive.thanos.io': 'thanos-receive-controller',
+      service+: service.mixin.metadata.withNamespace(namespace),
+      statefulSet+:: sts.mixin.metadata.withNamespace(namespace),
+    } + {
+      local labels = { 'app.kubernetes.io/instance': tenant.hashring },
+      ['service-' + tenant.hashring]:
+        super.service +
+        service.mixin.metadata.withName('thanos-receive-' + tenant.hashring) +
+        {
+          metadata+: {
+            labels+: labels,
           },
-        },
-        spec+: {
-          replicas: 3,
-          template+: {
-            spec+: {
-              // This patch should probably move upstream to kube-thanos
-              containers: [
-                super.containers[0] {
-                  args+: [
-                    '--tsdb.retention=6h',
-                    '--receive.hashrings-file=/var/lib/thanos-receive/hashrings.json',
-                    '--receive.local-endpoint=http://$(NAME).%s.$(NAMESPACE).svc.cluster.local:%d/api/v1/receive' % [
-                      $.thanos.receive.service.metadata.name,
-                      $.thanos.receive.service.spec.ports[2].port,
+          spec+: {
+            selector+: labels,
+          },
+        }
+      for tenant in tenants
+    } + {
+      ['statefulSet-' + tenant.hashring]:
+        super.statefulSet +
+        {
+          metadata+: {
+            name: 'thanos-receive-' + tenant.hashring,
+            labels+: { 'controller.receive.thanos.io': 'thanos-receive-controller' } + $.thanos.receive['service-' + tenant.hashring].metadata.labels,
+          },
+          spec+: {
+            replicas: tenant.replicas,
+            selector+: {
+              matchLabels+: $.thanos.receive['service-' + tenant.hashring].metadata.labels,
+            },
+            template+: {
+              metadata+: { labels+: $.thanos.receive['service-' + tenant.hashring].metadata.labels },
+              spec+: {
+                // This patch should probably move upstream to kube-thanos
+                containers: [
+                  super.containers[0] {
+                    args+: [
+                      '--tsdb.retention=6h',
+                      '--receive.hashrings-file=/var/lib/thanos-receive/hashrings.json',
+                      '--receive.local-endpoint=http://$(NAME).%s.$(NAMESPACE).svc.cluster.local:%d/api/v1/receive' % [
+                        $.thanos.receive['service-' + tenant.hashring].metadata.name,
+                        $.thanos.receive['service-' + tenant.hashring].spec.ports[2].port,
+                      ],
                     ],
-                  ],
-                  volumeMounts+: [
-                    { name: 'observatorium-tenants', mountPath: '/var/lib/thanos-receive' },
-                  ],
-                  env+: [
-                    local env = sts.mixin.spec.template.spec.containersType.envType;
+                    volumeMounts+: [
+                      { name: 'observatorium-tenants', mountPath: '/var/lib/thanos-receive' },
+                    ],
+                    env+: [
+                      local env = sts.mixin.spec.template.spec.containersType.envType;
 
-                    env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
-                  ],
-                },
-              ],
+                      env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
+                    ],
+                  },
+                ],
 
-              local volume = sts.mixin.spec.template.spec.volumesType,
-              volumes+: [
-                volume.withName('observatorium-tenants') +
-                volume.mixin.configMap.withName('%s-generated' % $.thanos.receiveController.configmap.metadata.name),
-              ],
+                local volume = sts.mixin.spec.template.spec.volumesType,
+                volumes+: [
+                  volume.withName('observatorium-tenants') +
+                  volume.mixin.configMap.withName('%s-generated' % $.thanos.receiveController.configmap.metadata.name),
+                ],
+              },
             },
           },
-        },
-      },
+        }
+      for tenant in tenants
     },
     receiveController+: {
       serviceAccount+:
