@@ -69,6 +69,7 @@ local rolebinding = k.rbac.v1.roleBinding;
             selector+: {
               matchLabels+: $.thanos.receive['service-' + tenant.hashring].metadata.labels,
             },
+            serviceName: $.thanos.receive['service-' + tenant.hashring].metadata.name,
             template+: {
               metadata+: { labels+: $.thanos.receive['service-' + tenant.hashring].metadata.labels },
               spec+: {

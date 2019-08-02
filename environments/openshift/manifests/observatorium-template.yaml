@@ -267,7 +267,7 @@ objects:
       matchLabels:
         app.kubernetes.io/instance: default
         app.kubernetes.io/name: thanos-receive
-    serviceName: thanos-receive
+    serviceName: thanos-receive-default
     template:
       metadata:
         labels:
