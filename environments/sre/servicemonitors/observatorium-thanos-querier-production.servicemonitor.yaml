@@ -3,13 +3,13 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: observatorium-thanos-querier
+  name: observatorium-thanos-querier-production
 spec:
   endpoints:
   - port: http
   namespaceSelector:
     matchNames:
-    - telemeter-stage
+    - telemeter-production
   selector:
     matchLabels:
       app.kubernetes.io/name: thanos-querier
