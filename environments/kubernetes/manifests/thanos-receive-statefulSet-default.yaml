@@ -5,6 +5,7 @@ metadata:
     app.kubernetes.io/instance: default
     app.kubernetes.io/name: thanos-receive
     controller.receive.thanos.io: thanos-receive-controller
+    controller.receive.thanos.io/hashring: default
   name: thanos-receive-default
   namespace: observatorium
 spec:
