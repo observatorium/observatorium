@@ -77,7 +77,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         local env = container.envType;
 
         local c =
-          container.new($.thanos.receiveController.deployment.metadata.name, 'quay.io/observatorium/thanos-receive-controller:master-2019-07-17-1085ff9') +
+          container.new($.thanos.receiveController.deployment.metadata.name, 'quay.io/observatorium/thanos-receive-controller:master-2019-08-08-61eeaf0') +
           container.withArgs([
             '--configmap-name=%s' % $.thanos.receiveController.configmap.metadata.name,
             '--configmap-generated-name=%s-generated' % $.thanos.receiveController.configmap.metadata.name,

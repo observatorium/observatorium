@@ -62,7 +62,10 @@ local rolebinding = k.rbac.v1.roleBinding;
         {
           metadata+: {
             name: 'thanos-receive-' + tenant.hashring,
-            labels+: { 'controller.receive.thanos.io': 'thanos-receive-controller' } + $.thanos.receive['service-' + tenant.hashring].metadata.labels,
+            labels+: {
+              'controller.receive.thanos.io': 'thanos-receive-controller',
+              'controller.receive.thanos.io/hashring': tenant.hashring,
+            } + $.thanos.receive['service-' + tenant.hashring].metadata.labels,
           },
           spec+: {
             replicas: tenant.replicas,

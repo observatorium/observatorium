@@ -26,6 +26,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: quay.io/observatorium/thanos-receive-controller:master-2019-07-17-1085ff9
+        image: quay.io/observatorium/thanos-receive-controller:master-2019-08-08-61eeaf0
         name: thanos-receive-controller
       serviceAccount: thanos-receive-controller

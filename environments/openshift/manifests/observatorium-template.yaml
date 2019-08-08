@@ -151,7 +151,7 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          image: quay.io/observatorium/thanos-receive-controller:master-2019-07-17-1085ff9
+          image: quay.io/observatorium/thanos-receive-controller:master-2019-08-08-61eeaf0
           name: thanos-receive-controller
         serviceAccount: thanos-receive-controller
 - apiVersion: rbac.authorization.k8s.io/v1
@@ -259,6 +259,7 @@ objects:
       app.kubernetes.io/instance: default
       app.kubernetes.io/name: thanos-receive
       controller.receive.thanos.io: thanos-receive-controller
+      controller.receive.thanos.io/hashring: default
     name: thanos-receive-default
     namespace: ${NAMESPACE}
   spec:
