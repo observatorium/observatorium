@@ -36,7 +36,10 @@ local sm =
           },
           spec+: {
             selector+: {
-              matchLabels: { 'app.kubernetes.io/name': 'thanos-receive' },
+              matchLabels: {
+                'app.kubernetes.io/name': 'thanos-receive',
+                'controller.receive.thanos.io': 'thanos-receive-controller',
+              },
             },
           },
         },
