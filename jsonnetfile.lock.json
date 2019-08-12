@@ -38,7 +38,7 @@
                     "subdir": "jsonnet/telemeter"
                 }
             },
-            "version": "08d1b2f56cb1afec6f261ca95fdbe6658b80099d"
+            "version": "4b3ea03de31f987c93967043eaf6eacc051aca99"
         },
         {
             "name": "prometheus-operator",
