@@ -411,7 +411,6 @@ objects:
     rhd.client_id: ""
     rhd.password: ""
     rhd.url: ""
-    rhd.username: ""
   kind: Secret
   metadata:
     labels:
@@ -527,7 +526,6 @@ objects:
           - --authorize=${AUTHORIZE_URL}
           - --authorize-issuer-url=$(RHD_URL)
           - --authorize-client-id=$(RHD_CLIENT_ID)
-          - --authorize-username=$(RHD_USERNAME)
           - --authorize-password=$(RHD_PASSWORD)
           - --whitelist={__name__="up"}
           - --whitelist={__name__="cluster_version"}
@@ -538,6 +536,7 @@ objects:
           - --whitelist={__name__="cluster_installer"}
           - --whitelist={__name__="cluster_infrastructure_provider"}
           - --whitelist={__name__="cluster_feature_set"}
+          - --whitelist={__name__="node_uname_info"}
           - --whitelist={__name__="instance:etcd_object_counts:sum"}
           - --whitelist={__name__="alerts",alertstate="firing"}
           - --whitelist={__name__="code:apiserver_request_count:rate:sum"}
@@ -571,11 +570,6 @@ objects:
             valueFrom:
               secretKeyRef:
                 key: rhd.url
-                name: telemeter-server
-          - name: RHD_USERNAME
-            valueFrom:
-              secretKeyRef:
-                key: rhd.username
                 name: telemeter-server
           - name: RHD_PASSWORD
             valueFrom:

@@ -31,7 +31,6 @@ spec:
         - --authorize=https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
         - --authorize-issuer-url=$(RHD_URL)
         - --authorize-client-id=$(RHD_CLIENT_ID)
-        - --authorize-username=$(RHD_USERNAME)
         - --authorize-password=$(RHD_PASSWORD)
         - --forward-url=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
         env:
@@ -43,11 +42,6 @@ spec:
           valueFrom:
             secretKeyRef:
               key: rhd.url
-              name: telemeter-server
-        - name: RHD_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: rhd.username
               name: telemeter-server
         - name: RHD_PASSWORD
           valueFrom:
