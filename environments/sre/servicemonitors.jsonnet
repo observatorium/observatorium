@@ -1,3 +1,4 @@
+local tenants = import '../../tenants.libsonnet';
 local sm =
   (import 'kube-thanos/kube-thanos-servicemonitors.libsonnet') +
   {
@@ -29,20 +30,23 @@ local sm =
         },
       },
       receive+: {
-        serviceMonitor+: {
-          metadata: {
-            name: 'observatorium-thanos-receive',
-            labels: { prometheus: 'app-sre' },
-          },
-          spec+: {
-            selector+: {
-              matchLabels: {
-                'app.kubernetes.io/name': 'thanos-receive',
-                'controller.receive.thanos.io': 'thanos-receive-controller',
+        ['serviceMonitor' + tenant.hashring]:
+          super.serviceMonitor +
+          {
+            metadata: {
+              name: 'observatorium-thanos-receive-' + tenant.hashring,
+              labels: { prometheus: 'app-sre' },
+            },
+            spec+: {
+              selector+: {
+                matchLabels: {
+                  'app.kubernetes.io/name': 'thanos-receive',
+                  'app.kubernetes.io/instance': tenant.hashring,
+                },
               },
             },
-          },
-        },
+          }
+        for tenant in tenants
       },
     },
   };
@@ -56,10 +60,6 @@ local sm =
     metadata+: { name+: '-stage' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
-  'observatorium-thanos-receive-stage.servicemonitor': sm.thanos.receive.serviceMonitor {
-    metadata+: { name+: '-stage' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
-  },
   'observatorium-thanos-querier-production.servicemonitor': sm.thanos.querier.serviceMonitor {
     metadata+: { name+: '-production' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
@@ -68,8 +68,16 @@ local sm =
     metadata+: { name+: '-production' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
-  'observatorium-thanos-receive-production.servicemonitor': sm.thanos.receive.serviceMonitor {
+} {
+  ['observatorium-thanos-receive-%s-stage.servicemonitor' % tenant.hashring]: sm.thanos.receive['serviceMonitor' + tenant.hashring] {
+    metadata+: { name+: '-stage' },
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  }
+  for tenant in tenants
+} {
+  ['observatorium-thanos-receive-%s-production.servicemonitor' % tenant.hashring]: sm.thanos.receive['serviceMonitor' + tenant.hashring] {
     metadata+: { name+: '-production' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
-  },
+  }
+  for tenant in tenants
 }
