@@ -30,3 +30,9 @@ rm -rf environments/sre/prometheusrules
 mkdir environments/sre/prometheusrules
 
 jsonnet -J vendor -m environments/sre/prometheusrules environments/sre/prometheusrules.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}
+
+# Make sure to start with a clean 'grafana' dir
+rm -rf environments/sre/grafana
+mkdir environments/sre/grafana
+
+jsonnet -J vendor -m environments/sre/grafana environments/sre/grafana.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml; rm -f {}' -- {}

@@ -559,6 +559,11 @@ objects:
           - --whitelist={__name__="job:ceph_pools_iops:total"}
           - --whitelist={__name__="job:ceph_pools_iops_bytes:total"}
           - --whitelist={__name__="job:ceph_versions_running:count"}
+          - --whitelist={__name__="job:noobaa_total_unhealthy_buckets:sum"}
+          - --whitelist={__name__="job:noobaa_bucket_count:sum"}
+          - --whitelist={__name__="job:noobaa_total_object_count:sum"}
+          - --whitelist={__name__="noobaa_accounts_num"}
+          - --whitelist={__name__="noobaa_total_usage"}
           - --elide-label=prometheus_replica
           - --forward-url=${TELEMETER_FORWARD_URL}
           env:

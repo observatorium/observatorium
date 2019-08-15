@@ -21,6 +21,26 @@
             "version": "master"
         },
         {
+            "name": "grafana-builder",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/grafana/jsonnet-libs",
+                    "subdir": "grafana-builder"
+                }
+            },
+            "version": "master"
+        },
+        {
+            "name": "grafonnet",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/grafana/grafonnet-lib",
+                    "subdir": "grafonnet"
+                }
+            },
+            "version": "master"
+        },
+        {
             "name": "telemeter",
             "source": {
                 "git": {
