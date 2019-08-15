@@ -17,6 +17,14 @@ local thanos = (import 'thanos-mixin/mixin.libsonnet');
         thanosStoreSelector: 'job="thanos-store", namespace="telemeter-stage"',
         thanosReceiveSelector: 'job="thanos-receive", namespace="telemeter-stage"',
       },
+    } + {
+      prometheusAlerts+:: {
+        groups:
+          std.filter(
+            function(ruleGroup) ruleGroup.name != 'thanos-sidecar.rules',
+            super.groups,
+          ),
+      },
     },
     spec: alerts.prometheusAlerts,
   },
@@ -35,6 +43,14 @@ local thanos = (import 'thanos-mixin/mixin.libsonnet');
         thanosQuerierSelector: 'job="thanos-querier", namespace="telemeter-production"',
         thanosStoreSelector: 'job="thanos-store", namespace="telemeter-production"',
         thanosReceiveSelector: 'job="thanos-receive", namespace="telemeter-production"',
+      },
+    } + {
+      prometheusAlerts+:: {
+        groups:
+          std.filter(
+            function(ruleGroup) ruleGroup.name != 'thanos-sidecar.rules',
+            super.groups,
+          ),
       },
     },
     spec: alerts.prometheusAlerts,
