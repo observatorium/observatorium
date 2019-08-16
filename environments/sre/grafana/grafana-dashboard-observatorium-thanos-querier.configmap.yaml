@@ -64,10 +64,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(label_replace(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\"}[$interval]),\"status_code\", \"${1}xx\", \"code\", \"([0-9])..\")) by (status_code)",
+                  "expr": "sum(label_replace(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query\"}[$interval]),\"status_code\", \"${1}xx\", \"code\", \"([0-9])..\")) by (job, status_code)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{status_code}}",
+                  "legendFormat": "{{job}} {{status_code}}",
                   "refId": "A",
                   "step": 10
                 }
@@ -151,7 +151,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\",code!~\"2..\"}[$interval])) / sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\"}[$interval])) ",
+                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query\",code!~\"2..\"}[$interval])) / sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -159,7 +159,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\"}[$interval])) - sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\",code!~\"2..\"}[$interval]))) / sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\"}[$interval]))",
+                  "expr": "(sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query\"}[$interval])) - sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query\",code!~\"2..\"}[$interval]))) / sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -245,26 +245,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",handler=\"query\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99",
+                  "legendFormat": "P99 {{job}}",
                   "refId": "A",
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(http_request_duration_seconds_sum{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\"}[$interval])) * 1 / sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\"}[$interval]))",
+                  "expr": "sum(rate(http_request_duration_seconds_sum{namespace=\"$namespace\",job=~\"$job\",handler=\"query\"}[$interval])) by (job) * 1 / sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\",job=~\"$job\",handler=\"query\"}[$interval])) by (job)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean",
+                  "legendFormat": "mean {{job}}",
                   "refId": "B",
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",handler=\"query\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50",
+                  "legendFormat": "P50 {{job}}",
                   "refId": "C",
                   "step": 10
                 }
@@ -365,10 +365,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(label_replace(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\"}[$interval]),\"status_code\", \"${1}xx\", \"code\", \"([0-9])..\")) by (status_code)",
+                  "expr": "sum(label_replace(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\"}[$interval]),\"status_code\", \"${1}xx\", \"code\", \"([0-9])..\")) by (job, status_code)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{status_code}}",
+                  "legendFormat": "{{job}} {{status_code}}",
                   "refId": "A",
                   "step": 10
                 }
@@ -452,7 +452,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\",code!~\"2..\"}[$interval])) / sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\"}[$interval])) ",
+                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\",code!~\"2..\"}[$interval])) / sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -460,7 +460,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\"}[$interval])) - sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\",code!~\"2..\"}[$interval]))) / sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\"}[$interval]))",
+                  "expr": "(sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\"}[$interval])) - sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\",code!~\"2..\"}[$interval]))) / sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -546,26 +546,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99",
+                  "legendFormat": "P99 {{job}}",
                   "refId": "A",
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(http_request_duration_seconds_sum{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\"}[$interval])) * 1 / sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\"}[$interval]))",
+                  "expr": "sum(rate(http_request_duration_seconds_sum{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\"}[$interval])) by (job) * 1 / sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\"}[$interval])) by (job)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean",
+                  "legendFormat": "mean {{job}}",
                   "refId": "B",
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",handler=\"query_range\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",handler=\"query_range\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50",
+                  "legendFormat": "P50 {{job}}",
                   "refId": "C",
                   "step": 10
                 }
@@ -666,10 +666,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(label_replace(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\"}[$interval]),\"status_code\", \"${1}xx\", \"code\", \"([0-9])..\")) by (handler, status_code)",
+                  "expr": "sum(label_replace(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]),\"status_code\", \"${1}xx\", \"code\", \"([0-9])..\")) by (job, handler, status_code)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{handler}} {{status_code}}",
+                  "legendFormat": "{{job}} {{handler}} {{status_code}}",
                   "refId": "A",
                   "step": 10
                 }
@@ -752,10 +752,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\",code!~\"2..\"}[$interval])) by (handler, code)\n/\nsum(rate(http_requests_total{namespace=\"$namespace\",job=\"thanos-querier\"}[$interval])) by (handler, code)\n",
+                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\",code!~\"2..\"}[$interval])) by (job, handler, code)\n/\nsum(rate(http_requests_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, handler, code)\n",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{handler}} {{code}}",
+                  "legendFormat": "{{job}} {{handler}} {{code}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -838,26 +838,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\"}[$interval])) by (handler, le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, handler, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99 {{handler}}",
+                  "legendFormat": "P99 {{job}} {{handler}}",
                   "refId": "A",
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(http_request_duration_seconds_sum{namespace=\"$namespace\",job=\"thanos-querier\"}[$interval])) * 1 / sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\",job=\"thanos-querier\"}[$interval]))",
+                  "expr": "sum(rate(http_request_duration_seconds_sum{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, handler) * 1 / sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, handler)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean",
+                  "legendFormat": "mean {{job}} {{handler}}",
                   "refId": "B",
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\"}[$interval])) by (lhandler, e)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, handler, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50 {{handler}}",
+                  "legendFormat": "P50 {{job}} {{handler}}",
                   "refId": "C",
                   "step": 10
                 }
@@ -907,7 +907,7 @@ data:
           "repeatIteration": null,
           "repeatRowId": null,
           "showTitle": true,
-          "title": "Detailed",
+          "title": "Query Detailed",
           "titleSize": "h6"
         },
         {
@@ -969,10 +969,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_client_handled_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) by (grpc_code)",
+                  "expr": "sum(rate(grpc_client_handled_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job, grpc_code)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{grpc_code}}",
+                  "legendFormat": "{{job}} {{grpc_code}}",
                   "refId": "A",
                   "step": 10
                 }
@@ -1056,7 +1056,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) / sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) ",
+                  "expr": "sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) / sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -1064,7 +1064,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) - sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval]))) / sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval]))",
+                  "expr": "(sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) - sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval]))) / sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -1150,26 +1150,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99",
+                  "legendFormat": "P99 {{job}}",
                   "legendLink": null,
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(grpc_client_handling_seconds_sum{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) * 1\n/\nsum(rate(grpc_client_handling_seconds_count{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval]))\n",
+                  "expr": "sum(rate(grpc_client_handling_seconds_sum{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job) * 1\n/\nsum(rate(grpc_client_handling_seconds_count{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job)\n",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean",
+                  "legendFormat": "mean {{job}}",
                   "legendLink": null,
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50",
+                  "legendFormat": "P50 {{job}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -1264,10 +1264,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_client_handled_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) by (grpc_method, grpc_code)",
+                  "expr": "sum(rate(grpc_client_handled_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job, grpc_method, grpc_code)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{grpc_method}} {{grpc_code}}",
+                  "legendFormat": "{{job}} {{grpc_method}} {{grpc_code}}",
                   "refId": "A",
                   "step": 10
                 }
@@ -1350,10 +1350,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) by (grpc_method, grpc_code)\n",
+                  "expr": "sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job, grpc_method, grpc_code)\n",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{grpc_method}} {{grpc_code}}",
+                  "legendFormat": "{{job}} {{grpc_method}} {{grpc_code}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -1436,26 +1436,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) by (grpc_method, le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job, grpc_method, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99 {{grpc_method}}",
+                  "legendFormat": "P99 {{job}} {{grpc_method}}",
                   "legendLink": null,
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(grpc_client_handling_seconds_sum{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) * 1\n/\nsum(rate(grpc_client_handling_seconds_count{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval]))\n",
+                  "expr": "sum(rate(grpc_client_handling_seconds_sum{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job) * 1\n/\nsum(rate(grpc_client_handling_seconds_count{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job)\n",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean {{grpc_method}}",
+                  "legendFormat": "mean {{job}} {{grpc_method}}",
                   "legendLink": null,
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"unary\"}[$interval])) by (grpc_method, le)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"unary\"}[$interval])) by (job, grpc_method, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50 {{grpc_method}}",
+                  "legendFormat": "P50 {{job}} {{grpc_method}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -1567,10 +1567,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_client_handled_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) by (grpc_code)",
+                  "expr": "sum(rate(grpc_client_handled_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job, grpc_code)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{grpc_code}}",
+                  "legendFormat": "{{job}} {{grpc_code}}",
                   "refId": "A",
                   "step": 10
                 }
@@ -1654,7 +1654,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) / sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) ",
+                  "expr": "sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) / sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -1662,7 +1662,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) - sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval]))) / sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval]))",
+                  "expr": "(sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) - sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval]))) / sum(rate(grpc_client_started_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -1748,26 +1748,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99",
+                  "legendFormat": "P99 {{job}}",
                   "legendLink": null,
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(grpc_client_handling_seconds_sum{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) * 1\n/\nsum(rate(grpc_client_handling_seconds_count{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval]))\n",
+                  "expr": "sum(rate(grpc_client_handling_seconds_sum{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job) * 1\n/\nsum(rate(grpc_client_handling_seconds_count{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job)\n",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean",
+                  "legendFormat": "mean {{job}}",
                   "legendLink": null,
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50",
+                  "legendFormat": "P50 {{job}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -1862,10 +1862,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_client_handled_total{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) by (grpc_method, grpc_code)",
+                  "expr": "sum(rate(grpc_client_handled_total{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job, grpc_method, grpc_code)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{grpc_method}} {{grpc_code}}",
+                  "legendFormat": "{{job}} {{grpc_method}} {{grpc_code}}",
                   "refId": "A",
                   "step": 10
                 }
@@ -1948,10 +1948,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) by (grpc_method, grpc_code)\n",
+                  "expr": "sum(rate(grpc_client_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job, grpc_method, grpc_code)\n",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{grpc_method}} {{grpc_code}}",
+                  "legendFormat": "{{job}} {{grpc_method}} {{grpc_code}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -2034,26 +2034,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) by (grpc_method, le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job, grpc_method, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99 {{grpc_method}}",
+                  "legendFormat": "P99 {{job}} {{grpc_method}}",
                   "legendLink": null,
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(grpc_client_handling_seconds_sum{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) * 1\n/\nsum(rate(grpc_client_handling_seconds_count{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval]))\n",
+                  "expr": "sum(rate(grpc_client_handling_seconds_sum{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job) * 1\n/\nsum(rate(grpc_client_handling_seconds_count{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job)\n",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean {{grpc_method}}",
+                  "legendFormat": "mean {{job}} {{grpc_method}}",
                   "legendLink": null,
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=\"thanos-querier\",grpc_type=\"server_stream\"}[$interval])) by (grpc_method, le)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(grpc_client_handling_seconds_bucket{namespace=\"$namespace\",job=~\"$job\",grpc_type=\"server_stream\"}[$interval])) by (job, grpc_method, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50 {{grpc_method}}",
+                  "legendFormat": "P50 {{job}} {{grpc_method}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -2148,10 +2148,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_querier_store_apis_dns_lookups_total{namespace=\"$namespace\",job=\"thanos-querier\"}[$interval]))",
+                  "expr": "sum(rate(thanos_querier_store_apis_dns_lookups_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "lookups",
+                  "legendFormat": "lookups {{job}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -2235,7 +2235,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_querier_store_apis_dns_failures_total{namespace=~\"$namespace\",job=\"thanos-querier\"}[$interval])) / sum(rate(thanos_querier_store_apis_dns_lookups_total{namespace=~\"$namespace\",job=\"thanos-querier\"}[$interval])) ",
+                  "expr": "sum(rate(thanos_querier_store_apis_dns_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) / sum(rate(thanos_querier_store_apis_dns_lookups_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -2243,7 +2243,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(thanos_querier_store_apis_dns_lookups_total{namespace=~\"$namespace\",job=\"thanos-querier\"}[$interval])) - sum(rate(thanos_querier_store_apis_dns_failures_total{namespace=~\"$namespace\",job=\"thanos-querier\"}[$interval]))) / sum(rate(thanos_querier_store_apis_dns_lookups_total{namespace=~\"$namespace\",job=\"thanos-querier\"}[$interval]))",
+                  "expr": "(sum(rate(thanos_querier_store_apis_dns_lookups_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) - sum(rate(thanos_querier_store_apis_dns_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))) / sum(rate(thanos_querier_store_apis_dns_lookups_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -2341,7 +2341,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "go_memstats_alloc_bytes{namespace=\"$namespace\",job=\"thanos-querier\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_memstats_alloc_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "alloc all {{pod}}",
@@ -2349,7 +2349,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "go_memstats_heap_alloc_bytes{namespace=\"$namespace\",job=\"thanos-querier\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_memstats_heap_alloc_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "alloc heap {{pod}}",
@@ -2357,7 +2357,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "rate(go_memstats_alloc_bytes_total{namespace=\"$namespace\",job=\"thanos-querier\",kubernetes_pod_name=~\"$pod\"}[30s])",
+                  "expr": "rate(go_memstats_alloc_bytes_total{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}[30s])",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "alloc rate all {{pod}}",
@@ -2365,7 +2365,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "rate(go_memstats_heap_alloc_bytes{namespace=\"$namespace\",job=\"thanos-querier\",kubernetes_pod_name=~\"$pod\"}[30s])",
+                  "expr": "rate(go_memstats_heap_alloc_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}[30s])",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "alloc rate heap {{pod}}",
@@ -2373,7 +2373,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "go_memstats_stack_inuse_bytes{namespace=\"$namespace\",job=\"thanos-querier\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_memstats_stack_inuse_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "inuse stack {{pod}}",
@@ -2381,7 +2381,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "go_memstats_heap_inuse_bytes{namespace=\"$namespace\",job=\"thanos-querier\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_memstats_heap_inuse_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "inuse heap {{pod}}",
@@ -2467,7 +2467,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "go_goroutines{namespace=\"$namespace\",job=\"thanos-querier\"}",
+                  "expr": "go_goroutines{namespace=\"$namespace\",job=~\"$job\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "{{pod}}",
@@ -2553,7 +2553,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "go_gc_duration_seconds{namespace=\"$namespace\",job=\"thanos-querier\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_gc_duration_seconds{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "{{quantile}} {{pod}}",
@@ -2636,8 +2636,7 @@ data:
           {
             "allValue": null,
             "current": {
-              "text": "prod",
-              "value": "prod"
+
             },
             "datasource": "$datasource",
             "hide": 0,
@@ -2648,7 +2647,34 @@ data:
             "options": [
 
             ],
-            "query": "label_values(kube_pod_info, namespace)",
+            "query": "label_values(kube_pod_info{}, namespace)",
+            "refresh": 1,
+            "regex": "",
+            "sort": 2,
+            "tagValuesQuery": "",
+            "tags": [
+
+            ],
+            "tagsQuery": "",
+            "type": "query",
+            "useTags": false
+          },
+          {
+            "allValue": "thanos-querier.*",
+            "current": {
+              "text": "all",
+              "value": "$__all"
+            },
+            "datasource": "$datasource",
+            "hide": 0,
+            "includeAll": true,
+            "label": "job",
+            "multi": false,
+            "name": "job",
+            "options": [
+
+            ],
+            "query": "label_values(up{namespace=\"$namespace\",job=\"thanos-querier\"}, job)",
             "refresh": 1,
             "regex": "",
             "sort": 2,

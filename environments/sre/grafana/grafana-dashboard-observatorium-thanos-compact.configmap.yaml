@@ -58,10 +58,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_compact_group_compactions_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) by (group)",
+                  "expr": "sum(rate(thanos_compact_group_compactions_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, group)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "compaction",
+                  "legendFormat": "compaction {{job}} {{group}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -145,7 +145,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_compact_group_compactions_failures_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) / sum(rate(thanos_compact_group_compactions_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) ",
+                  "expr": "sum(rate(thanos_compact_group_compactions_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) / sum(rate(thanos_compact_group_compactions_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -153,7 +153,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(thanos_compact_group_compactions_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) - sum(rate(thanos_compact_group_compactions_failures_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))) / sum(rate(thanos_compact_group_compactions_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "(sum(rate(thanos_compact_group_compactions_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) - sum(rate(thanos_compact_group_compactions_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))) / sum(rate(thanos_compact_group_compactions_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -251,10 +251,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_compact_downsample_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) by (group)",
+                  "expr": "sum(rate(thanos_compact_downsample_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, group)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "compaction",
+                  "legendFormat": "downsample {{job}} {{group}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -338,7 +338,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_compact_downsample_failed_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) / sum(rate(thanos_compact_downsample_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) ",
+                  "expr": "sum(rate(thanos_compact_downsample_failed_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) / sum(rate(thanos_compact_downsample_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -346,7 +346,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(thanos_compact_downsample_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) - sum(rate(thanos_compact_downsample_failed_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))) / sum(rate(thanos_compact_downsample_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "(sum(rate(thanos_compact_downsample_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) - sum(rate(thanos_compact_downsample_failed_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))) / sum(rate(thanos_compact_downsample_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -444,10 +444,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_compact_garbage_collection_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "sum(rate(thanos_compact_garbage_collection_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "compaction",
+                  "legendFormat": "garbage collection {{job}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -531,7 +531,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_compact_garbage_collection_failures_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) / sum(rate(thanos_compact_garbage_collection_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) ",
+                  "expr": "sum(rate(thanos_compact_garbage_collection_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) / sum(rate(thanos_compact_garbage_collection_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -539,7 +539,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(thanos_compact_garbage_collection_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) - sum(rate(thanos_compact_garbage_collection_failures_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))) / sum(rate(thanos_compact_garbage_collection_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "(sum(rate(thanos_compact_garbage_collection_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) - sum(rate(thanos_compact_garbage_collection_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))) / sum(rate(thanos_compact_garbage_collection_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -625,26 +625,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(thanos_compact_garbage_collection_duration_seconds_bucket{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(thanos_compact_garbage_collection_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99",
+                  "legendFormat": "P99 {{job}}",
                   "refId": "A",
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(thanos_compact_garbage_collection_duration_seconds_sum{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) * 1 / sum(rate(thanos_compact_garbage_collection_duration_seconds_count{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "sum(rate(thanos_compact_garbage_collection_duration_seconds_sum{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job) * 1 / sum(rate(thanos_compact_garbage_collection_duration_seconds_count{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean",
+                  "legendFormat": "mean {{job}}",
                   "refId": "B",
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(thanos_compact_garbage_collection_duration_seconds_bucket{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(thanos_compact_garbage_collection_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50",
+                  "legendFormat": "P50 {{job}}",
                   "refId": "C",
                   "step": 10
                 }
@@ -739,10 +739,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_compact_sync_meta_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "sum(rate(thanos_compact_sync_meta_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "compaction",
+                  "legendFormat": "sync {{job}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -826,7 +826,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_compact_sync_meta_failures_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) / sum(rate(thanos_compact_sync_meta_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) ",
+                  "expr": "sum(rate(thanos_compact_sync_meta_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) / sum(rate(thanos_compact_sync_meta_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -834,7 +834,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(thanos_compact_sync_meta_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) - sum(rate(thanos_compact_sync_meta_failures_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))) / sum(rate(thanos_compact_sync_meta_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "(sum(rate(thanos_compact_sync_meta_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) - sum(rate(thanos_compact_sync_meta_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))) / sum(rate(thanos_compact_sync_meta_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -920,26 +920,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(thanos_compact_sync_meta_duration_seconds_bucket{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(thanos_compact_sync_meta_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99",
+                  "legendFormat": "P99 {{job}}",
                   "refId": "A",
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(thanos_compact_sync_meta_duration_seconds_sum{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) * 1 / sum(rate(thanos_compact_sync_meta_duration_seconds_count{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "sum(rate(thanos_compact_sync_meta_duration_seconds_sum{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job) * 1 / sum(rate(thanos_compact_sync_meta_duration_seconds_count{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean",
+                  "legendFormat": "mean {{job}}",
                   "refId": "B",
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(thanos_compact_sync_meta_duration_seconds_bucket{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(thanos_compact_sync_meta_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50",
+                  "legendFormat": "P50 {{job}}",
                   "refId": "C",
                   "step": 10
                 }
@@ -1034,10 +1034,10 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_objstore_bucket_operations_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) by (operation)",
+                  "expr": "sum(rate(thanos_objstore_bucket_operations_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, operation)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "{{operation}}",
+                  "legendFormat": "{{job}} {{operation}}",
                   "legendLink": null,
                   "step": 10
                 }
@@ -1121,7 +1121,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_objstore_bucket_operation_failures_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) / sum(rate(thanos_objstore_bucket_operations_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) ",
+                  "expr": "sum(rate(thanos_objstore_bucket_operation_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) / sum(rate(thanos_objstore_bucket_operations_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -1129,7 +1129,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "(sum(rate(thanos_objstore_bucket_operations_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) - sum(rate(thanos_objstore_bucket_operation_failures_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))) / sum(rate(thanos_objstore_bucket_operations_total{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "(sum(rate(thanos_objstore_bucket_operations_total{namespace=\"$namespace\",job=~\"$job\"}[$interval])) - sum(rate(thanos_objstore_bucket_operation_failures_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))) / sum(rate(thanos_objstore_bucket_operations_total{namespace=\"$namespace\",job=~\"$job\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "success",
@@ -1215,26 +1215,26 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(thanos_objstore_bucket_operation_duration_seconds_bucket{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.99, sum(rate(thanos_objstore_bucket_operation_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P99",
+                  "legendFormat": "P99 {{job}}",
                   "refId": "A",
                   "step": 10
                 },
                 {
-                  "expr": "sum(rate(thanos_objstore_bucket_operation_duration_seconds_sum{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) * 1 / sum(rate(thanos_objstore_bucket_operation_duration_seconds_count{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval]))",
+                  "expr": "sum(rate(thanos_objstore_bucket_operation_duration_seconds_sum{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job) * 1 / sum(rate(thanos_objstore_bucket_operation_duration_seconds_count{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job)",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "mean",
+                  "legendFormat": "mean {{job}}",
                   "refId": "B",
                   "step": 10
                 },
                 {
-                  "expr": "histogram_quantile(0.50, sum(rate(thanos_objstore_bucket_operation_duration_seconds_bucket{namespace=~\"$namespace\",job=\"thanos-compact\"}[$interval])) by (le)) * 1",
+                  "expr": "histogram_quantile(0.50, sum(rate(thanos_objstore_bucket_operation_duration_seconds_bucket{namespace=\"$namespace\",job=~\"$job\"}[$interval])) by (job, le)) * 1",
                   "format": "time_series",
                   "intervalFactor": 2,
-                  "legendFormat": "P50",
+                  "legendFormat": "P50 {{job}}",
                   "refId": "C",
                   "step": 10
                 }
@@ -1329,7 +1329,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "go_memstats_alloc_bytes{namespace=\"$namespace\",job=\"thanos-compact\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_memstats_alloc_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "alloc all {{pod}}",
@@ -1337,7 +1337,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "go_memstats_heap_alloc_bytes{namespace=\"$namespace\",job=\"thanos-compact\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_memstats_heap_alloc_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "alloc heap {{pod}}",
@@ -1345,7 +1345,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "rate(go_memstats_alloc_bytes_total{namespace=\"$namespace\",job=\"thanos-compact\",kubernetes_pod_name=~\"$pod\"}[30s])",
+                  "expr": "rate(go_memstats_alloc_bytes_total{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}[30s])",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "alloc rate all {{pod}}",
@@ -1353,7 +1353,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "rate(go_memstats_heap_alloc_bytes{namespace=\"$namespace\",job=\"thanos-compact\",kubernetes_pod_name=~\"$pod\"}[30s])",
+                  "expr": "rate(go_memstats_heap_alloc_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}[30s])",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "alloc rate heap {{pod}}",
@@ -1361,7 +1361,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "go_memstats_stack_inuse_bytes{namespace=\"$namespace\",job=\"thanos-compact\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_memstats_stack_inuse_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "inuse stack {{pod}}",
@@ -1369,7 +1369,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "go_memstats_heap_inuse_bytes{namespace=\"$namespace\",job=\"thanos-compact\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_memstats_heap_inuse_bytes{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "inuse heap {{pod}}",
@@ -1455,7 +1455,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "go_goroutines{namespace=\"$namespace\",job=\"thanos-compact\"}",
+                  "expr": "go_goroutines{namespace=\"$namespace\",job=~\"$job\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "{{pod}}",
@@ -1541,7 +1541,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "go_gc_duration_seconds{namespace=\"$namespace\",job=\"thanos-compact\",kubernetes_pod_name=~\"$pod\"}",
+                  "expr": "go_gc_duration_seconds{namespace=\"$namespace\",job=~\"$job\",kubernetes_pod_name=~\"$pod\"}",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "{{quantile}} {{pod}}",
@@ -1624,8 +1624,7 @@ data:
           {
             "allValue": null,
             "current": {
-              "text": "prod",
-              "value": "prod"
+
             },
             "datasource": "$datasource",
             "hide": 0,
@@ -1636,7 +1635,34 @@ data:
             "options": [
 
             ],
-            "query": "label_values(kube_pod_info, namespace)",
+            "query": "label_values(kube_pod_info{}, namespace)",
+            "refresh": 1,
+            "regex": "",
+            "sort": 2,
+            "tagValuesQuery": "",
+            "tags": [
+
+            ],
+            "tagsQuery": "",
+            "type": "query",
+            "useTags": false
+          },
+          {
+            "allValue": "thanos-compact.*",
+            "current": {
+              "text": "all",
+              "value": "$__all"
+            },
+            "datasource": "$datasource",
+            "hide": 0,
+            "includeAll": true,
+            "label": "job",
+            "multi": false,
+            "name": "job",
+            "options": [
+
+            ],
+            "query": "label_values(up{namespace=\"$namespace\",job=\"thanos-compact\"}, job)",
             "refresh": 1,
             "regex": "",
             "sort": 2,
