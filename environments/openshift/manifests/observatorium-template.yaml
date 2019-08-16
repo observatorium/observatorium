@@ -8,6 +8,100 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/name: thanos-querier
+      observatorium.io/tenant: datahub
+    name: thanos-querier-datahub
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: ${{THANOS_QUERIER_REPLICAS}}
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: thanos-querier
+        observatorium.io/tenant: datahub
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: thanos-querier
+          observatorium.io/tenant: datahub
+      spec:
+        containers:
+        - args:
+          - query
+          - --query.replica-label=replica
+          - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:9090
+          - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.thanos-receive.${NAMESPACE}.svc.cluster.local
+          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          name: thanos-querier
+          ports:
+          - containerPort: 10901
+            name: grpc
+          - containerPort: 9090
+            name: http
+        - args:
+          - -provider=openshift
+          - -https-address=:9091
+          - -http-address=
+          - -email-domain=*
+          - -upstream=http://localhost:9090
+          - -openshift-service-account=prometheus-telemeter
+          - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
+            "namespace": "${NAMESPACE}"}'
+          - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",
+            "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}'
+          - -tls-cert=/etc/tls/private/tls.crt
+          - -tls-key=/etc/tls/private/tls.key
+          - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
+          - -cookie-secret-file=/etc/proxy/secrets/session_secret
+          - -openshift-ca=/etc/pki/tls/cert.pem
+          - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          - -skip-auth-regex=^/metrics
+          image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
+          name: proxy
+          ports:
+          - containerPort: 9091
+            name: https
+          volumeMounts:
+          - mountPath: /etc/tls/private
+            name: secret-querier-tls
+            readOnly: false
+          - mountPath: /etc/proxy/secrets
+            name: secret-querier-proxy
+            readOnly: false
+        serviceAccount: prometheus-telemeter
+        serviceAccountName: prometheus-telemeter
+        volumes:
+        - name: secret-querier-tls
+          secret:
+            secretName: querier-tls
+        - name: secret-querier-proxy
+          secret:
+            secretName: querier-proxy
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      observatorium.io/tenant: datahub
+    name: thanos-querier-datahub
+  spec:
+    ports:
+    - name: grpc
+      port: 10901
+      targetPort: grpc
+    - name: http
+      port: 9090
+      targetPort: http
+    - name: https
+      port: 9091
+      targetPort: https
+    selector:
+      app.kubernetes.io/name: thanos-querier
+      observatorium.io/tenant: datahub
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app.kubernetes.io/name: thanos-querier
     name: thanos-querier
     namespace: ${NAMESPACE}
   spec:

@@ -115,6 +115,44 @@ local list = import 'telemeter/lib/list.libsonnet';
           volume.fromSecret('secret-querier-tls', 'querier-tls'),
           volume.fromSecret('secret-querier-proxy', 'querier-proxy'),
         ]),
+
+      datahubService:
+        $.thanos.querier.service {
+          metadata: {
+            name: 'thanos-querier-datahub',
+            labels+: {
+              'observatorium.io/tenant': 'datahub',
+            },
+          },
+          spec+: {
+            selector+: {
+              'observatorium.io/tenant': 'datahub',
+            },
+          },
+        },
+      datahubDeployment:
+        $.thanos.querier.deployment {
+          metadata+: {
+            name: 'thanos-querier-datahub',
+            labels+: {
+              'observatorium.io/tenant': 'datahub',
+            },
+          },
+          spec+: {
+            selector+: {
+              matchLabels+: {
+                'observatorium.io/tenant': 'datahub',
+              },
+            },
+            template+: {
+              metadata+: {
+                labels+: {
+                  'observatorium.io/tenant': 'datahub',
+                },
+              },
+            },
+          },
+        },
     },
 
     store+: {
