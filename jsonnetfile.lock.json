@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "c0010ce3405896074dd30803ec8331337b45e27b"
+            "version": "f9dbabc4b8cf75cc57622c44cd986677e6e893fe"
         },
         {
             "name": "ksonnet",
@@ -28,7 +28,7 @@
                     "subdir": "jsonnet/thanos-mixin"
                 }
             },
-            "version": "c0010ce3405896074dd30803ec8331337b45e27b"
+            "version": "f9dbabc4b8cf75cc57622c44cd986677e6e893fe"
         },
         {
             "name": "grafana-builder",
