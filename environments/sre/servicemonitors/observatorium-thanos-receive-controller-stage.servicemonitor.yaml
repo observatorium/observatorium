@@ -1,0 +1,11 @@
+metadata:
+  labels:
+    prometheus: app-sre
+  name: observatorium-thanos-receive-controller-stage
+spec:
+  namespaceSelector:
+    matchNames:
+    - telemeter-stage
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: thanos-receive-controller
