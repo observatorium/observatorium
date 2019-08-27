@@ -69,7 +69,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
             ports.newNamed('http', 8080, 8080),
           ],
         ) +
-        service.mixin.metadata.withNamespace('observatorium'),
+        service.mixin.metadata.withNamespace('observatorium') +
+        service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.thanos.receiveController.deployment.metadata.name }),
 
       deployment:
         local deployment = k.apps.v1.deployment;

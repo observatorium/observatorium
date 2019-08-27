@@ -197,6 +197,8 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
+    labels:
+      app.kubernetes.io/name: thanos-receive-controller
     name: thanos-receive-controller
     namespace: ${NAMESPACE}
   spec:
