@@ -74,6 +74,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       deployment:
         local deployment = k.apps.v1.deployment;
         local container = deployment.mixin.spec.template.spec.containersType;
+        local containerPort = container.portsType;
         local env = container.envType;
 
         local c =
@@ -85,7 +86,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
             '--namespace=$(NAMESPACE)',
           ]) + container.withEnv([
             env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
-          ]);
+          ]) + container.withPorts(
+            containerPort.newNamed(8080, 'http')
+          );
 
         deployment.new('thanos-receive-controller', 1, c, $.thanos.receiveController.deployment.metadata.labels) +
         deployment.mixin.metadata.withNamespace('observatorium') +
