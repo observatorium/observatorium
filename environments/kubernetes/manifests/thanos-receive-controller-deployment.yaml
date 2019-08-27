@@ -28,4 +28,7 @@ spec:
               fieldPath: metadata.namespace
         image: quay.io/observatorium/thanos-receive-controller:master-2019-08-09-c8204c0
         name: thanos-receive-controller
+        ports:
+        - containerPort: 8080
+          name: http
       serviceAccount: thanos-receive-controller
