@@ -413,9 +413,9 @@ objects:
           name: data
 - apiVersion: v1
   data:
-    rhd.client_id: ""
-    rhd.password: ""
-    rhd.url: ""
+    client_id: ""
+    client_secret: ""
+    oidc_issuer: ""
   kind: Secret
   metadata:
     labels:
@@ -529,9 +529,9 @@ objects:
           - --internal-tls-key=/etc/pki/service/tls.key
           - --internal-tls-crt=/etc/pki/service/tls.crt
           - --authorize=${AUTHORIZE_URL}
-          - --authorize-issuer-url=$(RHD_URL)
-          - --authorize-client-id=$(RHD_CLIENT_ID)
-          - --authorize-password=$(RHD_PASSWORD)
+          - --oidc-issuer=$(OIDC_ISSUER)
+          - --client-id=$(CLIENT_ID)
+          - --client-secret=$(CLIENT_SECRET)
           - --whitelist={__name__="up"}
           - --whitelist={__name__="cluster_version"}
           - --whitelist={__name__="cluster_version_available_updates"}
@@ -576,20 +576,20 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          - name: RHD_URL
+          - name: OIDC_ISSUER
             valueFrom:
               secretKeyRef:
-                key: rhd.url
+                key: oidc_issuer
                 name: telemeter-server
-          - name: RHD_PASSWORD
+          - name: CLIENT_SECRET
             valueFrom:
               secretKeyRef:
-                key: rhd.password
+                key: client_secret
                 name: telemeter-server
-          - name: RHD_CLIENT_ID
+          - name: CLIENT_ID
             valueFrom:
               secretKeyRef:
-                key: rhd.client_id
+                key: client_id
                 name: telemeter-server
           image: ${IMAGE}:${IMAGE_TAG}
           livenessProbe:
