@@ -335,11 +335,11 @@ objects:
             name: remote-write
           resources:
             limits:
-              cpu: "1"
-              memory: 1Gi
+              cpu: ${THANOS_STORE_CPU_LIMIT}
+              memory: ${THANOS_STORE_MEMORY_LIMIT}
             requests:
-              cpu: 100m
-              memory: 512Mi
+              cpu: ${THANOS_STORE_CPU_REQUEST}
+              memory: ${THANOS_STORE_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /var/thanos/tsdb
             name: data
@@ -420,11 +420,11 @@ objects:
             name: http
           resources:
             limits:
-              cpu: "2"
-              memory: 8Gi
+              cpu: ${THANOS_STORE_CPU_LIMIT}
+              memory: ${THANOS_STORE_MEMORY_LIMIT}
             requests:
-              cpu: 500m
-              memory: 1Gi
+              cpu: ${THANOS_STORE_CPU_REQUEST}
+              memory: ${THANOS_STORE_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /var/thanos/store
             name: data
@@ -671,6 +671,30 @@ parameters:
   value: thanos-objectstorage
 - name: THANOS_S3_SECRET
   value: telemeter-thanos-stage-s3
+- name: THANOS_QUERIER_CPU_REQUEST
+  value: 100m
+- name: THANOS_QUERIER_CPU_LIMIT
+  value: '"1"'
+- name: THANOS_QUERIER_MEMORY_REQUEST
+  value: 500Mi
+- name: THANOS_QUERIER_MEMORY_LIMIT
+  value: 1Gi
+- name: THANOS_STORE_CPU_REQUEST
+  value: 100m
+- name: THANOS_STORE_CPU_LIMIT
+  value: '"1"'
+- name: THANOS_STORE_MEMORY_REQUEST
+  value: 500Mi
+- name: THANOS_STORE_MEMORY_LIMIT
+  value: 1Gi
+- name: THANOS_RECEIVE_CPU_REQUEST
+  value: 100m
+- name: THANOS_RECEIVE_CPU_LIMIT
+  value: '"1"'
+- name: THANOS_RECEIVE_MEMORY_REQUEST
+  value: 500Mi
+- name: THANOS_RECEIVE_MEMORY_LIMIT
+  value: 1Gi
 - name: AUTHORIZE_URL
   value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
 - name: IMAGE
