@@ -35,6 +35,13 @@ objects:
             name: grpc
           - containerPort: 9090
             name: http
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
         - args:
           - -provider=openshift
           - -https-address=:9091
@@ -326,6 +333,13 @@ objects:
             name: http
           - containerPort: 19291
             name: remote-write
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 512Mi
           volumeMounts:
           - mountPath: /var/thanos/tsdb
             name: data
@@ -404,6 +418,13 @@ objects:
             name: grpc
           - containerPort: 10902
             name: http
+          resources:
+            limits:
+              cpu: "2"
+              memory: 8Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
           volumeMounts:
           - mountPath: /var/thanos/store
             name: data
