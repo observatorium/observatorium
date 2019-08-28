@@ -53,7 +53,7 @@ spec:
             secretKeyRef:
               key: rhd.client_id
               name: telemeter-server
-        image: quay.io/metalmatze/telemeter:62c8659
+        image: quay.io/app-sre/telemeter:1049e93
         livenessProbe:
           httpGet:
             path: /healthz

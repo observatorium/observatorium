@@ -23,7 +23,7 @@ spec:
         - --http-address=0.0.0.0:9090
         - --store=dnssrv+_grpc._tcp.thanos-store.observatorium.svc.cluster.local
         - --store=dnssrv+_grpc._tcp.thanos-receive.observatorium.svc.cluster.local
-        image: improbable/thanos:v0.6.0-rc.0
+        image: quay.io/thanos/thanos:v0.6.1
         name: thanos-querier
         ports:
         - containerPort: 10901

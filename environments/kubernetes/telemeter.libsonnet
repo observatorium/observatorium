@@ -6,7 +6,7 @@
   },
 
   telemeterServer+:: {
-    local image = 'quay.io/metalmatze/telemeter:62c8659',
+    local image = 'quay.io/app-sre/telemeter:1049e93',
 
     statefulSet+: {
       spec+: {
