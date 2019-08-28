@@ -29,29 +29,29 @@ spec:
         - --internal-tls-key=/etc/pki/service/tls.key
         - --internal-tls-crt=/etc/pki/service/tls.crt
         - --authorize=https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
-        - --authorize-issuer-url=$(RHD_URL)
-        - --authorize-client-id=$(RHD_CLIENT_ID)
-        - --authorize-password=$(RHD_PASSWORD)
+        - --oidc-issuer=$(OIDC_ISSUER)
+        - --client-id=$(CLIENT_ID)
+        - --client-secret=$(CLIENT_SECRET)
         - --forward-url=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
         env:
         - name: NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: RHD_URL
+        - name: OIDC_ISSUER
           valueFrom:
             secretKeyRef:
-              key: rhd.url
+              key: oidc_issuer
               name: telemeter-server
-        - name: RHD_PASSWORD
+        - name: CLIENT_SECRET
           valueFrom:
             secretKeyRef:
-              key: rhd.password
+              key: client_secret
               name: telemeter-server
-        - name: RHD_CLIENT_ID
+        - name: CLIENT_ID
           valueFrom:
             secretKeyRef:
-              key: rhd.client_id
+              key: client_id
               name: telemeter-server
         image: quay.io/app-sre/telemeter:1049e93
         livenessProbe:
