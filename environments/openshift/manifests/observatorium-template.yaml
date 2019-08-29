@@ -65,6 +65,13 @@ objects:
           ports:
           - containerPort: 9091
             name: https
+          resources:
+            limits:
+              cpu: ${THANOS_QUERIER_CPU_LIMIT}
+              memory: ${THANOS_QUERIER_MEMORY_LIMIT}
+            requests:
+              cpu: ${THANOS_QUERIER_CPU_REQUEST}
+              memory: ${THANOS_QUERIER_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /etc/tls/private
             name: secret-querier-tls
