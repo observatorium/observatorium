@@ -342,11 +342,11 @@ objects:
             name: remote-write
           resources:
             limits:
-              cpu: ${THANOS_STORE_CPU_LIMIT}
-              memory: ${THANOS_STORE_MEMORY_LIMIT}
+              cpu: ${THANOS_RECEIVE_CPU_LIMIT}
+              memory: ${THANOS_RECEIVE_MEMORY_LIMIT}
             requests:
-              cpu: ${THANOS_STORE_CPU_REQUEST}
-              memory: ${THANOS_STORE_MEMORY_REQUEST}
+              cpu: ${THANOS_RECEIVE_CPU_REQUEST}
+              memory: ${THANOS_RECEIVE_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /var/thanos/tsdb
             name: data
@@ -681,25 +681,25 @@ parameters:
 - name: THANOS_QUERIER_CPU_REQUEST
   value: 100m
 - name: THANOS_QUERIER_CPU_LIMIT
-  value: '"1"'
+  value: "1"
 - name: THANOS_QUERIER_MEMORY_REQUEST
-  value: 500Mi
+  value: 256Mi
 - name: THANOS_QUERIER_MEMORY_LIMIT
   value: 1Gi
 - name: THANOS_STORE_CPU_REQUEST
-  value: 100m
+  value: 500m
 - name: THANOS_STORE_CPU_LIMIT
-  value: '"1"'
+  value: "2"
 - name: THANOS_STORE_MEMORY_REQUEST
-  value: 500Mi
-- name: THANOS_STORE_MEMORY_LIMIT
   value: 1Gi
+- name: THANOS_STORE_MEMORY_LIMIT
+  value: 8Gi
 - name: THANOS_RECEIVE_CPU_REQUEST
   value: 100m
 - name: THANOS_RECEIVE_CPU_LIMIT
-  value: '"1"'
+  value: "1"
 - name: THANOS_RECEIVE_MEMORY_REQUEST
-  value: 500Mi
+  value: 512Mi
 - name: THANOS_RECEIVE_MEMORY_LIMIT
   value: 1Gi
 - name: AUTHORIZE_URL
