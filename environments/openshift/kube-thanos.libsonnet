@@ -74,7 +74,20 @@ local list = import 'telemeter/lib/list.libsonnet';
           spec+: {
             template+: {
               spec+: {
-                containers+: [
+                containers: [
+                  super.containers[0] {
+                    resources: {
+                      requests: {
+                        cpu: '${THANOS_QUERIER_CPU_REQUEST}',
+                        memory: '${THANOS_QUERIER_MEMORY_REQUEST}',
+                      },
+                      limits: {
+                        cpu: '${THANOS_QUERIER_CPU_LIMIT}',
+                        memory: '${THANOS_QUERIER_MEMORY_LIMIT}',
+                      },
+                    },
+                  },
+                ] + [
                   container.new('proxy', $.thanos.variables.proxyImage) +
                   container.withArgs([
                     '-provider=openshift',
@@ -129,7 +142,28 @@ local list = import 'telemeter/lib/list.libsonnet';
 
           // As we use Vault and want to be able to use rotation of credentials,
           // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
-          template+: s3Envvars,
+          template+: s3Envvars {
+            spec+: {
+              containers: [
+                local container = sts.mixin.spec.template.spec.containersType;
+                local env = container.envType;
+
+                super.containers[0] {
+
+                  resources: {
+                    requests: {
+                      cpu: '${THANOS_STORE_CPU_REQUEST}',
+                      memory: '${THANOS_STORE_MEMORY_REQUEST}',
+                    },
+                    limits: {
+                      cpu: '${THANOS_STORE_CPU_LIMIT}',
+                      memory: '${THANOS_STORE_MEMORY_LIMIT}',
+                    },
+                  },
+                },
+              ],
+            },
+          },
         },
       },
     },
@@ -149,7 +183,27 @@ local list = import 'telemeter/lib/list.libsonnet';
 
           // As we use Vault and want to be able to use rotation of credentials,
           // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
-          template+: s3Envvars,
+          template+: s3Envvars {
+            spec+: {
+              containers: [
+                local container = sts.mixin.spec.template.spec.containersType;
+                local env = container.envType;
+
+                super.containers[0] {
+                  resources: {
+                    requests: {
+                      cpu: '${THANOS_RECEIVE_CPU_REQUEST}',
+                      memory: '${THANOS_RECEIVE_MEMORY_REQUEST}',
+                    },
+                    limits: {
+                      cpu: '${THANOS_RECEIVE_CPU_LIMIT}',
+                      memory: '${THANOS_RECEIVE_MEMORY_LIMIT}',
+                    },
+                  },
+                },
+              ],
+            },
+          },
         },
       }
       for tenant in tenants
@@ -234,6 +288,18 @@ local list = import 'telemeter/lib/list.libsonnet';
           name: 'THANOS_S3_SECRET',
           value: 'telemeter-thanos-stage-s3',
         },
+        { name: 'THANOS_QUERIER_CPU_REQUEST', value: '100m' },
+        { name: 'THANOS_QUERIER_CPU_LIMIT', value: '1' },
+        { name: 'THANOS_QUERIER_MEMORY_REQUEST', value: '256Mi' },
+        { name: 'THANOS_QUERIER_MEMORY_LIMIT', value: '1Gi' },
+        { name: 'THANOS_STORE_CPU_REQUEST', value: '500m' },
+        { name: 'THANOS_STORE_CPU_LIMIT', value: '2' },
+        { name: 'THANOS_STORE_MEMORY_REQUEST', value: '1Gi' },
+        { name: 'THANOS_STORE_MEMORY_LIMIT', value: '8Gi' },
+        { name: 'THANOS_RECEIVE_CPU_REQUEST', value: '100m' },
+        { name: 'THANOS_RECEIVE_CPU_LIMIT', value: '1' },
+        { name: 'THANOS_RECEIVE_MEMORY_REQUEST', value: '512Mi' },
+        { name: 'THANOS_RECEIVE_MEMORY_LIMIT', value: '1Gi' },
       ]),
   },
 }
