@@ -427,12 +427,12 @@ objects:
               memory: ${THANOS_STORE_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /var/thanos/store
-            name: data
+            name: thanos-store-data
             readOnly: false
         volumes: []
     volumeClaimTemplates:
     - metadata:
-        name: data
+        name: thanos-store-data
       spec:
         accessModes:
         - ReadWriteOnce
