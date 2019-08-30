@@ -74,7 +74,20 @@ local list = import 'telemeter/lib/list.libsonnet';
           spec+: {
             template+: {
               spec+: {
-                containers+: [
+                containers: [
+                  super.containers[0] {
+                    resources: {
+                      requests: {
+                        cpu: '${THANOS_QUERIER_CPU_REQUEST}',
+                        memory: '${THANOS_QUERIER_MEMORY_REQUEST}',
+                      },
+                      limits: {
+                        cpu: '${THANOS_QUERIER_CPU_LIMIT}',
+                        memory: '${THANOS_QUERIER_MEMORY_LIMIT}',
+                      },
+                    },
+                  },
+                ] + [
                   container.new('proxy', $.thanos.variables.proxyImage) +
                   container.withArgs([
                     '-provider=openshift',
@@ -96,14 +109,6 @@ local list = import 'telemeter/lib/list.libsonnet';
                   container.withPorts([
                     { name: 'https', containerPort: $.thanos.querier.service.spec.ports[2].port },
                   ]) +
-                  container.mixin.resources.withRequests({
-                    cpu: '${THANOS_QUERIER_CPU_REQUEST}',
-                    memory: '${THANOS_QUERIER_MEMORY_REQUEST}',
-                  }) +
-                  container.mixin.resources.withLimits({
-                    cpu: '${THANOS_QUERIER_CPU_LIMIT}',
-                    memory: '${THANOS_QUERIER_MEMORY_LIMIT}',
-                  }) +
                   container.withVolumeMounts(
                     [
                       volumeMount.new('secret-querier-tls', '/etc/tls/private'),
