@@ -427,11 +427,19 @@ objects:
               memory: ${THANOS_STORE_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /var/thanos/store
-            name: data
+            name: thanos-store-data
             readOnly: false
-        volumes:
-        - emptyDir: {}
-          name: data
+        volumes: []
+    volumeClaimTemplates:
+    - metadata:
+        name: thanos-store-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: gp2-encrypted
 - apiVersion: v1
   data:
     client_id: ""
