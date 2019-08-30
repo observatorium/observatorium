@@ -131,6 +131,13 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
 
     store+: {
+      variables+:: {
+        pvc+: {
+          class: 'gp2-encrypted',
+          size: '50Gi',
+        },
+      },
+
       service+:
         service.mixin.metadata.withNamespace(namespace),
       statefulSet+: {

@@ -429,9 +429,17 @@ objects:
           - mountPath: /var/thanos/store
             name: data
             readOnly: false
-        volumes:
-        - emptyDir: {}
-          name: data
+        volumes: []
+    volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: gp2-encrypted
 - apiVersion: v1
   data:
     client_id: ""
