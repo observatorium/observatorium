@@ -12,11 +12,12 @@ local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.l
         role: 'alert-rules',
       },
     },
-    local thanosAlerts = thanos {
+    local alerts = thanos + thanosReceiveController {
       _config+:: {
         thanosQuerierSelector: 'job="thanos-querier", namespace="telemeter-stage"',
         thanosStoreSelector: 'job="thanos-store", namespace="telemeter-stage"',
         thanosReceiveSelector: 'job="thanos-receive", namespace="telemeter-stage"',
+        thanosReceiveControllerSelector: 'job="thanos-receive-controller", namespace="telemeter-stage"',
       },
     } + {
       prometheusAlerts+:: {
@@ -28,14 +29,7 @@ local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.l
       },
     },
 
-    local thanosReceiveControllerAlerts = thanosReceiveController {
-      _config+:: {
-        thanosReceiveSelector: 'job="thanos-receive", namespace="telemeter-stage"',
-        thanosReceiveControllerSelector: 'job="thanos-receive-controller", namespace="telemeter-stage"',
-      },
-    },
-
-    spec: (thanosAlerts + thanosReceiveControllerAlerts).prometheusAlerts,
+    spec: alerts.prometheusAlerts,
   },
   'observatorium-thanos-production.prometheusrules': {
     apiVersion: 'monitoring.coreos.com/v1',
@@ -47,11 +41,12 @@ local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.l
         role: 'alert-rules',
       },
     },
-    local thanosAlerts = thanos {
+    local alerts = thanos + thanosReceiveController {
       _config+:: {
         thanosQuerierSelector: 'job="thanos-querier", namespace="telemeter-production"',
         thanosStoreSelector: 'job="thanos-store", namespace="telemeter-production"',
         thanosReceiveSelector: 'job="thanos-receive", namespace="telemeter-production"',
+        thanosReceiveControllerSelector: 'job="thanos-receive-controller", namespace="telemeter-production"',
       },
     } + {
       prometheusAlerts+:: {
@@ -63,13 +58,6 @@ local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.l
       },
     },
 
-    local thanosReceiveControllerAlerts = thanosReceiveController {
-      _config+:: {
-        thanosReceiveSelector: 'job="thanos-receive", namespace="telemeter-production"',
-        thanosReceiveControllerSelector: 'job="thanos-receive-controller", namespace="telemeter-production"',
-      },
-    },
-
-    spec: (thanosAlerts + thanosReceiveControllerAlerts).prometheusAlerts,
+    spec: alerts.prometheusAlerts,
   },
 }
