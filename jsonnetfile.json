@@ -21,6 +21,16 @@
             "version": "master"
         },
         {
+            "name": "thanos-receive-controller-mixin",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/observatorium/thanos-receive-controller",
+                    "subdir": "jsonnet/thanos-receive-controller-mixin"
+                }
+            },
+            "version": "master"
+        },
+        {
             "name": "grafana-builder",
             "source": {
                 "git": {
