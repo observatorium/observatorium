@@ -9,16 +9,29 @@ spec:
   groups:
   - name: thanos-querier.rules
     rules:
-    - alert: ThanosQuerierGrpcErrorRate
+    - alert: ThanosQuerierGrpcServerErrorRate
       annotations:
-        message: Thanos Querier {{$labels.job}} is returning Internal/Unavailable
-          errors.
+        message: Thanos Querier {{$labels.job}} is failing to handle {{ $value | humanize
+          }}% of requests.
       expr: |
         sum(
           rate(grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable", job="thanos-querier", namespace="telemeter-production"}[5m])
           /
           rate(grpc_server_started_total{job="thanos-querier", namespace="telemeter-production"}[5m])
-        ) by (job) > 0.05
+        ) by (job) * 100 > 5
+      for: 5m
+      labels:
+        severity: warning
+    - alert: ThanosQuerierGrpcClientErrorRate
+      annotations:
+        message: Thanos Querier {{$labels.job}} is failing to send {{ $value | humanize
+          }}% of requests.
+      expr: |
+        sum(
+          rate(grpc_client_handled_total{grpc_code!="OK", job="thanos-querier", namespace="telemeter-production"}[5m])
+          /
+          rate(grpc_client_started_total{job="thanos-querier", namespace="telemeter-production"}[5m])
+        ) by (job) * 100 > 5
       for: 5m
       labels:
         severity: warning
@@ -45,7 +58,7 @@ spec:
         ) > 10
       for: 10m
       labels:
-        severity: warning
+        severity: critical
     - alert: ThanosQuerierRangeLatencyHigh
       annotations:
         message: Thanos Querier {{$labels.job}} has a 99th percentile latency of {{
@@ -56,7 +69,7 @@ spec:
         ) > 10
       for: 10m
       labels:
-        severity: warning
+        severity: critical
   - name: thanos-receive.rules
     rules:
     - alert: ThanosReceiveHttpRequestLatencyHigh
@@ -69,23 +82,23 @@ spec:
         ) > 10
       for: 10m
       labels:
-        severity: warning
+        severity: critical
     - alert: ThanosReceiveHighForwardRequestFailures
       annotations:
-        message: Thanos Receive {{$labels.job}} failling to forward {{ $value | humanize
-          }}% of requests.
+        message: Thanos Receive {{$labels.job}} is failing to forward {{ $value |
+          humanize }}% of requests.
       expr: |
         sum(
           rate(thanos_receive_forward_requests_total{result="error", job="thanos-receive", namespace="telemeter-production"}[5m])
         /
           rate(thanos_receive_forward_requests_total{job="thanos-receive", namespace="telemeter-production"}[5m])
-        ) by (job)  > 0.05
+        ) by (job) * 100 > 5
       for: 15m
       labels:
-        severity: warning
+        severity: critical
     - alert: ThanosReceiveHighHashringFileRefreshFailures
       annotations:
-        message: Thanos Receive {{$labels.job}} failling to refresh hashring file,
+        message: Thanos Receive {{$labels.job}} is failing to refresh hashring file,
           {{ $value | humanize }} of attempts failed.
       expr: |
         sum(
@@ -98,10 +111,10 @@ spec:
         severity: warning
     - alert: ThanosReceiveConfigReloadFailure
       annotations:
-        message: Thanos Receive {{$labels.pod}} has not been able to reload hashring
+        message: Thanos Receive {{$labels.job}} has not been able to reload hashring
           configurations.
-      expr: thanos_receive_config_last_reload_successful{job="thanos-receive", namespace="telemeter-production"}
-        == 0
+      expr: avg(thanos_receive_config_last_reload_successful{job="thanos-receive",
+        namespace="telemeter-production"}) by (job) != 1
       for: 5m
       labels:
         severity: warning
@@ -109,13 +122,14 @@ spec:
     rules:
     - alert: ThanosStoreGrpcErrorRate
       annotations:
-        message: Thanos Store {{$labels.job}} is returning Internal/Unavailable errors.
+        message: Thanos Store {{$labels.job}} is failing to handle {{ $value | humanize
+          }}% of requests.
       expr: |
         sum(
           rate(grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable", job="thanos-store", namespace="telemeter-production"}[5m])
           /
           rate(grpc_server_started_total{job="thanos-store", namespace="telemeter-production"}[5m])
-        ) by (job) > 0.05
+        ) by (job) * 100 > 5
       for: 5m
       labels:
         severity: warning
@@ -132,13 +146,14 @@ spec:
         severity: warning
     - alert: ThanosStoreBucketHighOperationFailures
       annotations:
-        message: Thanos Store {{$labels.job}} Bucket has {{ $value }} of failing operations.
+        message: Thanos Store {{$labels.job}} Bucket is failing to execute {{ $value
+          | humanize }}% of operations.
       expr: |
         sum(
           rate(thanos_objstore_bucket_operation_failures_total{job="thanos-store", namespace="telemeter-production"}[5m])
         /
           rate(thanos_objstore_bucket_operations_total{job="thanos-store", namespace="telemeter-production"}[5m])
-        ) by (job) > 0.05
+        ) by (job) * 100 > 5
       for: 15m
       labels:
         severity: warning
