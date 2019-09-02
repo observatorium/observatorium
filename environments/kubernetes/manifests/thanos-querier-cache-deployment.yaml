@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: observatorium-querier-cache
+  name: observatorium-querier-cache
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: observatorium-querier-cache
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: observatorium-querier-cache
+    spec:
+      containers:
+      - args:
+        - -config.file=/etc/cache-config/observatorium-cache-conf.yaml
+        - -frontend.downstream-url=observatorium-cache-conf
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: quay.io/cortexproject/cortex:master-8533a216
+        name: observatorium-querier-cache
+        ports:
+        - containerPort: 9001
+          name: http
+        - containerPort: 9005
+          name: grpc

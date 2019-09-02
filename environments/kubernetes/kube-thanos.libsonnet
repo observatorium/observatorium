@@ -14,6 +14,7 @@ local rolebinding = k.rbac.v1.roleBinding;
 (import 'kube-thanos/kube-thanos-compactor.libsonnet') +
 (import 'kube-thanos/kube-thanos-pvc.libsonnet') +
 (import '../../components/thanos-receive-controller.libsonnet') +
+(import '../../components/thanos-querier-cache.libsonnet') +
 {
   thanos+:: {
     variables+:: {

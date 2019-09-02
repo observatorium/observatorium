@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: observatorium-querier-cache
+  name: observatorium-cache
+  namespace: observatorium
+spec:
+  ports:
+  - name: http
+    port: 9091
+    targetPort: 9091
+  selector:
+    app.kubernetes.io/name: observatorium-querier-cache
