@@ -41,7 +41,7 @@ local thanosReceiveDashboards = thanosReceiveController {
   for name in std.objectFields(dashboards)
 } + {
   ['grafana-dashboard-observatorium-thanos-%s.configmap' % std.split(name, '.')[0]]:
-  local configmap = k.core.v1.configMap;
+    local configmap = k.core.v1.configMap;
     configmap.new() +
     configmap.mixin.metadata.withName('grafana-dashboard-observatorium-thanos-%s' % std.split(name, '.')[0]) +
     configmap.withData({
