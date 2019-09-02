@@ -1,5 +1,1 @@
 vendor/
-*.servicemonitor
-*.configmap
-*.prometheusrules
-*-serviceAccount
