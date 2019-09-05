@@ -1,4 +1,5 @@
 local thanos = (import 'thanos-mixin/mixin.libsonnet');
+local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.libsonnet');
 
 {
   'observatorium-thanos-stage.prometheusrules': {
@@ -11,11 +12,12 @@ local thanos = (import 'thanos-mixin/mixin.libsonnet');
         role: 'alert-rules',
       },
     },
-    local alerts = thanos {
+    local alerts = thanos + thanosReceiveController {
       _config+:: {
         thanosQuerierSelector: 'job="thanos-querier", namespace="telemeter-stage"',
         thanosStoreSelector: 'job="thanos-store", namespace="telemeter-stage"',
         thanosReceiveSelector: 'job="thanos-receive", namespace="telemeter-stage"',
+        thanosReceiveControllerSelector: 'job="thanos-receive-controller", namespace="telemeter-stage"',
       },
     } + {
       prometheusAlerts+:: {
@@ -26,6 +28,7 @@ local thanos = (import 'thanos-mixin/mixin.libsonnet');
           ),
       },
     },
+
     spec: alerts.prometheusAlerts,
   },
   'observatorium-thanos-production.prometheusrules': {
@@ -38,11 +41,12 @@ local thanos = (import 'thanos-mixin/mixin.libsonnet');
         role: 'alert-rules',
       },
     },
-    local alerts = thanos {
+    local alerts = thanos + thanosReceiveController {
       _config+:: {
         thanosQuerierSelector: 'job="thanos-querier", namespace="telemeter-production"',
         thanosStoreSelector: 'job="thanos-store", namespace="telemeter-production"',
         thanosReceiveSelector: 'job="thanos-receive", namespace="telemeter-production"',
+        thanosReceiveControllerSelector: 'job="thanos-receive-controller", namespace="telemeter-production"',
       },
     } + {
       prometheusAlerts+:: {
@@ -53,6 +57,7 @@ local thanos = (import 'thanos-mixin/mixin.libsonnet');
           ),
       },
     },
+
     spec: alerts.prometheusAlerts,
   },
 }
