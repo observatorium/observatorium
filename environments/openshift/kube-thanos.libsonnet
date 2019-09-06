@@ -156,7 +156,6 @@ local list = import 'telemeter/lib/list.libsonnet';
                 local env = container.envType;
 
                 super.containers[0] {
-
                   resources: {
                     requests: {
                       cpu: '${THANOS_STORE_CPU_REQUEST}',
@@ -165,6 +164,43 @@ local list = import 'telemeter/lib/list.libsonnet';
                     limits: {
                       cpu: '${THANOS_STORE_CPU_LIMIT}',
                       memory: '${THANOS_STORE_MEMORY_LIMIT}',
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+
+    compactor+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      statefulSet+: {
+        metadata+: {
+          namespace: namespace,
+        },
+        spec+: {
+          replicas: '${{THANOS_COMPACTOR_REPLICAS}}',
+
+          // As we use Vault and want to be able to use rotation of credentials,
+          // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
+          template+: s3Envvars {
+            spec+: {
+              containers: [
+                local container = sts.mixin.spec.template.spec.containersType;
+                local env = container.envType;
+
+                super.containers[0] {
+                  resources: {
+                    requests: {
+                      cpu: '${THANOS_COMPACTOR_CPU_REQUEST}',
+                      memory: '${THANOS_COMPACTOR_MEMORY_REQUEST}',
+                    },
+                    limits: {
+                      cpu: '${THANOS_COMPACTOR_CPU_LIMIT}',
+                      memory: '${THANOS_COMPACTOR_MEMORY_LIMIT}',
                     },
                   },
                 },
@@ -247,6 +283,9 @@ local list = import 'telemeter/lib/list.libsonnet';
         ['store-' + name]: thanos.store[name]
         for name in std.objectFields(thanos.store)
       } + {
+        ['compactor-' + name]: thanos.compactor[name]
+        for name in std.objectFields(thanos.compactor)
+      } + {
         ['receive-' + name]: thanos.receive[name]
         for name in std.objectFields(thanos.receive)
       } + {
@@ -284,6 +323,10 @@ local list = import 'telemeter/lib/list.libsonnet';
           value: '5',
         },
         {
+          name: 'THANOS_COMPACTOR_REPLICAS',
+          value: '1',
+        },
+        {
           name: 'THANOS_RECEIVE_REPLICAS',
           value: '5',
         },
@@ -307,6 +350,10 @@ local list = import 'telemeter/lib/list.libsonnet';
         { name: 'THANOS_RECEIVE_CPU_LIMIT', value: '1' },
         { name: 'THANOS_RECEIVE_MEMORY_REQUEST', value: '512Mi' },
         { name: 'THANOS_RECEIVE_MEMORY_LIMIT', value: '1Gi' },
+        { name: 'THANOS_COMPACTOR_CPU_REQUEST', value: '100m' },
+        { name: 'THANOS_COMPACTOR_CPU_LIMIT', value: '1' },
+        { name: 'THANOS_COMPACTOR_MEMORY_REQUEST', value: '1Gi' },
+        { name: 'THANOS_COMPACTOR_MEMORY_LIMIT', value: '5Gi' },
       ]),
   },
 }
