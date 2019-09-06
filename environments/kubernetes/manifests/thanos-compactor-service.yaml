@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: thanos-compactor
   name: thanos-compactor
-  namespace: monitoring
+  namespace: observatorium
 spec:
   ports:
   - name: http

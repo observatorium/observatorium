@@ -40,6 +40,33 @@ local rolebinding = k.rbac.v1.roleBinding;
         sts.mixin.metadata.withNamespace(namespace) +
         sts.mixin.spec.withReplicas(3),
     },
+    compactor+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      statefulSet+: {
+        metadata+: {
+          namespace: namespace,
+        },
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                super.containers[0] {
+                  args: [
+                    'compact',
+                    '--wait',
+                    '--retention.resolution-raw=16d',
+                    '--retention.resolution-5m=16d',
+                    '--retention.resolution-1h=16d',
+                    '--objstore.config=$(OBJSTORE_CONFIG)',
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
     receive+: {
       service+: service.mixin.metadata.withNamespace(namespace),
       statefulSet+:: sts.mixin.metadata.withNamespace(namespace),
