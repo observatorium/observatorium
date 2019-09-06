@@ -7,4 +7,5 @@ local app =
 { ['thanos-compactor-' + name]: app.thanos.compactor[name] for name in std.objectFields(app.thanos.compactor) } +
 { ['thanos-store-' + name]: app.thanos.store[name] for name in std.objectFields(app.thanos.store) } +
 { ['thanos-receive-controller-' + name]: app.thanos.receiveController[name] for name in std.objectFields(app.thanos.receiveController) } +
+{ ['thanos-querier-cache-' + name]: app.thanos.querierCache[name] for name in std.objectFields(app.thanos.querierCache) } +
 { ['telemeter-' + name]: app.telemeterServer[name] for name in std.objectFields(app.telemeterServer) }

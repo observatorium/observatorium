@@ -271,6 +271,36 @@ local list = import 'telemeter/lib/list.libsonnet';
         role.mixin.metadata.withNamespace(namespace),
       roleBinding+: setSubjectNamespace(super.roleBinding) + roleBinding.mixin.metadata.withNamespace(namespace),
     },
+    querierCache+: {
+      configmap+:
+        configmap.mixin.metadata.withNamespace(namespace),
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      deployment+:
+        {
+          spec+: {
+            template+: {
+              spec+: {
+                containers: [
+                  super.containers[0] {
+                    resources: {
+                      requests: {
+                        cpu: '${THANOS_QUERIER_CACHE_CPU_REQUEST}',
+                        memory: '${THANOS_QUERIER_CACHE_MEMORY_REQUEST}',
+                      },
+                      limits: {
+                        cpu: '${THANOS_QUERIER_CACHE_CPU_LIMIT}',
+                        memory: '${THANOS_QUERIER_CACHE_MEMORY_LIMIT}',
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        } +
+        deployment.mixin.metadata.withNamespace(namespace),
+    },
   },
 } + {
   local thanos = super.thanos,
@@ -291,6 +321,9 @@ local list = import 'telemeter/lib/list.libsonnet';
       } + {
         ['receive-controller-' + name]: thanos.receiveController[name]
         for name in std.objectFields(thanos.receiveController)
+      } + {
+        ['querier-cache-' + name]: thanos.querierCache[name]
+        for name in std.objectFields(thanos.querierCache)
       };
 
       list.asList('thanos', objects, [
@@ -342,6 +375,10 @@ local list = import 'telemeter/lib/list.libsonnet';
         { name: 'THANOS_QUERIER_CPU_LIMIT', value: '1' },
         { name: 'THANOS_QUERIER_MEMORY_REQUEST', value: '256Mi' },
         { name: 'THANOS_QUERIER_MEMORY_LIMIT', value: '1Gi' },
+        { name: 'THANOS_QUERIER_CACHE_CPU_REQUEST', value: '100m' },
+        { name: 'THANOS_QUERIER_CACHE_CPU_LIMIT', value: '1' },
+        { name: 'THANOS_QUERIER_CACHE_MEMORY_REQUEST', value: '256Mi' },
+        { name: 'THANOS_QUERIER_CACHE_MEMORY_LIMIT', value: '1Gi' },
         { name: 'THANOS_STORE_CPU_REQUEST', value: '500m' },
         { name: 'THANOS_STORE_CPU_LIMIT', value: '2' },
         { name: 'THANOS_STORE_MEMORY_REQUEST', value: '1Gi' },
@@ -354,6 +391,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         { name: 'THANOS_COMPACTOR_CPU_LIMIT', value: '1' },
         { name: 'THANOS_COMPACTOR_MEMORY_REQUEST', value: '1Gi' },
         { name: 'THANOS_COMPACTOR_MEMORY_LIMIT', value: '5Gi' },
+        { name: 'THANOS_QUERIER_SVC_URL', value: 'thanos-querier.observatorium.svc' },
       ]),
   },
 }

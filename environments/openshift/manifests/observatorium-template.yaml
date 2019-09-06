@@ -79,6 +79,92 @@ objects:
         - emptyDir: {}
           name: thanos-compactor-data
     volumeClaimTemplates: []
+- apiVersion: v1
+  data:
+    observatorium-cache-config.yaml: |-
+      "auth_enabled": false
+      "frontend":
+        "align_queries_with_step": true
+        "cache_results": true
+        "compress_responses": true
+        "results_cache":
+          "cache":
+            "enable_fifocache": true
+            "fifocache":
+              "size": 1024
+              "validity": "6h"
+          "max_freshness": "1m"
+        "split_queries_by_day": true
+      "http_prefix": null
+      "server":
+        "http_listen_port": 9091
+      "target": "query-frontend"
+  kind: ConfigMap
+  metadata:
+    labels:
+      app.kubernetes.io/name: observatorium-querier-cache
+    name: observatorium-cache-conf
+    namespace: ${NAMESPACE}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app.kubernetes.io/name: observatorium-querier-cache
+    name: observatorium-querier-cache
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: observatorium-querier-cache
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: observatorium-querier-cache
+      spec:
+        containers:
+        - args:
+          - -config.file=/etc/cache-config/observatorium-cache-conf.yaml
+          - -frontend.downstream-url=thanos-querier.${NAMESPACE}.svc.cluster.local:9090
+          env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          image: quay.io/cortexproject/cortex:master-8533a216
+          name: observatorium-querier-cache
+          ports:
+          - containerPort: 9001
+            name: http
+          resources:
+            limits:
+              cpu: ${THANOS_QUERIER_CACHE_CPU_LIMIT}
+              memory: ${THANOS_QUERIER_CACHE_MEMORY_LIMIT}
+            requests:
+              cpu: ${THANOS_QUERIER_CACHE_CPU_REQUEST}
+              memory: ${THANOS_QUERIER_CACHE_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /etc/cache-config/observatorium-cache-conf.yaml
+            name: querier-cache-config
+            readOnly: false
+        volumes:
+        - configMap:
+            name: observatorium-cache-conf
+          name: querier-cache-config
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/name: observatorium-querier-cache
+    name: observatorium-cache
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - name: http
+      port: 9091
+      targetPort: 9091
+    selector:
+      app.kubernetes.io/name: observatorium-querier-cache
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -765,6 +851,14 @@ parameters:
   value: 256Mi
 - name: THANOS_QUERIER_MEMORY_LIMIT
   value: 1Gi
+- name: THANOS_QUERIER_CACHE_CPU_REQUEST
+  value: 100m
+- name: THANOS_QUERIER_CACHE_CPU_LIMIT
+  value: "1"
+- name: THANOS_QUERIER_CACHE_MEMORY_REQUEST
+  value: 256Mi
+- name: THANOS_QUERIER_CACHE_MEMORY_LIMIT
+  value: 1Gi
 - name: THANOS_STORE_CPU_REQUEST
   value: 500m
 - name: THANOS_STORE_CPU_LIMIT
@@ -789,6 +883,8 @@ parameters:
   value: 1Gi
 - name: THANOS_COMPACTOR_MEMORY_LIMIT
   value: 5Gi
+- name: THANOS_QUERIER_SVC_URL
+  value: thanos-querier.observatorium.svc
 - name: AUTHORIZE_URL
   value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
 - name: IMAGE
