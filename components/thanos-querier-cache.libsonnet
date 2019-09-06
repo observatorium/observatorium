@@ -63,9 +63,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           container.new($.thanos.querierCache.deployment.metadata.name, 'quay.io/cortexproject/cortex:master-8533a216') +
           container.withArgs([
             '-config.file=/etc/cache-config/%s.yaml' % $.thanos.querierCache.configmap.metadata.name,
-            '-frontend.downstream-url=%s.%s.svc.cluster.local' % [
-              $.thanos.querierCache.service.metadata.name,
-              $.thanos.querierCache.service.metadata.namespace,
+            '-frontend.downstream-url=%s.%s.svc.cluster.local:%d' % [
+              $.thanos.querier.service.metadata.name,
+              $.thanos.querier.service.metadata.namespace,
+              $.thanos.querier.service.spec.ports[1].port,
             ],
           ]) + container.withEnv([
             env.fromFieldPath('NAMESPACE', 'metadata.namespace'),

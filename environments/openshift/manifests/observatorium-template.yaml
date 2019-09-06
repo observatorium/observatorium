@@ -125,7 +125,7 @@ objects:
         containers:
         - args:
           - -config.file=/etc/cache-config/observatorium-cache-conf.yaml
-          - -frontend.downstream-url=observatorium-cache.${NAMESPACE}.svc.cluster.local
+          - -frontend.downstream-url=thanos-querier.${NAMESPACE}.svc.cluster.local:9090
           env:
           - name: NAMESPACE
             valueFrom:
