@@ -42,11 +42,4 @@ spec:
           requests:
             cpu: 100m
             memory: 1Gi
-        volumeMounts:
-        - mountPath: /var/thanos/compactor
-          name: thanos-compactor-data
-          readOnly: false
-      volumes:
-      - emptyDir: {}
-        name: thanos-compactor-data
   volumeClaimTemplates: []

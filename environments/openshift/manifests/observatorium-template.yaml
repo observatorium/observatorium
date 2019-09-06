@@ -71,13 +71,6 @@ objects:
             requests:
               cpu: ${THANOS_COMPACTOR_CPU_REQUEST}
               memory: ${THANOS_COMPACTOR_MEMORY_REQUEST}
-          volumeMounts:
-          - mountPath: /var/thanos/compactor
-            name: thanos-compactor-data
-            readOnly: false
-        volumes:
-        - emptyDir: {}
-          name: thanos-compactor-data
     volumeClaimTemplates: []
 - apiVersion: v1
   data:
