@@ -18,7 +18,7 @@ spec:
       containers:
       - args:
         - -config.file=/etc/cache-config/observatorium-cache-conf.yaml
-        - -frontend.downstream-url=thanos-querier.observatorium.svc.cluster.local:9090
+        - -frontend.downstream-url=http://thanos-querier.observatorium.svc.cluster.local:9090
         env:
         - name: NAMESPACE
           valueFrom:
@@ -30,7 +30,7 @@ spec:
         - containerPort: 9001
           name: http
         volumeMounts:
-        - mountPath: /etc/cache-config/observatorium-cache-conf.yaml
+        - mountPath: /etc/cache-config/
           name: querier-cache-config
           readOnly: false
       volumes:

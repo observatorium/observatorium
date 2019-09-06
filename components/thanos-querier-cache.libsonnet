@@ -11,7 +11,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         configmap.mixin.metadata.withNamespace('observatorium') +
         configmap.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.thanos.querierCache.deployment.metadata.name }) +
         configmap.withData({
-          'observatorium-cache-config.yaml': std.manifestYamlDoc(
+          'observatorium-cache-conf.yaml': std.manifestYamlDoc(
             {
               auth_enabled: false,
               target: 'query-frontend',
@@ -64,7 +64,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           container.new($.thanos.querierCache.deployment.metadata.name, 'quay.io/cortexproject/cortex:master-8533a216') +
           container.withArgs([
             '-config.file=/etc/cache-config/%s.yaml' % $.thanos.querierCache.configmap.metadata.name,
-            '-frontend.downstream-url=%s.%s.svc.cluster.local:%d' % [
+            '-frontend.downstream-url=http://%s.%s.svc.cluster.local:%d' % [
               $.thanos.querier.service.metadata.name,
               $.thanos.querier.service.metadata.namespace,
               $.thanos.querier.service.spec.ports[1].port,
@@ -76,7 +76,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
               containerPort.newNamed(9001, 'http'),
             ],
           ) + container.withVolumeMounts([
-            containerVolumeMount.new('querier-cache-config', '/etc/cache-config/%s.yaml' % $.thanos.querierCache.configmap.metadata.name),
+            containerVolumeMount.new('querier-cache-config', '/etc/cache-config/'),
           ],);
 
         deployment.new('observatorium-querier-cache', 1, c, $.thanos.querierCache.deployment.metadata.labels) +

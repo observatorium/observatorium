@@ -391,7 +391,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         { name: 'THANOS_COMPACTOR_CPU_LIMIT', value: '1' },
         { name: 'THANOS_COMPACTOR_MEMORY_REQUEST', value: '1Gi' },
         { name: 'THANOS_COMPACTOR_MEMORY_LIMIT', value: '5Gi' },
-        { name: 'THANOS_QUERIER_SVC_URL', value: 'thanos-querier.observatorium.svc' },
+        { name: 'THANOS_QUERIER_SVC_URL', value: 'http://thanos-querier.observatorium.svc:9090' },
       ]),
   },
 }

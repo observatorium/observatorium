@@ -81,7 +81,7 @@ objects:
     volumeClaimTemplates: []
 - apiVersion: v1
   data:
-    observatorium-cache-config.yaml: |-
+    observatorium-cache-conf.yaml: |-
       "auth_enabled": false
       "frontend":
         "align_queries_with_step": true
@@ -125,7 +125,7 @@ objects:
         containers:
         - args:
           - -config.file=/etc/cache-config/observatorium-cache-conf.yaml
-          - -frontend.downstream-url=thanos-querier.${NAMESPACE}.svc.cluster.local:9090
+          - -frontend.downstream-url=http://thanos-querier.${NAMESPACE}.svc.cluster.local:9090
           env:
           - name: NAMESPACE
             valueFrom:
@@ -144,7 +144,7 @@ objects:
               cpu: ${THANOS_QUERIER_CACHE_CPU_REQUEST}
               memory: ${THANOS_QUERIER_CACHE_MEMORY_REQUEST}
           volumeMounts:
-          - mountPath: /etc/cache-config/observatorium-cache-conf.yaml
+          - mountPath: /etc/cache-config/
             name: querier-cache-config
             readOnly: false
         volumes:
@@ -884,7 +884,7 @@ parameters:
 - name: THANOS_COMPACTOR_MEMORY_LIMIT
   value: 5Gi
 - name: THANOS_QUERIER_SVC_URL
-  value: thanos-querier.observatorium.svc
+  value: http://thanos-querier.observatorium.svc:9090
 - name: AUTHORIZE_URL
   value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
 - name: IMAGE
