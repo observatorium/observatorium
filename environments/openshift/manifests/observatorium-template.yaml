@@ -136,8 +136,6 @@ objects:
           ports:
           - containerPort: 9001
             name: http
-          - containerPort: 9005
-            name: grpc
           resources:
             limits:
               cpu: ${THANOS_QUERIER_CACHE_CPU_LIMIT}

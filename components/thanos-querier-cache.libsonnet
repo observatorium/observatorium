@@ -74,7 +74,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           ]) + container.withPorts(
             [
               containerPort.newNamed(9001, 'http'),
-              containerPort.newNamed(9005, 'grpc'),
             ],
           ) + container.withVolumeMounts([
             containerVolumeMount.new('querier-cache-config', '/etc/cache-config/%s.yaml' % $.thanos.querierCache.configmap.metadata.name),

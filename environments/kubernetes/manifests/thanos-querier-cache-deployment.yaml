@@ -29,8 +29,6 @@ spec:
         ports:
         - containerPort: 9001
           name: http
-        - containerPort: 9005
-          name: grpc
         volumeMounts:
         - mountPath: /etc/cache-config/observatorium-cache-conf.yaml
           name: querier-cache-config
