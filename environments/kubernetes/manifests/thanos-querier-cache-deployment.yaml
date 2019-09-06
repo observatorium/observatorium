@@ -18,7 +18,7 @@ spec:
       containers:
       - args:
         - -config.file=/etc/cache-config/observatorium-cache-conf.yaml
-        - -frontend.downstream-url=observatorium-cache-conf
+        - -frontend.downstream-url=observatorium-cache.observatorium.svc.cluster.local
         env:
         - name: NAMESPACE
           valueFrom:

@@ -30,7 +30,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                     enable_fifocache: true,
                     fifocache: {
                       size: 1024,
-                      validity: '24h',
+                      validity: '6h',
                     },
                   },
                 },
@@ -63,7 +63,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           container.new($.thanos.querierCache.deployment.metadata.name, 'quay.io/cortexproject/cortex:master-8533a216') +
           container.withArgs([
             '-config.file=/etc/cache-config/%s.yaml' % $.thanos.querierCache.configmap.metadata.name,
-            '-frontend.downstream-url=%s' % $.thanos.querierCache.configmap.metadata.name,
+            '-frontend.downstream-url=%s.%s.svc.cluster.local' % [
+              $.thanos.querierCache.service.metadata.name,
+              $.thanos.querierCache.service.metadata.namespace,
+            ],
           ]) + container.withEnv([
             env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
           ]) + container.withPorts(

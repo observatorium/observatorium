@@ -11,7 +11,7 @@ data:
           "enable_fifocache": true
           "fifocache":
             "size": 1024
-            "validity": "24h"
+            "validity": "6h"
         "max_freshness": "1m"
       "split_queries_by_day": true
     "http_prefix": null
