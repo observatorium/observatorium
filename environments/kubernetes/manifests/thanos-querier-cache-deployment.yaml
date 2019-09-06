@@ -31,3 +31,11 @@ spec:
           name: http
         - containerPort: 9005
           name: grpc
+        volumeMounts:
+        - mountPath: /etc/cache-config/observatorium-cache-conf.yaml
+          name: querier-cache-config
+          readOnly: false
+      volumes:
+      - configMap:
+          name: observatorium-cache-conf
+        name: querier-cache-config

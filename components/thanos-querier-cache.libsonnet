@@ -58,6 +58,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         local container = deployment.mixin.spec.template.spec.containersType;
         local containerPort = container.portsType;
         local env = container.envType;
+        local containerVolumeMount = container.volumeMountsType;
 
         local c =
           container.new($.thanos.querierCache.deployment.metadata.name, 'quay.io/cortexproject/cortex:master-8533a216') +
@@ -75,12 +76,17 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
               containerPort.newNamed(9001, 'http'),
               containerPort.newNamed(9005, 'grpc'),
             ],
-          );
+          ) + container.withVolumeMounts([
+            containerVolumeMount.new('querier-cache-config', '/etc/cache-config/%s.yaml' % $.thanos.querierCache.configmap.metadata.name),
+          ],);
 
         deployment.new('observatorium-querier-cache', 1, c, $.thanos.querierCache.deployment.metadata.labels) +
         deployment.mixin.metadata.withNamespace('observatorium') +
         deployment.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.thanos.querierCache.deployment.metadata.name }) +
-        deployment.mixin.spec.selector.withMatchLabels($.thanos.querierCache.deployment.metadata.labels),
+        deployment.mixin.spec.selector.withMatchLabels($.thanos.querierCache.deployment.metadata.labels) +
+        deployment.mixin.spec.template.spec.withVolumes([
+          { name: 'querier-cache-config', configMap: { name: $.thanos.querierCache.configmap.metadata.name } },
+        ]),
     },
   },
 }

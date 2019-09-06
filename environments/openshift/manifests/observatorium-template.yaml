@@ -145,6 +145,14 @@ objects:
             requests:
               cpu: ${THANOS_QUERIER_CACHE_CPU_REQUEST}
               memory: ${THANOS_QUERIER_CACHE_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /etc/cache-config/observatorium-cache-conf.yaml
+            name: querier-cache-config
+            readOnly: false
+        volumes:
+        - configMap:
+            name: observatorium-cache-conf
+          name: querier-cache-config
 - apiVersion: v1
   kind: Service
   metadata:
