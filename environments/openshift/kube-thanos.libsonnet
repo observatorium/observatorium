@@ -272,12 +272,6 @@ local list = import 'telemeter/lib/list.libsonnet';
       roleBinding+: setSubjectNamespace(super.roleBinding) + roleBinding.mixin.metadata.withNamespace(namespace),
     },
     querierCache+: {
-      local setSubjectNamespace(object) = {
-        subjects: [
-          s { namespace: '${NAMESPACE}' }
-          for s in super.subjects
-        ],
-      },
       configmap+:
         configmap.mixin.metadata.withNamespace(namespace),
       service+:
