@@ -47,7 +47,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           'observatorium-cache',
           $.thanos.querierCache.deployment.metadata.labels,
           [
-            ports.newNamed('http', 9091, 9091),
+            ports.newNamed('cache', 9090, 9090),
           ],
         ) +
         service.mixin.metadata.withNamespace('observatorium') +

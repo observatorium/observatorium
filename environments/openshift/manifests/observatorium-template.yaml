@@ -191,21 +191,26 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/name: thanos-querier
-    name: querier-proxy
+    name: querier-cache-proxy
     namespace: ${NAMESPACE}
   type: Opaque
 - apiVersion: v1
   kind: Service
   metadata:
+    annotations:
+      service.alpha.openshift.io/serving-cert-secret-name: querier-tls
     labels:
       app.kubernetes.io/name: observatorium-querier-cache
     name: observatorium-cache
     namespace: ${NAMESPACE}
   spec:
     ports:
-    - name: http
+    - name: cache
+      port: 9090
+      targetPort: 9090
+    - name: proxy
       port: 9091
-      targetPort: 9091
+      targetPort: https
     selector:
       app.kubernetes.io/name: observatorium-querier-cache
 - apiVersion: apps/v1

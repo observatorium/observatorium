@@ -274,7 +274,7 @@ local list = import 'telemeter/lib/list.libsonnet';
     querierCache+: {
       // The proxy secret is there to encrypt session created by the oauth proxy.
       proxySecret:
-        secret.new('querier-proxy', {
+        secret.new('querier-cache-proxy', {
           session_secret: std.base64($.thanos.variables.proxyConfig.sessionSecret),
         }) +
         secret.mixin.metadata.withNamespace(namespace) +
@@ -282,7 +282,16 @@ local list = import 'telemeter/lib/list.libsonnet';
       configmap+:
         configmap.mixin.metadata.withNamespace(namespace),
       service+:
-        service.mixin.metadata.withNamespace(namespace),
+        service.mixin.metadata.withNamespace(namespace) +
+        service.mixin.metadata.withAnnotations({
+          'service.alpha.openshift.io/serving-cert-secret-name': 'querier-tls',
+        }) + {
+          spec+: {
+            ports+: [
+              service.mixin.spec.portsType.newNamed('proxy', 9091, 'https'),
+            ],
+          },
+        },
       deployment+:
         {
           spec+: {
@@ -305,10 +314,10 @@ local list = import 'telemeter/lib/list.libsonnet';
                   container.new('proxy', $.thanos.variables.proxyImage) +
                   container.withArgs([
                     '-provider=openshift',
-                    '-https-address=:%d' % $.thanos.querier.service.spec.ports[2].port,
+                    '-https-address=:%d' % $.thanos.querierCache.service.spec.ports[1].port,
                     '-http-address=',
                     '-email-domain=*',
-                    '-upstream=http://localhost:%d' % $.thanos.querier.service.spec.ports[1].port,
+                    '-upstream=http://localhost:%d' % $.thanos.querierCache.service.spec.ports[0].port,
                     '-openshift-service-account=prometheus-telemeter',
                     '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}',
                     '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}',

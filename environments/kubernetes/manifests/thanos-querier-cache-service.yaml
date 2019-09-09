@@ -7,8 +7,8 @@ metadata:
   namespace: observatorium
 spec:
   ports:
-  - name: http
-    port: 9091
-    targetPort: 9091
+  - name: cache
+    port: 9090
+    targetPort: 9090
   selector:
     app.kubernetes.io/name: observatorium-querier-cache
