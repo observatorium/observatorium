@@ -272,6 +272,13 @@ local list = import 'telemeter/lib/list.libsonnet';
       roleBinding+: setSubjectNamespace(super.roleBinding) + roleBinding.mixin.metadata.withNamespace(namespace),
     },
     querierCache+: {
+      // The proxy secret is there to encrypt session created by the oauth proxy.
+      proxySecret:
+        secret.new('querier-proxy', {
+          session_secret: std.base64($.thanos.variables.proxyConfig.sessionSecret),
+        }) +
+        secret.mixin.metadata.withNamespace(namespace) +
+        secret.mixin.metadata.withLabels({ 'app.kubernetes.io/name': 'thanos-querier' }),
       configmap+:
         configmap.mixin.metadata.withNamespace(namespace),
       service+:
@@ -294,12 +301,44 @@ local list = import 'telemeter/lib/list.libsonnet';
                       },
                     },
                   },
+                ] + [
+                  container.new('proxy', $.thanos.variables.proxyImage) +
+                  container.withArgs([
+                    '-provider=openshift',
+                    '-https-address=:%d' % $.thanos.querier.service.spec.ports[2].port,
+                    '-http-address=',
+                    '-email-domain=*',
+                    '-upstream=http://localhost:%d' % $.thanos.querier.service.spec.ports[1].port,
+                    '-openshift-service-account=prometheus-telemeter',
+                    '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}',
+                    '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}',
+                    '-tls-cert=/etc/tls/private/tls.crt',
+                    '-tls-key=/etc/tls/private/tls.key',
+                    '-client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token',
+                    '-cookie-secret-file=/etc/proxy/secrets/session_secret',
+                    '-openshift-ca=/etc/pki/tls/cert.pem',
+                    '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+                    '-skip-auth-regex=^/metrics',
+                  ]) +
+                  container.withPorts([
+                    { name: 'https', containerPort: $.thanos.querier.service.spec.ports[2].port },
+                  ]) +
+                  container.withVolumeMounts(
+                    [
+                      volumeMount.new('secret-querier-cache-tls', '/etc/tls/private'),
+                      volumeMount.new('secret-querier-cache-proxy', '/etc/proxy/secrets'),
+                    ]
+                  ),
                 ],
               },
             },
           },
         } +
-        deployment.mixin.metadata.withNamespace(namespace),
+        deployment.mixin.metadata.withNamespace(namespace) +
+        deployment.mixin.spec.template.spec.withVolumes([
+          volume.fromSecret('secret-querier-cache-tls', 'querier-cache-tls'),
+          volume.fromSecret('secret-querier-cache-proxy', 'querier-cache-proxy'),
+        ]),
     },
   },
 } + {

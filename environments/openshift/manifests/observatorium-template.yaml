@@ -97,7 +97,7 @@ objects:
         "split_queries_by_day": true
       "http_prefix": null
       "server":
-        "http_listen_port": 9091
+        "http_listen_port": 9090
       "target": "query-frontend"
   kind: ConfigMap
   metadata:
@@ -147,10 +147,53 @@ objects:
           - mountPath: /etc/cache-config/
             name: querier-cache-config
             readOnly: false
+        - args:
+          - -provider=openshift
+          - -https-address=:9091
+          - -http-address=
+          - -email-domain=*
+          - -upstream=http://localhost:9090
+          - -openshift-service-account=prometheus-telemeter
+          - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
+            "namespace": "${NAMESPACE}"}'
+          - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",
+            "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}'
+          - -tls-cert=/etc/tls/private/tls.crt
+          - -tls-key=/etc/tls/private/tls.key
+          - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
+          - -cookie-secret-file=/etc/proxy/secrets/session_secret
+          - -openshift-ca=/etc/pki/tls/cert.pem
+          - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          - -skip-auth-regex=^/metrics
+          image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
+          name: proxy
+          ports:
+          - containerPort: 9091
+            name: https
+          volumeMounts:
+          - mountPath: /etc/tls/private
+            name: secret-querier-cache-tls
+            readOnly: false
+          - mountPath: /etc/proxy/secrets
+            name: secret-querier-cache-proxy
+            readOnly: false
         volumes:
-        - configMap:
-            name: observatorium-cache-conf
-          name: querier-cache-config
+        - name: secret-querier-cache-tls
+          secret:
+            secretName: querier-cache-tls
+        - name: secret-querier-cache-proxy
+          secret:
+            secretName: querier-cache-proxy
+- apiVersion: v1
+  data:
+    session_secret: ""
+  kind: Secret
+  metadata:
+    labels:
+      app.kubernetes.io/name: thanos-querier
+    name: querier-proxy
+    namespace: ${NAMESPACE}
+  type: Opaque
 - apiVersion: v1
   kind: Service
   metadata:

@@ -17,7 +17,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
               target: 'query-frontend',
               http_prefix: null,
               server: {
-                http_listen_port: 9091,
+                http_listen_port: 9090,
               },
               frontend: {
                 split_queries_by_day: true,

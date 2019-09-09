@@ -16,7 +16,7 @@ data:
       "split_queries_by_day": true
     "http_prefix": null
     "server":
-      "http_listen_port": 9091
+      "http_listen_port": 9090
     "target": "query-frontend"
 kind: ConfigMap
 metadata:
