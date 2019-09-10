@@ -339,15 +339,15 @@ local list = import 'telemeter/lib/list.libsonnet';
                     ]
                   ),
                 ],
+                volumes+: [
+                  volume.fromSecret('secret-querier-cache-tls', 'querier-cache-tls'),
+                  volume.fromSecret('secret-querier-cache-proxy', 'querier-cache-proxy'),
+                ],
               },
             },
           },
         } +
-        deployment.mixin.metadata.withNamespace(namespace) +
-        deployment.mixin.spec.template.spec.withVolumes([
-          volume.fromSecret('secret-querier-cache-tls', 'querier-cache-tls'),
-          volume.fromSecret('secret-querier-cache-proxy', 'querier-cache-proxy'),
-        ]),
+        deployment.mixin.metadata.withNamespace(namespace),
     },
   },
 } + {
