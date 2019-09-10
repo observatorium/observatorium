@@ -29,6 +29,19 @@ local sm =
           },
         },
       },
+      compactor+: {
+        serviceMonitor+: {
+          metadata: {
+            name: 'observatorium-thanos-compactor',
+            labels: { prometheus: 'app-sre' },
+          },
+          spec+: {
+            selector+: {
+              matchLabels: { 'app.kubernetes.io/name': 'thanos-compactor' },
+            },
+          },
+        },
+      },
       thanosReceiveController+: {
         serviceMonitor+: {
           metadata: {
@@ -73,6 +86,10 @@ local sm =
     metadata+: { name+: '-stage' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
+  'observatorium-thanos-compactor-stage.servicemonitor': sm.thanos.compactor.serviceMonitor {
+    metadata+: { name+: '-stage' },
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  },
   'observatorium-thanos-receive-controller-stage.servicemonitor': sm.thanos.thanosReceiveController.serviceMonitor {
     metadata+: { name+: '-stage' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
@@ -82,6 +99,10 @@ local sm =
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
   'observatorium-thanos-store-production.servicemonitor': sm.thanos.store.serviceMonitor {
+    metadata+: { name+: '-production' },
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
+  },
+  'observatorium-thanos-compactor-production.servicemonitor': sm.thanos.compactor.serviceMonitor {
     metadata+: { name+: '-production' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
