@@ -17,7 +17,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
               target: 'query-frontend',
               http_prefix: null,
               server: {
-                http_listen_port: 9091,
+                http_listen_port: 9090,
               },
               frontend: {
                 split_queries_by_day: true,
@@ -47,7 +47,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           'observatorium-cache',
           $.thanos.querierCache.deployment.metadata.labels,
           [
-            ports.newNamed('http', 9091, 9091),
+            ports.newNamed('cache', 9090, 9090),
           ],
         ) +
         service.mixin.metadata.withNamespace('observatorium') +
