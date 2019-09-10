@@ -284,7 +284,7 @@ local list = import 'telemeter/lib/list.libsonnet';
       service+:
         service.mixin.metadata.withNamespace(namespace) +
         service.mixin.metadata.withAnnotations({
-          'service.alpha.openshift.io/serving-cert-secret-name': 'querier-tls',
+          'service.alpha.openshift.io/serving-cert-secret-name': 'querier-cache-tls',
         }) + {
           spec+: {
             ports+: [

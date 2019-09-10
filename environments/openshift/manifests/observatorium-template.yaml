@@ -203,7 +203,7 @@ objects:
   kind: Service
   metadata:
     annotations:
-      service.alpha.openshift.io/serving-cert-secret-name: querier-tls
+      service.alpha.openshift.io/serving-cert-secret-name: querier-cache-tls
     labels:
       app.kubernetes.io/name: observatorium-querier-cache
     name: observatorium-cache
