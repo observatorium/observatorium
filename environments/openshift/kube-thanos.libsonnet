@@ -347,7 +347,9 @@ local list = import 'telemeter/lib/list.libsonnet';
             },
           },
         } +
-        deployment.mixin.metadata.withNamespace(namespace),
+        deployment.mixin.metadata.withNamespace(namespace) +
+        deployment.mixin.spec.template.spec.withServiceAccount('prometheus-telemeter') +
+        deployment.mixin.spec.template.spec.withServiceAccountName('prometheus-telemeter'),
     },
   },
 } + {
