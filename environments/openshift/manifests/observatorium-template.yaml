@@ -180,6 +180,9 @@ objects:
             name: secret-querier-cache-proxy
             readOnly: false
         volumes:
+        - configMap:
+            name: observatorium-cache-conf
+          name: querier-cache-config
         - name: secret-querier-cache-tls
           secret:
             secretName: querier-cache-tls
