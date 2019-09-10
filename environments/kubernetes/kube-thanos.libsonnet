@@ -61,7 +61,7 @@ local rolebinding = k.rbac.v1.roleBinding;
                     '--retention.resolution-1h=16d',
                     '--objstore.config=$(OBJSTORE_CONFIG)',
                     '--data-dir=/var/thanos/compactor',
-                    '--debug.accept-malformed-index=true',
+                    '--debug.accept-malformed-index',
                   ],
                 },
               ],
