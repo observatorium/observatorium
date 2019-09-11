@@ -4,28 +4,28 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
 local dashboards = thanos {
   _config+:: {
-    thanosQuerier: 'thanos-querier',
-    thanosStore: 'thanos-store',
-    thanosReceive: 'thanos-receive',
-    thanosRule: 'thanos-rule',
-    thanosCompact: 'thanos-compact',
-    thanosSidecar: 'thanos-sidecar',
+    thanosQuerierJobPrefix: 'thanos-querier',
+    thanosStoreJobPrefix: 'thanos-store',
+    thanosReceiveJobPrefix: 'thanos-receive',
+    thanosRuleJobPrefix: 'thanos-rule',
+    thanosCompactJobPrefix: 'thanos-compactor',
+    thanosSidecarJobPrefix: 'thanos-sidecar',
 
-    thanosQuerierSelector: 'job="%s"' % self.thanosQuerier,
-    thanosStoreSelector: 'job="%s"' % self.thanosStore,
-    thanosReceiveSelector: 'job="%s"' % self.thanosReceive,
-    thanosRuleSelector: 'job="%s"' % self.thanosRule,
-    thanosCompactSelector: 'job="%s"' % self.thanosCompact,
-    thanosSidecarSelector: 'job="%s"' % self.thanosSidecar,
+    thanosQuerierSelector: 'job=~"%s.*"' % self.thanosQuerierJobPrefix,
+    thanosStoreSelector: 'job=~"%s.*"' % self.thanosStoreJobPrefix,
+    thanosReceiveSelector: 'job=~"%s.*"' % self.thanosReceiveJobPrefix,
+    thanosRuleSelector: 'job=~"%s.*"' % self.thanosRuleJobPrefix,
+    thanosCompactSelector: 'job=~"%s.*"' % self.thanosCompactJobPrefix,
+    thanosSidecarSelector: 'job=~"%s.*"' % self.thanosSidecarJobPrefix,
   },
 }.grafanaDashboards;
 
 local thanosReceiveDashboards = thanosReceiveController {
   _config+:: {
-    thanosReceive: 'thanos-receive',
+    thanosReceiveJobPrefix: 'thanos-receive',
     thanosReceiveControllerJobPrefix: 'thanos-receive-controller',
 
-    thanosReceiveSelector: 'job="%s"' % self.thanosReceive,
+    thanosReceiveSelector: 'job=~"%s.*"' % self.thanosReceiveJobPrefix,
     thanosReceiveControllerSelector: 'job=~"%s.*"' % self.thanosReceiveControllerJobPrefix,
   },
 }.grafanaDashboards;

@@ -426,7 +426,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_receive_hashrings_file_changes_total{namespace=\"$namespace\",job=\"thanos-receive\"}[$interval]))",
+                  "expr": "sum(rate(thanos_receive_hashrings_file_changes_total{namespace=\"$namespace\",job=~\"thanos-receive.*\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "all",
@@ -512,7 +512,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_receive_hashrings_file_errors_total{namespace=\"$namespace\",job=\"thanos-receive\"}[$interval])) / sum(rate(thanos_receive_hashrings_file_changes_total{namespace=\"$namespace\",job=\"thanos-receive\"}[$interval]))",
+                  "expr": "sum(rate(thanos_receive_hashrings_file_errors_total{namespace=\"$namespace\",job=~\"thanos-receive.*\"}[$interval])) / sum(rate(thanos_receive_hashrings_file_changes_total{namespace=\"$namespace\",job=~\"thanos-receive.*\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -618,7 +618,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "avg(thanos_receive_hashring_nodes{namespace=\"$namespace\",job=\"thanos-receive\"}) by (name)",
+                  "expr": "avg(thanos_receive_hashring_nodes{namespace=\"$namespace\",job=~\"thanos-receive.*\"}) by (name)",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "receive {{name}}",
@@ -712,7 +712,7 @@ data:
                   "step": 10
                 },
                 {
-                  "expr": "avg(thanos_receive_hashring_tenants{namespace=\"$namespace\",job=\"thanos-receive\"}) by (name)",
+                  "expr": "avg(thanos_receive_hashring_tenants{namespace=\"$namespace\",job=~\"thanos-receive.*\"}) by (name)",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "receive {{name}}",
@@ -899,7 +899,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "time() - max(thanos_receive_config_last_reload_success_timestamp_seconds{namespace=\"$namespace\",job=\"thanos-receive\"})",
+                  "expr": "time() - max(thanos_receive_config_last_reload_success_timestamp_seconds{namespace=\"$namespace\",job=~\"thanos-receive.*\"})",
                   "format": "time_series",
                   "instant": true,
                   "intervalFactor": 2,

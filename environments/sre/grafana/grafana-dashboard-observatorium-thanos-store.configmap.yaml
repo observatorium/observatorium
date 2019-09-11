@@ -3335,7 +3335,7 @@ data:
             "options": [
 
             ],
-            "query": "label_values(up{namespace=\"$namespace\",job=\"thanos-store\"}, job)",
+            "query": "label_values(up{namespace=\"$namespace\",job=~\"thanos-store.*\"}, job)",
             "refresh": 1,
             "regex": "",
             "sort": 2,
