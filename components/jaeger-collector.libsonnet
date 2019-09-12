@@ -44,12 +44,16 @@ local service = k.core.v1.service;
       local mount = container.volumeMountsType;
       local volume = k.apps.v1.statefulSet.mixin.spec.template.spec.volumesType;
 
+      // the assumption based on past perf tests is that this collector should be able to comfortably
+      // ingest at least 2k spans/sec with badger and 256Mi of memory on 1 cpu.
+      // this depends on the span size, but these default values should provide a good base line
       local c =
         container.new($.jaeger.deployment.metadata.name, 'jaegertracing/all-in-one:1.14.0') +
         container.withArgs([
           '--badger.directory-key=/var/jaeger/store/keys',
           '--badger.directory-value=/var/jaeger/store/values',
           '--badger.ephemeral=false',
+          '--collector.queue-size=4000',
         ],) +
         container.withEnv([
           env.new('SPAN_STORAGE_TYPE', 'badger'),
@@ -60,7 +64,13 @@ local service = k.core.v1.service;
             containerPort.newNamed(16686, 'query'),
           ],
         ) +
-        container.withVolumeMounts([mount.new('jaeger-store-data', '/var/jaeger/store')]);
+        container.withVolumeMounts([mount.new('jaeger-store-data', '/var/jaeger/store')]) +
+        container.mixin.readinessProbe.withFailureThreshold(3) +
+        container.mixin.readinessProbe.httpGet.withPath('/').withPort('14269').withScheme('HTTP') +
+        container.mixin.livenessProbe.withFailureThreshold(3) +
+        container.mixin.livenessProbe.httpGet.withPath('/').withPort('14269').withScheme('HTTP') +
+        container.mixin.resources.withRequests({ cpu: '1', memory: '256Mi' }) +
+        container.mixin.resources.withLimits({ cpu: '4', memory: '2Gi' });
 
       deployment.new('jaeger-all-in-one', 1, c, $.jaeger.deployment.metadata.labels) +
       deployment.mixin.metadata.withNamespace('observatorium') +
