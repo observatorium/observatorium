@@ -39,4 +39,4 @@ install-tools:
 all: check vendor build
 
 .PHONY: ci
-ci: all
+ci: all check # we run the check twice, as the manifests might have changed as part of the build
