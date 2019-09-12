@@ -816,6 +816,7 @@ objects:
           - --whitelist={__name__="noobaa_accounts_num"}
           - --whitelist={__name__="noobaa_total_usage"}
           - --elide-label=prometheus_replica
+          - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}
           env:
           - name: NAME
