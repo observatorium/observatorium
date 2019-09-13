@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: observatorium-up
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app: observatorium-up
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: observatorium-up
+        image: quay.io/observatorium/up:master-2020-01-09-89757a5
+        args:
+          - --endpoint-write=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
+          - --endpoint-read=http://observatorium-cache.observatorium.svc.cluster.local:9090/api/v1/query
+          - --period=1s
+          - --duration=2m
+          - --name=foo
+          - --labels=bar="baz"
+          - --latency=10s
+          - --initial-query-delay=5s
+          - --threshold=0.90
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"

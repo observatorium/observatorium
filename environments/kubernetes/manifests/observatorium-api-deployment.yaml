@@ -46,10 +46,3 @@ spec:
             scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 30
-        resources:
-          limits:
-            cpu: "2"
-            memory: 1Gi
-          requests:
-            cpu: "1"
-            memory: 256Mi
