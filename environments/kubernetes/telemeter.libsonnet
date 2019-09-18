@@ -17,6 +17,7 @@
               super.containers[0] {
                 image: image,
                 command+: [
+                  '--token-expire-seconds=3600',
                   '--forward-url=http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
                     $.thanos.receive.service.metadata.name,
                     $.thanos.receive.service.metadata.namespace,
