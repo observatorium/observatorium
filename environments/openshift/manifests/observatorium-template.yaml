@@ -816,6 +816,7 @@ objects:
           - --whitelist={__name__="job:noobaa_total_object_count:sum"}
           - --whitelist={__name__="noobaa_accounts_num"}
           - --whitelist={__name__="noobaa_total_usage"}
+          - --whitelist={__name__="console_url"}
           - --elide-label=prometheus_replica
           - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}
