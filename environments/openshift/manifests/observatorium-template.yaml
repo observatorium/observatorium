@@ -909,6 +909,186 @@ objects:
         - name: telemeter-server-tls
           secret:
             secretName: telemeter-server-shared
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: prometheus-ams-${NAMESPACE}
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - nodes/metrics
+    verbs:
+    - get
+  - nonResourceURLs:
+    - /metrics
+    verbs:
+    - get
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: prometheus-ams-${NAMESPACE}
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: prometheus-ams-${NAMESPACE}
+  subjects:
+  - kind: ServiceAccount
+    name: prometheus-ams
+    namespace: ${NAMESPACE}
+- apiVersion: monitoring.coreos.com/v1
+  kind: Prometheus
+  metadata:
+    labels:
+      prometheus: ams
+    name: ams
+    namespace: ${NAMESPACE}
+  spec:
+    alerting:
+      alertmanagers: []
+    baseImage: ${PROMETHEUS_IMAGE}
+    containers:
+    - args: []
+      image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
+      name: proxy
+      ports:
+      - containerPort: 8080
+        name: https
+      volumeMounts:
+      - mountPath: /nginx.conf
+        name: prometheus-remote-write-proxy-config
+        readOnly: false
+    nodeSelector:
+      kubernetes.io/os: linux
+    podMonitorSelector: {}
+    remoteWrite:
+    - url: http://localhost:8080
+      write_relabel_configs:
+        action: keep
+        regex: subscription_labels
+        source_labels:
+        - __name__
+    replicas: 1
+    resources:
+      limits:
+        cpu: ${PROMETHEUS_CPU_LIMIT}
+        memory: ${PROMETHEUS_MEMORY_LIMIT}
+      requests:
+        cpu: ${PROMETHEUS_CPU_REQUEST}
+        memory: ${PROMETHEUS_MEMORY_REQUEST}
+    ruleSelector:
+      matchLabels:
+        prometheus: ams
+        role: alert-rules
+    securityContext:
+      fsGroup: 2000
+      runAsNonRoot: true
+      runAsUser: 1000
+    serviceAccountName: prometheus-ams
+    serviceMonitorNamespaceSelector: {}
+    serviceMonitorSelector: {}
+    version: ${PROMETHEUS_IMAGE_TAG}
+    volumes:
+    - configMap:
+        items:
+        - nginx.conf
+        name: nginx-config
+      name: prometheus-remote-write-proxy-config
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: prometheus-ams-config
+    namespace: ${NAMESPACE}
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: prometheus-ams-config
+  subjects:
+  - kind: ServiceAccount
+    name: prometheus-ams
+    namespace: ${NAMESPACE}
+- apiVersion: rbac.authorization.k8s.io/v1
+  items:
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: prometheus-ams
+      namespace: observatorium
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: prometheus-ams
+    subjects:
+    - kind: ServiceAccount
+      name: prometheus-ams
+      namespace: observatorium
+  kind: RoleBindingList
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: prometheus-ams-config
+    namespace: ${NAMESPACE}
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    verbs:
+    - get
+- apiVersion: rbac.authorization.k8s.io/v1
+  items:
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      name: prometheus-ams
+      namespace: observatorium
+    rules:
+    - apiGroups:
+      - ""
+      resources:
+      - services
+      - endpoints
+      - pods
+      verbs:
+      - get
+      - list
+      - watch
+  kind: RoleList
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      prometheus: ams
+    name: prometheus-ams
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - name: web
+      port: 9090
+      targetPort: web
+    selector:
+      app: prometheus
+      prometheus: ams
+    sessionAffinity: ClientIP
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: prometheus-ams
+    namespace: ${NAMESPACE}
+- apiVersion: monitoring.coreos.com/v1
+  kind: ServiceMonitor
+  metadata:
+    labels:
+      k8s-app: prometheus
+    name: prometheus
+    namespace: ${NAMESPACE}
+  spec:
+    endpoints:
+    - interval: 30s
+      port: web
+    selector:
+      matchLabels:
+        prometheus: ams
 parameters:
 - name: NAMESPACE
   value: telemeter
@@ -994,3 +1174,19 @@ parameters:
   value: 1Gi
 - name: TELEMETER_FORWARD_URL
   value: ""
+- name: PROMETHEUS_IMAGE
+  value: quay.io/prometheus/prometheus
+- name: PROMETHEUS_IMAGE_TAG
+  value: v2.3.2
+- name: PROXY_IMAGE
+  value: openshift/oauth-proxy
+- name: PROXY_IMAGE_TAG
+  value: v1.1.0
+- name: PROMETHEUS_CPU_REQUEST
+  value: "0"
+- name: PROMETHEUS_CPU_LIMIT
+  value: "0"
+- name: PROMETHEUS_MEMORY_REQUEST
+  value: 400Mi
+- name: PROMETHEUS_MEMORY_LIMIT
+  value: "0"

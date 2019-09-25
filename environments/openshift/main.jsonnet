@@ -5,6 +5,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 
 local app =
   (import 'kube-thanos.libsonnet') +
+  (import 'prometheus.libsonnet') +
   (import 'telemeter.libsonnet') +
   {
     local thanos = super.thanos,
@@ -13,13 +14,15 @@ local app =
       list.asList('observatorium', {}, []) + {
         objects:
           $.thanos.template.objects +
-          $.telemeterServer.list.objects,
+          $.telemeterServer.list.objects +
+          $.prometheus.template.objects,
 
         parameters:
           $.thanos.template.parameters +
           $.telemeterServer.list.parameters + [
             { name: 'TELEMETER_FORWARD_URL', value: '' },
-          ],
+          ] +
+          $.prometheus.template.parameters,
       },
   } + {
     template+: {
