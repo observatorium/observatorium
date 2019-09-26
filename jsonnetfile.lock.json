@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "1b494be5b1257a062aea2b774391ab634a0daac4"
+            "version": "46c5a3dbead8e1d6259e1de4ef757451febcbf06"
         },
         {
             "name": "ksonnet",
@@ -28,7 +28,7 @@
                     "subdir": "jsonnet/thanos-mixin"
                 }
             },
-            "version": "1b494be5b1257a062aea2b774391ab634a0daac4"
+            "version": "46c5a3dbead8e1d6259e1de4ef757451febcbf06"
         },
         {
             "name": "thanos-receive-controller-mixin",
@@ -48,7 +48,7 @@
                     "subdir": "grafana-builder"
                 }
             },
-            "version": "918277932b7e058481e4f227ca4f0e5237d1c2db"
+            "version": "2b9b14d0d91adf8781e5b2c9b62dc8cb180a9886"
         },
         {
             "name": "grafonnet",
@@ -68,7 +68,7 @@
                     "subdir": "jsonnet/telemeter"
                 }
             },
-            "version": "3308c2642bfb673cb6bb61d8e120436675c06c13"
+            "version": "c205c411e3f4fa8339bc06cdda6b1d4a93fc77ae"
         },
         {
             "name": "prometheus-operator",

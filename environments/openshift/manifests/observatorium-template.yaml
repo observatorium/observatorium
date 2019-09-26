@@ -62,10 +62,20 @@ objects:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
           name: thanos-compactor
           ports:
           - containerPort: 10902
             name: http
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
           resources:
             limits:
               cpu: ${THANOS_COMPACTOR_CPU_LIMIT}
@@ -246,12 +256,22 @@ objects:
           - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
           - --store=dnssrv+_grpc._tcp.thanos-receive.${NAMESPACE}.svc.cluster.local
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+              scheme: HTTP
           name: thanos-querier
           ports:
           - containerPort: 10901
             name: grpc
           - containerPort: 9090
             name: http
+          readinessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+              scheme: HTTP
           resources:
             limits:
               cpu: ${THANOS_QUERIER_CPU_LIMIT}
