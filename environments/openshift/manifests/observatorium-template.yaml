@@ -914,12 +914,6 @@ objects:
   metadata:
     name: prometheus-ams-${NAMESPACE}
   rules:
-  - apiGroups:
-    - ""
-    resources:
-    - nodes/metrics
-    verbs:
-    - get
   - nonResourceURLs:
     - /metrics
     verbs:
@@ -936,6 +930,46 @@ objects:
   - kind: ServiceAccount
     name: prometheus-ams
     namespace: ${NAMESPACE}
+- apiVersion: v1
+  data:
+    nginx.conf: |
+      daemon off;
+      worker_processes 1;
+      error_log /dev/stderr;
+      pid /tmp/nginx.pid;
+
+      events {
+          worker_connections 1024;
+      }
+
+      http {
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+
+        upstream app {
+          server http://thanos-receive.${NAMESPACE}.svc.cluster.local:10902/api/v1/receive;
+          keepalive 64;
+        }
+
+        server {
+          listen *:8080;
+          server_name _;
+          access_log  /dev/stdout  main;
+          error_log /dev/stderr;
+
+          location / {
+            proxy_set_header THANOS-TENANT ${THANOS_TENANT};
+            proxy_pass http://app;
+          }
+        }
+      }
+  kind: ConfigMap
+  metadata:
+    labels:
+      prometheus: ams
+    name: remote-write-proxy-config
+    namespace: ${NAMESPACE}
 - apiVersion: monitoring.coreos.com/v1
   kind: Prometheus
   metadata:
@@ -949,15 +983,15 @@ objects:
     baseImage: ${PROMETHEUS_IMAGE}
     containers:
     - args: []
-      image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
-      name: proxy
+      image: quay.io/app-sre/observatorium-receive-proxy:latest
+      name: remote-write-proxy
       ports:
       - containerPort: 8080
-        name: https
+        name: http
       volumeMounts:
       - mountPath: /nginx.conf
         name: prometheus-remote-write-proxy-config
-        readOnly: false
+        readOnly: true
     nodeSelector:
       kubernetes.io/os: linux
     podMonitorSelector: {}
@@ -992,7 +1026,7 @@ objects:
     - configMap:
         items:
         - nginx.conf
-        name: nginx-config
+        name: remote-write-proxy-config
       name: prometheus-remote-write-proxy-config
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: RoleBinding

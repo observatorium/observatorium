@@ -9,30 +9,46 @@ local list = import 'telemeter/lib/list.libsonnet';
 
     versions+:: {
       prometheus: 'v2.11.0',
+      remoteWriteProxy: 'latest',
     },
 
     imageRepos+:: {
       prometheus: 'quay.io/prometheus/prometheus',
+      remoteWriteProxy: 'quay.io/app-sre/observatorium-receive-proxy',
     },
 
     ams+:: {
-      variables+:: {
-        proxyImage: '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}',
-      },
+      proxyPort: 8080,
+      remoteWriteTarget: 'http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
+        $.thanos.receive.service.metadata.name,
+        $.thanos.receive.service.metadata.namespace,
+        $.thanos.receive.service.spec.ports[1].port,
+      ],
+      receiveTenantId: '${THANOS_TENANT}',
+
       prometheus+:: {
+        namespaces: [$._config.namespace],
         name: 'ams',
         replicas: 1,
         rules: {},
         renderedRules: {},
-        namespaces: [$._config.namespace],
-        resourceLimits: {},  // TODO(kakkoyun): Adjust
-        resourceRequests: { memory: '400Mi' },  // TODO(kakkoyun): Adjust
+        resourceLimits: {},
+        resourceRequests: { memory: '400Mi' },
+        remoteWrite: [
+          {
+            url: 'http://localhost:%d' % $._config.ams.proxyPort,
+            write_relabel_configs: {
+              source_labels: ['__name__'],
+              regex: 'subscription_labels',
+              action: 'keep',
+            },
+          },
+        ],
       },
     },
   },
 
   prometheus+:: {
-    // tODO(kakkoyun): Add proxy configmap
     serviceAccount:
       local serviceAccount = k.core.v1.serviceAccount;
 
@@ -82,16 +98,11 @@ local list = import 'telemeter/lib/list.libsonnet';
       local clusterRole = k.rbac.v1.clusterRole;
       local policyRule = clusterRole.rulesType;
 
-      local nodeMetricsRule = policyRule.new() +
-                              policyRule.withApiGroups(['']) +
-                              policyRule.withResources(['nodes/metrics']) +
-                              policyRule.withVerbs(['get']);
-
       local metricsRule = policyRule.new() +
                           policyRule.withNonResourceUrls('/metrics') +
                           policyRule.withVerbs(['get']);
 
-      local rules = [nodeMetricsRule, metricsRule];
+      local rules = [metricsRule];
 
       clusterRole.new() +
       clusterRole.mixin.metadata.withName('prometheus-' + $._config.ams.prometheus.name) +
@@ -162,7 +173,8 @@ local list = import 'telemeter/lib/list.libsonnet';
 
       local resources =
         resourceRequirements.new() +
-        resourceRequirements.withRequests({ memory: '400Mi' });
+        resourceRequirements.withLimits($._config.ams.resourceLimits) +
+        resourceRequirements.withRequests($._config.ams.resourceRequests);
 
       {
         apiVersion: 'monitoring.coreos.com/v1',
@@ -196,31 +208,15 @@ local list = import 'telemeter/lib/list.libsonnet';
             runAsNonRoot: true,
             fsGroup: 2000,
           },
-          remoteWrite: [
-            {
-              url: 'http://localhost:8080',
-              write_relabel_configs: {
-                source_labels: ['__name__'],
-                regex: 'subscription_labels',
-                action: 'keep',
-              },
-            },
-          ],
+          remoteWrite: $._config.ams.prometheus.remoteWrite,
           containers: [
-            container.new('proxy', $._config.ams.variables.proxyImage) +
+            container.new('remote-write-proxy', '%s:%s' % [$._config.imageRepos.remoteWriteProxy, $._config.versions.remoteWriteProxy]) +
             container.withArgs([]) +
-            container.withPorts([
-              // TODO(kakkoyun): Paramaterize
-              { name: 'https', containerPort: 8080 },
-            ]) +
-            container.withVolumeMounts(
-              [
-                volumeMount.new('prometheus-remote-write-proxy-config', '/nginx.conf'),
-              ]
-            ),
+            container.withPorts([{ name: 'http', containerPort: $._config.ams.proxyPort }]) +
+            container.withVolumeMounts([volumeMount.new('prometheus-%s' % $.prometheus.configmap.metadata.name, '/nginx.conf', true)]),
           ],
           volumes+: [
-            volume.fromConfigMap('prometheus-remote-write-proxy-config', 'nginx-config', ['nginx.conf']),
+            volume.fromConfigMap('prometheus-%s' % $.prometheus.configmap.metadata.name, $.prometheus.configmap.metadata.name, ['nginx.conf']),
           ],
         },
       },
@@ -249,6 +245,22 @@ local list = import 'telemeter/lib/list.libsonnet';
           ],
         },
       },
+    configmap:
+      local configmap = k.core.v1.configMap;
+
+      configmap.new() +
+      configmap.mixin.metadata.withName('remote-write-proxy-config') +
+      configmap.mixin.metadata.withNamespace($._config.namespace) +
+      configmap.mixin.metadata.withLabels({ prometheus: $._config.ams.prometheus.name }) +
+      configmap.withData({
+        local f = importstr './prometheus/remote_write_proxy.conf',
+
+        'nginx.conf': std.format(f, {
+          listen_port: $._config.ams.proxyPort,
+          forward_host: $._config.ams.remoteWriteTarget,
+          thanos_tenant: $._config.ams.receiveTenantId,
+        }),
+      }),
   },
 } + {
   local prom = super.prometheus,
