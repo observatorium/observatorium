@@ -34,7 +34,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows rate of requests against /query for the given time.",
               "fill": 10,
               "id": 1,
               "legend": {
@@ -121,7 +120,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows ratio of errors compared to the the total number of handled requests against /query.",
               "fill": 10,
               "id": 2,
               "legend": {
@@ -208,7 +206,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows how long has it taken to handle requests in quantiles.",
               "fill": 1,
               "id": 3,
               "legend": {
@@ -329,7 +326,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows rate of requests against /query_range for the given time range.",
               "fill": 10,
               "id": 4,
               "legend": {
@@ -416,7 +412,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows ratio of errors compared to the the total number of handled requests against /query_range.",
               "fill": 10,
               "id": 5,
               "legend": {
@@ -503,7 +498,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows how long has it taken to handle requests in quantiles.",
               "fill": 1,
               "id": 6,
               "legend": {
@@ -624,7 +618,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows rate of requests against /query for the given time, with handlers and codes.",
               "fill": 10,
               "id": 7,
               "legend": {
@@ -711,7 +704,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows ratio of errors compared to the the total number of handled requests, in more detail.",
               "fill": 10,
               "id": 8,
               "legend": {
@@ -798,7 +790,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows how long has it taken to handle requests in quantiles.",
               "fill": 1,
               "id": 9,
               "legend": {
@@ -930,7 +921,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows rate of handled Unary gRPC requests from other queriers.",
               "fill": 10,
               "id": 10,
               "legend": {
@@ -1017,7 +1007,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows ratio of errors compared to the the total number of handled requests from other queriers.",
               "fill": 10,
               "id": 11,
               "legend": {
@@ -1104,7 +1093,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows how long has it taken to handle requests from other queriers, in quantiles.",
               "fill": 1,
               "id": 12,
               "legend": {
@@ -1219,7 +1207,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows rate of handled Unary gRPC requests, with grpc methods and codes from other queriers.",
               "fill": 10,
               "id": 13,
               "legend": {
@@ -1306,7 +1293,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows ratio of errors compared to the the total number of handled requests from other queriers.",
               "fill": 10,
               "id": 14,
               "legend": {
@@ -1393,7 +1379,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows how long has it taken to handle requests from other queriers, in quantiles.",
               "fill": 1,
               "id": 15,
               "legend": {
@@ -1525,7 +1510,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows rate of handled Streamed gRPC requests from other queriers.",
               "fill": 10,
               "id": 16,
               "legend": {
@@ -1612,7 +1596,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows ratio of errors compared to the the total number of handled requests from other queriers.",
               "fill": 10,
               "id": 17,
               "legend": {
@@ -1699,7 +1682,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows how long has it taken to handle requests from other queriers, in quantiles",
               "fill": 1,
               "id": 18,
               "legend": {
@@ -1814,7 +1796,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows rate of handled Streamed gRPC requests, with grpc methods and codes.",
               "fill": 10,
               "id": 19,
               "legend": {
@@ -1901,7 +1882,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows ratio of errors compared to the the total number of handled requests.",
               "fill": 10,
               "id": 20,
               "legend": {
@@ -1988,7 +1968,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows how long has it taken to handle requests in quantiles.",
               "fill": 1,
               "id": 21,
               "legend": {
@@ -2103,7 +2082,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows rate of DNS lookups to discover stores.",
               "fill": 1,
               "id": 22,
               "legend": {
@@ -2190,7 +2168,6 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
-              "description": "Shows ratio of failures compared to the the total number of executed DNS lookups.",
               "fill": 10,
               "id": 23,
               "legend": {

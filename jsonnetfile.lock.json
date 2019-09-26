@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "46c5a3dbead8e1d6259e1de4ef757451febcbf06"
+            "version": "1b494be5b1257a062aea2b774391ab634a0daac4"
         },
         {
             "name": "ksonnet",
@@ -28,7 +28,7 @@
                     "subdir": "jsonnet/thanos-mixin"
                 }
             },
-            "version": "46c5a3dbead8e1d6259e1de4ef757451febcbf06"
+            "version": "1b494be5b1257a062aea2b774391ab634a0daac4"
         },
         {
             "name": "thanos-receive-controller",
@@ -58,7 +58,7 @@
                     "subdir": "grafana-builder"
                 }
             },
-            "version": "2b9b14d0d91adf8781e5b2c9b62dc8cb180a9886"
+            "version": "918277932b7e058481e4f227ca4f0e5237d1c2db"
         },
         {
             "name": "grafonnet",

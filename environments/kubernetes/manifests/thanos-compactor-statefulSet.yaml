@@ -33,20 +33,10 @@ spec:
               key: thanos.yaml
               name: thanos-objectstorage
         image: quay.io/thanos/thanos:v0.6.1
-        livenessProbe:
-          httpGet:
-            path: /-/healthy
-            port: 10902
-            scheme: HTTP
         name: thanos-compactor
         ports:
         - containerPort: 10902
           name: http
-        readinessProbe:
-          httpGet:
-            path: /-/ready
-            port: 10902
-            scheme: HTTP
         resources:
           limits:
             cpu: 500m
