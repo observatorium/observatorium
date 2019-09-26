@@ -100,7 +100,7 @@ local sm =
     metadata+: { name+: '-stage' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
-  'observatorium-prometheus-ams-stage.servicemonitor': prom.prometheus.serviceMonitor {
+  'observatorium-prometheus-ams-stage.servicemonitor': prom.prometheusAms.serviceMonitor {
     metadata+: { name+: '-stage', labels: { prometheus: 'app-sre' } },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
@@ -120,7 +120,7 @@ local sm =
     metadata+: { name+: '-production' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
-  'observatorium-prometheus-ams-production.servicemonitor': prom.prometheus.serviceMonitor {
+  'observatorium-prometheus-ams-production.servicemonitor': prom.prometheusAms.serviceMonitor {
     metadata+: { name+: '-production', labels: { prometheus: 'app-sre' } },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },

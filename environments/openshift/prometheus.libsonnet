@@ -48,7 +48,7 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
   },
 
-  prometheus+:: {
+  prometheusAms+:: {
     serviceAccount:
       local serviceAccount = k.core.v1.serviceAccount;
 
@@ -210,10 +210,10 @@ local list = import 'telemeter/lib/list.libsonnet';
             container.new('remote-write-proxy', '%s:%s' % [$._config.imageRepos.remoteWriteProxy, $._config.versions.remoteWriteProxy]) +
             container.withArgs([]) +
             container.withPorts([{ name: 'http', containerPort: $._config.ams.proxyPort }]) +
-            container.withVolumeMounts([volumeMount.new('prometheus-%s' % $.prometheus.configmap.metadata.name, '/nginx.conf', true)]),
+            container.withVolumeMounts([volumeMount.new('prometheus-%s' % $.prometheusAms.configmap.metadata.name, '/nginx.conf', true)]),
           ],
           volumes+: [
-            volume.fromConfigMap('prometheus-%s' % $.prometheus.configmap.metadata.name, $.prometheus.configmap.metadata.name, ['nginx.conf']),
+            volume.fromConfigMap('prometheus-%s' % $.prometheusAms.configmap.metadata.name, $.prometheusAms.configmap.metadata.name, ['nginx.conf']),
           ],
         },
       },
@@ -260,8 +260,8 @@ local list = import 'telemeter/lib/list.libsonnet';
       }),
   },
 } + {
-  local prom = super.prometheus,
-  prometheus+:: {
+  local prom = super.prometheusAms,
+  prometheusAms+:: {
     template+:
       list.asList('prometheus-observatorium-ams', prom, []) +
       list.withNamespace($._config) +

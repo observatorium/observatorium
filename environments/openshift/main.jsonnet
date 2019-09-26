@@ -15,14 +15,14 @@ local app =
         objects:
           $.thanos.template.objects +
           $.telemeterServer.list.objects +
-          $.prometheus.template.objects,
+          $.prometheusAms.template.objects,
 
         parameters:
           $.thanos.template.parameters +
           $.telemeterServer.list.parameters + [
             { name: 'TELEMETER_FORWARD_URL', value: '' },
           ] +
-          $.prometheus.template.parameters,
+          $.prometheusAms.template.parameters,
       },
   } + {
     template+: {
