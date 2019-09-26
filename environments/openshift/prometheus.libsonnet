@@ -8,7 +8,7 @@ local list = import 'telemeter/lib/list.libsonnet';
     namespace: namespace,
 
     versions+:: {
-      prometheus: 'v2.11.0',
+      prometheus: 'v2.12.0',
       remoteWriteProxy: 'latest',
     },
 
@@ -24,7 +24,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         $.thanos.receive.service.metadata.namespace,
         $.thanos.receive.service.spec.ports[1].port,
       ],
-      receiveTenantId: '${THANOS_TENANT}',
+      receiveTenantId: '_id',
 
       prometheus+:: {
         namespaces: [$._config.namespace],
@@ -200,9 +200,6 @@ local list = import 'telemeter/lib/list.libsonnet';
             prometheus: $._config.ams.prometheus.name,
           }),
           resources: resources,
-          alerting: {
-            alertmanagers: [],
-          },
           securityContext: {
             runAsUser: 1000,
             runAsNonRoot: true,
@@ -225,7 +222,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         apiVersion: 'monitoring.coreos.com/v1',
         kind: 'ServiceMonitor',
         metadata: {
-          name: 'prometheus',
+          name: 'prometheus-ams',
           namespace: $._config.namespace,
           labels: {
             'k8s-app': 'prometheus',

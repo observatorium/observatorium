@@ -939,7 +939,7 @@ objects:
           error_log /dev/stderr;
 
           location / {
-            proxy_set_header THANOS-TENANT ${THANOS_TENANT};
+            proxy_set_header THANOS-TENANT _id;
             proxy_pass http://app;
           }
         }
@@ -958,8 +958,6 @@ objects:
     name: ams
     namespace: ${NAMESPACE}
   spec:
-    alerting:
-      alertmanagers: []
     baseImage: ${PROMETHEUS_IMAGE}
     containers:
     - args: []
@@ -1094,7 +1092,7 @@ objects:
   metadata:
     labels:
       k8s-app: prometheus
-    name: prometheus
+    name: prometheus-ams
     namespace: ${NAMESPACE}
   spec:
     endpoints:

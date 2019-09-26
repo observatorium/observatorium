@@ -1,3 +1,7 @@
+apiVersion: monitoring.coreos.com/v1
+endpoints:
+- port: http
+kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
