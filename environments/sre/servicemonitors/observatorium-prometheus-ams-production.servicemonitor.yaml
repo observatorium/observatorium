@@ -4,7 +4,6 @@ metadata:
   labels:
     prometheus: app-sre
   name: prometheus-ams-production
-  namespace: ${NAMESPACE}
 spec:
   endpoints:
   - interval: 30s

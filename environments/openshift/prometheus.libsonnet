@@ -4,16 +4,15 @@ local list = import 'telemeter/lib/list.libsonnet';
 
 {
   _config+:: {
-    local namespace = '${NAMESPACE}',
-    namespace: namespace,
+    namespace: 'observatorium',
 
     versions+:: {
-      prometheus: 'v2.12.0',
-      remoteWriteProxy: 'latest',
+      prometheusAms: 'v2.12.0',
+      remoteWriteProxy: '14e844d',
     },
 
     imageRepos+:: {
-      prometheus: 'quay.io/prometheus/prometheus',
+      prometheusAms: 'quay.io/prometheus/prometheus',
       remoteWriteProxy: 'quay.io/app-sre/observatorium-receive-proxy',
     },
 
@@ -173,8 +172,14 @@ local list = import 'telemeter/lib/list.libsonnet';
 
       local resources =
         resourceRequirements.new() +
-        resourceRequirements.withLimits($._config.ams.resourceLimits) +
-        resourceRequirements.withRequests($._config.ams.resourceRequests);
+        resourceRequirements.withLimits({
+          cpu: '${PROMETHEUS_AMS_CPU_LIMIT}',
+          memory: '${PROMETHEUS_AMS_MEMORY_LIMIT}',
+        }) +
+        resourceRequirements.withRequests({
+          cpu: '${PROMETHEUS_AMS_CPU_REQUEST}',
+          memory: '${PROMETHEUS_AMS_MEMORY_REQUEST}',
+        });
 
       {
         apiVersion: 'monitoring.coreos.com/v1',
@@ -188,13 +193,12 @@ local list = import 'telemeter/lib/list.libsonnet';
         },
         spec: {
           replicas: $._config.ams.prometheus.replicas,
-          version: $._config.versions.prometheus,
-          baseImage: $._config.imageRepos.prometheus,
+          version: '${PROMETHEUS_AMS_IMAGE_TAG}',
+          baseImage: '${PROMETHEUS_AMS_IMAGE}',
           serviceAccountName: 'prometheus-' + $._config.ams.prometheus.name,
           serviceMonitorSelector: {},
           podMonitorSelector: {},
           serviceMonitorNamespaceSelector: {},
-          nodeSelector: { 'kubernetes.io/os': 'linux' },
           ruleSelector: selector.withMatchLabels({
             role: 'alert-rules',
             prometheus: $._config.ams.prometheus.name,
@@ -207,7 +211,7 @@ local list = import 'telemeter/lib/list.libsonnet';
           },
           remoteWrite: $._config.ams.prometheus.remoteWrite,
           containers: [
-            container.new('remote-write-proxy', '%s:%s' % [$._config.imageRepos.remoteWriteProxy, $._config.versions.remoteWriteProxy]) +
+            container.new('remote-write-proxy', '${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE}:${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION}') +
             container.withArgs([]) +
             container.withPorts([{ name: 'http', containerPort: $._config.ams.proxyPort }]) +
             container.withVolumeMounts([volumeMount.new('prometheus-%s' % $.prometheusAms.configmap.metadata.name, '/nginx.conf', true)]),
@@ -222,7 +226,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         apiVersion: 'monitoring.coreos.com/v1',
         kind: 'ServiceMonitor',
         metadata: {
-          name: 'prometheus-ams',
+          name: 'prometheus-' + $._config.ams.prometheus.name,
           namespace: $._config.namespace,
           labels: {
             'k8s-app': 'prometheus',
@@ -263,9 +267,55 @@ local list = import 'telemeter/lib/list.libsonnet';
   local prom = super.prometheusAms,
   prometheusAms+:: {
     template+:
-      list.asList('prometheus-observatorium-ams', prom, []) +
-      list.withNamespace($._config) +
-      list.withPrometheusImage($._config) +
-      list.withPrometheusResources($._config.ams.prometheus.resourceRequests, $._config.ams.prometheus.resourceLimits),
+      list.asList('prometheus-observatorium-ams', prom, [
+        {
+          name: 'PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE',
+          value: $._config.imageRepos.remoteWriteProxy,
+        },
+        {
+          name: 'PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION',
+          value: $._config.versions.remoteWriteProxy,
+        },
+        {
+          name: 'PROMETHEUS_AMS_IMAGE',
+          value: $._config.imageRepos.prometheusAms,
+        },
+        {
+          name: 'PROMETHEUS_AMS_IMAGE_TAG',
+          value: $._config.versions.prometheusAms,
+        },
+        {
+          name: 'PROMETHEUS_AMS_CPU_REQUEST',
+          value: if std.objectHas($._config.ams.prometheus.resourceRequests, 'cpu') then $._config.ams.prometheus.resourceRequests.cpu else '0',
+        },
+        {
+          name: 'PROMETHEUS_AMS_CPU_LIMIT',
+          value: if std.objectHas($._config.ams.prometheus.resourceLimits, 'cpu') then $._config.ams.prometheus.resourceLimits.cpu else '0',
+        },
+        {
+          name: 'PROMETHEUS_AMS_MEMORY_REQUEST',
+          value: if std.objectHas($._config.ams.prometheus.resourceRequests, 'memory') then $._config.ams.prometheus.resourceRequests.memory else '0',
+        },
+        {
+          name: 'PROMETHEUS_AMS_MEMORY_LIMIT',
+          value: if std.objectHas($._config.ams.prometheus.resourceLimits, 'memory') then $._config.ams.prometheus.resourceLimits.memory else '0',
+        },
+      ]) +
+      list.withNamespace($._config),
+  } + {
+    local setNamespace(object) =
+      if std.objectHas(object, 'metadata') && std.objectHas(object.metadata, 'namespace') then {
+        metadata+: {
+          namespace: '${NAMESPACE}',
+        },
+      },
+    template+: {
+      objects: [
+        if std.objectHas(o, 'items') then o {
+          items: [i + setNamespace(i) for i in super.items],
+        } else o
+        for o in super.objects
+      ],
+    },
   },
 }

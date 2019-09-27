@@ -958,10 +958,10 @@ objects:
     name: ams
     namespace: ${NAMESPACE}
   spec:
-    baseImage: ${PROMETHEUS_IMAGE}
+    baseImage: ${PROMETHEUS_AMS_IMAGE}
     containers:
     - args: []
-      image: quay.io/app-sre/observatorium-receive-proxy:latest
+      image: ${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE}:${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION}
       name: remote-write-proxy
       ports:
       - containerPort: 8080
@@ -970,8 +970,6 @@ objects:
       - mountPath: /nginx.conf
         name: prometheus-remote-write-proxy-config
         readOnly: true
-    nodeSelector:
-      kubernetes.io/os: linux
     podMonitorSelector: {}
     remoteWrite:
     - url: http://localhost:8080
@@ -983,11 +981,11 @@ objects:
     replicas: 1
     resources:
       limits:
-        cpu: ${PROMETHEUS_CPU_LIMIT}
-        memory: ${PROMETHEUS_MEMORY_LIMIT}
+        cpu: ${PROMETHEUS_AMS_CPU_LIMIT}
+        memory: ${PROMETHEUS_AMS_MEMORY_LIMIT}
       requests:
-        cpu: ${PROMETHEUS_CPU_REQUEST}
-        memory: ${PROMETHEUS_MEMORY_REQUEST}
+        cpu: ${PROMETHEUS_AMS_CPU_REQUEST}
+        memory: ${PROMETHEUS_AMS_MEMORY_REQUEST}
     ruleSelector:
       matchLabels:
         prometheus: ams
@@ -999,7 +997,7 @@ objects:
     serviceAccountName: prometheus-ams
     serviceMonitorNamespaceSelector: {}
     serviceMonitorSelector: {}
-    version: ${PROMETHEUS_IMAGE_TAG}
+    version: ${PROMETHEUS_AMS_IMAGE_TAG}
     volumes:
     - configMap:
         items:
@@ -1025,7 +1023,7 @@ objects:
     kind: RoleBinding
     metadata:
       name: prometheus-ams
-      namespace: observatorium
+      namespace: ${NAMESPACE}
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: Role
@@ -1053,7 +1051,7 @@ objects:
     kind: Role
     metadata:
       name: prometheus-ams
-      namespace: observatorium
+      namespace: ${NAMESPACE}
     rules:
     - apiGroups:
       - ""
@@ -1186,19 +1184,19 @@ parameters:
   value: 1Gi
 - name: TELEMETER_FORWARD_URL
   value: ""
-- name: PROMETHEUS_IMAGE
+- name: PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE
+  value: quay.io/app-sre/observatorium-receive-proxy
+- name: PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION
+  value: 14e844d
+- name: PROMETHEUS_AMS_IMAGE
   value: quay.io/prometheus/prometheus
-- name: PROMETHEUS_IMAGE_TAG
-  value: v2.3.2
-- name: PROXY_IMAGE
-  value: openshift/oauth-proxy
-- name: PROXY_IMAGE_TAG
-  value: v1.1.0
-- name: PROMETHEUS_CPU_REQUEST
+- name: PROMETHEUS_AMS_IMAGE_TAG
+  value: v2.12.0
+- name: PROMETHEUS_AMS_CPU_REQUEST
   value: "0"
-- name: PROMETHEUS_CPU_LIMIT
+- name: PROMETHEUS_AMS_CPU_LIMIT
   value: "0"
-- name: PROMETHEUS_MEMORY_REQUEST
+- name: PROMETHEUS_AMS_MEMORY_REQUEST
   value: 400Mi
-- name: PROMETHEUS_MEMORY_LIMIT
+- name: PROMETHEUS_AMS_MEMORY_LIMIT
   value: "0"

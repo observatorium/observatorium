@@ -4,14 +4,13 @@ metadata:
   labels:
     prometheus: app-sre
   name: prometheus-ams-stage
-  namespace: ${NAMESPACE}
 spec:
   endpoints:
   - interval: 30s
     port: web
   namespaceSelector:
     matchNames:
-    - telemeter-production
+    - telemeter-stage
   selector:
     matchLabels:
       prometheus: ams
