@@ -54,7 +54,7 @@ spec:
             secretKeyRef:
               key: client_id
               name: telemeter-server
-        image: quay.io/app-sre/telemeter:1049e93
+        image: quay.io/app-sre/telemeter:c205c41
         livenessProbe:
           httpGet:
             path: /healthz
