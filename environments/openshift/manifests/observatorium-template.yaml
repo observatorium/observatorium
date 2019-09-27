@@ -909,27 +909,6 @@ objects:
         - name: telemeter-server-tls
           secret:
             secretName: telemeter-server-shared
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRole
-  metadata:
-    name: prometheus-ams-${NAMESPACE}
-  rules:
-  - nonResourceURLs:
-    - /metrics
-    verbs:
-    - get
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRoleBinding
-  metadata:
-    name: prometheus-ams-${NAMESPACE}
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: prometheus-ams-${NAMESPACE}
-  subjects:
-  - kind: ServiceAccount
-    name: prometheus-ams
-    namespace: ${NAMESPACE}
 - apiVersion: v1
   data:
     nginx.conf: |
@@ -1013,7 +992,8 @@ objects:
       fsGroup: 2000
       runAsNonRoot: true
       runAsUser: 1000
-    serviceAccountName: prometheus-ams
+    serviceAccount: prometheus-telemeter
+    serviceAccountName: prometheus-telemeter
     serviceMonitorNamespaceSelector: {}
     serviceMonitorSelector: {}
     version: ${PROMETHEUS_AMS_IMAGE_TAG}
@@ -1023,66 +1003,6 @@ objects:
         - nginx.conf
         name: remote-write-proxy-config
       name: prometheus-remote-write-proxy-config
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: RoleBinding
-  metadata:
-    name: prometheus-ams-config
-    namespace: ${NAMESPACE}
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: Role
-    name: prometheus-ams-config
-  subjects:
-  - kind: ServiceAccount
-    name: prometheus-ams
-    namespace: ${NAMESPACE}
-- apiVersion: rbac.authorization.k8s.io/v1
-  items:
-  - apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      name: prometheus-ams
-      namespace: ${NAMESPACE}
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: Role
-      name: prometheus-ams
-    subjects:
-    - kind: ServiceAccount
-      name: prometheus-ams
-      namespace: ${NAMESPACE}
-  kind: RoleBindingList
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    name: prometheus-ams-config
-    namespace: ${NAMESPACE}
-  rules:
-  - apiGroups:
-    - ""
-    resources:
-    - configmaps
-    verbs:
-    - get
-- apiVersion: rbac.authorization.k8s.io/v1
-  items:
-  - apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      name: prometheus-ams
-      namespace: ${NAMESPACE}
-    rules:
-    - apiGroups:
-      - ""
-      resources:
-      - services
-      - endpoints
-      - pods
-      verbs:
-      - get
-      - list
-      - watch
-  kind: RoleList
 - apiVersion: v1
   kind: Service
   metadata:
@@ -1099,11 +1019,6 @@ objects:
       app: prometheus
       prometheus: ams
     sessionAffinity: ClientIP
-- apiVersion: v1
-  kind: ServiceAccount
-  metadata:
-    name: prometheus-ams
-    namespace: ${NAMESPACE}
 - apiVersion: monitoring.coreos.com/v1
   kind: ServiceMonitor
   metadata:
