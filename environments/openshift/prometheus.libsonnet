@@ -308,10 +308,18 @@ local list = import 'telemeter/lib/list.libsonnet';
           namespace: '${NAMESPACE}',
         },
       },
+    local setSubjectNamespace(object) =
+      if std.endsWith(object.kind, 'Binding') then {
+        subjects: [
+          s { namespace: '${NAMESPACE}' }
+          for s in super.subjects
+        ],
+      }
+      else {},
     template+: {
       objects: [
         if std.objectHas(o, 'items') then o {
-          items: [i + setNamespace(i) for i in super.items],
+          items: [i + setNamespace(i) + setSubjectNamespace(i) for i in super.items],
         } else o
         for o in super.objects
       ],
