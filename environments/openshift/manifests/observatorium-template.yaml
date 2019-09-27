@@ -926,10 +926,7 @@ objects:
                           '$status $body_bytes_sent "$http_referer" '
                           '"$http_user_agent" "$http_x_forwarded_for"';
 
-        upstream app {
-          server http://thanos-receive.${NAMESPACE}.svc.cluster.local:10902/api/v1/receive;
-          keepalive 64;
-        }
+        resolver 127.0.0.1 valid=5s;
 
         server {
           listen *:8080;
@@ -939,7 +936,8 @@ objects:
 
           location / {
             proxy_set_header THANOS-TENANT FB870BF3-9F3A-44FF-9BF7-D7A047A52F43;
-            proxy_pass http://app;
+            set $forward_servers http://thanos-receive.${NAMESPACE}.svc.cluster.local:10902/api/v1/receive;
+            proxy_pass $forward_servers;
           }
         }
       }
