@@ -939,7 +939,7 @@ objects:
           error_log /dev/stderr;
 
           location / {
-            proxy_set_header THANOS-TENANT _id;
+            proxy_set_header THANOS-TENANT FB870BF3-9F3A-44FF-9BF7-D7A047A52F43;
             proxy_pass http://app;
           }
         }

@@ -24,7 +24,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         $.thanos.receive.service.metadata.namespace,
         $.thanos.receive.service.spec.ports[1].port,
       ],
-      receiveTenantId: '_id',
+      receiveTenantId: 'FB870BF3-9F3A-44FF-9BF7-D7A047A52F43',
 
       prometheus+:: {
         namespaces: [$._config.namespace],
