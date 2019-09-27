@@ -197,7 +197,6 @@ local list = import 'telemeter/lib/list.libsonnet';
           baseImage: '${PROMETHEUS_AMS_IMAGE}',
           serviceAccountName: 'prometheus-' + $._config.ams.prometheus.name,
           serviceMonitorSelector: {},
-          podMonitorSelector: {},
           serviceMonitorNamespaceSelector: {},
           ruleSelector: selector.withMatchLabels({
             role: 'alert-rules',

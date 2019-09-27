@@ -970,7 +970,6 @@ objects:
       - mountPath: /nginx.conf
         name: prometheus-remote-write-proxy-config
         readOnly: true
-    podMonitorSelector: {}
     remoteWrite:
     - url: http://localhost:8080
       write_relabel_configs:
