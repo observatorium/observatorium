@@ -22,6 +22,7 @@ local list = import 'telemeter/lib/list.libsonnet';
     variables+: {
       image: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
       proxyImage: '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}',
+      thanosReceiveControllerImage: '${THANOS_RECEIVE_CONTROLLER_IMAGE}:${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}',
       objectStorageConfig+: {
         name: '${THANOS_CONFIG_SECRET}',
         key: 'thanos.yaml',
@@ -265,8 +266,25 @@ local list = import 'telemeter/lib/list.libsonnet';
         serviceAccount.mixin.metadata.withNamespace(namespace),
       service+:
         service.mixin.metadata.withNamespace(namespace),
+      serviceMonitor+: {
+        metadata+: {
+          namespace: namespace,
+        },
+      },
       deployment+:
-        deployment.mixin.metadata.withNamespace(namespace),
+        deployment.mixin.metadata.withNamespace(namespace) + {
+          spec+: {
+            template+: {
+              spec+: {
+                containers: [
+                  super.containers[0] {
+                    image: $.thanos.variables.thanosReceiveControllerImage,
+                  },
+                ],
+              },
+            },
+          },
+        },
       role+:
         role.mixin.metadata.withNamespace(namespace),
       roleBinding+: setSubjectNamespace(super.roleBinding) + roleBinding.mixin.metadata.withNamespace(namespace),
@@ -396,6 +414,14 @@ local list = import 'telemeter/lib/list.libsonnet';
         {
           name: 'PROXY_IMAGE_TAG',
           value: 'v1.1.0',
+        },
+        {
+          name: 'THANOS_RECEIVE_CONTROLLER_IMAGE',
+          value: 'quay.io/observatorium/thanos-receive-controller',
+        },
+        {
+          name: 'THANOS_RECEIVE_CONTROLLER_IMAGE_TAG',
+          value: 'master-2019-08-09-c8204c0',
         },
         {
           name: 'THANOS_QUERIER_REPLICAS',
