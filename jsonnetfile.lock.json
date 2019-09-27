@@ -31,6 +31,16 @@
             "version": "46c5a3dbead8e1d6259e1de4ef757451febcbf06"
         },
         {
+            "name": "thanos-receive-controller",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/observatorium/thanos-receive-controller",
+                    "subdir": "jsonnet/lib"
+                }
+            },
+            "version": "a5fa090cd1c06ce1af7a2d45a8405765877af488"
+        },
+        {
             "name": "thanos-receive-controller-mixin",
             "source": {
                 "git": {
@@ -38,7 +48,7 @@
                     "subdir": "jsonnet/thanos-receive-controller-mixin"
                 }
             },
-            "version": "3614aff27f1d8116b11f9ebb5b81355675e274fd"
+            "version": "a5fa090cd1c06ce1af7a2d45a8405765877af488"
         },
         {
             "name": "grafana-builder",
@@ -68,7 +78,7 @@
                     "subdir": "jsonnet/telemeter"
                 }
             },
-            "version": "c205c411e3f4fa8339bc06cdda6b1d4a93fc77ae"
+            "version": "b8fa131f1c911f46a89f0230d6d624500de0ee16"
         },
         {
             "name": "prometheus-operator",
