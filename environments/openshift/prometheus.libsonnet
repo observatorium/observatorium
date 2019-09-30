@@ -18,6 +18,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 
     ams+:: {
       proxyPort: 8080,
+      dnsResolver: 'kube-dns.kube-system.svc.cluster.local',
       remoteWriteTarget: 'http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
         $.thanos.receive.service.metadata.name,
         $.thanos.receive.service.metadata.namespace,
@@ -36,8 +37,8 @@ local list = import 'telemeter/lib/list.libsonnet';
         remoteWrite: [
           {
             url: 'http://localhost:%d' % $._config.ams.proxyPort,
-            write_relabel_configs: {
-              source_labels: ['__name__'],
+            writeRelabelConfigs: {
+              sourceLabels: ['__name__'],
               regex: 'subscription_labels',
               action: 'keep',
             },
@@ -172,6 +173,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 
         'nginx.conf': std.format(f, {
           listen_port: $._config.ams.proxyPort,
+          dns_resolver: $._config.ams.dnsResolver,
           forward_host: $._config.ams.remoteWriteTarget,
           thanos_tenant: $._config.ams.receiveTenantId,
         }),
