@@ -89,6 +89,16 @@
                 }
             },
             "version": "908ee0372a9ac2c6574d589fdc56a4f3cb5f12d1"
+        },
+        {
+            "name": "slo-libsonnet",
+            "source": {
+                "git": {
+                    "remote": "https://github.com/metalmatze/slo-libsonnet",
+                    "subdir": "slo-libsonnet"
+                }
+            },
+            "version": "427577196fd8511d3f9f8823e7df44953d6caa58"
         }
     ]
 }

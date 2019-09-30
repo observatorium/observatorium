@@ -1,0 +1,127 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: app-sre
+    role: alert-rules
+  name: observatorium-slos-stage
+spec:
+  groups:
+  - name: observatorium.slo.rules
+    rules:
+    - expr: |
+        sum(label_replace(rate(http_requests_total{job="thanos-querier",namespace="telemeter-stage"}[5m]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: status_code:http_requests_total:rate5m:sum
+    - expr: |
+        sum(label_replace(rate(http_requests_total{job="thanos-querier",namespace="telemeter-stage"}[30m]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: status_code:http_requests_total:rate30m:sum
+    - expr: |
+        sum(label_replace(rate(http_requests_total{job="thanos-querier",namespace="telemeter-stage"}[1h]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: status_code:http_requests_total:rate1h:sum
+    - expr: |
+        sum(label_replace(rate(http_requests_total{job="thanos-querier",namespace="telemeter-stage"}[2h]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: status_code:http_requests_total:rate2h:sum
+    - expr: |
+        sum(label_replace(rate(http_requests_total{job="thanos-querier",namespace="telemeter-stage"}[6h]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: status_code:http_requests_total:rate6h:sum
+    - expr: |
+        sum(label_replace(rate(http_requests_total{job="thanos-querier",namespace="telemeter-stage"}[1d]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: status_code:http_requests_total:rate1d:sum
+    - expr: |
+        sum(label_replace(rate(http_requests_total{job="thanos-querier",namespace="telemeter-stage"}[3d]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: status_code:http_requests_total:rate3d:sum
+    - expr: |
+        sum(status_code:http_requests_total:rate5m:sum{job="thanos-querier",namespace="telemeter-stage",status_code="5xx"})
+        /
+        sum(status_code:http_requests_total:rate5m:sum{job="thanos-querier",namespace="telemeter-stage"})
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errors:status_code:http_requests_total:rate5m:sum
+    - expr: |
+        sum(status_code:http_requests_total:rate30m:sum{job="thanos-querier",namespace="telemeter-stage",status_code="5xx"})
+        /
+        sum(status_code:http_requests_total:rate30m:sum{job="thanos-querier",namespace="telemeter-stage"})
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errors:status_code:http_requests_total:rate30m:sum
+    - expr: |
+        sum(status_code:http_requests_total:rate1h:sum{job="thanos-querier",namespace="telemeter-stage",status_code="5xx"})
+        /
+        sum(status_code:http_requests_total:rate1h:sum{job="thanos-querier",namespace="telemeter-stage"})
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errors:status_code:http_requests_total:rate1h:sum
+    - expr: |
+        sum(status_code:http_requests_total:rate2h:sum{job="thanos-querier",namespace="telemeter-stage",status_code="5xx"})
+        /
+        sum(status_code:http_requests_total:rate2h:sum{job="thanos-querier",namespace="telemeter-stage"})
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errors:status_code:http_requests_total:rate2h:sum
+    - expr: |
+        sum(status_code:http_requests_total:rate6h:sum{job="thanos-querier",namespace="telemeter-stage",status_code="5xx"})
+        /
+        sum(status_code:http_requests_total:rate6h:sum{job="thanos-querier",namespace="telemeter-stage"})
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errors:status_code:http_requests_total:rate6h:sum
+    - expr: |
+        sum(status_code:http_requests_total:rate1d:sum{job="thanos-querier",namespace="telemeter-stage",status_code="5xx"})
+        /
+        sum(status_code:http_requests_total:rate1d:sum{job="thanos-querier",namespace="telemeter-stage"})
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errors:status_code:http_requests_total:rate1d:sum
+    - expr: |
+        sum(status_code:http_requests_total:rate3d:sum{job="thanos-querier",namespace="telemeter-stage",status_code="5xx"})
+        /
+        sum(status_code:http_requests_total:rate3d:sum{job="thanos-querier",namespace="telemeter-stage"})
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errors:status_code:http_requests_total:rate3d:sum
+    - alert: ErrorBudgetBurn
+      expr: |
+        (
+          errors:status_code:http_requests_total:rate1h:sum{job="thanos-querier",namespace="telemeter-stage"} > (14.4*0.010000)
+          and
+          errors:status_code:http_requests_total:rate5m:sum{job="thanos-querier",namespace="telemeter-stage"} > (14.4*0.010000)
+        )
+        or
+        (
+          errors:status_code:http_requests_total:rate6h:sum{job="thanos-querier",namespace="telemeter-stage"} > (6*0.010000)
+          and
+          errors:status_code:http_requests_total:rate30m:sum{job="thanos-querier",namespace="telemeter-stage"} > (6*0.010000)
+        )
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+        severity: info
+        window: 30d
