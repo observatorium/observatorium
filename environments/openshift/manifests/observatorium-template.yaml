@@ -926,7 +926,7 @@ objects:
                           '$status $body_bytes_sent "$http_referer" '
                           '"$http_user_agent" "$http_x_forwarded_for"';
 
-        resolver kube-dns.kube-system.svc.cluster.local valid=5s;
+        resolver 172.30.0.10 valid=5s;
 
         server {
           listen *:8080;
@@ -936,7 +936,7 @@ objects:
 
           location / {
             proxy_set_header THANOS-TENANT FB870BF3-9F3A-44FF-9BF7-D7A047A52F43;
-            set $forward_servers http://thanos-receive.${NAMESPACE}.svc.cluster.local:10902/api/v1/receive;
+            set $forward_servers http://thanos-receive.${NAMESPACE}.svc.cluster.local:19291;
             proxy_pass $forward_servers;
           }
         }
@@ -945,8 +945,47 @@ objects:
   metadata:
     labels:
       prometheus: ams
-    name: remote-write-proxy-config
+    name: prometheus-remote-write-proxy-config
     namespace: ${NAMESPACE}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app.kubernetes.io/name: prometheus-remote-write-proxy
+      prometheus: ams
+    name: prometheus-remote-write-proxy
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: prometheus-remote-write-proxy
+        prometheus: ams
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: prometheus-remote-write-proxy
+          prometheus: ams
+      spec:
+        containers:
+        - args:
+          - -c
+          - /config/nginx.conf
+          command:
+          - nginx
+          image: ${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE}:${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION}
+          name: remote-write-proxy
+          ports:
+          - containerPort: 8080
+            name: http
+          volumeMounts:
+          - mountPath: /config
+            name: prometheus-remote-write-proxy-config
+            readOnly: true
+        volumes:
+        - configMap:
+            name: prometheus-remote-write-proxy-config
+          name: prometheus-remote-write-proxy-config
 - apiVersion: monitoring.coreos.com/v1
   kind: Prometheus
   metadata:
@@ -956,21 +995,11 @@ objects:
     namespace: ${NAMESPACE}
   spec:
     baseImage: ${PROMETHEUS_AMS_IMAGE}
-    containers:
-    - args: []
-      image: ${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE}:${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION}
-      name: remote-write-proxy
-      ports:
-      - containerPort: 8080
-        name: http
-      volumeMounts:
-      - mountPath: /nginx.conf
-        name: prometheus-remote-write-proxy-config
-        readOnly: true
+    containers: []
     remoteWrite:
-    - url: http://localhost:8080
+    - url: http://prometheus-ams-remote-write-proxy.${NAMESPACE}.svc.cluster.local:8080/api/v1/receive
       writeRelabelConfigs:
-        action: keep
+      - action: keep
         regex: subscription_labels
         sourceLabels:
         - __name__
@@ -986,21 +1015,29 @@ objects:
       matchLabels:
         prometheus: ams
         role: alert-rules
-    securityContext:
-      fsGroup: 2000
-      runAsNonRoot: true
-      runAsUser: 1000
+    securityContext: {}
     serviceAccount: prometheus-telemeter
     serviceAccountName: prometheus-telemeter
     serviceMonitorNamespaceSelector: {}
-    serviceMonitorSelector: {}
+    serviceMonitorSelector:
+      matchLabels:
+        k8s-app: prometheus-ams
     version: ${PROMETHEUS_AMS_IMAGE_TAG}
-    volumes:
-    - configMap:
-        items:
-        - nginx.conf
-        name: remote-write-proxy-config
-      name: prometheus-remote-write-proxy-config
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      prometheus: ams
+    name: prometheus-ams-remote-write-proxy
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      targetPort: http
+    selector:
+      app.kubernetes.io/name: prometheus-remote-write-proxy
+      prometheus: ams
 - apiVersion: v1
   kind: Service
   metadata:
@@ -1014,14 +1051,14 @@ objects:
       port: 9090
       targetPort: web
     selector:
-      app: prometheus
+      app.kubernetes.io/name: prometheus
       prometheus: ams
     sessionAffinity: ClientIP
 - apiVersion: monitoring.coreos.com/v1
   kind: ServiceMonitor
   metadata:
     labels:
-      k8s-app: prometheus
+      k8s-app: prometheus-ams
     name: prometheus-ams
     namespace: ${NAMESPACE}
   spec:
@@ -1129,6 +1166,6 @@ parameters:
 - name: PROMETHEUS_AMS_CPU_LIMIT
   value: "0"
 - name: PROMETHEUS_AMS_MEMORY_REQUEST
-  value: 400Mi
+  value: "0"
 - name: PROMETHEUS_AMS_MEMORY_LIMIT
   value: "0"

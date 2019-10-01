@@ -18,11 +18,16 @@ local list = import 'telemeter/lib/list.libsonnet';
 
     ams+:: {
       proxyPort: 8080,
-      dnsResolver: 'kube-dns.kube-system.svc.cluster.local',
-      remoteWriteTarget: 'http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
+      dnsResolver: '172.30.0.10',
+      remoteWriteTarget: 'http://%s.%s.svc.cluster.local:%d' % [
         $.thanos.receive.service.metadata.name,
-        $.thanos.receive.service.metadata.namespace,
-        $.thanos.receive.service.spec.ports[1].port,
+        '${NAMESPACE}',
+        $.thanos.receive.service.spec.ports[2].port,
+      ],
+      remoteWriteProxy: 'http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
+        $.prometheusRemoteWriteProxy.proxyService.metadata.name,
+        '${NAMESPACE}',
+        $.prometheusRemoteWriteProxy.proxyService.spec.ports[0].port,
       ],
       receiveTenantId: 'FB870BF3-9F3A-44FF-9BF7-D7A047A52F43',
 
@@ -33,15 +38,17 @@ local list = import 'telemeter/lib/list.libsonnet';
         rules: {},
         renderedRules: {},
         resourceLimits: {},
-        resourceRequests: { memory: '400Mi' },
+        resourceRequests: {},
         remoteWrite: [
           {
-            url: 'http://localhost:%d' % $._config.ams.proxyPort,
-            writeRelabelConfigs: {
-              sourceLabels: ['__name__'],
-              regex: 'subscription_labels',
-              action: 'keep',
-            },
+            url: $._config.ams.remoteWriteProxy,
+            writeRelabelConfigs: [
+              {
+                sourceLabels: ['__name__'],
+                regex: 'subscription_labels',
+                action: 'keep',
+              },
+            ],
           },
         ],
       },
@@ -55,7 +62,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 
       local prometheusPort = servicePort.newNamed('web', 9090, 'web');
 
-      service.new('prometheus-' + $._config.ams.prometheus.name, { app: 'prometheus', prometheus: $._config.ams.prometheus.name }, prometheusPort) +
+      service.new('prometheus-' + $._config.ams.prometheus.name, { 'app.kubernetes.io/name': 'prometheus', prometheus: $._config.ams.prometheus.name }, prometheusPort) +
       service.mixin.spec.withSessionAffinity('ClientIP') +
       service.mixin.metadata.withNamespace($._config.namespace) +
       service.mixin.metadata.withLabels({ prometheus: $._config.ams.prometheus.name }),
@@ -81,9 +88,6 @@ local list = import 'telemeter/lib/list.libsonnet';
       local resourceRequirements = container.mixin.resourcesType;
       local selector = statefulSet.mixin.spec.selectorType;
       local deployment = k.apps.v1.deployment;
-      local container = deployment.mixin.spec.template.spec.containersType;
-      local volume = k.apps.v1beta2.statefulSet.mixin.spec.template.spec.volumesType;
-      local volumeMount = container.volumeMountsType;
 
       local resources =
         resourceRequirements.new() +
@@ -110,30 +114,20 @@ local list = import 'telemeter/lib/list.libsonnet';
           replicas: $._config.ams.prometheus.replicas,
           version: '${PROMETHEUS_AMS_IMAGE_TAG}',
           baseImage: '${PROMETHEUS_AMS_IMAGE}',
+          securityContext: {},
           serviceAccount: 'prometheus-telemeter',
           serviceAccountName: 'prometheus-telemeter',
-          serviceMonitorSelector: {},
+          serviceMonitorSelector: selector.withMatchLabels({
+            'k8s-app': 'prometheus-ams',
+          }),
           serviceMonitorNamespaceSelector: {},
           ruleSelector: selector.withMatchLabels({
             role: 'alert-rules',
             prometheus: $._config.ams.prometheus.name,
           }),
           resources: resources,
-          securityContext: {
-            runAsUser: 1000,
-            runAsNonRoot: true,
-            fsGroup: 2000,
-          },
           remoteWrite: $._config.ams.prometheus.remoteWrite,
-          containers: [
-            container.new('remote-write-proxy', '${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE}:${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION}') +
-            container.withArgs([]) +
-            container.withPorts([{ name: 'http', containerPort: $._config.ams.proxyPort }]) +
-            container.withVolumeMounts([volumeMount.new('prometheus-%s' % $.prometheusAms.configmap.metadata.name, '/nginx.conf', true)]),
-          ],
-          volumes+: [
-            volume.fromConfigMap('prometheus-%s' % $.prometheusAms.configmap.metadata.name, $.prometheusAms.configmap.metadata.name, ['nginx.conf']),
-          ],
+          containers: [],
         },
       },
     serviceMonitor:
@@ -144,7 +138,7 @@ local list = import 'telemeter/lib/list.libsonnet';
           name: 'prometheus-' + $._config.ams.prometheus.name,
           namespace: $._config.namespace,
           labels: {
-            'k8s-app': 'prometheus',
+            'k8s-app': 'prometheus-ams',
           },
         },
         spec: {
@@ -161,11 +155,46 @@ local list = import 'telemeter/lib/list.libsonnet';
           ],
         },
       },
+  },
+
+  prometheusRemoteWriteProxy+:: {
+    proxyService:
+      local service = k.core.v1.service;
+      local servicePort = k.core.v1.service.mixin.spec.portsType;
+
+      local port = servicePort.newNamed('http', 8080, 'http');
+
+      service.new('prometheus-%s-remote-write-proxy' % $._config.ams.prometheus.name, { 'app.kubernetes.io/name': 'prometheus-remote-write-proxy', prometheus: $._config.ams.prometheus.name }, port) +
+      service.mixin.metadata.withNamespace($._config.namespace) +
+      service.mixin.metadata.withLabels({ prometheus: $._config.ams.prometheus.name }),
+    deployment:
+      local deployment = k.apps.v1.deployment;
+      local container = deployment.mixin.spec.template.spec.containersType;
+      local containerPort = container.portsType;
+      local containerVolumeMount = container.volumeMountsType;
+      local volumeMount = container.volumeMountsType;
+
+      local c = container.new('remote-write-proxy', '${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE}:${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION}') +
+                container.withCommand('nginx') +
+                container.withArgs([
+                  '-c',
+                  '/config/nginx.conf',
+                ]) +
+                container.withPorts([{ name: 'http', containerPort: $._config.ams.proxyPort }]) +
+                container.withVolumeMounts([volumeMount.new($.prometheusRemoteWriteProxy.configmap.metadata.name, '/config', true)]);
+
+      deployment.new('prometheus-remote-write-proxy', 1, c, $.prometheusRemoteWriteProxy.deployment.metadata.labels) +
+      deployment.mixin.metadata.withNamespace($._config.namespace) +
+      deployment.mixin.metadata.withLabels($.prometheusRemoteWriteProxy.proxyService.spec.selector) +
+      deployment.mixin.spec.selector.withMatchLabels($.prometheusRemoteWriteProxy.deployment.metadata.labels) +
+      deployment.mixin.spec.template.spec.withVolumes([
+        { name: $.prometheusRemoteWriteProxy.configmap.metadata.name, configMap: { name: $.prometheusRemoteWriteProxy.configmap.metadata.name } },
+      ]),
     configmap:
       local configmap = k.core.v1.configMap;
 
       configmap.new() +
-      configmap.mixin.metadata.withName('remote-write-proxy-config') +
+      configmap.mixin.metadata.withName('prometheus-remote-write-proxy-config') +
       configmap.mixin.metadata.withNamespace($._config.namespace) +
       configmap.mixin.metadata.withLabels({ prometheus: $._config.ams.prometheus.name }) +
       configmap.withData({
@@ -181,9 +210,10 @@ local list = import 'telemeter/lib/list.libsonnet';
   },
 } + {
   local prom = super.prometheusAms,
+  local proxy = super.prometheusRemoteWriteProxy,
   prometheusAms+:: {
     template+:
-      list.asList('prometheus-observatorium-ams', prom, [
+      list.asList('prometheus-observatorium-ams', prom + proxy, [
         {
           name: 'PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE',
           value: $._config.imageRepos.remoteWriteProxy,
