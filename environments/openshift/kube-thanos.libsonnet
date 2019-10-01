@@ -289,6 +289,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         role.mixin.metadata.withNamespace(namespace),
       roleBinding+: setSubjectNamespace(super.roleBinding) + roleBinding.mixin.metadata.withNamespace(namespace),
     },
+
     querierCache+: {
       // The proxy secret is there to encrypt session created by the oauth proxy.
       proxySecret:

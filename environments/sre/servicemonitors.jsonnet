@@ -1,4 +1,5 @@
 local tenants = import '../../tenants.libsonnet';
+local prom = import '../openshift/prometheus.libsonnet';
 local sm =
   (import 'kube-thanos/kube-thanos-servicemonitors.libsonnet') +
   {
@@ -44,6 +45,8 @@ local sm =
       },
       thanosReceiveController+: {
         serviceMonitor+: {
+          apiVersion: 'monitoring.coreos.com/v1',
+          kind: 'ServiceMonitor',
           metadata: {
             name: 'observatorium-thanos-receive-controller',
             labels: { prometheus: 'app-sre' },
@@ -53,6 +56,9 @@ local sm =
               matchLabels: { 'app.kubernetes.io/name': 'thanos-receive-controller' },
             },
           },
+          endpoints: [
+            { port: 'http' },
+          ],
         },
       },
       receive+: {
@@ -94,6 +100,10 @@ local sm =
     metadata+: { name+: '-stage' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
+  'observatorium-prometheus-ams-stage.servicemonitor': prom.prometheusAms.serviceMonitor {
+    metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name + '-stage', labels: { prometheus: 'app-sre' } },
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  },
   'observatorium-thanos-querier-production.servicemonitor': sm.thanos.querier.serviceMonitor {
     metadata+: { name+: '-production' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
@@ -108,6 +118,10 @@ local sm =
   },
   'observatorium-thanos-receive-controller-production.servicemonitor': sm.thanos.thanosReceiveController.serviceMonitor {
     metadata+: { name+: '-production' },
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
+  },
+  'observatorium-prometheus-ams-production.servicemonitor': prom.prometheusAms.serviceMonitor {
+    metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name + '-production', labels: { prometheus: 'app-sre' } },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
 } {

@@ -1,15 +1,16 @@
 apiVersion: monitoring.coreos.com/v1
-endpoints:
-- port: http
 kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: observatorium-thanos-receive-controller-production
+  name: prometheus-ams-production
 spec:
+  endpoints:
+  - interval: 30s
+    port: web
   namespaceSelector:
     matchNames:
     - telemeter-production
   selector:
     matchLabels:
-      app.kubernetes.io/name: thanos-receive-controller
+      prometheus: ams
