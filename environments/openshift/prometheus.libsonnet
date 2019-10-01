@@ -1,4 +1,3 @@
-local k3 = import 'ksonnet/ksonnet.beta.3/k.libsonnet';
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local list = import 'telemeter/lib/list.libsonnet';
 
@@ -118,7 +117,7 @@ local list = import 'telemeter/lib/list.libsonnet';
           serviceAccount: 'prometheus-telemeter',
           serviceAccountName: 'prometheus-telemeter',
           serviceMonitorSelector: selector.withMatchLabels({
-            'k8s-app': 'prometheus-ams',
+            'app.kubernetes.io/name': 'prometheus-ams',
           }),
           serviceMonitorNamespaceSelector: {},
           ruleSelector: selector.withMatchLabels({
@@ -138,7 +137,7 @@ local list = import 'telemeter/lib/list.libsonnet';
           name: 'prometheus-' + $._config.ams.prometheus.name,
           namespace: $._config.namespace,
           labels: {
-            'k8s-app': 'prometheus-ams',
+            'app.kubernetes.io/name': 'prometheus-ams',
           },
         },
         spec: {

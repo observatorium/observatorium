@@ -1021,7 +1021,7 @@ objects:
     serviceMonitorNamespaceSelector: {}
     serviceMonitorSelector:
       matchLabels:
-        k8s-app: prometheus-ams
+        app.kubernetes.io/name: prometheus-ams
     version: ${PROMETHEUS_AMS_IMAGE_TAG}
 - apiVersion: v1
   kind: Service
@@ -1058,7 +1058,7 @@ objects:
   kind: ServiceMonitor
   metadata:
     labels:
-      k8s-app: prometheus-ams
+      app.kubernetes.io/name: prometheus-ams
     name: prometheus-ams
     namespace: ${NAMESPACE}
   spec:
