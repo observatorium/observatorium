@@ -944,7 +944,7 @@ objects:
   kind: ConfigMap
   metadata:
     labels:
-      prometheus: ams
+      app.kubernetes.io/name: prometheus-remote-write-proxy
     name: prometheus-remote-write-proxy-config
     namespace: ${NAMESPACE}
 - apiVersion: apps/v1
@@ -952,7 +952,6 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/name: prometheus-remote-write-proxy
-      prometheus: ams
     name: prometheus-remote-write-proxy
     namespace: ${NAMESPACE}
   spec:
@@ -960,12 +959,10 @@ objects:
     selector:
       matchLabels:
         app.kubernetes.io/name: prometheus-remote-write-proxy
-        prometheus: ams
     template:
       metadata:
         labels:
           app.kubernetes.io/name: prometheus-remote-write-proxy
-          prometheus: ams
       spec:
         containers:
         - args:
@@ -1018,7 +1015,6 @@ objects:
     securityContext: {}
     serviceAccount: prometheus-telemeter
     serviceAccountName: prometheus-telemeter
-    serviceMonitorNamespaceSelector: {}
     serviceMonitorSelector:
       matchLabels:
         app.kubernetes.io/name: prometheus-ams
@@ -1027,7 +1023,7 @@ objects:
   kind: Service
   metadata:
     labels:
-      prometheus: ams
+      app.kubernetes.io/name: prometheus-remote-write-proxy
     name: prometheus-ams-remote-write-proxy
     namespace: ${NAMESPACE}
   spec:
@@ -1037,11 +1033,11 @@ objects:
       targetPort: http
     selector:
       app.kubernetes.io/name: prometheus-remote-write-proxy
-      prometheus: ams
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
+      app.kubernetes.io/name: prometheus-ams
       prometheus: ams
     name: prometheus-ams
     namespace: ${NAMESPACE}
@@ -1051,14 +1047,13 @@ objects:
       port: 9090
       targetPort: web
     selector:
-      app.kubernetes.io/name: prometheus
       prometheus: ams
     sessionAffinity: ClientIP
 - apiVersion: monitoring.coreos.com/v1
   kind: ServiceMonitor
   metadata:
     labels:
-      app.kubernetes.io/name: prometheus-ams
+      prometheus: ams
     name: prometheus-ams
     namespace: ${NAMESPACE}
   spec:
