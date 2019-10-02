@@ -13,4 +13,5 @@ spec:
     - telemeter-stage
   selector:
     matchLabels:
-      prometheus: ams
+      app.kubernetes.io/instance: ams
+      app.kubernetes.io/name: prometheus
