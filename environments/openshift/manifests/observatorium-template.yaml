@@ -90,7 +90,6 @@ objects:
         volumes:
         - emptyDir: {}
           name: thanos-compactor-data
-    volumeClaimTemplates: []
 - apiVersion: v1
   data:
     observatorium-cache-conf.yaml: |-
