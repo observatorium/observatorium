@@ -40,7 +40,6 @@ local list = import 'telemeter/lib/list.libsonnet';
         remoteWrite: [
           {
             url: $._config.ams.remoteWriteProxy,
-            remoteTimeout: '5m',
             writeRelabelConfigs: [
               {
                 sourceLabels: ['__name__'],
@@ -126,7 +125,6 @@ local list = import 'telemeter/lib/list.libsonnet';
           resources: resources,
           remoteWrite: $._config.ams.prometheus.remoteWrite,
           containers: [],
-          logLevel: 'debug',
         },
       },
     serviceMonitor:

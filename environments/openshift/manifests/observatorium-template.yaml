@@ -988,10 +988,8 @@ objects:
   spec:
     baseImage: ${PROMETHEUS_AMS_IMAGE}
     containers: []
-    logLevel: debug
     remoteWrite:
-    - remoteTimeout: 5m
-      url: http://prometheus-ams-remote-write-proxy.${NAMESPACE}.svc.cluster.local:8080/api/v1/receive
+    - url: http://prometheus-ams-remote-write-proxy.${NAMESPACE}.svc.cluster.local:8080/api/v1/receive
       writeRelabelConfigs:
       - action: keep
         regex: subscription_labels
