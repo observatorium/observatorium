@@ -126,6 +126,7 @@ local list = import 'telemeter/lib/list.libsonnet';
           resources: resources,
           remoteWrite: $._config.ams.prometheus.remoteWrite,
           containers: [],
+          logLevel: 'debug',
         },
       },
     serviceMonitor:
