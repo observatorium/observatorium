@@ -4,6 +4,31 @@ local slo = import 'slo-libsonnet/slo.libsonnet';
 local observatoriumSLOs = import '../../slos.libsonnet';
 
 {
+  'telemeter-slos-prod.prometheusrules': {
+    apiVersion: 'monitoring.coreos.com/v1',
+    kind: 'PrometheusRule',
+    metadata: {
+      name: 'telemeter-slos-prod',
+      labels: {
+        prometheus: 'app-sre',
+        role: 'alert-rules',
+      },
+    },
+    spec: {
+      groups: [
+        {
+          name: 'telemeter.slo.rules',
+          rules:
+            local uploadErrors = observatoriumSLOs.telemeterServerUpload.errors {
+              selectors+: ['namespace="telemeter-production"'],
+            };
+
+            slo.errorburn(uploadErrors).recordingrules +
+            slo.errorbudget(uploadErrors).recordingrules,
+        },
+      ],
+    },
+  },
   'observatorium-slos-stage.prometheusrules': {
     apiVersion: 'monitoring.coreos.com/v1',
     kind: 'PrometheusRule',
@@ -19,11 +44,12 @@ local observatoriumSLOs = import '../../slos.libsonnet';
         {
           name: 'observatorium.slo.rules',
           rules:
-            local rangeQueryErrors = observatoriumSLOs.observatoriumRangeQuery.errors {
+            local queryErrors = observatoriumSLOs.observatoriumQuery.errors {
               selectors+: ['namespace="telemeter-stage"'],
             };
-            slo.errorburn(rangeQueryErrors).recordingrules +
-            slo.errorburn(rangeQueryErrors).alerts,
+            slo.errorburn(queryErrors).recordingrules +
+            slo.errorburn(queryErrors).alerts +
+            slo.errorbudget(queryErrors).recordingrules,
         } + {
           // Override all severity to info for now
           rules: [

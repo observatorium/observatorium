@@ -125,3 +125,33 @@ spec:
         namespace: telemeter-stage
         severity: info
         window: 30d
+    - expr: |
+        sum(label_replace(increase(http_requests_total{job="thanos-querier",namespace="telemeter-stage"}[30d]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: status_code:http_requests_total:increase30d:sum
+    - expr: |
+        status_code:http_requests_total:increase30d:sum{job="thanos-querier",namespace="telemeter-stage",status_code="5xx"}
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errors:status_code:http_requests_total:increase30d:sum
+    - expr: |
+        (0.010000) * sum(status_code:http_requests_total:increase30d:sum)
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errorbudget_requests:status_code:http_requests_total:increase30d:sum
+    - expr: |
+        sum(errorbudget_requests:status_code:http_requests_total:increase30d:sum{job="thanos-querier",namespace="telemeter-stage"}) - sum(errors:status_code:http_requests_total:increase30d:sum{job="thanos-querier",namespace="telemeter-stage"})
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errorbudget_remaining:status_code:http_requests_total:increase30d:sum
+    - expr: |
+        errorbudget_remaining:status_code:http_requests_total:increase30d:sum / errorbudget_requests:status_code:http_requests_total:increase30d:sum
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+      record: errorbudget:status_code:http_requests_total:increase30d:sum
