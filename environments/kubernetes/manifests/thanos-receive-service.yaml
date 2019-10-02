@@ -6,7 +6,6 @@ metadata:
   name: thanos-receive
   namespace: observatorium
 spec:
-  clusterIP: None
   ports:
   - name: grpc
     port: 10901

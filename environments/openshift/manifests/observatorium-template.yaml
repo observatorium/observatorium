@@ -475,7 +475,6 @@ objects:
     name: thanos-receive
     namespace: ${NAMESPACE}
   spec:
-    clusterIP: None
     ports:
     - name: grpc
       port: 10901
@@ -925,8 +924,6 @@ objects:
                           '$status $body_bytes_sent "$http_referer" '
                           '"$http_user_agent" "$http_x_forwarded_for"';
 
-        resolver 172.30.0.10 valid=5s;
-
         server {
           listen *:8080;
           server_name _;
@@ -935,8 +932,7 @@ objects:
 
           location / {
             proxy_set_header THANOS-TENANT FB870BF3-9F3A-44FF-9BF7-D7A047A52F43;
-            set $forward_servers http://thanos-receive.${NAMESPACE}.svc.cluster.local:19291;
-            proxy_pass $forward_servers;
+            proxy_pass http://thanos-receive.${NAMESPACE}.svc.cluster.local:19291;
           }
         }
       }
