@@ -17,7 +17,6 @@ local list = import 'telemeter/lib/list.libsonnet';
 
     ams+:: {
       proxyPort: 8080,
-      dnsResolver: '172.30.0.10',
       remoteWriteTarget: 'http://%s.%s.svc.cluster.local:%d' % [
         $.thanos.receive.service.metadata.name,
         '${NAMESPACE}',

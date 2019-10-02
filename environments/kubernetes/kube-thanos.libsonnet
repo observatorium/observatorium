@@ -88,6 +88,10 @@ local rolebinding = k.rbac.v1.roleBinding;
         }
       for tenant in tenants
     } + {
+      // Service for each statefulset will be headless,
+      // - while overarching statefulset will have cluster IP.
+      service+: { spec+: { clusterIP:: '' } },
+    } + {
       ['statefulSet-' + tenant.hashring]:
         super.statefulSet +
         {
