@@ -41,6 +41,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         remoteWrite: [
           {
             url: $._config.ams.remoteWriteProxy,
+            remoteTimeout: '5m',
             writeRelabelConfigs: [
               {
                 sourceLabels: ['__name__'],
