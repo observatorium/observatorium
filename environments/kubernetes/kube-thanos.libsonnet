@@ -31,6 +31,33 @@ local rolebinding = k.rbac.v1.roleBinding;
       service+:
         service.mixin.metadata.withNamespace(namespace),
       deployment+:
+        {
+          spec+: {
+            template+: {
+              spec+: {
+                containers: [
+                  super.containers[0]
+                  { args: [
+                    'query',
+                    '--query.replica-label=replica',
+                    '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
+                    '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
+                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                      $.thanos.store.service.metadata.name,
+                      $.thanos.store.service.metadata.namespace,
+                    ],
+                  ] + [
+                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                      $.thanos.receive['service-' + tenant.hashring].metadata.name,
+                      $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
+                    ]
+                    for tenant in tenants
+                  ] },
+                ],
+              },
+            },
+          },
+        } +
         deployment.mixin.metadata.withNamespace(namespace) +
         deployment.mixin.spec.withReplicas(3),
     },
