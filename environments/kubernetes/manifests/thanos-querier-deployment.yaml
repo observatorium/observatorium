@@ -23,7 +23,7 @@ spec:
         - --http-address=0.0.0.0:9090
         - --store=dnssrv+_grpc._tcp.thanos-store.observatorium.svc.cluster.local
         - --store=dnssrv+_grpc._tcp.thanos-receive.observatorium.svc.cluster.local
-        image: quay.io/thanos/thanos:v0.6.1
+        image: quay.io/thanos/thanos:v0.7.0
         livenessProbe:
           httpGet:
             path: /-/healthy

@@ -32,7 +32,7 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
-        image: quay.io/thanos/thanos:v0.6.1
+        image: quay.io/thanos/thanos:v0.7.0
         livenessProbe:
           httpGet:
             path: /-/healthy
