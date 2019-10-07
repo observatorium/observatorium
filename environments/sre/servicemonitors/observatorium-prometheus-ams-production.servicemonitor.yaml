@@ -13,4 +13,5 @@ spec:
     - telemeter-production
   selector:
     matchLabels:
-      prometheus: ams
+      app.kubernetes.io/instance: ams
+      app.kubernetes.io/name: prometheus

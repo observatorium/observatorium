@@ -939,25 +939,31 @@ objects:
   kind: ConfigMap
   metadata:
     labels:
-      app.kubernetes.io/name: prometheus-remote-write-proxy
+      app.kubernetes.io/instance: remote-write-proxy
+      app.kubernetes.io/name: nginx
+      app.kubernetes.io/part-of: prometheus-ams
     name: prometheus-remote-write-proxy-config
     namespace: ${NAMESPACE}
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
-      app.kubernetes.io/name: prometheus-remote-write-proxy
+      app.kubernetes.io/instance: remote-write-proxy
+      app.kubernetes.io/name: nginx
+      app.kubernetes.io/part-of: prometheus-ams
     name: prometheus-remote-write-proxy
     namespace: ${NAMESPACE}
   spec:
     replicas: 1
     selector:
       matchLabels:
-        app.kubernetes.io/name: prometheus-remote-write-proxy
+        app.kubernetes.io/instance: remote-write-proxy
+        app.kubernetes.io/name: nginx
     template:
       metadata:
         labels:
-          app.kubernetes.io/name: prometheus-remote-write-proxy
+          app.kubernetes.io/instance: remote-write-proxy
+          app.kubernetes.io/name: nginx
       spec:
         containers:
         - args:
@@ -982,6 +988,9 @@ objects:
   kind: Prometheus
   metadata:
     labels:
+      app.kubernetes.io/instance: ams
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: prometheus-ams
       prometheus: ams
     name: ams
     namespace: ${NAMESPACE}
@@ -1012,13 +1021,15 @@ objects:
     serviceAccountName: prometheus-telemeter
     serviceMonitorSelector:
       matchLabels:
-        app.kubernetes.io/name: prometheus-ams
+        prometheus: ams
     version: ${PROMETHEUS_AMS_IMAGE_TAG}
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
-      app.kubernetes.io/name: prometheus-remote-write-proxy
+      app.kubernetes.io/instance: remote-write-proxy
+      app.kubernetes.io/name: nginx
+      app.kubernetes.io/part-of: prometheus-ams
     name: prometheus-ams-remote-write-proxy
     namespace: ${NAMESPACE}
   spec:
@@ -1027,12 +1038,15 @@ objects:
       port: 8080
       targetPort: http
     selector:
-      app.kubernetes.io/name: prometheus-remote-write-proxy
+      app.kubernetes.io/instance: remote-write-proxy
+      app.kubernetes.io/name: nginx
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
-      app.kubernetes.io/name: prometheus-ams
+      app.kubernetes.io/instance: ams
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: prometheus-ams
       prometheus: ams
     name: prometheus-ams
     namespace: ${NAMESPACE}
@@ -1048,7 +1062,9 @@ objects:
   kind: ServiceMonitor
   metadata:
     labels:
-      prometheus: ams
+      app.kubernetes.io/instance: ams
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: prometheus-ams
     name: prometheus-ams
     namespace: ${NAMESPACE}
   spec:
@@ -1057,7 +1073,8 @@ objects:
       port: web
     selector:
       matchLabels:
-        prometheus: ams
+        app.kubernetes.io/instance: ams
+        app.kubernetes.io/name: prometheus
 parameters:
 - name: NAMESPACE
   value: telemeter
