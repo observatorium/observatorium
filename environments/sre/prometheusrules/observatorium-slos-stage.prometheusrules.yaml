@@ -125,6 +125,24 @@ spec:
         namespace: telemeter-stage
         severity: info
         window: 30d
+    - alert: ErrorBudgetBurn
+      expr: |
+        (
+          errors:status_code:http_requests_total:rate1d:sum{job="thanos-querier",namespace="telemeter-stage"} > (3*0.010000)
+          and
+          errors:status_code:http_requests_total:rate2h:sum{job="thanos-querier",namespace="telemeter-stage"} > (3*0.010000)
+        )
+        or
+        (
+          errors:status_code:http_requests_total:rate3d:sum{job="thanos-querier",namespace="telemeter-stage"} > (0.010000)
+          and
+          errors:status_code:http_requests_total:rate6h:sum{job="thanos-querier",namespace="telemeter-stage"} > (0.010000)
+        )
+      labels:
+        job: thanos-querier
+        namespace: telemeter-stage
+        severity: info
+        window: 30d
     - expr: |
         sum(label_replace(increase(http_requests_total{job="thanos-querier",namespace="telemeter-stage"}[30d]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
       labels:

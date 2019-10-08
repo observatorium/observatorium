@@ -78,7 +78,7 @@
                     "subdir": "slo-libsonnet"
                 }
             },
-            "version": "master"
+            "version": "all"
         }
     ]
 }
