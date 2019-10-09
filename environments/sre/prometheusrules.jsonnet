@@ -29,11 +29,11 @@ local observatoriumSLOs = import '../../slos.libsonnet';
       ],
     },
   },
-  'observatorium-slos-stage.prometheusrules': {
+  'observatorium-slos-production.prometheusrules': {
     apiVersion: 'monitoring.coreos.com/v1',
     kind: 'PrometheusRule',
     metadata: {
-      name: 'observatorium-slos-stage',
+      name: 'observatorium-slos-production',
       labels: {
         prometheus: 'app-sre',
         role: 'alert-rules',
@@ -45,7 +45,7 @@ local observatoriumSLOs = import '../../slos.libsonnet';
           name: 'observatorium.slo.rules',
           rules:
             local queryErrors = observatoriumSLOs.observatoriumQuery.errors {
-              selectors+: ['namespace="telemeter-stage"'],
+              selectors+: ['namespace="telemeter-production"'],
             };
             slo.errorburn(queryErrors).recordingrules +
             slo.errorburn(queryErrors).alerts +

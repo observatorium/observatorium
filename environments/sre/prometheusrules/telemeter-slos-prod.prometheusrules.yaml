@@ -10,117 +10,145 @@ spec:
   - name: telemeter.slo.rules
     rules:
     - expr: |
-        sum(label_replace(rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[5m]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+        sum by (status_class) (
+          label_replace(
+            rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[5m]
+          ), "status_class", "${1}xx", "code", "([0-9])..")
+        )
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: status_code:http_requests_total:rate5m:sum
+      record: status_class:http_requests_total:rate5m
     - expr: |
-        sum(label_replace(rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[30m]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+        sum by (status_class) (
+          label_replace(
+            rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[30m]
+          ), "status_class", "${1}xx", "code", "([0-9])..")
+        )
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: status_code:http_requests_total:rate30m:sum
+      record: status_class:http_requests_total:rate30m
     - expr: |
-        sum(label_replace(rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[1h]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+        sum by (status_class) (
+          label_replace(
+            rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[1h]
+          ), "status_class", "${1}xx", "code", "([0-9])..")
+        )
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: status_code:http_requests_total:rate1h:sum
+      record: status_class:http_requests_total:rate1h
     - expr: |
-        sum(label_replace(rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[2h]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+        sum by (status_class) (
+          label_replace(
+            rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[2h]
+          ), "status_class", "${1}xx", "code", "([0-9])..")
+        )
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: status_code:http_requests_total:rate2h:sum
+      record: status_class:http_requests_total:rate2h
     - expr: |
-        sum(label_replace(rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[6h]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+        sum by (status_class) (
+          label_replace(
+            rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[6h]
+          ), "status_class", "${1}xx", "code", "([0-9])..")
+        )
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: status_code:http_requests_total:rate6h:sum
+      record: status_class:http_requests_total:rate6h
     - expr: |
-        sum(label_replace(rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[1d]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+        sum by (status_class) (
+          label_replace(
+            rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[1d]
+          ), "status_class", "${1}xx", "code", "([0-9])..")
+        )
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: status_code:http_requests_total:rate1d:sum
+      record: status_class:http_requests_total:rate1d
     - expr: |
-        sum(label_replace(rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[3d]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
+        sum by (status_class) (
+          label_replace(
+            rate(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[3d]
+          ), "status_class", "${1}xx", "code", "([0-9])..")
+        )
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: status_code:http_requests_total:rate3d:sum
+      record: status_class:http_requests_total:rate3d
     - expr: |
-        sum(status_code:http_requests_total:rate5m:sum{service="telemeter-server",handler="upload",namespace="telemeter-production",status_code="5xx"})
+        sum(status_class:http_requests_total:rate5m{service="telemeter-server",handler="upload",namespace="telemeter-production",status_class="5xx"})
         /
-        sum(status_code:http_requests_total:rate5m:sum{service="telemeter-server",handler="upload",namespace="telemeter-production"})
+        sum(status_class:http_requests_total:rate5m{service="telemeter-server",handler="upload",namespace="telemeter-production"})
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: errors:status_code:http_requests_total:rate5m:sum
+      record: status_class_5xx:http_requests_total:ratio_rate5m
     - expr: |
-        sum(status_code:http_requests_total:rate30m:sum{service="telemeter-server",handler="upload",namespace="telemeter-production",status_code="5xx"})
+        sum(status_class:http_requests_total:rate30m{service="telemeter-server",handler="upload",namespace="telemeter-production",status_class="5xx"})
         /
-        sum(status_code:http_requests_total:rate30m:sum{service="telemeter-server",handler="upload",namespace="telemeter-production"})
+        sum(status_class:http_requests_total:rate30m{service="telemeter-server",handler="upload",namespace="telemeter-production"})
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: errors:status_code:http_requests_total:rate30m:sum
+      record: status_class_5xx:http_requests_total:ratio_rate30m
     - expr: |
-        sum(status_code:http_requests_total:rate1h:sum{service="telemeter-server",handler="upload",namespace="telemeter-production",status_code="5xx"})
+        sum(status_class:http_requests_total:rate1h{service="telemeter-server",handler="upload",namespace="telemeter-production",status_class="5xx"})
         /
-        sum(status_code:http_requests_total:rate1h:sum{service="telemeter-server",handler="upload",namespace="telemeter-production"})
+        sum(status_class:http_requests_total:rate1h{service="telemeter-server",handler="upload",namespace="telemeter-production"})
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: errors:status_code:http_requests_total:rate1h:sum
+      record: status_class_5xx:http_requests_total:ratio_rate1h
     - expr: |
-        sum(status_code:http_requests_total:rate2h:sum{service="telemeter-server",handler="upload",namespace="telemeter-production",status_code="5xx"})
+        sum(status_class:http_requests_total:rate2h{service="telemeter-server",handler="upload",namespace="telemeter-production",status_class="5xx"})
         /
-        sum(status_code:http_requests_total:rate2h:sum{service="telemeter-server",handler="upload",namespace="telemeter-production"})
+        sum(status_class:http_requests_total:rate2h{service="telemeter-server",handler="upload",namespace="telemeter-production"})
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: errors:status_code:http_requests_total:rate2h:sum
+      record: status_class_5xx:http_requests_total:ratio_rate2h
     - expr: |
-        sum(status_code:http_requests_total:rate6h:sum{service="telemeter-server",handler="upload",namespace="telemeter-production",status_code="5xx"})
+        sum(status_class:http_requests_total:rate6h{service="telemeter-server",handler="upload",namespace="telemeter-production",status_class="5xx"})
         /
-        sum(status_code:http_requests_total:rate6h:sum{service="telemeter-server",handler="upload",namespace="telemeter-production"})
+        sum(status_class:http_requests_total:rate6h{service="telemeter-server",handler="upload",namespace="telemeter-production"})
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: errors:status_code:http_requests_total:rate6h:sum
+      record: status_class_5xx:http_requests_total:ratio_rate6h
     - expr: |
-        sum(status_code:http_requests_total:rate1d:sum{service="telemeter-server",handler="upload",namespace="telemeter-production",status_code="5xx"})
+        sum(status_class:http_requests_total:rate1d{service="telemeter-server",handler="upload",namespace="telemeter-production",status_class="5xx"})
         /
-        sum(status_code:http_requests_total:rate1d:sum{service="telemeter-server",handler="upload",namespace="telemeter-production"})
+        sum(status_class:http_requests_total:rate1d{service="telemeter-server",handler="upload",namespace="telemeter-production"})
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: errors:status_code:http_requests_total:rate1d:sum
+      record: status_class_5xx:http_requests_total:ratio_rate1d
     - expr: |
-        sum(status_code:http_requests_total:rate3d:sum{service="telemeter-server",handler="upload",namespace="telemeter-production",status_code="5xx"})
+        sum(status_class:http_requests_total:rate3d{service="telemeter-server",handler="upload",namespace="telemeter-production",status_class="5xx"})
         /
-        sum(status_code:http_requests_total:rate3d:sum{service="telemeter-server",handler="upload",namespace="telemeter-production"})
+        sum(status_class:http_requests_total:rate3d{service="telemeter-server",handler="upload",namespace="telemeter-production"})
       labels:
         handler: upload
         namespace: telemeter-production
         service: telemeter-server
-      record: errors:status_code:http_requests_total:rate3d:sum
+      record: status_class_5xx:http_requests_total:ratio_rate3d
     - expr: |
         sum(label_replace(increase(http_requests_total{service="telemeter-server",handler="upload",namespace="telemeter-production"}[30d]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
       labels:
