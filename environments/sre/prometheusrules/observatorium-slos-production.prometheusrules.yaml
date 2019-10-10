@@ -169,24 +169,6 @@ spec:
         job: thanos-querier
         namespace: telemeter-production
         severity: info
-    - alert: ErrorBudgetBurn
-      expr: |
-        (
-          status_class_5xx:http_requests_total:ratio_rate1d{job="thanos-querier",namespace="telemeter-production"} > (3*0.010000)
-          and
-          status_class_5xx:http_requests_total:ratio_rate2h{job="thanos-querier",namespace="telemeter-production"} > (3*0.010000)
-        )
-        or
-        (
-          status_class_5xx:http_requests_total:ratio_rate3d{job="thanos-querier",namespace="telemeter-production"} > (0.010000)
-          and
-          status_class_5xx:http_requests_total:ratio_rate6h{job="thanos-querier",namespace="telemeter-production"} > (0.010000)
-        )
-      labels:
-        job: thanos-querier
-        namespace: telemeter-production
-        severity: info
-        window: 30d
     - expr: |
         sum(label_replace(increase(http_requests_total{job="thanos-querier",namespace="telemeter-production"}[30d]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
       labels:
