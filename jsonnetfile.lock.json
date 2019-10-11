@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "af85d5adcf14723114167d7812b72bada7f746de"
+            "version": "ec9d51f6cfb448ba8e6b9b6ffe6a0b10398d8797"
         },
         {
             "name": "ksonnet",
@@ -28,7 +28,7 @@
                     "subdir": "jsonnet/thanos-mixin"
                 }
             },
-            "version": "af85d5adcf14723114167d7812b72bada7f746de"
+            "version": "ec9d51f6cfb448ba8e6b9b6ffe6a0b10398d8797"
         },
         {
             "name": "thanos-receive-controller",
