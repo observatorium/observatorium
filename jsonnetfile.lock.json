@@ -8,7 +8,7 @@
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
-            "version": "a20498991312fe71f934b27a22c77e2852252fac"
+            "version": "02a9ecd520895680272f3b99170600b6fc4fd8ad"
         },
         {
             "name": "ksonnet",
@@ -28,7 +28,7 @@
                     "subdir": "jsonnet/thanos-mixin"
                 }
             },
-            "version": "a20498991312fe71f934b27a22c77e2852252fac"
+            "version": "02a9ecd520895680272f3b99170600b6fc4fd8ad"
         },
         {
             "name": "thanos-receive-controller",
@@ -78,7 +78,7 @@
                     "subdir": "jsonnet/telemeter"
                 }
             },
-            "version": "b8fa131f1c911f46a89f0230d6d624500de0ee16"
+            "version": "0bb1b1ce693adcec3b5185c75641062168016eff"
         },
         {
             "name": "prometheus-operator",
