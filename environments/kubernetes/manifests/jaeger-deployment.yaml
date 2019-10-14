@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: jaeger-all-in-one
+  name: jaeger-all-in-one
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jaeger-all-in-one
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jaeger-all-in-one
+    spec:
+      containers:
+      - args:
+        - --badger.directory-key=/var/jaeger/store/keys
+        - --badger.directory-value=/var/jaeger/store/values
+        - --badger.ephemeral=false
+        - --collector.queue-size=4000
+        env:
+        - name: SPAN_STORAGE_TYPE
+          value: badger
+        image: jaegertracing/all-in-one:1.14.0
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: "14269"
+            scheme: HTTP
+        name: jaeger-all-in-one
+        ports:
+        - containerPort: 14250
+          name: grpc
+        - containerPort: 14269
+          name: admin-http
+        - containerPort: 16686
+          name: query
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: "14269"
+            scheme: HTTP
+        resources:
+          limits:
+            cpu: "4"
+            memory: 2Gi
+          requests:
+            cpu: "1"
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /var/jaeger/store
+          name: jaeger-store-data
+          readOnly: false
+      volumes:
+      - name: jaeger-store-data
+        persistentVolumeClaim:
+          claimName: jaeger-store-data
