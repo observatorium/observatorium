@@ -88,6 +88,14 @@ local observatoriumSLOs = import '../../slos.libsonnet';
         thanosCompactSelector: 'job=~"%s.*", namespace="telemeter-stage"' % self.thanosCompactJobPrefix,
         thanosReceiveControllerSelector: 'job=~"%s.*",namespace="telemeter-stage"' % self.thanosReceiveControllerJobPrefix,
 
+        local config = self,
+        // We build alerts for the presence of all these jobs.
+        jobs: {
+          ThanosQuerier: config.thanosQuerierSelector,
+          ThanosStore: config.thanosStoreSelector,
+          ThanosReceive: config.thanosReceiveSelector,
+          ThanosCompact: config.thanosCompactSelector,
+        },
       },
     } + {
       prometheusAlerts+:: {
@@ -125,6 +133,14 @@ local observatoriumSLOs = import '../../slos.libsonnet';
         thanosCompactSelector: 'job=~"%s.*",namespace="telemeter-production"' % self.thanosCompactJobPrefix,
         thanosReceiveControllerSelector: 'job=~"%s.*",namespace="telemeter-production"' % self.thanosReceiveControllerJobPrefix,
 
+        local config = self,
+        // We build alerts for the presence of all these jobs.
+        jobs: {
+          ThanosQuerier: config.thanosQuerierSelector,
+          ThanosStore: config.thanosStoreSelector,
+          ThanosReceive: config.thanosReceiveSelector,
+          ThanosCompact: config.thanosCompactSelector,
+        },
       },
     } + {
       prometheusAlerts+:: {

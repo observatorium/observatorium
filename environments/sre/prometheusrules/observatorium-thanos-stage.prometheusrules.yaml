@@ -17,14 +17,6 @@ spec:
       for: 5m
       labels:
         severity: warning
-    - alert: ThanosCompactIsNotRunning
-      annotations:
-        message: Thanos Compaction is not running or just not scraped yet.
-      expr: up{job=~"thanos-compactor.*", namespace="telemeter-stage"} == 0 or absent({job=~"thanos-compactor.*",
-        namespace="telemeter-stage"})
-      for: 5m
-      labels:
-        severity: warning
     - alert: ThanosCompactHalted
       annotations:
         message: Thanos Compact {{$labels.job}} has failed to run and now is halted.
@@ -236,6 +228,40 @@ spec:
       for: 10m
       labels:
         severity: warning
+  - name: thanos-component-absent
+    rules:
+    - alert: ThanosCompactIsDown
+      annotations:
+        message: ThanosCompact has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{job=~"thanos-compactor.*", namespace="telemeter-stage"} == 1)
+      for: 10m
+      labels:
+        severity: critical
+    - alert: ThanosQuerierIsDown
+      annotations:
+        message: ThanosQuerier has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{job=~"thanos-querier.*", namespace="telemeter-stage"} == 1)
+      for: 10m
+      labels:
+        severity: critical
+    - alert: ThanosReceiveIsDown
+      annotations:
+        message: ThanosReceive has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{job=~"thanos-receive.*", namespace="telemeter-stage"} == 1)
+      for: 10m
+      labels:
+        severity: critical
+    - alert: ThanosStoreIsDown
+      annotations:
+        message: ThanosStore has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{job=~"thanos-store.*", namespace="telemeter-stage"} == 1)
+      for: 10m
+      labels:
+        severity: critical
   - name: thanos-receive-controller.rules
     rules:
     - alert: ThanosReceiveControllerReconcileErrorRate
