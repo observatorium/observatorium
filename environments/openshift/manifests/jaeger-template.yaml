@@ -154,9 +154,9 @@ parameters:
 - name: NAMESPACE
   value: telemeter
 - name: IMAGE
-  value: jaegertracing
+  value: jaegertracing/all-in-one
 - name: IMAGE_TAG
-  value: all-in-one:1.14.0
+  value: 1.14.0
 - name: REPLICAS
   value: 1
 - name: PROXY_IMAGE
