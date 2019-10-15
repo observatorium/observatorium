@@ -83,9 +83,9 @@ local rolebinding = k.rbac.v1.roleBinding;
                   args: [
                     'compact',
                     '--wait',
-                    '--retention.resolution-raw=16d',
-                    '--retention.resolution-5m=16d',
-                    '--retention.resolution-1h=16d',
+                    '--retention.resolution-raw=14d',
+                    '--retention.resolution-5m=14d',
+                    '--retention.resolution-1h=14d',
                     '--objstore.config=$(OBJSTORE_CONFIG)',
                     '--data-dir=/var/thanos/compactor',
                     '--debug.accept-malformed-index',
