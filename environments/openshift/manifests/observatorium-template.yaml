@@ -664,7 +664,6 @@ objects:
               path: /-/ready
               port: 10902
               scheme: HTTP
-            initialDelaySeconds: 120
           resources:
             limits:
               cpu: ${THANOS_STORE_CPU_LIMIT}
