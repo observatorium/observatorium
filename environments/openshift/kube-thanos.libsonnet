@@ -19,17 +19,15 @@ local list = import 'telemeter/lib/list.libsonnet';
 (import '../kubernetes/kube-thanos.libsonnet') +
 {
   thanos+:: {
-    variables+: {
-      image: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
-      proxyImage: '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}',
-      thanosReceiveControllerImage: '${THANOS_RECEIVE_CONTROLLER_IMAGE}:${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}',
-      objectStorageConfig+: {
-        name: '${THANOS_CONFIG_SECRET}',
-        key: 'thanos.yaml',
-      },
-      proxyConfig+: {
-        sessionSecret: '',
-      },
+    image: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
+    proxyImage: '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}',
+    thanosReceiveControllerImage: '${THANOS_RECEIVE_CONTROLLER_IMAGE}:${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}',
+    objectStorageConfig+: {
+      name: '${THANOS_CONFIG_SECRET}',
+      key: 'thanos.yaml',
+    },
+    proxyConfig+: {
+      sessionSecret: '',
     },
 
     local namespace = '${NAMESPACE}',
@@ -53,7 +51,7 @@ local list = import 'telemeter/lib/list.libsonnet';
       // The proxy secret is there to encrypt session created by the oauth proxy.
       proxySecret:
         secret.new('querier-proxy', {
-          session_secret: std.base64($.thanos.variables.proxyConfig.sessionSecret),
+          session_secret: std.base64($.thanos.proxyConfig.sessionSecret),
         }) +
         secret.mixin.metadata.withNamespace(namespace) +
         secret.mixin.metadata.withLabels({ 'app.kubernetes.io/name': 'thanos-querier' }),
@@ -89,7 +87,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                     },
                   },
                 ] + [
-                  container.new('proxy', $.thanos.variables.proxyImage) +
+                  container.new('proxy', $.thanos.proxyImage) +
                   container.withArgs([
                     '-provider=openshift',
                     '-https-address=:%d' % $.thanos.querier.service.spec.ports[2].port,
@@ -132,11 +130,9 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
 
     store+: {
-      variables+:: {
-        pvc+: {
-          class: 'gp2-encrypted',
-          size: '50Gi',
-        },
+      pvc+: {
+        class: 'gp2-encrypted',
+        size: '50Gi',
       },
 
       service+:
@@ -278,7 +274,7 @@ local list = import 'telemeter/lib/list.libsonnet';
               spec+: {
                 containers: [
                   super.containers[0] {
-                    image: $.thanos.variables.thanosReceiveControllerImage,
+                    image: $.thanos.thanosReceiveControllerImage,
                   },
                 ],
               },
@@ -294,7 +290,7 @@ local list = import 'telemeter/lib/list.libsonnet';
       // The proxy secret is there to encrypt session created by the oauth proxy.
       proxySecret:
         secret.new('querier-cache-proxy', {
-          session_secret: std.base64($.thanos.variables.proxyConfig.sessionSecret),
+          session_secret: std.base64($.thanos.proxyConfig.sessionSecret),
         }) +
         secret.mixin.metadata.withNamespace(namespace) +
         secret.mixin.metadata.withLabels({ 'app.kubernetes.io/name': 'thanos-querier' }),
@@ -330,7 +326,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                     },
                   },
                 ] + [
-                  container.new('proxy', $.thanos.variables.proxyImage) +
+                  container.new('proxy', $.thanos.proxyImage) +
                   container.withArgs([
                     '-provider=openshift',
                     '-https-address=:%d' % $.thanos.querierCache.service.spec.ports[1].port,

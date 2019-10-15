@@ -17,12 +17,10 @@ local rolebinding = k.rbac.v1.roleBinding;
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
   thanos+:: {
-    variables+:: {
-      image: 'quay.io/thanos/thanos:v0.7.0',
-      objectStorageConfig+: {
-        name: 'thanos-objectstorage',
-        key: 'thanos.yaml',
-      },
+    image: 'quay.io/thanos/thanos:v0.7.0',
+    objectStorageConfig+: {
+      name: 'thanos-objectstorage',
+      key: 'thanos.yaml',
     },
 
     local namespace = 'observatorium',
@@ -62,6 +60,9 @@ local rolebinding = k.rbac.v1.roleBinding;
         deployment.mixin.spec.withReplicas(3),
     },
     store+: {
+      pvc+:: {
+        size: '50Gi',
+      },
       service+:
         service.mixin.metadata.withNamespace(namespace),
       statefulSet+:
