@@ -17,7 +17,7 @@ local rolebinding = k.rbac.v1.roleBinding;
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
   thanos+:: {
-    image: 'quay.io/thanos/thanos:v0.7.0',
+    image: 'quay.io/thanos/thanos:v0.8.1',
     objectStorageConfig+: {
       name: 'thanos-objectstorage',
       key: 'thanos.yaml',
