@@ -153,6 +153,9 @@ local list = import 'telemeter/lib/list.libsonnet';
                 local env = container.envType;
 
                 super.containers[0] {
+                  readinessProbe+:{
+                    initialDelaySeconds: 120
+                  },
                   resources: {
                     requests: {
                       cpu: '${THANOS_STORE_CPU_REQUEST}',
