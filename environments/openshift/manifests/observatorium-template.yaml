@@ -62,11 +62,6 @@ objects:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 10902
-              scheme: HTTP
           name: thanos-compactor
           ports:
           - containerPort: 10902
@@ -255,11 +250,6 @@ objects:
           - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
           - --store=dnssrv+_grpc._tcp.thanos-receive-default.${NAMESPACE}.svc.cluster.local
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 9090
-              scheme: HTTP
           name: thanos-querier
           ports:
           - containerPort: 10901
@@ -571,11 +561,6 @@ objects:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 10902
-              scheme: HTTP
           name: thanos-receive
           ports:
           - containerPort: 10901
@@ -668,11 +653,6 @@ objects:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 10902
-              scheme: HTTP
           name: thanos-store
           ports:
           - containerPort: 10901
@@ -695,7 +675,7 @@ objects:
           - mountPath: /var/thanos/store
             name: thanos-store-data
             readOnly: false
-        volumes: []
+        volumes: null
     volumeClaimTemplates:
     - metadata:
         name: thanos-store-data

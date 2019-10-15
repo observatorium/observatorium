@@ -32,12 +32,7 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
-        image: quay.io/thanos/thanos:v0.7.0
-        livenessProbe:
-          httpGet:
-            path: /-/healthy
-            port: 10902
-            scheme: HTTP
+        image: quay.io/thanos/thanos:v0.8.1
         name: thanos-compactor
         ports:
         - containerPort: 10902
