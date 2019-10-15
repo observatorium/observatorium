@@ -10,7 +10,7 @@ local app =
       queryService+: {
         metadata+: {
           annotations+: {
-            'service.alpha.openshift.io/serving-cert-secret-name': 'querier-tls',
+            'service.alpha.openshift.io/serving-cert-secret-name': 'jaeger-tls',
           },
         },
         spec+: {
@@ -46,7 +46,6 @@ local app =
                   '-cookie-secret-file=/etc/proxy/secrets/session_secret',
                   '-openshift-ca=/etc/pki/tls/cert.pem',
                   '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
-                  '-skip-auth-regex=^/metrics',
                 ]) +
                 container.withPorts([
                   { name: 'https', containerPort: $.jaeger.queryService.spec.ports[1].port },
@@ -84,8 +83,8 @@ local app =
   ],
   parameters: [
     { name: 'NAMESPACE', value: 'telemeter' },
-    { name: 'IMAGE', value: 'jaegertracing' },
-    { name: 'IMAGE_TAG', value: 'all-in-one:1.14.0' },
+    { name: 'IMAGE', value: 'jaegertracing/all-in-one' },
+    { name: 'IMAGE_TAG', value: '1.14.0' },
     { name: 'REPLICAS', value: 1 },
     { name: 'PROXY_IMAGE', value: 'openshift/oauth-proxy' },
     { name: 'PROXY_IMAGE_TAG', value: 'v1.1.0' },
