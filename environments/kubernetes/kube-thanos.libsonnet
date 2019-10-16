@@ -10,9 +10,10 @@ local rolebinding = k.rbac.v1.roleBinding;
 
 (import 'kube-thanos/kube-thanos-querier.libsonnet') +
 (import 'kube-thanos/kube-thanos-store.libsonnet') +
+(import 'kube-thanos/kube-thanos-store-pvc.libsonnet') +
 (import 'kube-thanos/kube-thanos-receive.libsonnet') +
+(import 'kube-thanos/kube-thanos-receive-pvc.libsonnet') +
 (import 'kube-thanos/kube-thanos-compactor.libsonnet') +
-(import 'kube-thanos/kube-thanos-pvc.libsonnet') +
 (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') +
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
@@ -99,6 +100,10 @@ local rolebinding = k.rbac.v1.roleBinding;
       },
     },
     receive+: {
+      pvc+:: {
+        size: '50Gi',
+      },
+
       service+: service.mixin.metadata.withNamespace(namespace),
       statefulSet+:: sts.mixin.metadata.withNamespace(namespace),
     } + {
@@ -162,7 +167,7 @@ local rolebinding = k.rbac.v1.roleBinding;
                 ],
 
                 local volume = sts.mixin.spec.template.spec.volumesType,
-                volumes+: [
+                volumes: [
                   volume.withName('observatorium-tenants') +
                   volume.mixin.configMap.withName('%s-generated' % $.thanos.receiveController.configmap.metadata.name),
                 ],

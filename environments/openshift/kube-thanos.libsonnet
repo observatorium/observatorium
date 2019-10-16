@@ -209,6 +209,10 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
 
     receive+: {
+      pvc+:: {
+        class: 'gp2-encrypted',
+      },
+
       service+: service.mixin.metadata.withNamespace(namespace),
     } + {
       ['service-' + tenant.hashring]+: service.mixin.metadata.withNamespace(namespace)
