@@ -85,7 +85,7 @@ local app =
     { name: 'NAMESPACE', value: 'telemeter' },
     { name: 'IMAGE', value: 'jaegertracing/all-in-one' },
     { name: 'IMAGE_TAG', value: '1.14.0' },
-    { name: 'REPLICAS', value: 1 },
+    { name: 'REPLICAS', value: '1' },
     { name: 'PROXY_IMAGE', value: 'openshift/oauth-proxy' },
     { name: 'PROXY_IMAGE_TAG', value: 'v1.1.0' },
   ],
