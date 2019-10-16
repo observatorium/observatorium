@@ -3,6 +3,11 @@ local service = k.core.v1.service;
 
 {
   jaeger+:: {
+    local j = self,
+    namespace:: error 'must set namespace for jaeger',
+    image:: error 'must set image for jaeger',
+    replicas:: 1,
+
     headlessService:
       service.new(
         'jaeger-collector-headless',
@@ -11,7 +16,7 @@ local service = k.core.v1.service;
           service.mixin.spec.portsType.newNamed('grpc', 14250, 14250),
         ],
       ) +
-      service.mixin.metadata.withNamespace('observatorium') +
+      service.mixin.metadata.withNamespace(j.namespace) +
       service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }) +
       service.mixin.spec.withClusterIp('None'),
 
@@ -23,14 +28,14 @@ local service = k.core.v1.service;
           service.mixin.spec.portsType.newNamed('query', 16686, 16686),
         ],
       ) +
-      service.mixin.metadata.withNamespace('observatorium') +
+      service.mixin.metadata.withNamespace(j.namespace) +
       service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }),
 
     volumeClaim:
       local claim = k.core.v1.persistentVolumeClaim;
       claim.new() +
       claim.mixin.metadata.withName('jaeger-store-data') +
-      claim.mixin.metadata.withNamespace('observatorium') +
+      claim.mixin.metadata.withNamespace(j.namespace) +
       claim.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }) +
       claim.mixin.spec.withAccessModes('ReadWriteOnce') +
       claim.mixin.spec.resources.withRequests({ storage: '50Gi' },) +
@@ -48,7 +53,7 @@ local service = k.core.v1.service;
       // ingest at least 2k spans/sec with badger and 256Mi of memory on 1 cpu.
       // this depends on the span size, but these default values should provide a good base line
       local c =
-        container.new($.jaeger.deployment.metadata.name, 'jaegertracing/all-in-one:1.14.0') +
+        container.new($.jaeger.deployment.metadata.name, j.image) +
         container.withArgs([
           '--badger.directory-key=/var/jaeger/store/keys',
           '--badger.directory-value=/var/jaeger/store/values',
@@ -72,8 +77,8 @@ local service = k.core.v1.service;
         container.mixin.resources.withRequests({ cpu: '1', memory: '256Mi' }) +
         container.mixin.resources.withLimits({ cpu: '4', memory: '2Gi' });
 
-      deployment.new('jaeger-all-in-one', 1, c, $.jaeger.deployment.metadata.labels) +
-      deployment.mixin.metadata.withNamespace('observatorium') +
+      deployment.new('jaeger-all-in-one', j.replicas, c, $.jaeger.deployment.metadata.labels) +
+      deployment.mixin.metadata.withNamespace(j.namespace) +
       deployment.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }) +
       deployment.mixin.spec.selector.withMatchLabels($.jaeger.deployment.metadata.labels) +
       deployment.mixin.spec.template.spec.withVolumes(volume.fromPersistentVolumeClaim($.jaeger.volumeClaim.metadata.name, $.jaeger.volumeClaim.metadata.name)),
