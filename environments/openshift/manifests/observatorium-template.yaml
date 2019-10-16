@@ -588,11 +588,19 @@ objects:
           - mountPath: /var/lib/thanos-receive
             name: observatorium-tenants
         volumes:
-        - emptyDir: {}
-          name: data
         - configMap:
             name: observatorium-tenants-generated
           name: observatorium-tenants
+    volumeClaimTemplates:
+    - metadata:
+        name: thanos-receive-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: gp2-encrypted
 - apiVersion: v1
   kind: Service
   metadata:
