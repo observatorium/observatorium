@@ -71,9 +71,9 @@ local service = k.core.v1.service;
         ) +
         container.withVolumeMounts([mount.new('jaeger-store-data', '/var/jaeger/store')]) +
         container.mixin.readinessProbe.withFailureThreshold(3) +
-        container.mixin.readinessProbe.httpGet.withPath('/').withPort('14269').withScheme('HTTP') +
+        container.mixin.readinessProbe.httpGet.withPath('/').withPort(14269).withScheme('HTTP') +
         container.mixin.livenessProbe.withFailureThreshold(3) +
-        container.mixin.livenessProbe.httpGet.withPath('/').withPort('14269').withScheme('HTTP') +
+        container.mixin.livenessProbe.httpGet.withPath('/').withPort(14269).withScheme('HTTP') +
         container.mixin.resources.withRequests({ cpu: '1', memory: '256Mi' }) +
         container.mixin.resources.withLimits({ cpu: '4', memory: '2Gi' });
 

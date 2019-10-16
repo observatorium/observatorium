@@ -34,7 +34,7 @@ objects:
             failureThreshold: 3
             httpGet:
               path: /
-              port: "14269"
+              port: 14269
               scheme: HTTP
           name: jaeger-all-in-one
           ports:
@@ -48,7 +48,7 @@ objects:
             failureThreshold: 3
             httpGet:
               path: /
-              port: "14269"
+              port: 14269
               scheme: HTTP
           resources:
             limits:
