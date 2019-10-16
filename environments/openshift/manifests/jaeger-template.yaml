@@ -85,7 +85,7 @@ objects:
             name: https
           volumeMounts:
           - mountPath: /etc/tls/private
-            name: secret-jaeger-tls
+            name: secret-jaeger-query-tls
             readOnly: false
           - mountPath: /etc/proxy/secrets
             name: secret-jaeger-proxy
@@ -96,9 +96,9 @@ objects:
         - name: jaeger-store-data
           persistentVolumeClaim:
             claimName: jaeger-store-data
-        - name: secret-jaeger-tls
+        - name: secret-jaeger-query-tls
           secret:
-            secretName: jaeger-tls
+            secretName: jaeger-query-tls
         - name: secret-jaeger-proxy
           secret:
             secretName: jaeger-proxy
@@ -121,7 +121,7 @@ objects:
   kind: Service
   metadata:
     annotations:
-      service.alpha.openshift.io/serving-cert-secret-name: jaeger-tls
+      service.alpha.openshift.io/serving-cert-secret-name: jaeger-query-tls
     labels:
       app.kubernetes.io/name: jaeger-all-in-one
     name: jaeger-query

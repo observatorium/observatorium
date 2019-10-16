@@ -10,7 +10,7 @@ local app =
       queryService+: {
         metadata+: {
           annotations+: {
-            'service.alpha.openshift.io/serving-cert-secret-name': 'jaeger-tls',
+            'service.alpha.openshift.io/serving-cert-secret-name': 'jaeger-query-tls',
           },
         },
         spec+: {
@@ -52,7 +52,7 @@ local app =
                 ]) +
                 container.withVolumeMounts(
                   [
-                    volumeMount.new('secret-jaeger-tls', '/etc/tls/private'),
+                    volumeMount.new('secret-jaeger-query-tls', '/etc/tls/private'),
                     volumeMount.new('secret-jaeger-proxy', '/etc/proxy/secrets'),
                   ]
                 ),
@@ -61,7 +61,7 @@ local app =
               serviceAccount: 'prometheus-telemeter',
               serviceAccountName: 'prometheus-telemeter',
               volumes+: [
-                { name: 'secret-jaeger-tls', secret: { secretName: 'jaeger-tls' } },
+                { name: 'secret-jaeger-query-tls', secret: { secretName: 'jaeger-query-tls' } },
                 { name: 'secret-jaeger-proxy', secret: { secretName: 'jaeger-proxy' } },
               ],
             },
