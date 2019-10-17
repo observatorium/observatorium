@@ -7,6 +7,10 @@ local service = k.core.v1.service;
     namespace:: error 'must set namespace for jaeger',
     image:: error 'must set image for jaeger',
     replicas:: 1,
+    pvc:: {
+      class: 'standard',
+      size: '50Gi',
+    },
 
     headlessService:
       service.new(
@@ -38,8 +42,8 @@ local service = k.core.v1.service;
       claim.mixin.metadata.withNamespace(j.namespace) +
       claim.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }) +
       claim.mixin.spec.withAccessModes('ReadWriteOnce') +
-      claim.mixin.spec.resources.withRequests({ storage: '50Gi' },) +
-      claim.mixin.spec.withStorageClassName('standard'),
+      claim.mixin.spec.resources.withRequests({ storage: j.pvc.size },) +
+      claim.mixin.spec.withStorageClassName(j.pvc.class),
 
     deployment:
       local deployment = k.apps.v1.deployment;

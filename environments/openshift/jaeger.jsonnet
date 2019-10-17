@@ -6,6 +6,9 @@ local app =
       namespace:: '${NAMESPACE}',
       image:: '${IMAGE}:${IMAGE_TAG}',
       replicas:: '${{REPLICAS}}',
+      pvc+:: {
+        class: 'gp2-encrypted',
+      },
 
       queryService+: {
         metadata+: {
