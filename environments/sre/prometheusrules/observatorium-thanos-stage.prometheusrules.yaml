@@ -233,7 +233,7 @@ spec:
         (
           histogram_quantile(0.99, sum by (job, le) (thanos_objstore_bucket_operation_duration_seconds_bucket{job=~"thanos-store.*", namespace="telemeter-stage"})) > 15
         and
-          sum by (job) (rate(thanos_objstore_bucket_operation_duration_seconds_count{job=~"thanos-store.*", namespace="telemeter-stage"}[5m]))) > 0
+          sum by (job) (rate(thanos_objstore_bucket_operation_duration_seconds_count{job=~"thanos-store.*", namespace="telemeter-stage"}[5m])) > 0
         )
       for: 10m
       labels:
@@ -256,11 +256,11 @@ spec:
       for: 10m
       labels:
         severity: critical
-    - alert: ThanosReceiveIsDown
+    - alert: ThanosReceiveDefaultIsDown
       annotations:
-        message: ThanosReceive has disappeared from Prometheus target discovery.
+        message: ThanosReceiveDefault has disappeared from Prometheus target discovery.
       expr: |
-        absent(up{job=~"thanos-receive.*", namespace="telemeter-stage"} == 1)
+        absent(up{job="thanos-receive-default", namespace="telemeter-stage"} == 1)
       for: 10m
       labels:
         severity: critical
@@ -274,6 +274,15 @@ spec:
         severity: critical
   - name: thanos-receive-controller.rules
     rules:
+    - alert: ThanosReceiveControllerIsDown
+      annotations:
+        message: Thanos Receive Controller has disappeared from Prometheus target
+          discovery.
+      expr: |
+        absent(up{job=~"thanos-receive-controller.*",namespace="telemeter-stage"} == 1)
+      for: 5m
+      labels:
+        severity: critical
     - alert: ThanosReceiveControllerReconcileErrorRate
       annotations:
         message: Thanos Receive Controller failing to reconcile changes, {{ $value
