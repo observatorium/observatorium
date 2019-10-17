@@ -4,6 +4,8 @@ local slo = import 'slo-libsonnet/slo.libsonnet';
 local observatoriumSLOs = import '../../slos.libsonnet';
 local tenants = import '../../tenants.libsonnet';
 
+local capitalize(str) = std.asciiUpper(std.substr(str, 0, 1)) + std.asciiLower(std.substr(str, 1, std.length(str)));
+
 {
   'telemeter-slos-prod.prometheusrules': {
     apiVersion: 'monitoring.coreos.com/v1',
@@ -96,8 +98,7 @@ local tenants = import '../../tenants.libsonnet';
           ThanosStore: config.thanosStoreSelector,
           ThanosCompact: config.thanosCompactSelector,
         } + {
-          ['ThanosReceive' + std.asciiUpper(std.substr(tenant.hashring, 0, 1)) + std.asciiLower(std.substr(tenant.hashring, 1, std.length(tenant.hashring)))]:
-            'job="thanos-receive-%s", namespace="telemeter-stage"' % tenant.hashring
+          ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s", namespace="telemeter-stage"' % tenant.hashring
           for tenant in tenants
         },
       },
@@ -144,8 +145,7 @@ local tenants = import '../../tenants.libsonnet';
           ThanosStore: config.thanosStoreSelector,
           ThanosCompact: config.thanosCompactSelector,
         } + {
-          ['ThanosReceive' + std.asciiUpper(std.substr(tenant.hashring, 0, 1)) + std.asciiLower(std.substr(tenant.hashring, 1, std.length(tenant.hashring)))]:
-            'job="thanos-receive-%s", namespace="telemeter-production"' % tenant.hashring
+          ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s", namespace="telemeter-production"' % tenant.hashring
           for tenant in tenants
         },
       },
