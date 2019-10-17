@@ -258,7 +258,7 @@ objects:
             name: http
           readinessProbe:
             httpGet:
-              path: /-/ready
+              path: /-/healthy
               port: 9090
               scheme: HTTP
           resources:
@@ -531,8 +531,8 @@ objects:
           - --remote-write.address=0.0.0.0:19291
           - --objstore.config=$(OBJSTORE_CONFIG)
           - --tsdb.path=/var/thanos/receive
-          - --label=replica="$(NAME)"
-          - --label=receive="true"
+          - --labels=replica="$(NAME)"
+          - --labels=receive="true"
           - --tsdb.retention=6h
           - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
           - --receive.local-endpoint=http://$(NAME).thanos-receive-default.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
@@ -569,11 +569,6 @@ objects:
             name: http
           - containerPort: 19291
             name: remote-write
-          readinessProbe:
-            httpGet:
-              path: /-/ready
-              port: 10902
-              scheme: HTTP
           resources:
             limits:
               cpu: ${THANOS_RECEIVE_CPU_LIMIT}
@@ -667,11 +662,6 @@ objects:
             name: grpc
           - containerPort: 10902
             name: http
-          readinessProbe:
-            httpGet:
-              path: /-/ready
-              port: 10902
-              scheme: HTTP
           resources:
             limits:
               cpu: ${THANOS_STORE_CPU_LIMIT}
