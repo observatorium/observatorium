@@ -530,7 +530,7 @@ objects:
           - --http-address=0.0.0.0:10902
           - --remote-write.address=0.0.0.0:19291
           - --objstore.config=$(OBJSTORE_CONFIG)
-          - --tsdb.path=/var/thanos/tsdb
+          - --tsdb.path=/var/thanos/receive
           - --label=replica="$(NAME)"
           - --label=receive="true"
           - --tsdb.retention=6h
@@ -582,8 +582,8 @@ objects:
               cpu: ${THANOS_RECEIVE_CPU_REQUEST}
               memory: ${THANOS_RECEIVE_MEMORY_REQUEST}
           volumeMounts:
-          - mountPath: /var/thanos/tsdb
-            name: data
+          - mountPath: /var/thanos/receive
+            name: thanos-receive-data
             readOnly: false
           - mountPath: /var/lib/thanos-receive
             name: observatorium-tenants
