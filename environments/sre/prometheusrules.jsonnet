@@ -2,6 +2,9 @@ local thanos = (import 'thanos-mixin/mixin.libsonnet');
 local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.libsonnet');
 local slo = import 'slo-libsonnet/slo.libsonnet';
 local observatoriumSLOs = import '../../slos.libsonnet';
+local tenants = import '../../tenants.libsonnet';
+
+local capitalize(str) = std.asciiUpper(std.substr(str, 0, 1)) + std.asciiLower(std.substr(str, 1, std.length(str)));
 
 {
   'telemeter-slos-prod.prometheusrules': {
@@ -93,8 +96,10 @@ local observatoriumSLOs = import '../../slos.libsonnet';
         jobs: {
           ThanosQuerier: config.thanosQuerierSelector,
           ThanosStore: config.thanosStoreSelector,
-          ThanosReceive: config.thanosReceiveSelector,
           ThanosCompact: config.thanosCompactSelector,
+        } + {
+          ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s", namespace="telemeter-stage"' % tenant.hashring
+          for tenant in tenants
         },
       },
     } + {
@@ -138,8 +143,10 @@ local observatoriumSLOs = import '../../slos.libsonnet';
         jobs: {
           ThanosQuerier: config.thanosQuerierSelector,
           ThanosStore: config.thanosStoreSelector,
-          ThanosReceive: config.thanosReceiveSelector,
           ThanosCompact: config.thanosCompactSelector,
+        } + {
+          ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s", namespace="telemeter-production"' % tenant.hashring
+          for tenant in tenants
         },
       },
     } + {

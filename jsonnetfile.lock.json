@@ -4,7 +4,7 @@
             "name": "kube-thanos",
             "source": {
                 "git": {
-                    "remote": "https://github.com/metalmatze/kube-thanos",
+                    "remote": "https://github.com/thanos-io/kube-thanos",
                     "subdir": "jsonnet/kube-thanos"
                 }
             },
@@ -24,11 +24,11 @@
             "name": "thanos-mixin",
             "source": {
                 "git": {
-                    "remote": "https://github.com/metalmatze/kube-thanos",
+                    "remote": "https://github.com/thanos-io/kube-thanos",
                     "subdir": "jsonnet/thanos-mixin"
                 }
             },
-            "version": "3cd87fda1d54c73d9b9cf65326ce340f874d26a0"
+            "version": "5e78521e47947bd3fc69e4e8d8f837c8561d2dca"
         },
         {
             "name": "thanos-receive-controller",
@@ -38,7 +38,7 @@
                     "subdir": "jsonnet/lib"
                 }
             },
-            "version": "6ed4a6470ca9db34662da965751636a5409d56ec"
+            "version": "965e79d6f5679ccd42053151ca84dbf815ff0012"
         },
         {
             "name": "thanos-receive-controller-mixin",
@@ -48,7 +48,7 @@
                     "subdir": "jsonnet/thanos-receive-controller-mixin"
                 }
             },
-            "version": "6ed4a6470ca9db34662da965751636a5409d56ec"
+            "version": "965e79d6f5679ccd42053151ca84dbf815ff0012"
         },
         {
             "name": "grafana-builder",
@@ -58,7 +58,7 @@
                     "subdir": "grafana-builder"
                 }
             },
-            "version": "e59d64a96a73e65ba53ba7fe05c9598974cc4a52"
+            "version": "3fe9a46d5fe0b70cbcabec1d2054f8ac3b3faae7"
         },
         {
             "name": "grafonnet",
