@@ -422,7 +422,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         },
         {
           name: 'THANOS_RECEIVE_CONTROLLER_IMAGE_TAG',
-          value: 'master-2019-10-09-6ed4a64',
+          value: 'master-2019-10-18-d55fee2',
         },
         {
           name: 'THANOS_QUERIER_REPLICAS',
