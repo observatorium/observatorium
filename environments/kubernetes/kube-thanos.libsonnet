@@ -4,6 +4,8 @@ local service = k.core.v1.service;
 local configmap = k.core.v1.configMap;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
+local container = deployment.mixin.spec.template.spec.containersType;
+local containerEnv = container.envType;
 local sa = k.core.v1.serviceAccount;
 local role = k.rbac.v1.role;
 local rolebinding = k.rbac.v1.roleBinding;
@@ -17,6 +19,26 @@ local rolebinding = k.rbac.v1.roleBinding;
 (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') +
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
+  local jaegerAgent =
+    container.new('jaeger-agent', 'jaegertracing/jaeger-agent:1.14.0') +
+    container.withArgs([
+      '--reporter.grpc.host-port=dns:///%s.%s.svc:%d' % [
+        $.jaeger.headlessService.metadata.name,
+        $.jaeger.headlessService.metadata.namespace,
+        $.jaeger.headlessService.spec.ports[0].port,
+      ],
+      '--reporter.type=grpc',
+      '--jaeger.tags=pod.namespace=${NAMESPACE},pod.name=${POD}',
+    ]) +
+    container.withEnv([
+      containerEnv.fromFieldPath('NAMESPACE', 'metadata.namespace'),
+      containerEnv.fromFieldPath('POD', 'metadata.name'),
+    ]) +
+    container.withPorts([
+      container.portsType.newNamed(6831, 'jaeger-thrift'),
+      container.portsType.newNamed(5778, 'configs'),
+    ]),
+
   thanos+:: {
     image: 'quay.io/thanos/thanos:v0.8.1',
     objectStorageConfig+: {
@@ -25,58 +47,55 @@ local rolebinding = k.rbac.v1.roleBinding;
     },
 
     local namespace = 'observatorium',
+    namespace:: namespace,
 
     querier+: {
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
-      deployment+:
-        {
-          spec+: {
-            template+: {
-              spec+: {
-                containers: [
-                  super.containers[0]
-                  { args: [
-                    'query',
-                    '--query.replica-label=replica',
-                    '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
-                    '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
-                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
-                      $.thanos.store.service.metadata.name,
-                      $.thanos.store.service.metadata.namespace,
-                    ],
-                  ] + [
-                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
-                      $.thanos.receive['service-' + tenant.hashring].metadata.name,
-                      $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
-                    ]
-                    for tenant in tenants
-                  ] },
-                ],
-              },
+      replicas:: 3,
+      deployment+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                super.containers[0]
+                { args: [
+                  'query',
+                  '--query.replica-label=replica',
+                  '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
+                  '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
+                  '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                    $.thanos.store.service.metadata.name,
+                    $.thanos.store.service.metadata.namespace,
+                  ],
+                ] + [
+                  '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                    $.thanos.receive['service-' + tenant.hashring].metadata.name,
+                    $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
+                  ]
+                  for tenant in tenants
+                ] },
+              ] + [jaegerAgent],
             },
           },
-        } +
-        deployment.mixin.metadata.withNamespace(namespace) +
-        deployment.mixin.spec.withReplicas(3),
+        },
+      },
     },
     store+: {
+      replicas:: 1,
       pvc+:: {
         size: '50Gi',
       },
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
-      statefulSet+:
-        sts.mixin.metadata.withNamespace(namespace) +
-        sts.mixin.spec.withReplicas(3),
+      statefulSet+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers+: [jaegerAgent],
+            },
+          },
+        },
+      },
     },
     compactor+: {
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
       statefulSet+: {
-        metadata+: {
-          namespace: namespace,
-        },
         spec+: {
           template+: {
             spec+: {
@@ -93,7 +112,7 @@ local rolebinding = k.rbac.v1.roleBinding;
                     '--debug.accept-malformed-index',
                   ],
                 },
-              ],
+              ] + [jaegerAgent],
             },
           },
         },
@@ -103,8 +122,6 @@ local rolebinding = k.rbac.v1.roleBinding;
       pvc+:: {
         size: '50Gi',
       },
-
-      service+: service.mixin.metadata.withNamespace(namespace),
       statefulSet+:: sts.mixin.metadata.withNamespace(namespace),
     } + {
       local labels = { 'app.kubernetes.io/instance': tenant.hashring },
@@ -164,7 +181,7 @@ local rolebinding = k.rbac.v1.roleBinding;
                       env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
                     ],
                   },
-                ],
+                ] + [jaegerAgent],
 
                 local volume = sts.mixin.spec.template.spec.volumesType,
                 volumes: [
