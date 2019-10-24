@@ -22,11 +22,7 @@ local rolebinding = k.rbac.v1.roleBinding;
   local jaegerAgent =
     container.new('jaeger-agent', 'jaegertracing/jaeger-agent:1.14.0') +
     container.withArgs([
-      '--reporter.grpc.host-port=dns:///%s.%s.svc:%d' % [
-        $.jaeger.headlessService.metadata.name,
-        $.jaeger.headlessService.metadata.namespace,
-        $.jaeger.headlessService.spec.ports[0].port,
-      ],
+      '--reporter.grpc.host-port=dns:///jaeger-collector-headless.%s.svc:14250' % $.thanos.namespace,
       '--reporter.type=grpc',
       '--jaeger.tags=pod.namespace=${NAMESPACE},pod.name=${POD}',
     ]) +
@@ -163,7 +159,7 @@ local rolebinding = k.rbac.v1.roleBinding;
               spec+: {
                 // This patch should probably move upstream to kube-thanos
                 containers: [
-                  super.containers[0] {
+                  if c.name == 'thanos-receive' then c {
                     args+: [
                       '--tsdb.retention=6h',
                       '--receive.hashrings-file=/var/lib/thanos-receive/hashrings.json',
@@ -180,7 +176,8 @@ local rolebinding = k.rbac.v1.roleBinding;
 
                       env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
                     ],
-                  },
+                  } else c
+                  for c in super.containers
                 ] + [jaegerAgent],
 
                 local volume = sts.mixin.spec.template.spec.volumesType,

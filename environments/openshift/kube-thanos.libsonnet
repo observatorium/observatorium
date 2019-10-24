@@ -19,18 +19,19 @@ local list = import 'telemeter/lib/list.libsonnet';
 (import '../kubernetes/kube-thanos.libsonnet') +
 {
   thanos+:: {
-    image: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
-    proxyImage: '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}',
-    thanosReceiveControllerImage: '${THANOS_RECEIVE_CONTROLLER_IMAGE}:${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}',
-    objectStorageConfig+: {
+    local namespace = '${NAMESPACE}',
+    namespace:: namespace,
+    image:: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
+    proxyImage:: '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}',
+    thanosReceiveControllerImage:: '${THANOS_RECEIVE_CONTROLLER_IMAGE}:${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}',
+    objectStorageConfig+:: {
       name: '${THANOS_CONFIG_SECRET}',
       key: 'thanos.yaml',
     },
-    proxyConfig+: {
+    proxyConfig+:: {
       sessionSecret: '',
     },
 
-    local namespace = '${NAMESPACE}',
     local s3Envvars = {
       spec+: {
         containers: [
@@ -74,7 +75,7 @@ local list = import 'telemeter/lib/list.libsonnet';
             template+: {
               spec+: {
                 containers: [
-                  super.containers[0] {
+                  if c.name == 'thanos-querier' then c {
                     resources: {
                       requests: {
                         cpu: '${THANOS_QUERIER_CPU_REQUEST}',
@@ -85,7 +86,8 @@ local list = import 'telemeter/lib/list.libsonnet';
                         memory: '${THANOS_QUERIER_MEMORY_LIMIT}',
                       },
                     },
-                  },
+                  } else c
+                  for c in super.containers
                 ] + [
                   container.new('proxy', $.thanos.proxyImage) +
                   container.withArgs([
@@ -130,17 +132,11 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
 
     store+: {
-      pvc+: {
+      pvc+:: {
         class: 'gp2-encrypted',
         size: '50Gi',
       },
-
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
       statefulSet+: {
-        metadata+: {
-          namespace: namespace,
-        },
         spec+: {
           replicas: '${{THANOS_STORE_REPLICAS}}',
 
@@ -152,7 +148,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                 local container = sts.mixin.spec.template.spec.containersType;
                 local env = container.envType;
 
-                super.containers[0] {
+                if c.name == 'thanos-store' then c {
                   resources: {
                     requests: {
                       cpu: '${THANOS_STORE_CPU_REQUEST}',
@@ -163,7 +159,8 @@ local list = import 'telemeter/lib/list.libsonnet';
                       memory: '${THANOS_STORE_MEMORY_LIMIT}',
                     },
                   },
-                },
+                } else c
+                for c in super.containers
               ],
             },
           },
@@ -189,7 +186,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                 local container = sts.mixin.spec.template.spec.containersType;
                 local env = container.envType;
 
-                super.containers[0] {
+                c {
                   resources: {
                     requests: {
                       cpu: '${THANOS_COMPACTOR_CPU_REQUEST}',
@@ -200,7 +197,8 @@ local list = import 'telemeter/lib/list.libsonnet';
                       memory: '${THANOS_COMPACTOR_MEMORY_LIMIT}',
                     },
                   },
-                },
+                }
+                for c in super.containers
               ],
             },
           },
@@ -232,8 +230,7 @@ local list = import 'telemeter/lib/list.libsonnet';
               containers: [
                 local container = sts.mixin.spec.template.spec.containersType;
                 local env = container.envType;
-
-                super.containers[0] {
+                if c.name == 'thanos-receive' then c {
                   resources: {
                     requests: {
                       cpu: '${THANOS_RECEIVE_CPU_REQUEST}',
@@ -244,7 +241,8 @@ local list = import 'telemeter/lib/list.libsonnet';
                       memory: '${THANOS_RECEIVE_MEMORY_LIMIT}',
                     },
                   },
-                },
+                }
+                for c in super.containers
               ],
             },
           },
