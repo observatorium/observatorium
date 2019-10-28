@@ -38,12 +38,18 @@ local list = import 'telemeter/lib/list.libsonnet';
           local container = sts.mixin.spec.template.spec.containersType;
           local env = container.envType;
 
-          super.containers[0] {
+          if
+            c.name == $.thanos.querier.deployment.metadata.name ||
+            c.name == $.thanos.store.statefulSet.metadata.name ||
+            c.name == $.thanos.compactor.statefulSet.metadata.name ||
+            c.name == $.thanos.receive.statefulSet.metadata.name
+          then c {
             env+: [
               env.fromSecretRef('AWS_ACCESS_KEY_ID', '${THANOS_S3_SECRET}', 'aws_access_key_id'),
               env.fromSecretRef('AWS_SECRET_ACCESS_KEY', '${THANOS_S3_SECRET}', 'aws_secret_access_key'),
             ],
-          },
+          } else c
+          for c in super.containers
         ],
       },
     },
@@ -186,7 +192,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                 local container = sts.mixin.spec.template.spec.containersType;
                 local env = container.envType;
 
-                c {
+                if c.name == 'thanos-compactor' then c {
                   resources: {
                     requests: {
                       cpu: '${THANOS_COMPACTOR_CPU_REQUEST}',
@@ -197,7 +203,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                       memory: '${THANOS_COMPACTOR_MEMORY_LIMIT}',
                     },
                   },
-                }
+                } else c
                 for c in super.containers
               ],
             },
@@ -241,7 +247,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                       memory: '${THANOS_RECEIVE_MEMORY_LIMIT}',
                     },
                   },
-                }
+                } else c
                 for c in super.containers
               ],
             },
