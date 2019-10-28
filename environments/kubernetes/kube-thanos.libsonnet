@@ -35,13 +35,13 @@ local rolebinding = k.rbac.v1.roleBinding;
       container.portsType.newNamed(5778, 'configs'),
     ]),
 
-    local jaegerAgentFlag = |||
-      --tracing.config=
-        type: JAEGER
-        config:
-          agent_host: 'localhost'
-          agent_port: 6831
-    |||,
+  local jaegerAgentFlag = |||
+    --tracing.config=
+      type: JAEGER
+      config:
+        agent_host: 'localhost'
+        agent_port: 6831
+  |||,
 
   thanos+:: {
     image: 'quay.io/thanos/thanos:v0.8.1',
