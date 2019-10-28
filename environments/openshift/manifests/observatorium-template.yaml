@@ -45,6 +45,12 @@ objects:
           - --objstore.config=$(OBJSTORE_CONFIG)
           - --data-dir=/var/thanos/compactor
           - --debug.accept-malformed-index
+          - |
+            --tracing.config=
+              type: JAEGER
+              config:
+                agent_host: 'localhost'
+                agent_port: 6831
           env:
           - name: OBJSTORE_CONFIG
             valueFrom:
@@ -268,6 +274,12 @@ objects:
           - --grpc-address=0.0.0.0:10901
           - --http-address=0.0.0.0:9090
           - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
+          - |
+            --tracing.config=
+              type: JAEGER
+              config:
+                agent_host: 'localhost'
+                agent_port: 6831
           - --store=dnssrv+_grpc._tcp.thanos-receive-default.${NAMESPACE}.svc.cluster.local
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           name: thanos-querier
@@ -576,6 +588,12 @@ objects:
           - --tsdb.retention=6h
           - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
           - --receive.local-endpoint=http://$(NAME).thanos-receive-default.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
+          - |
+            --tracing.config=
+              type: JAEGER
+              config:
+                agent_host: 'localhost'
+                agent_port: 6831
           env:
           - name: NAME
             valueFrom:

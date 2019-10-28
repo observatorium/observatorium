@@ -22,6 +22,12 @@ spec:
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:9090
         - --store=dnssrv+_grpc._tcp.thanos-store.observatorium.svc.cluster.local
+        - |
+          --tracing.config=
+            type: JAEGER
+            config:
+              agent_host: 'localhost'
+              agent_port: 6831
         - --store=dnssrv+_grpc._tcp.thanos-receive-default.observatorium.svc.cluster.local
         image: quay.io/thanos/thanos:v0.8.1
         name: thanos-querier

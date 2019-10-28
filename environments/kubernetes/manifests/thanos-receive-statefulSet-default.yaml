@@ -34,6 +34,12 @@ spec:
         - --tsdb.retention=6h
         - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
         - --receive.local-endpoint=http://$(NAME).thanos-receive-default.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
+        - |
+          --tracing.config=
+            type: JAEGER
+            config:
+              agent_host: 'localhost'
+              agent_port: 6831
         env:
         - name: NAME
           valueFrom:
