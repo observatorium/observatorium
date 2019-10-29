@@ -9,6 +9,7 @@ local containerEnv = container.envType;
 local sa = k.core.v1.serviceAccount;
 local role = k.rbac.v1.role;
 local rolebinding = k.rbac.v1.roleBinding;
+local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 
 (import 'kube-thanos/kube-thanos-querier.libsonnet') +
 (import 'kube-thanos/kube-thanos-store.libsonnet') +
@@ -19,30 +20,6 @@ local rolebinding = k.rbac.v1.roleBinding;
 (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') +
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
-  local jaegerAgent =
-    container.new('jaeger-agent', 'jaegertracing/jaeger-agent:1.14.0') +
-    container.withArgs([
-      '--reporter.grpc.host-port=dns:///jaeger-collector-headless.%s.svc:14250' % $.thanos.namespace,
-      '--reporter.type=grpc',
-      '--jaeger.tags=pod.namespace=${NAMESPACE},pod.name=${POD}',
-    ]) +
-    container.withEnv([
-      containerEnv.fromFieldPath('NAMESPACE', 'metadata.namespace'),
-      containerEnv.fromFieldPath('POD', 'metadata.name'),
-    ]) +
-    container.withPorts([
-      container.portsType.newNamed(6831, 'jaeger-thrift'),
-      container.portsType.newNamed(5778, 'configs'),
-    ]),
-
-  local jaegerAgentFlag = |||
-    --tracing.config=
-      type: JAEGER
-      config:
-        agent_host: 'localhost'
-        agent_port: 6831
-  |||,
-
   thanos+:: {
     image: 'quay.io/thanos/thanos:v0.8.1',
     objectStorageConfig+: {
@@ -70,7 +47,7 @@ local rolebinding = k.rbac.v1.roleBinding;
                     $.thanos.store.service.metadata.name,
                     $.thanos.store.service.metadata.namespace,
                   ],
-                  jaegerAgentFlag,
+                  jaegerAgent.thanosFlag,
                 ] + [
                   '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
                     $.thanos.receive['service-' + tenant.hashring].metadata.name,
@@ -78,7 +55,7 @@ local rolebinding = k.rbac.v1.roleBinding;
                   ]
                   for tenant in tenants
                 ] },
-              ] + [jaegerAgent],
+              ] + [jaegerAgent.container],
             },
           },
         },
@@ -93,7 +70,7 @@ local rolebinding = k.rbac.v1.roleBinding;
         spec+: {
           template+: {
             spec+: {
-              containers+: [jaegerAgent],
+              containers+: [jaegerAgent.container],
             },
           },
         },
@@ -115,10 +92,10 @@ local rolebinding = k.rbac.v1.roleBinding;
                     '--objstore.config=$(OBJSTORE_CONFIG)',
                     '--data-dir=/var/thanos/compactor',
                     '--debug.accept-malformed-index',
-                    jaegerAgentFlag,
+                    jaegerAgent.thanosFlag,
                   ],
                 },
-              ] + [jaegerAgent],
+              ] + [jaegerAgent.container],
             },
           },
         },
@@ -177,7 +154,7 @@ local rolebinding = k.rbac.v1.roleBinding;
                         $.thanos.receive['service-' + tenant.hashring].metadata.name,
                         $.thanos.receive['service-' + tenant.hashring].spec.ports[2].port,
                       ],
-                      jaegerAgentFlag,
+                      jaegerAgent.thanosFlag,
                     ],
                     volumeMounts+: [
                       { name: 'observatorium-tenants', mountPath: '/var/lib/thanos-receive' },
@@ -189,7 +166,7 @@ local rolebinding = k.rbac.v1.roleBinding;
                     ],
                   } else c
                   for c in super.containers
-                ] + [jaegerAgent],
+                ] + [jaegerAgent.container],
 
                 local volume = sts.mixin.spec.template.spec.volumesType,
                 volumes: [

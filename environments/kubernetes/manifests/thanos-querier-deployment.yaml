@@ -49,7 +49,7 @@ spec:
             cpu: 100m
             memory: 256Mi
       - args:
-        - --reporter.grpc.host-port=dns:///jaeger-collector-headless.observatorium.svc:14250
+        - --reporter.grpc.host-port=dns:///jaeger-collector-headless.${NAMESPACE}.svc:14250
         - --reporter.type=grpc
         - --jaeger.tags=pod.namespace=${NAMESPACE},pod.name=${POD}
         env:

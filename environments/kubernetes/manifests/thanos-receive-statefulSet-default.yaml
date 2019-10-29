@@ -82,7 +82,7 @@ spec:
         - mountPath: /var/lib/thanos-receive
           name: observatorium-tenants
       - args:
-        - --reporter.grpc.host-port=dns:///jaeger-collector-headless.observatorium.svc:14250
+        - --reporter.grpc.host-port=dns:///jaeger-collector-headless.${NAMESPACE}.svc:14250
         - --reporter.type=grpc
         - --jaeger.tags=pod.namespace=${NAMESPACE},pod.name=${POD}
         env:
