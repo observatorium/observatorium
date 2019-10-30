@@ -24,7 +24,7 @@ local containerEnv = container.envType;
     --tracing.config=
       type: JAEGER
       config:
-        agent_host: 'localhost'
-        agent_port: 6831
+        sampler_type: ratelimiting
+        sampler_param: 2
   |||,
 }

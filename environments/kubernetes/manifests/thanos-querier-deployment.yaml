@@ -26,8 +26,8 @@ spec:
           --tracing.config=
             type: JAEGER
             config:
-              agent_host: 'localhost'
-              agent_port: 6831
+              sampler_type: ratelimiting
+              sampler_param: 2
         - --store=dnssrv+_grpc._tcp.thanos-receive-default.observatorium.svc.cluster.local
         image: quay.io/thanos/thanos:v0.8.1
         name: thanos-querier

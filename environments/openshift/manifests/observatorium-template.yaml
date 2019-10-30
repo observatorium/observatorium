@@ -49,8 +49,8 @@ objects:
             --tracing.config=
               type: JAEGER
               config:
-                agent_host: 'localhost'
-                agent_port: 6831
+                sampler_type: ratelimiting
+                sampler_param: 2
           env:
           - name: OBJSTORE_CONFIG
             valueFrom:
@@ -278,8 +278,8 @@ objects:
             --tracing.config=
               type: JAEGER
               config:
-                agent_host: 'localhost'
-                agent_port: 6831
+                sampler_type: ratelimiting
+                sampler_param: 2
           - --store=dnssrv+_grpc._tcp.thanos-receive-default.${NAMESPACE}.svc.cluster.local
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           name: thanos-querier
@@ -592,8 +592,8 @@ objects:
             --tracing.config=
               type: JAEGER
               config:
-                agent_host: 'localhost'
-                agent_port: 6831
+                sampler_type: ratelimiting
+                sampler_param: 2
           env:
           - name: NAME
             valueFrom:
