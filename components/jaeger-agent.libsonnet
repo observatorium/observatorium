@@ -7,9 +7,9 @@ local containerEnv = container.envType;
   container::
     container.new('jaeger-agent', 'jaegertracing/jaeger-agent:1.14.0') +
     container.withArgs([
-      '--reporter.grpc.host-port=dns:///jaeger-collector-headless.${NAMESPACE}.svc:14250',
+      '--reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250',
       '--reporter.type=grpc',
-      '--jaeger.tags=pod.namespace=${NAMESPACE},pod.name=${POD}',
+      '--jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)',
     ]) +
     container.withEnv([
       containerEnv.fromFieldPath('NAMESPACE', 'metadata.namespace'),

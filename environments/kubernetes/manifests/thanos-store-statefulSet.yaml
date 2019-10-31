@@ -53,9 +53,9 @@ spec:
           name: thanos-store-data
           readOnly: false
       - args:
-        - --reporter.grpc.host-port=dns:///jaeger-collector-headless.${NAMESPACE}.svc:14250
+        - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
         - --reporter.type=grpc
-        - --jaeger.tags=pod.namespace=${NAMESPACE},pod.name=${POD}
+        - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
         env:
         - name: NAMESPACE
           valueFrom:
