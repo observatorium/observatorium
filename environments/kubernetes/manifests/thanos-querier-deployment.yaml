@@ -22,6 +22,13 @@ spec:
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:9090
         - --store=dnssrv+_grpc._tcp.thanos-store.observatorium.svc.cluster.local
+        - |
+          --tracing.config=
+            type: JAEGER
+            config:
+              service_name: thanos-querier
+              sampler_type: ratelimiting
+              sampler_param: 2
         - --store=dnssrv+_grpc._tcp.thanos-receive-default.observatorium.svc.cluster.local
         image: quay.io/thanos/thanos:v0.8.1
         name: thanos-querier
@@ -42,3 +49,23 @@ spec:
           requests:
             cpu: 100m
             memory: 256Mi
+      - args:
+        - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
+        - --reporter.type=grpc
+        - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: jaegertracing/jaeger-agent:1.14.0
+        name: jaeger-agent
+        ports:
+        - containerPort: 6831
+          name: jaeger-thrift
+        - containerPort: 5778
+          name: configs

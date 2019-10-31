@@ -4,9 +4,12 @@ local service = k.core.v1.service;
 local configmap = k.core.v1.configMap;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
+local container = deployment.mixin.spec.template.spec.containersType;
+local containerEnv = container.envType;
 local sa = k.core.v1.serviceAccount;
 local role = k.rbac.v1.role;
 local rolebinding = k.rbac.v1.roleBinding;
+local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 
 (import 'kube-thanos/kube-thanos-querier.libsonnet') +
 (import 'kube-thanos/kube-thanos-store.libsonnet') +
@@ -25,58 +28,56 @@ local rolebinding = k.rbac.v1.roleBinding;
     },
 
     local namespace = 'observatorium',
+    namespace:: namespace,
 
     querier+: {
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
-      deployment+:
-        {
-          spec+: {
-            template+: {
-              spec+: {
-                containers: [
-                  super.containers[0]
-                  { args: [
-                    'query',
-                    '--query.replica-label=replica',
-                    '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
-                    '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
-                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
-                      $.thanos.store.service.metadata.name,
-                      $.thanos.store.service.metadata.namespace,
-                    ],
-                  ] + [
-                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
-                      $.thanos.receive['service-' + tenant.hashring].metadata.name,
-                      $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
-                    ]
-                    for tenant in tenants
-                  ] },
-                ],
-              },
+      replicas:: 3,
+      deployment+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                super.containers[0]
+                { args: [
+                  'query',
+                  '--query.replica-label=replica',
+                  '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
+                  '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
+                  '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                    $.thanos.store.service.metadata.name,
+                    $.thanos.store.service.metadata.namespace,
+                  ],
+                  jaegerAgent.thanosFlag % $.thanos.querier.deployment.metadata.name,
+                ] + [
+                  '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                    $.thanos.receive['service-' + tenant.hashring].metadata.name,
+                    $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
+                  ]
+                  for tenant in tenants
+                ] },
+              ] + [jaegerAgent.container],
             },
           },
-        } +
-        deployment.mixin.metadata.withNamespace(namespace) +
-        deployment.mixin.spec.withReplicas(3),
+        },
+      },
     },
     store+: {
+      replicas:: 1,
       pvc+:: {
         size: '50Gi',
       },
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
-      statefulSet+:
-        sts.mixin.metadata.withNamespace(namespace) +
-        sts.mixin.spec.withReplicas(3),
+      statefulSet+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers+: [jaegerAgent.container],
+            },
+          },
+        },
+      },
     },
     compactor+: {
-      service+:
-        service.mixin.metadata.withNamespace(namespace),
       statefulSet+: {
-        metadata+: {
-          namespace: namespace,
-        },
         spec+: {
           template+: {
             spec+: {
@@ -91,9 +92,10 @@ local rolebinding = k.rbac.v1.roleBinding;
                     '--objstore.config=$(OBJSTORE_CONFIG)',
                     '--data-dir=/var/thanos/compactor',
                     '--debug.accept-malformed-index',
+                    jaegerAgent.thanosFlag % $.thanos.compactor.statefulSet.metadata.name,
                   ],
                 },
-              ],
+              ] + [jaegerAgent.container],
             },
           },
         },
@@ -103,8 +105,6 @@ local rolebinding = k.rbac.v1.roleBinding;
       pvc+:: {
         size: '50Gi',
       },
-
-      service+: service.mixin.metadata.withNamespace(namespace),
       statefulSet+:: sts.mixin.metadata.withNamespace(namespace),
     } + {
       local labels = { 'app.kubernetes.io/instance': tenant.hashring },
@@ -146,7 +146,7 @@ local rolebinding = k.rbac.v1.roleBinding;
               spec+: {
                 // This patch should probably move upstream to kube-thanos
                 containers: [
-                  super.containers[0] {
+                  if c.name == 'thanos-receive' then c {
                     args+: [
                       '--tsdb.retention=6h',
                       '--receive.hashrings-file=/var/lib/thanos-receive/hashrings.json',
@@ -154,6 +154,7 @@ local rolebinding = k.rbac.v1.roleBinding;
                         $.thanos.receive['service-' + tenant.hashring].metadata.name,
                         $.thanos.receive['service-' + tenant.hashring].spec.ports[2].port,
                       ],
+                      jaegerAgent.thanosFlag % $.thanos.receive['statefulSet-' + tenant.hashring].metadata.name,
                     ],
                     volumeMounts+: [
                       { name: 'observatorium-tenants', mountPath: '/var/lib/thanos-receive' },
@@ -163,8 +164,9 @@ local rolebinding = k.rbac.v1.roleBinding;
 
                       env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
                     ],
-                  },
-                ],
+                  } else c
+                  for c in super.containers
+                ] + [jaegerAgent.container],
 
                 local volume = sts.mixin.spec.template.spec.volumesType,
                 volumes: [
