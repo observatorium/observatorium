@@ -38,6 +38,7 @@ spec:
           --tracing.config=
             type: JAEGER
             config:
+              service_name: thanos-receive-default
               sampler_type: ratelimiting
               sampler_param: 2
         env:

@@ -24,6 +24,7 @@ local containerEnv = container.envType;
     --tracing.config=
       type: JAEGER
       config:
+        service_name: %s
         sampler_type: ratelimiting
         sampler_param: 2
   |||,

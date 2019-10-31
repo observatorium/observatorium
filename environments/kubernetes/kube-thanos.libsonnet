@@ -47,7 +47,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                     $.thanos.store.service.metadata.name,
                     $.thanos.store.service.metadata.namespace,
                   ],
-                  jaegerAgent.thanosFlag,
+                  jaegerAgent.thanosFlag % $.thanos.querier.deployment.metadata.name,
                 ] + [
                   '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
                     $.thanos.receive['service-' + tenant.hashring].metadata.name,
@@ -92,7 +92,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                     '--objstore.config=$(OBJSTORE_CONFIG)',
                     '--data-dir=/var/thanos/compactor',
                     '--debug.accept-malformed-index',
-                    jaegerAgent.thanosFlag,
+                    jaegerAgent.thanosFlag % $.thanos.compactor.statefulSet.metadata.name,
                   ],
                 },
               ] + [jaegerAgent.container],
@@ -154,7 +154,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                         $.thanos.receive['service-' + tenant.hashring].metadata.name,
                         $.thanos.receive['service-' + tenant.hashring].spec.ports[2].port,
                       ],
-                      jaegerAgent.thanosFlag,
+                      jaegerAgent.thanosFlag % $.thanos.receive['statefulSet-' + tenant.hashring].metadata.name,
                     ],
                     volumeMounts+: [
                       { name: 'observatorium-tenants', mountPath: '/var/lib/thanos-receive' },

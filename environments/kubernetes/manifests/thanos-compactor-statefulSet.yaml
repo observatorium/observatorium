@@ -30,6 +30,7 @@ spec:
           --tracing.config=
             type: JAEGER
             config:
+              service_name: thanos-compactor
               sampler_type: ratelimiting
               sampler_param: 2
         env:

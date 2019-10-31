@@ -26,6 +26,7 @@ spec:
           --tracing.config=
             type: JAEGER
             config:
+              service_name: thanos-querier
               sampler_type: ratelimiting
               sampler_param: 2
         - --store=dnssrv+_grpc._tcp.thanos-receive-default.observatorium.svc.cluster.local
