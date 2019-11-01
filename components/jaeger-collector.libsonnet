@@ -85,6 +85,8 @@ local service = k.core.v1.service;
       deployment.mixin.metadata.withNamespace(j.namespace) +
       deployment.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }) +
       deployment.mixin.spec.selector.withMatchLabels($.jaeger.deployment.metadata.labels) +
+      deployment.mixin.spec.strategy.rollingUpdate.withMaxSurge(0) +
+      deployment.mixin.spec.strategy.rollingUpdate.withMaxUnavailable(1) +
       deployment.mixin.spec.template.spec.withVolumes(volume.fromPersistentVolumeClaim($.jaeger.volumeClaim.metadata.name, $.jaeger.volumeClaim.metadata.name)),
   },
 }
