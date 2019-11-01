@@ -15,6 +15,10 @@ objects:
     selector:
       matchLabels:
         app.kubernetes.io/name: jaeger-all-in-one
+    strategy:
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 1
     template:
       metadata:
         labels:
