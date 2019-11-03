@@ -1,84 +1,84 @@
 {
-    "dependencies": [
-        {
-            "name": "kube-thanos",
-            "source": {
-                "git": {
-                    "remote": "https://github.com/thanos-io/kube-thanos",
-                    "subdir": "jsonnet/kube-thanos"
-                }
-            },
-            "version": "master"
-        },
-        {
-            "name": "thanos-mixin",
-            "source": {
-                "git": {
-                    "remote": "https://github.com/thanos-io/kube-thanos",
-                    "subdir": "jsonnet/thanos-mixin"
-                }
-            },
-            "version": "master"
-        },
-        {
-            "name": "thanos-receive-controller",
-            "source": {
-                "git": {
-                    "remote": "https://github.com/observatorium/thanos-receive-controller",
-                    "subdir": "jsonnet/lib"
-                }
-            },
-            "version": "master"
-        },
-        {
-            "name": "thanos-receive-controller-mixin",
-            "source": {
-                "git": {
-                    "remote": "https://github.com/observatorium/thanos-receive-controller",
-                    "subdir": "jsonnet/thanos-receive-controller-mixin"
-                }
-            },
-            "version": "master"
-        },
-        {
-            "name": "grafana-builder",
-            "source": {
-                "git": {
-                    "remote": "https://github.com/grafana/jsonnet-libs",
-                    "subdir": "grafana-builder"
-                }
-            },
-            "version": "master"
-        },
-        {
-            "name": "grafonnet",
-            "source": {
-                "git": {
-                    "remote": "https://github.com/grafana/grafonnet-lib",
-                    "subdir": "grafonnet"
-                }
-            },
-            "version": "master"
-        },
-        {
-            "name": "telemeter",
-            "source": {
-                "git": {
-                    "remote": "https://github.com/openshift/telemeter",
-                    "subdir": "jsonnet/telemeter"
-                }
-            },
-            "version": "master"
-        },
-        {
-            "name": "slo-libsonnet",
-            "source": {
-                "git": {
-                    "remote": "https://github.com/metalmatze/slo-libsonnet",
-                    "subdir": "slo-libsonnet"
-                }
-            },
-            "version": "all"
+  "dependencies": [
+    {
+      "name": "grafana-builder",
+      "source": {
+        "git": {
+          "remote": "https://github.com/grafana/jsonnet-libs",
+          "subdir": "grafana-builder"
         }
-    ]
+      },
+      "version": "master"
+    },
+    {
+      "name": "grafonnet",
+      "source": {
+        "git": {
+          "remote": "https://github.com/grafana/grafonnet-lib",
+          "subdir": "grafonnet"
+        }
+      },
+      "version": "master"
+    },
+    {
+      "name": "kube-thanos",
+      "source": {
+        "git": {
+          "remote": "https://github.com/thanos-io/kube-thanos",
+          "subdir": "jsonnet/kube-thanos"
+        }
+      },
+      "version": "master"
+    },
+    {
+      "name": "slo-libsonnet",
+      "source": {
+        "git": {
+          "remote": "https://github.com/metalmatze/slo-libsonnet",
+          "subdir": "slo-libsonnet"
+        }
+      },
+      "version": "all"
+    },
+    {
+      "name": "telemeter",
+      "source": {
+        "git": {
+          "remote": "https://github.com/openshift/telemeter",
+          "subdir": "jsonnet/telemeter"
+        }
+      },
+      "version": "master"
+    },
+    {
+      "name": "thanos-mixin",
+      "source": {
+        "git": {
+          "remote": "https://github.com/thanos-io/kube-thanos",
+          "subdir": "jsonnet/thanos-mixin"
+        }
+      },
+      "version": "master"
+    },
+    {
+      "name": "thanos-receive-controller",
+      "source": {
+        "git": {
+          "remote": "https://github.com/observatorium/thanos-receive-controller",
+          "subdir": "jsonnet/lib"
+        }
+      },
+      "version": "master"
+    },
+    {
+      "name": "thanos-receive-controller-mixin",
+      "source": {
+        "git": {
+          "remote": "https://github.com/observatorium/thanos-receive-controller",
+          "subdir": "jsonnet/thanos-receive-controller-mixin"
+        }
+      },
+      "version": "master"
+    }
+  ]
 }
