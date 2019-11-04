@@ -21,8 +21,9 @@ spec:
         - compact
         - --wait
         - --retention.resolution-raw=14d
-        - --retention.resolution-5m=14d
-        - --retention.resolution-1h=14d
+        - --downsampling.disable
+        - --retention.resolution-5m=1s
+        - --retention.resolution-1h=1s
         - --objstore.config=$(OBJSTORE_CONFIG)
         - --data-dir=/var/thanos/compactor
         - --debug.accept-malformed-index
