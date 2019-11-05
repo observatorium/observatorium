@@ -406,11 +406,11 @@ local list = import 'telemeter/lib/list.libsonnet';
         },
         {
           name: 'THANOS_IMAGE',
-          value: 'quay.io/quay/thanos',
+          value: 'quay.io/thanos/thanos',
         },
         {
           name: 'THANOS_IMAGE_TAG',
-          value: 'v0.6.0-rc.0',
+          value: 'v0.8.1',
         },
         {
           name: 'PROXY_IMAGE',
