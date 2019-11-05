@@ -72,11 +72,12 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
             spec+: {
               containers: [
                 super.containers[0]
-                  { args+: [
+                {
+                  args+: [
                     jaegerAgent.thanosFlag % $.thanos.store.statefulSet.metadata.name,
-                  ]
-                   },
-                ] + [jaegerAgent.container],
+                  ],
+                },
+              ] + [jaegerAgent.container],
             },
           },
         },
