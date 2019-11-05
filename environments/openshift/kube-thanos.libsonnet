@@ -406,7 +406,7 @@ local list = import 'telemeter/lib/list.libsonnet';
         },
         {
           name: 'THANOS_IMAGE',
-          value: 'improbable/thanos',
+          value: 'quay.io/quay/thanos',
         },
         {
           name: 'THANOS_IMAGE_TAG',
