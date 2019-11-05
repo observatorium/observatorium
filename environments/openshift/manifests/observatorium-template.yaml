@@ -726,6 +726,13 @@ objects:
           - --grpc-address=0.0.0.0:10901
           - --http-address=0.0.0.0:10902
           - --objstore.config=$(OBJSTORE_CONFIG)
+          - |
+            --tracing.config=
+              type: JAEGER
+              config:
+                service_name: thanos-store
+                sampler_type: ratelimiting
+                sampler_param: 2
           env:
           - name: OBJSTORE_CONFIG
             valueFrom:
@@ -1190,7 +1197,7 @@ parameters:
 - name: NAMESPACE
   value: telemeter
 - name: THANOS_IMAGE
-  value: improbable/thanos
+  value: quay.io/quay/thanos
 - name: THANOS_IMAGE_TAG
   value: v0.6.0-rc.0
 - name: PROXY_IMAGE

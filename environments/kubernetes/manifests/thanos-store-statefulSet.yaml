@@ -23,6 +23,13 @@ spec:
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:10902
         - --objstore.config=$(OBJSTORE_CONFIG)
+        - |
+          --tracing.config=
+            type: JAEGER
+            config:
+              service_name: thanos-store
+              sampler_type: ratelimiting
+              sampler_param: 2
         env:
         - name: OBJSTORE_CONFIG
           valueFrom:
