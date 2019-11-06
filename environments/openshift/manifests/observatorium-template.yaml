@@ -965,6 +965,8 @@ objects:
           - --whitelist={__name__="noobaa_accounts_num"}
           - --whitelist={__name__="noobaa_total_usage"}
           - --whitelist={__name__="console_url"}
+          - --whitelist={__name__="cluster:network_attachment_definition_instances:max"}
+          - --whitelist={__name__="cluster:network_attachment_definition_enabled_instance_up:max"}
           - --elide-label=prometheus_replica
           - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}
