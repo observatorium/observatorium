@@ -41,6 +41,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                 { args: [
                   'query',
                   '--query.replica-label=replica',
+                  '--query.replica-label=prometheus_replica',
                   '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
                   '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
                   '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [

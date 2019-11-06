@@ -273,6 +273,7 @@ objects:
         - args:
           - query
           - --query.replica-label=replica
+          - --query.replica-label=prometheus_replica
           - --grpc-address=0.0.0.0:10901
           - --http-address=0.0.0.0:9090
           - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
