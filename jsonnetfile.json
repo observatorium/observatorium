@@ -21,6 +21,16 @@
       "version": "master"
     },
     {
+      "name": "jaeger-mixin",
+      "source": {
+        "git": {
+          "remote": "https://github.com/jaegertracing/jaeger/",
+          "subdir": "monitoring/jaeger-mixin"
+        }
+      },
+      "version": "master"
+    },
+    {
       "name": "kube-thanos",
       "source": {
         "git": {

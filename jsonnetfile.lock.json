@@ -23,6 +23,17 @@
       "sum": "BjHfWzqSAgtAKEVD6ipoYOkb8XT5wSBIboY4ZLwhlOU="
     },
     {
+      "name": "jaeger-mixin",
+      "source": {
+        "git": {
+          "remote": "https://github.com/jaegertracing/jaeger/",
+          "subdir": "monitoring/jaeger-mixin"
+        }
+      },
+      "version": "b6086ec8600b4904e216a23be2685732c27c4002",
+      "sum": "U/RwaRP/ps+5dVyeVxeFEb2psfZHQgEjHU2Jeb454Kg="
+    },
+    {
       "name": "ksonnet",
       "source": {
         "git": {

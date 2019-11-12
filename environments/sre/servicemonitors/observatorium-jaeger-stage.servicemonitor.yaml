@@ -1,0 +1,11 @@
+metadata:
+  labels:
+    prometheus: app-sre
+  name: observatorium-jaeger
+spec:
+  namespaceSelector:
+    matchNames:
+    - telemeter-stage
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jaeger-all-in-one

@@ -1,5 +1,6 @@
 local thanos = (import 'thanos-mixin/mixin.libsonnet');
 local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.libsonnet');
+local jaeger = (import 'jaeger-mixin/mixin.libsonnet');
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
 local dashboards = thanos {
@@ -48,4 +49,13 @@ local thanosReceiveDashboards = thanosReceiveController {
       [name]: std.manifestJsonEx(thanosReceiveDashboards[name], '  '),
     })
   for name in std.objectFields(thanosReceiveDashboards)
+} + {
+  ['grafana-dashboard-observatorium-jaeger-%s.configmap' % std.split(name, '.')[0]]:
+    local configmap = k.core.v1.configMap;
+    configmap.new() +
+    configmap.mixin.metadata.withName('grafana-dashboard-observatorium-jaeger-%s' % std.split(name, '.')[0]) +
+    configmap.withData({
+      [name]: std.manifestJsonEx(jaeger.grafanaDashboards[name], '  '),
+    })
+  for name in std.objectFields(jaeger.grafanaDashboards)
 }
