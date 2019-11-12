@@ -1,5 +1,6 @@
 local thanos = (import 'thanos-mixin/mixin.libsonnet');
 local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.libsonnet');
+local jaeger = (import 'jaeger-mixin/mixin.libsonnet');
 local slo = import 'slo-libsonnet/slo.libsonnet';
 local observatoriumSLOs = import '../../slos.libsonnet';
 local tenants = import '../../tenants.libsonnet';
@@ -160,5 +161,31 @@ local capitalize(str) = std.asciiUpper(std.substr(str, 0, 1)) + std.asciiLower(s
     },
 
     spec: alerts.prometheusAlerts,
+  },
+  'observatorium-jaeger-production.prometheusrules': {
+    apiVersion: 'monitoring.coreos.com/v1',
+    kind: 'PrometheusRule',
+    metadata: {
+      name: 'observatorium-jaeger-production',
+      labels: {
+        prometheus: 'app-sre',
+        role: 'alert-rules',
+      },
+    },
+
+    spec: jaeger.prometheusAlerts,
+  },
+  'observatorium-jaeger-stage.prometheusrules': {
+    apiVersion: 'monitoring.coreos.com/v1',
+    kind: 'PrometheusRule',
+    metadata: {
+      name: 'observatorium-jaeger-stage',
+      labels: {
+        prometheus: 'app-sre',
+        role: 'alert-rules',
+      },
+    },
+
+    spec: jaeger.prometheusAlerts,
   },
 }
