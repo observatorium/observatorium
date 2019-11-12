@@ -1,12 +1,12 @@
 apiVersion: monitoring.coreos.com/v1
-endpoints:
-- port: http
 kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
   name: observatorium-thanos-receive-controller-stage
 spec:
+  endpoints:
+  - port: http
   namespaceSelector:
     matchNames:
     - telemeter-stage

@@ -1,6 +1,7 @@
 local tenants = import '../../tenants.libsonnet';
 local prom = import '../openshift/prometheus.libsonnet';
 local sm =
+  (import '../openshift/kube-thanos.libsonnet') +
   (import 'kube-thanos/kube-thanos-servicemonitors.libsonnet') +
   {
     thanos+:: {
@@ -12,7 +13,7 @@ local sm =
           },
           spec+: {
             selector+: {
-              matchLabels: { 'app.kubernetes.io/name': 'thanos-querier' },
+              matchLabels: $.thanos.querier.service.metadata.labels,
             },
           },
         },
@@ -25,7 +26,7 @@ local sm =
           },
           spec+: {
             selector+: {
-              matchLabels: { 'app.kubernetes.io/name': 'thanos-store' },
+              matchLabels: $.thanos.store.service.metadata.labels,
             },
           },
         },
@@ -38,27 +39,22 @@ local sm =
           },
           spec+: {
             selector+: {
-              matchLabels: { 'app.kubernetes.io/name': 'thanos-compactor' },
+              matchLabels: $.thanos.compactor.service.metadata.labels,
             },
           },
         },
       },
-      thanosReceiveController+: {
+      receiveController+: {
         serviceMonitor+: {
-          apiVersion: 'monitoring.coreos.com/v1',
-          kind: 'ServiceMonitor',
           metadata: {
             name: 'observatorium-thanos-receive-controller',
             labels: { prometheus: 'app-sre' },
           },
           spec+: {
             selector+: {
-              matchLabels: { 'app.kubernetes.io/name': 'thanos-receive-controller' },
+              matchLabels: $.thanos.receiveController.service.metadata.labels,
             },
           },
-          endpoints: [
-            { port: 'http' },
-          ],
         },
       },
       receive+: {
@@ -71,31 +67,28 @@ local sm =
             },
             spec+: {
               selector+: {
-                matchLabels: {
-                  'app.kubernetes.io/name': 'thanos-receive',
-                  'app.kubernetes.io/instance': tenant.hashring,
-                },
+                matchLabels: $.thanos.receive['service-' + tenant.hashring].metadata.labels,
               },
             },
           }
         for tenant in tenants
       },
     },
-  };
-
-local jaeger = {
-  serviceMonitor+: {
-    metadata: {
-      name: 'observatorium-jaeger',
-      labels: { prometheus: 'app-sre' },
-    },
-    spec+: {
-      selector+: {
-        matchLabels: { 'app.kubernetes.io/name': 'jaeger' },
+  } + (import '../../components/jaeger-collector.libsonnet') {
+    jaeger+:: {
+      serviceMonitor+: {
+        metadata: {
+          name: 'observatorium-jaeger',
+          labels: { prometheus: 'app-sre' },
+        },
+        spec+: {
+          selector+: {
+            matchLabels: $.jaeger.queryService.metadata.labels,
+          },
+        },
       },
     },
-  },
-};
+  };
 
 {
   'observatorium-thanos-querier-stage.servicemonitor': sm.thanos.querier.serviceMonitor {
@@ -110,7 +103,7 @@ local jaeger = {
     metadata+: { name+: '-stage' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
-  'observatorium-thanos-receive-controller-stage.servicemonitor': sm.thanos.thanosReceiveController.serviceMonitor {
+  'observatorium-thanos-receive-controller-stage.servicemonitor': sm.thanos.receiveController.serviceMonitor {
     metadata+: { name+: '-stage' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
@@ -130,7 +123,7 @@ local jaeger = {
     metadata+: { name+: '-production' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
-  'observatorium-thanos-receive-controller-production.servicemonitor': sm.thanos.thanosReceiveController.serviceMonitor {
+  'observatorium-thanos-receive-controller-production.servicemonitor': sm.thanos.receiveController.serviceMonitor {
     metadata+: { name+: '-production' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
@@ -151,10 +144,10 @@ local jaeger = {
   }
   for tenant in tenants
 } {
-  'observatorium-jaeger.servicemonitor': jaeger.serviceMonitor {
+  'observatorium-jaeger.servicemonitor': sm.jaeger.serviceMonitor {
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
-  'observatorium-jaeger-stage.servicemonitor': jaeger.serviceMonitor {
+  'observatorium-jaeger-stage.servicemonitor': sm.jaeger.serviceMonitor {
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
 }

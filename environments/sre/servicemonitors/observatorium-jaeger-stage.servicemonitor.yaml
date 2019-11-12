@@ -8,4 +8,4 @@ spec:
     - telemeter-stage
   selector:
     matchLabels:
-      app.kubernetes.io/name: jaeger
+      app.kubernetes.io/name: jaeger-all-in-one
