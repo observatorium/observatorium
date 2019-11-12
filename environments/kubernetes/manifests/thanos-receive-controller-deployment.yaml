@@ -31,4 +31,11 @@ spec:
         ports:
         - containerPort: 8080
           name: http
+        resources:
+          limits:
+            cpu: 64m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 24Mi
       serviceAccount: thanos-receive-controller
