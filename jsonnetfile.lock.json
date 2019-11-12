@@ -8,7 +8,7 @@
           "subdir": "grafana-builder"
         }
       },
-      "version": "67ab3dc52f3cdbc3b29d30afd3261375b5ad13fd",
+      "version": "3fe9a46d5fe0b70cbcabec1d2054f8ac3b3faae7",
       "sum": "ELsYwK+kGdzX1mee2Yy+/b2mdO4Y503BOCDkFzwmGbE="
     },
     {
@@ -19,8 +19,8 @@
           "subdir": "grafonnet"
         }
       },
-      "version": "b82411476842f583817e67feff5becf1228fd540",
-      "sum": "mEosZ6hZCTCw8AaASEtRFjY8PSmpvqI3xj6IWpwcroU="
+      "version": "69bc267211790a1c3f4ea6e6211f3e8ffe22f987",
+      "sum": "BjHfWzqSAgtAKEVD6ipoYOkb8XT5wSBIboY4ZLwhlOU="
     },
     {
       "name": "jaeger-mixin",
@@ -52,8 +52,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "05d490681404e9dae6e42284b6a2776493a9355c",
-      "sum": "rTPcq23U6UNXoN2Fpxt5JzIYTnylMuG794lr9Pt4xEc="
+      "version": "5e78521e47947bd3fc69e4e8d8f837c8561d2dca",
+      "sum": "s8KZDFOx6+tF81w/NbGnjjOAP29c0bBzoASVq5jEyOU="
     },
     {
       "name": "prometheus-operator",
@@ -63,8 +63,8 @@
           "subdir": "jsonnet/prometheus-operator"
         }
       },
-      "version": "8d44e0990230144177f97cf62ae4f43b1c4e3168",
-      "sum": "5U7/8MD3pF9O0YDTtUhg4vctkUBRVFxZxWUyhtNiBM8="
+      "version": "908ee0372a9ac2c6574d589fdc56a4f3cb5f12d1",
+      "sum": "L1ZFTEYXOqNH7UFnzYQ6b/0V909jq+A1twzfSwh8juE="
     },
     {
       "name": "slo-libsonnet",
@@ -74,8 +74,8 @@
           "subdir": "slo-libsonnet"
         }
       },
-      "version": "101618191a5dae835f7c8a90e6f0df40072e2cb3",
-      "sum": "vERnAgUe02tI7S4cRK2KSEsyuVm6XFT9v8RucCG/8B8="
+      "version": "f040d2b3ed4553c0d22ab3590e303f30d8cea1a7",
+      "sum": "GgqnlAw5hWs8PMfkGyOPPTnW5V2Gxzu1yoBJKX4rQxg="
     },
     {
       "name": "telemeter",
@@ -96,7 +96,7 @@
           "subdir": "jsonnet/thanos-mixin"
         }
       },
-      "version": "05d490681404e9dae6e42284b6a2776493a9355c",
+      "version": "5e78521e47947bd3fc69e4e8d8f837c8561d2dca",
       "sum": "sGk0IQJcux6rkzpuDKfBB8Of8z439K8xL7gs4yNR7EQ="
     },
     {
@@ -107,7 +107,7 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "117290cc0acaf2f3dd3d510e4579c9a56ae9c7c2",
+      "version": "965e79d6f5679ccd42053151ca84dbf815ff0012",
       "sum": "vJAU/C1iuD1HS0v4ylubg9+LlwdRVuYu5/bO9MVC7gY="
     },
     {
@@ -118,7 +118,7 @@
           "subdir": "jsonnet/thanos-receive-controller-mixin"
         }
       },
-      "version": "117290cc0acaf2f3dd3d510e4579c9a56ae9c7c2",
+      "version": "965e79d6f5679ccd42053151ca84dbf815ff0012",
       "sum": "TK16wpgsxCEimR2oxw6V8TIs+BRi6Rk+mENkcaOW5m8="
     }
   ]
