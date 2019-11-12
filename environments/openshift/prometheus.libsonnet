@@ -193,6 +193,8 @@ local list = import 'telemeter/lib/list.libsonnet';
           '/config/nginx.conf',
         ]) +
         container.withPorts([{ name: 'http', containerPort: $._config.ams.proxyPort }]) +
+        container.mixin.resources.withRequests({ cpu: '50m', memory: '16Mi' }) +
+        container.mixin.resources.withLimits({ cpu: '100m', memory: '64Mi' }) +
         container.withVolumeMounts([volumeMount.new($.prometheusRemoteWriteProxy.configmap.metadata.name, '/config', true)]);
 
       deployment.new('prometheus-remote-write-proxy', 1, c, selectorLabels) +

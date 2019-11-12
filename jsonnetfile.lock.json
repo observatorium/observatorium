@@ -96,8 +96,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "965e79d6f5679ccd42053151ca84dbf815ff0012",
-      "sum": "vJAU/C1iuD1HS0v4ylubg9+LlwdRVuYu5/bO9MVC7gY="
+      "version": "47c08cc6789327b9124bceccea346a3759041cb2",
+      "sum": "EGr26vVxp0ZKDHd3EGBlsozeOa3/9sRF+L/qAMZmpw4="
     },
     {
       "name": "thanos-receive-controller-mixin",

@@ -110,6 +110,13 @@ objects:
             name: jaeger-thrift
           - containerPort: 5778
             name: configs
+          resources:
+            limits:
+              cpu: 128m
+              memory: 64Mi
+            requests:
+              cpu: 32m
+              memory: 16Mi
         volumes:
         - emptyDir: {}
           name: thanos-compactor-data
@@ -204,6 +211,13 @@ objects:
           ports:
           - containerPort: 9091
             name: https
+          resources:
+            limits:
+              cpu: 64m
+              memory: 128Mi
+            requests:
+              cpu: 32m
+              memory: 32Mi
           volumeMounts:
           - mountPath: /etc/tls/private
             name: secret-querier-cache-tls
@@ -324,6 +338,13 @@ objects:
             name: jaeger-thrift
           - containerPort: 5778
             name: configs
+          resources:
+            limits:
+              cpu: 128m
+              memory: 64Mi
+            requests:
+              cpu: 32m
+              memory: 16Mi
         - args:
           - -provider=openshift
           - -https-address=:9091
@@ -445,6 +466,13 @@ objects:
           ports:
           - containerPort: 8080
             name: http
+          resources:
+            limits:
+              cpu: 64m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 24Mi
         serviceAccount: thanos-receive-controller
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: Role
@@ -670,6 +698,13 @@ objects:
             name: jaeger-thrift
           - containerPort: 5778
             name: configs
+          resources:
+            limits:
+              cpu: 128m
+              memory: 64Mi
+            requests:
+              cpu: 32m
+              memory: 16Mi
         volumes:
         - configMap:
             name: observatorium-tenants-generated
@@ -793,6 +828,13 @@ objects:
             name: jaeger-thrift
           - containerPort: 5778
             name: configs
+          resources:
+            limits:
+              cpu: 128m
+              memory: 64Mi
+            requests:
+              cpu: 32m
+              memory: 16Mi
         volumes: null
     volumeClaimTemplates:
     - metadata:
@@ -1097,6 +1139,13 @@ objects:
           ports:
           - containerPort: 8080
             name: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 64Mi
+            requests:
+              cpu: 50m
+              memory: 16Mi
           volumeMounts:
           - mountPath: /config
             name: prometheus-remote-write-proxy-config

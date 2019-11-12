@@ -355,6 +355,8 @@ local list = import 'telemeter/lib/list.libsonnet';
                   container.withPorts([
                     { name: 'https', containerPort: $.thanos.querier.service.spec.ports[2].port },
                   ]) +
+                  container.mixin.resources.withRequests({ cpu: '32m', memory: '32Mi' }) +
+                  container.mixin.resources.withLimits({ cpu: '64m', memory: '128Mi' }) +
                   container.withVolumeMounts(
                     [
                       volumeMount.new('secret-querier-cache-tls', '/etc/tls/private'),
