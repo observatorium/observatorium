@@ -15,6 +15,8 @@ local containerEnv = container.envType;
       containerEnv.fromFieldPath('NAMESPACE', 'metadata.namespace'),
       containerEnv.fromFieldPath('POD', 'metadata.name'),
     ]) +
+    container.mixin.resources.withRequests({ cpu: '32m', memory: '16Mi' }) +
+    container.mixin.resources.withLimits({ cpu: '128m', memory: '64Mi' }) +
     container.withPorts([
       container.portsType.newNamed(6831, 'jaeger-thrift'),
       container.portsType.newNamed(5778, 'configs'),
