@@ -83,6 +83,20 @@ local sm =
     },
   };
 
+local jaeger = {
+  serviceMonitor+: {
+    metadata: {
+      name: 'observatorium-jaeger',
+      labels: { prometheus: 'app-sre' },
+    },
+    spec+: {
+      selector+: {
+        matchLabels: { 'app.kubernetes.io/name': 'jaeger' },
+      },
+    },
+  },
+};
+
 {
   'observatorium-thanos-querier-stage.servicemonitor': sm.thanos.querier.serviceMonitor {
     metadata+: { name+: '-stage' },
@@ -136,4 +150,11 @@ local sm =
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   }
   for tenant in tenants
+} {
+  'observatorium-jaeger.servicemonitor': jaeger.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
+  },
+  'observatorium-jaeger-stage.servicemonitor': jaeger.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  },
 }

@@ -162,24 +162,11 @@ local capitalize(str) = std.asciiUpper(std.substr(str, 0, 1)) + std.asciiLower(s
 
     spec: alerts.prometheusAlerts,
   },
-  'observatorium-jaeger-production.prometheusrules': {
+  'observatorium-jaeger.prometheusrules': {
     apiVersion: 'monitoring.coreos.com/v1',
     kind: 'PrometheusRule',
     metadata: {
-      name: 'observatorium-jaeger-production',
-      labels: {
-        prometheus: 'app-sre',
-        role: 'alert-rules',
-      },
-    },
-
-    spec: jaeger.prometheusAlerts,
-  },
-  'observatorium-jaeger-stage.prometheusrules': {
-    apiVersion: 'monitoring.coreos.com/v1',
-    kind: 'PrometheusRule',
-    metadata: {
-      name: 'observatorium-jaeger-stage',
+      name: 'observatorium-jaeger',
       labels: {
         prometheus: 'app-sre',
         role: 'alert-rules',

@@ -4,7 +4,7 @@ metadata:
   labels:
     prometheus: app-sre
     role: alert-rules
-  name: observatorium-jaeger-production
+  name: observatorium-jaeger
 spec:
   groups:
   - name: jaeger_alerts
