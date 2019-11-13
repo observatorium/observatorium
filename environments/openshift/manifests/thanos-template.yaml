@@ -128,6 +128,7 @@ objects:
               requests:
                 cpu: 32m
                 memory: 64Mi
+          terminationGracePeriodSeconds: 120
           volumes:
           - emptyDir: {}
             name: thanos-compactor-data
@@ -409,6 +410,7 @@ objects:
               readOnly: false
           serviceAccount: prometheus-telemeter
           serviceAccountName: prometheus-telemeter
+          terminationGracePeriodSeconds: 120
           volumes:
           - name: secret-querier-tls
             secret:
@@ -758,6 +760,7 @@ objects:
               requests:
                 cpu: 32m
                 memory: 64Mi
+          terminationGracePeriodSeconds: 120
           volumes:
           - configMap:
               name: observatorium-tenants-generated
@@ -899,6 +902,7 @@ objects:
               requests:
                 cpu: 32m
                 memory: 64Mi
+          terminationGracePeriodSeconds: 120
           volumes: null
       volumeClaimTemplates:
       - metadata:

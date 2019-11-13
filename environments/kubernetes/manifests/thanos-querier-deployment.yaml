@@ -86,3 +86,4 @@ spec:
           requests:
             cpu: 32m
             memory: 64Mi
+      terminationGracePeriodSeconds: 120

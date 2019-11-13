@@ -97,6 +97,7 @@ spec:
           requests:
             cpu: 32m
             memory: 64Mi
+      terminationGracePeriodSeconds: 120
       volumes:
       - emptyDir: {}
         name: thanos-compactor-data
