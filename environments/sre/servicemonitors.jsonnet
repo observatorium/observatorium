@@ -77,6 +77,8 @@ local sm =
   } + (import '../../components/jaeger-collector.libsonnet') {
     jaeger+:: {
       serviceMonitor+: {
+        apiVersion: 'monitoring.coreos.com/v1',
+        kind: 'ServiceMonitor',
         metadata: {
           name: 'observatorium-jaeger',
           labels: { prometheus: 'app-sre' },
@@ -85,6 +87,9 @@ local sm =
           selector+: {
             matchLabels: $.jaeger.queryService.metadata.labels,
           },
+          endpoints: [
+          { port: $.jaeger.queryService.spec.ports[0].name },
+        ],
         },
       },
     },
