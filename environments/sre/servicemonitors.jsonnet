@@ -88,8 +88,8 @@ local sm =
             matchLabels: $.jaeger.queryService.metadata.labels,
           },
           endpoints: [
-          { port: $.jaeger.queryService.spec.ports[0].name },
-        ],
+            { port: $.jaeger.queryService.spec.ports[0].name },
+          ],
         },
       },
     },
