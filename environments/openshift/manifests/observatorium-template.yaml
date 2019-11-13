@@ -80,6 +80,8 @@ objects:
               path: /-/ready
               port: 10902
               scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
           resources:
             limits:
               cpu: ${THANOS_COMPACTOR_CPU_LIMIT}
@@ -311,6 +313,13 @@ objects:
                 sampler_param: 2
           - --store=dnssrv+_grpc._tcp.thanos-receive-default.${NAMESPACE}.svc.cluster.local
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /-/healthy
+              port: 9090
+              scheme: HTTP
+            periodSeconds: 30
           name: thanos-querier
           ports:
           - containerPort: 10901
@@ -322,6 +331,8 @@ objects:
               path: /-/ready
               port: 9090
               scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
           resources:
             limits:
               cpu: ${THANOS_QUERIER_CPU_LIMIT}
@@ -693,6 +704,8 @@ objects:
               path: /-/ready
               port: 10902
               scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
           resources:
             limits:
               cpu: ${THANOS_RECEIVE_CPU_LIMIT}
@@ -835,6 +848,8 @@ objects:
               path: /-/ready
               port: 10902
               scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
           resources:
             limits:
               cpu: ${THANOS_STORE_CPU_LIMIT}

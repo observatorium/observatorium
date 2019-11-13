@@ -34,95 +34,119 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 
     querier+: {
       replicas:: 3,
-      deployment+: {
-        spec+: {
-          template+: {
-            metadata+: {
-              labels+: super.labels + jaegerAgent.labels,
-            },
-            spec+: {
-              containers: [
-                super.containers[0]
-                { args: [
-                  'query',
-                  '--query.replica-label=replica',
-                  '--query.replica-label=prometheus_replica',
-                  '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
-                  '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
-                  '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
-                    $.thanos.store.service.metadata.name,
-                    $.thanos.store.service.metadata.namespace,
-                  ],
-                  jaegerAgent.thanosFlag % $.thanos.querier.deployment.metadata.name,
-                ] + [
-                  '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
-                    $.thanos.receive['service-' + tenant.hashring].metadata.name,
-                    $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
-                  ]
-                  for tenant in tenants
-                ] },
-              ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
+
+      deployment+:
+        {
+          spec+: {
+            template+: {
+              metadata+: {
+                labels+: super.labels + jaegerAgent.labels,
+              },
+              spec+: {
+                containers: [
+                  super.containers[0]
+                  { args: [
+                    'query',
+                    '--query.replica-label=replica',
+                    '--query.replica-label=prometheus_replica',
+                    '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
+                    '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
+                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                      $.thanos.store.service.metadata.name,
+                      $.thanos.store.service.metadata.namespace,
+                    ],
+                    jaegerAgent.thanosFlag % $.thanos.querier.deployment.metadata.name,
+                  ] + [
+                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                      $.thanos.receive['service-' + tenant.hashring].metadata.name,
+                      $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
+                    ]
+                    for tenant in tenants
+                  ] } + {
+                    readinessProbe+: {
+                      initialDelaySeconds: 10,
+                      periodSeconds: 30,
+                    },
+                  } + container.mixin.livenessProbe +
+                  container.mixin.livenessProbe.withPeriodSeconds(30) +
+                  container.mixin.livenessProbe.withFailureThreshold(4) +
+                  container.mixin.livenessProbe.httpGet.withPort($.thanos.querier.service.spec.ports[1].port) +
+                  container.mixin.livenessProbe.httpGet.withScheme('HTTP') +
+                  container.mixin.livenessProbe.httpGet.withPath('/-/healthy'),
+                ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
+              },
             },
           },
-        },
-      } +
-      deployment.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
+        } +
+        deployment.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
     },
     store+: {
       replicas:: 1,
       pvc+:: {
         size: '50Gi',
       },
-      statefulSet+: {
-        spec+: {
-          template+: {
-            metadata+: {
-              labels+: super.labels + jaegerAgent.labels,
-            },
-            spec+: {
-              containers: [
-                super.containers[0]
-                {
-                  args+: [
-                    jaegerAgent.thanosFlag % $.thanos.store.statefulSet.metadata.name,
-                  ],
-                },
-              ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
+      statefulSet+:
+        {
+          spec+: {
+            template+: {
+              metadata+: {
+                labels+: super.labels + jaegerAgent.labels,
+              },
+              spec+: {
+                containers: [
+                  super.containers[0]
+                  {
+                    args+: [
+                      jaegerAgent.thanosFlag % $.thanos.store.statefulSet.metadata.name,
+                    ],
+                  } + {
+                    readinessProbe+: {
+                      initialDelaySeconds: 10,
+                      periodSeconds: 30,
+                    },
+                  },
+                ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
+              },
             },
           },
-        },
-      } +
-      statefulset.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
+        } +
+        statefulset.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
     },
     compactor+: {
-      statefulSet+: {
-        spec+: {
-          template+: {
-            metadata+: {
-              labels+: super.labels + jaegerAgent.labels,
-            },
-            spec+: {
-              containers: [
-                super.containers[0] {
-                  args: [
-                    'compact',
-                    '--wait',
-                    '--retention.resolution-raw=14d',
-                    '--downsampling.disable',
-                    '--retention.resolution-5m=1s',
-                    '--retention.resolution-1h=1s',
-                    '--objstore.config=$(OBJSTORE_CONFIG)',
-                    '--data-dir=/var/thanos/compactor',
-                    '--debug.accept-malformed-index',
-                    jaegerAgent.thanosFlag % $.thanos.compactor.statefulSet.metadata.name,
-                  ],
-                },
-              ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
+      statefulSet+:
+        {
+          spec+: {
+            template+: {
+              metadata+: {
+                labels+: super.labels + jaegerAgent.labels,
+              },
+              spec+: {
+                containers: [
+                  super.containers[0] {
+                    args: [
+                      'compact',
+                      '--wait',
+                      '--retention.resolution-raw=14d',
+                      '--downsampling.disable',
+                      '--retention.resolution-5m=1s',
+                      '--retention.resolution-1h=1s',
+                      '--objstore.config=$(OBJSTORE_CONFIG)',
+                      '--data-dir=/var/thanos/compactor',
+                      '--debug.accept-malformed-index',
+                      jaegerAgent.thanosFlag % $.thanos.compactor.statefulSet.metadata.name,
+                    ],
+                  } + {
+                    readinessProbe+: {
+                      initialDelaySeconds: 10,
+                      periodSeconds: 30,
+                    },
+                  },
+                ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
+              },
             },
           },
-        },
-      } +
-      statefulset.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
+        } +
+        statefulset.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
     },
     receive+: {
       pvc+:: {
@@ -189,6 +213,11 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 
                       env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
                     ],
+                  } + {
+                    readinessProbe+: {
+                      initialDelaySeconds: 10,
+                      periodSeconds: 30,
+                    },
                   } else c
                   for c in super.containers
                 ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
@@ -202,7 +231,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
             },
           },
         } +
-      statefulset.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
+        statefulset.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120)
       for tenant in tenants
     },
     receiveController+: {
