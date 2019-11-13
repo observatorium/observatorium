@@ -103,7 +103,7 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          image: jaegertracing/jaeger-agent:1.14.0
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
           name: jaeger-agent
           ports:
           - containerPort: 6831
@@ -331,7 +331,7 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          image: jaegertracing/jaeger-agent:1.14.0
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
           name: jaeger-agent
           ports:
           - containerPort: 6831
@@ -691,7 +691,7 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          image: jaegertracing/jaeger-agent:1.14.0
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
           name: jaeger-agent
           ports:
           - containerPort: 6831
@@ -821,7 +821,7 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          image: jaegertracing/jaeger-agent:1.14.0
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
           name: jaeger-agent
           ports:
           - containerPort: 6831
