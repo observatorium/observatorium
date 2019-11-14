@@ -22,6 +22,7 @@ local list = import 'telemeter/lib/list.libsonnet';
     local namespace = '${NAMESPACE}',
     namespace:: namespace,
     image:: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
+    imageJaegerAgent:: '${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}',
     proxyImage:: '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}',
     thanosReceiveControllerImage:: '${THANOS_RECEIVE_CONTROLLER_IMAGE}:${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}',
     objectStorageConfig+:: {
@@ -402,58 +403,21 @@ local list = import 'telemeter/lib/list.libsonnet';
       };
 
       list.asList('thanos', objects, [
-        {
-          name: 'NAMESPACE',
-          value: 'telemeter',
-        },
-        {
-          name: 'THANOS_IMAGE',
-          value: 'quay.io/thanos/thanos',
-        },
-        {
-          name: 'THANOS_IMAGE_TAG',
-          value: 'v0.8.1',
-        },
-        {
-          name: 'PROXY_IMAGE',
-          value: 'openshift/oauth-proxy',
-        },
-        {
-          name: 'PROXY_IMAGE_TAG',
-          value: 'v1.1.0',
-        },
-        {
-          name: 'THANOS_RECEIVE_CONTROLLER_IMAGE',
-          value: 'quay.io/observatorium/thanos-receive-controller',
-        },
-        {
-          name: 'THANOS_RECEIVE_CONTROLLER_IMAGE_TAG',
-          value: 'master-2019-10-18-d55fee2',
-        },
-        {
-          name: 'THANOS_QUERIER_REPLICAS',
-          value: '3',
-        },
-        {
-          name: 'THANOS_STORE_REPLICAS',
-          value: '5',
-        },
-        {
-          name: 'THANOS_COMPACTOR_REPLICAS',
-          value: '1',
-        },
-        {
-          name: 'THANOS_RECEIVE_REPLICAS',
-          value: '5',
-        },
-        {
-          name: 'THANOS_CONFIG_SECRET',
-          value: 'thanos-objectstorage',
-        },
-        {
-          name: 'THANOS_S3_SECRET',
-          value: 'telemeter-thanos-stage-s3',
-        },
+        { name: 'NAMESPACE', value: 'telemeter' },
+        { name: 'THANOS_IMAGE', value: 'quay.io/thanos/thanos' },
+        { name: 'THANOS_IMAGE_TAG', value: 'v0.8.1' },
+        { name: 'PROXY_IMAGE', value: 'openshift/oauth-proxy' },
+        { name: 'PROXY_IMAGE_TAG', value: 'v1.1.0' },
+        { name: 'JAEGER_AGENT_IMAGE', value: 'jaegertracing/jaeger-agent' },
+        { name: 'JAEGER_AGENT_IMAGE_TAG', value: '1.14.0' },
+        { name: 'THANOS_RECEIVE_CONTROLLER_IMAGE', value: 'quay.io/observatorium/thanos-receive-controller' },
+        { name: 'THANOS_RECEIVE_CONTROLLER_IMAGE_TAG', value: 'master-2019-10-18-d55fee2' },
+        { name: 'THANOS_QUERIER_REPLICAS', value: '3' },
+        { name: 'THANOS_STORE_REPLICAS', value: '5' },
+        { name: 'THANOS_COMPACTOR_REPLICAS', value: '1' },
+        { name: 'THANOS_RECEIVE_REPLICAS', value: '5' },
+        { name: 'THANOS_CONFIG_SECRET', value: 'thanos-objectstorage' },
+        { name: 'THANOS_S3_SECRET', value: 'telemeter-thanos-stage-s3' },
         { name: 'THANOS_QUERIER_CPU_REQUEST', value: '100m' },
         { name: 'THANOS_QUERIER_CPU_LIMIT', value: '1' },
         { name: 'THANOS_QUERIER_MEMORY_REQUEST', value: '256Mi' },

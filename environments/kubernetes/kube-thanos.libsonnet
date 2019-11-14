@@ -22,6 +22,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 {
   thanos+:: {
     image: 'quay.io/thanos/thanos:v0.8.1',
+    imageJaegerAgent: 'jaegertracing/jaeger-agent:1.14.0',
     objectStorageConfig+: {
       name: 'thanos-objectstorage',
       key: 'thanos.yaml',
@@ -56,7 +57,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                   ]
                   for tenant in tenants
                 ] },
-              ] + [jaegerAgent.container],
+              ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
           },
         },
@@ -78,7 +79,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                     jaegerAgent.thanosFlag % $.thanos.store.statefulSet.metadata.name,
                   ],
                 },
-              ] + [jaegerAgent.container],
+              ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
           },
         },
@@ -104,7 +105,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                     jaegerAgent.thanosFlag % $.thanos.compactor.statefulSet.metadata.name,
                   ],
                 },
-              ] + [jaegerAgent.container],
+              ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
           },
         },
@@ -175,7 +176,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                     ],
                   } else c
                   for c in super.containers
-                ] + [jaegerAgent.container],
+                ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
 
                 local volume = sts.mixin.spec.template.spec.volumesType,
                 volumes: [

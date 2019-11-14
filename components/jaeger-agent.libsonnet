@@ -4,8 +4,8 @@ local container = deployment.mixin.spec.template.spec.containersType;
 local containerEnv = container.envType;
 
 {
-  container::
-    container.new('jaeger-agent', 'jaegertracing/jaeger-agent:1.14.0') +
+  container(image)::
+    container.new('jaeger-agent', image) +
     container.withArgs([
       '--reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250',
       '--reporter.type=grpc',

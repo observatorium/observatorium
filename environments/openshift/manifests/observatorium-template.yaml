@@ -103,7 +103,7 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          image: jaegertracing/jaeger-agent:1.14.0
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
           name: jaeger-agent
           ports:
           - containerPort: 6831
@@ -331,7 +331,7 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          image: jaegertracing/jaeger-agent:1.14.0
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
           name: jaeger-agent
           ports:
           - containerPort: 6831
@@ -691,7 +691,7 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          image: jaegertracing/jaeger-agent:1.14.0
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
           name: jaeger-agent
           ports:
           - containerPort: 6831
@@ -821,7 +821,7 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-          image: jaegertracing/jaeger-agent:1.14.0
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
           name: jaeger-agent
           ports:
           - containerPort: 6831
@@ -1257,6 +1257,10 @@ parameters:
   value: openshift/oauth-proxy
 - name: PROXY_IMAGE_TAG
   value: v1.1.0
+- name: JAEGER_AGENT_IMAGE
+  value: jaegertracing/jaeger-agent
+- name: JAEGER_AGENT_IMAGE_TAG
+  value: 1.14.0
 - name: THANOS_RECEIVE_CONTROLLER_IMAGE
   value: quay.io/observatorium/thanos-receive-controller
 - name: THANOS_RECEIVE_CONTROLLER_IMAGE_TAG
