@@ -3,6 +3,20 @@ kind: Template
 metadata:
   name: jaeger
 objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/name: jaeger-all-in-one
+    name: jaeger-admin
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - name: admin-http
+      port: 14269
+      targetPort: 14269
+    selector:
+      app.kubernetes.io/name: jaeger-all-in-one
 - apiVersion: apps/v1
   kind: Deployment
   metadata:

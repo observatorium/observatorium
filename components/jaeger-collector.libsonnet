@@ -35,6 +35,17 @@ local service = k.core.v1.service;
       service.mixin.metadata.withNamespace(j.namespace) +
       service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }),
 
+    adminService:
+      service.new(
+        'jaeger-admin',
+        $.jaeger.deployment.metadata.labels,
+        [
+          service.mixin.spec.portsType.newNamed('admin-http', 14269, 14269),
+        ],
+      ) +
+      service.mixin.metadata.withNamespace(j.namespace) +
+      service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }),
+
     volumeClaim:
       local claim = k.core.v1.persistentVolumeClaim;
       claim.new() +

@@ -4,6 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/instance: default
     app.kubernetes.io/name: thanos-receive
+    app.kubernetes.io/tracing: jaeger-agent
     controller.receive.thanos.io: thanos-receive-controller
     controller.receive.thanos.io/hashring: default
   name: thanos-receive-default
@@ -96,12 +97,20 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         image: jaegertracing/jaeger-agent:1.14.0
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /
+            port: 14271
+            scheme: HTTP
         name: jaeger-agent
         ports:
         - containerPort: 6831
           name: jaeger-thrift
         - containerPort: 5778
           name: configs
+        - containerPort: 14271
+          name: metrics
         resources:
           limits:
             cpu: 128m
