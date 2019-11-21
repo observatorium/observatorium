@@ -37,7 +37,7 @@ local thanosReceiveDashboards = thanosReceiveController {
     configmap.new() +
     configmap.mixin.metadata.withName('grafana-dashboard-observatorium-thanos-%s' % std.split(name, '.')[0]) +
     configmap.withData({
-      [name]: std.manifestJsonEx(dashboards[name], '  '),
+      [name]: std.manifestJsonEx(dashboards[name] { tags: std.uniq(super.tags + ['observatorium']) }, '  '),
     })
   for name in std.objectFields(dashboards)
 } + {
@@ -46,7 +46,7 @@ local thanosReceiveDashboards = thanosReceiveController {
     configmap.new() +
     configmap.mixin.metadata.withName('grafana-dashboard-observatorium-thanos-%s' % std.split(name, '.')[0]) +
     configmap.withData({
-      [name]: std.manifestJsonEx(thanosReceiveDashboards[name], '  '),
+      [name]: std.manifestJsonEx(thanosReceiveDashboards[name] { tags: std.uniq(super.tags + ['observatorium']) }, '  '),
     })
   for name in std.objectFields(thanosReceiveDashboards)
 } + {
@@ -55,7 +55,7 @@ local thanosReceiveDashboards = thanosReceiveController {
     configmap.new() +
     configmap.mixin.metadata.withName('grafana-dashboard-observatorium-jaeger-%s' % std.split(name, '.')[0]) +
     configmap.withData({
-      [name]: std.manifestJsonEx(jaeger.grafanaDashboards[name], '  '),
+      [name]: std.manifestJsonEx(jaeger.grafanaDashboards[name] { tags: std.uniq(super.tags + ['observatorium']) }, '  '),
     })
   for name in std.objectFields(jaeger.grafanaDashboards)
 }
