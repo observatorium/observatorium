@@ -1,15 +1,15 @@
 apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
+kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
   name: observatorium-jaeger-agent
 spec:
+  endpoints:
+  - port: metrics
   namespaceSelector:
     matchNames:
     - telemeter-stage
-  podMetricsEndpoints:
-  - targetPort: 14271
   selector:
     matchLabels:
-      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/name: jaeger-agent

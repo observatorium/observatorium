@@ -26,7 +26,12 @@ local containerEnv = container.envType;
     ]),
 
   metricsPort:: 14271,
-
+  serviceLabels:: {
+    'app.kubernetes.io/name': 'jaeger-agent',
+  },
+  labels:: {
+    'app.kubernetes.io/tracing': 'jaeger-agent',
+  },
   thanosFlag:: |||
     --tracing.config=
       type: JAEGER
@@ -35,8 +40,4 @@ local containerEnv = container.envType;
         sampler_type: ratelimiting
         sampler_param: 2
   |||,
-
-  labels:: {
-    'app.kubernetes.io/tracing': 'jaeger-agent',
-  },
 }

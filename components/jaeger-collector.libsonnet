@@ -1,5 +1,6 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local service = k.core.v1.service;
+local jaegerAgent = import './jaeger-agent.libsonnet';
 
 {
   jaeger+:: {
@@ -45,6 +46,17 @@ local service = k.core.v1.service;
       ) +
       service.mixin.metadata.withNamespace(j.namespace) +
       service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }),
+
+    agentService:
+      service.new(
+        'jaeger-agent',
+        jaegerAgent.labels,
+        [
+          service.mixin.spec.portsType.newNamed('metrics', jaegerAgent.metricsPort, jaegerAgent.metricsPort),
+        ],
+      ) +
+      service.mixin.metadata.withNamespace(j.namespace) +
+      service.mixin.metadata.withLabels(jaegerAgent.serviceLabels),
 
     volumeClaim:
       local claim = k.core.v1.persistentVolumeClaim;
