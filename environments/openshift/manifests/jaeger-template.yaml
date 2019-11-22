@@ -83,7 +83,7 @@ objects:
               path: /
               port: 14269
               scheme: HTTP
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
             periodSeconds: 30
           resources:
             limits:

@@ -99,7 +99,7 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
         container.withVolumeMounts([mount.new('jaeger-store-data', '/var/jaeger/store')]) +
         container.mixin.readinessProbe.withFailureThreshold(3) +
         container.mixin.readinessProbe.withPeriodSeconds(30) +
-        container.mixin.readinessProbe.withInitialDelaySeconds(30) +
+        container.mixin.readinessProbe.withInitialDelaySeconds(10) +
         container.mixin.readinessProbe.httpGet.withPath('/').withPort(14269).withScheme('HTTP') +
         container.mixin.livenessProbe.withPeriodSeconds(30) +
         container.mixin.livenessProbe.withFailureThreshold(4) +
