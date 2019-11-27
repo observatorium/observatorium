@@ -10,6 +10,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: thanos-rule
+  serviceName: thanos-rule
   template:
     metadata:
       labels:
@@ -17,13 +18,13 @@ spec:
     spec:
       containers:
       - args:
-        - ruler
+        - rule
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:10902
         - --objstore.config=$(OBJSTORE_CONFIG)
         - --data-dir=/var/thanos/rule
-        - --label=replica="$(NAME)"
-        - --alert.label-drop="replica"
+        - --label=rule_replica="$(NAME)"
+        - --alert.label-drop="rule_replica"
         - --query=dnssrv+_grpc._tcp.thanos-querier.observatorium.svc.cluster.local
         env:
         - name: NAME
