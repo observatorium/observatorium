@@ -104,8 +104,8 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
         container.mixin.livenessProbe.withPeriodSeconds(30) +
         container.mixin.livenessProbe.withFailureThreshold(4) +
         container.mixin.livenessProbe.httpGet.withPath('/').withPort(14269).withScheme('HTTP') +
-        container.mixin.resources.withRequests({ cpu: '1', memory: '256Mi' }) +
-        container.mixin.resources.withLimits({ cpu: '4', memory: '2Gi' });
+        container.mixin.resources.withRequests({ cpu: '1', memory: '1Gi' }) +
+        container.mixin.resources.withLimits({ cpu: '4', memory: '4Gi' });
 
       deployment.new('jaeger-all-in-one', j.replicas, c, $.jaeger.deployment.metadata.labels) +
       deployment.mixin.metadata.withNamespace(j.namespace) +

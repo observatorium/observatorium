@@ -88,10 +88,10 @@ objects:
           resources:
             limits:
               cpu: "4"
-              memory: 2Gi
+              memory: 4Gi
             requests:
               cpu: "1"
-              memory: 256Mi
+              memory: 1Gi
           volumeMounts:
           - mountPath: /var/jaeger/store
             name: jaeger-store-data
