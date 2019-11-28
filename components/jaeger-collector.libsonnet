@@ -1,5 +1,6 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 local service = k.core.v1.service;
+local jaegerAgent = import './jaeger-agent.libsonnet';
 
 {
   jaeger+:: {
@@ -34,6 +35,28 @@ local service = k.core.v1.service;
       ) +
       service.mixin.metadata.withNamespace(j.namespace) +
       service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }),
+
+    adminService:
+      service.new(
+        'jaeger-admin',
+        $.jaeger.deployment.metadata.labels,
+        [
+          service.mixin.spec.portsType.newNamed('admin-http', 14269, 14269),
+        ],
+      ) +
+      service.mixin.metadata.withNamespace(j.namespace) +
+      service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }),
+
+    agentService:
+      service.new(
+        'jaeger-agent',
+        jaegerAgent.labels,
+        [
+          service.mixin.spec.portsType.newNamed('metrics', jaegerAgent.metricsPort, jaegerAgent.metricsPort),
+        ],
+      ) +
+      service.mixin.metadata.withNamespace(j.namespace) +
+      service.mixin.metadata.withLabels(jaegerAgent.serviceLabels),
 
     volumeClaim:
       local claim = k.core.v1.persistentVolumeClaim;
@@ -75,8 +98,11 @@ local service = k.core.v1.service;
         ) +
         container.withVolumeMounts([mount.new('jaeger-store-data', '/var/jaeger/store')]) +
         container.mixin.readinessProbe.withFailureThreshold(3) +
+        container.mixin.readinessProbe.withPeriodSeconds(30) +
+        container.mixin.readinessProbe.withInitialDelaySeconds(10) +
         container.mixin.readinessProbe.httpGet.withPath('/').withPort(14269).withScheme('HTTP') +
-        container.mixin.livenessProbe.withFailureThreshold(3) +
+        container.mixin.livenessProbe.withPeriodSeconds(30) +
+        container.mixin.livenessProbe.withFailureThreshold(4) +
         container.mixin.livenessProbe.httpGet.withPath('/').withPort(14269).withScheme('HTTP') +
         container.mixin.resources.withRequests({ cpu: '1', memory: '256Mi' }) +
         container.mixin.resources.withLimits({ cpu: '4', memory: '2Gi' });

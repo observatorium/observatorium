@@ -36,6 +36,9 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
       deployment+: {
         spec+: {
           template+: {
+            metadata+: {
+              labels+: super.labels + jaegerAgent.labels,
+            },
             spec+: {
               containers: [
                 super.containers[0]
@@ -71,6 +74,9 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
       statefulSet+: {
         spec+: {
           template+: {
+            metadata+: {
+              labels+: super.labels + jaegerAgent.labels,
+            },
             spec+: {
               containers: [
                 super.containers[0]
@@ -89,6 +95,9 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
       statefulSet+: {
         spec+: {
           template+: {
+            metadata+: {
+              labels+: super.labels + jaegerAgent.labels,
+            },
             spec+: {
               containers: [
                 super.containers[0] {
@@ -140,10 +149,12 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
         {
           metadata+: {
             name: 'thanos-receive-' + tenant.hashring,
-            labels+: {
-              'controller.receive.thanos.io': 'thanos-receive-controller',
-              'controller.receive.thanos.io/hashring': tenant.hashring,
-            } + $.thanos.receive['service-' + tenant.hashring].metadata.labels,
+            labels+:
+              {
+                'controller.receive.thanos.io': 'thanos-receive-controller',
+                'controller.receive.thanos.io/hashring': tenant.hashring,
+              } + $.thanos.receive['service-' + tenant.hashring].metadata.labels
+              + jaegerAgent.labels,
           },
           spec+: {
             replicas: tenant.replicas,

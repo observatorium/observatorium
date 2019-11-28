@@ -3,10 +3,10 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: observatorium-jaeger
+  name: observatorium-jaeger-collector
 spec:
   endpoints:
-  - port: query
+  - port: admin-http
   namespaceSelector:
     matchNames:
     - telemeter-stage

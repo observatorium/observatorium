@@ -30,11 +30,12 @@ spec:
           value: badger
         image: jaegertracing/all-in-one:1.14.0
         livenessProbe:
-          failureThreshold: 3
+          failureThreshold: 4
           httpGet:
             path: /
             port: 14269
             scheme: HTTP
+          periodSeconds: 30
         name: jaeger-all-in-one
         ports:
         - containerPort: 14250
@@ -49,6 +50,8 @@ spec:
             path: /
             port: 14269
             scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
         resources:
           limits:
             cpu: "4"

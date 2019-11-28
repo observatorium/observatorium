@@ -80,16 +80,35 @@ local sm =
         apiVersion: 'monitoring.coreos.com/v1',
         kind: 'ServiceMonitor',
         metadata: {
-          name: 'observatorium-jaeger',
+          name: 'observatorium-jaeger-collector',
           labels: { prometheus: 'app-sre' },
         },
         spec+: {
           selector+: {
-            matchLabels: $.jaeger.queryService.metadata.labels,
+            matchLabels: $.jaeger.adminService.metadata.labels,
           },
           endpoints: [
-            { port: $.jaeger.queryService.spec.ports[0].name },
+            { port: $.jaeger.adminService.spec.ports[0].name },
           ],
+        },
+      },
+      agent+:: {
+        local jaegerAgent = import '../../components/jaeger-agent.libsonnet',
+        serviceMonitor+: {
+          apiVersion: 'monitoring.coreos.com/v1',
+          kind: 'ServiceMonitor',
+          metadata: {
+            name: 'observatorium-jaeger-agent',
+            labels: { prometheus: 'app-sre' },
+          },
+          spec+: {
+            selector+: {
+              matchLabels: jaegerAgent.serviceLabels,
+            },
+            endpoints: [
+              { port: $.jaeger.agentService.spec.ports[0].name },
+            ],
+          },
         },
       },
     },
@@ -153,6 +172,13 @@ local sm =
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
   'observatorium-jaeger-stage.servicemonitor': sm.jaeger.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  },
+} {
+  'observatorium-jaeger-agent.servicemonitor': sm.jaeger.agent.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
+  },
+  'observatorium-jaeger-agent-stage.servicemonitor': sm.jaeger.agent.serviceMonitor {
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
 }

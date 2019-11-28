@@ -34,6 +34,7 @@ objects:
       metadata:
         labels:
           app.kubernetes.io/name: thanos-compactor
+          app.kubernetes.io/tracing: jaeger-agent
       spec:
         containers:
         - args:
@@ -104,12 +105,20 @@ objects:
               fieldRef:
                 fieldPath: metadata.name
           image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 14271
+              scheme: HTTP
           name: jaeger-agent
           ports:
           - containerPort: 6831
             name: jaeger-thrift
           - containerPort: 5778
             name: configs
+          - containerPort: 14271
+            name: metrics
           resources:
             limits:
               cpu: 128m
@@ -282,6 +291,7 @@ objects:
       metadata:
         labels:
           app.kubernetes.io/name: thanos-querier
+          app.kubernetes.io/tracing: jaeger-agent
       spec:
         containers:
         - args:
@@ -332,12 +342,20 @@ objects:
               fieldRef:
                 fieldPath: metadata.name
           image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 14271
+              scheme: HTTP
           name: jaeger-agent
           ports:
           - containerPort: 6831
             name: jaeger-thrift
           - containerPort: 5778
             name: configs
+          - containerPort: 14271
+            name: metrics
           resources:
             limits:
               cpu: 128m
@@ -590,6 +608,7 @@ objects:
     labels:
       app.kubernetes.io/instance: default
       app.kubernetes.io/name: thanos-receive
+      app.kubernetes.io/tracing: jaeger-agent
       controller.receive.thanos.io: thanos-receive-controller
       controller.receive.thanos.io/hashring: default
     name: thanos-receive-default
@@ -692,12 +711,20 @@ objects:
               fieldRef:
                 fieldPath: metadata.name
           image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 14271
+              scheme: HTTP
           name: jaeger-agent
           ports:
           - containerPort: 6831
             name: jaeger-thrift
           - containerPort: 5778
             name: configs
+          - containerPort: 14271
+            name: metrics
           resources:
             limits:
               cpu: 128m
@@ -754,6 +781,7 @@ objects:
       metadata:
         labels:
           app.kubernetes.io/name: thanos-store
+          app.kubernetes.io/tracing: jaeger-agent
       spec:
         containers:
         - args:
@@ -822,12 +850,20 @@ objects:
               fieldRef:
                 fieldPath: metadata.name
           image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 14271
+              scheme: HTTP
           name: jaeger-agent
           ports:
           - containerPort: 6831
             name: jaeger-thrift
           - containerPort: 5778
             name: configs
+          - containerPort: 14271
+            name: metrics
           resources:
             limits:
               cpu: 128m

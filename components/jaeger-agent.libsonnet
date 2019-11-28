@@ -17,11 +17,21 @@ local containerEnv = container.envType;
     ]) +
     container.mixin.resources.withRequests({ cpu: '32m', memory: '16Mi' }) +
     container.mixin.resources.withLimits({ cpu: '128m', memory: '64Mi' }) +
+    container.mixin.livenessProbe.withFailureThreshold(5) +
+    container.mixin.livenessProbe.httpGet.withPath('/').withPort(self.metricsPort).withScheme('HTTP') +
     container.withPorts([
       container.portsType.newNamed(6831, 'jaeger-thrift'),
       container.portsType.newNamed(5778, 'configs'),
+      container.portsType.newNamed(self.metricsPort, 'metrics'),
     ]),
 
+  metricsPort:: 14271,
+  serviceLabels:: {
+    'app.kubernetes.io/name': 'jaeger-agent',
+  },
+  labels:: {
+    'app.kubernetes.io/tracing': 'jaeger-agent',
+  },
   thanosFlag:: |||
     --tracing.config=
       type: JAEGER
