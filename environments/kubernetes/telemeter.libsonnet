@@ -20,7 +20,7 @@
                   '--token-expire-seconds=3600',
                   '--forward-url=http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
                     'thanos-receive',
-                    '${NAMESPACE}',
+                    $._config.namespace,
                     19291,
                   ],
                 ],
