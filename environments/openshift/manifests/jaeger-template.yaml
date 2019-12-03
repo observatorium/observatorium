@@ -22,7 +22,7 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/name: jaeger-agent
-    name: jaeger-agent
+    name: jaeger-agent-discovery
     namespace: ${NAMESPACE}
   spec:
     ports:
