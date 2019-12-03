@@ -118,6 +118,13 @@ objects:
           ports:
           - containerPort: 16687
             name: https
+          resources:
+            limits:
+              cpu: ${JAEGER_PROXY_CPU_LIMITS}
+              memory: ${JAEGER_PROXY_MEMORY_LIMITS}
+            requests:
+              cpu: ${JAEGER_PROXY_CPU_REQUEST}
+              memory: ${JAEGER_PROXY_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /etc/tls/private
             name: secret-jaeger-query-tls
@@ -198,3 +205,11 @@ parameters:
   value: openshift/oauth-proxy
 - name: PROXY_IMAGE_TAG
   value: v1.1.0
+- name: JAEGER_PROXY_CPU_REQUEST
+  value: 100m
+- name: JAEGER_PROXY_MEMORY_REQUEST
+  value: 100m
+- name: JAEGER_PROXY_CPU_LIMITS
+  value: 200m
+- name: JAEGER_PROXY_MEMORY_LIMITS
+  value: 200m

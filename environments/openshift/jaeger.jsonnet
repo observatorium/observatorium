@@ -58,7 +58,15 @@ local app =
                     volumeMount.new('secret-jaeger-query-tls', '/etc/tls/private'),
                     volumeMount.new('secret-jaeger-proxy', '/etc/proxy/secrets'),
                   ]
-                ),
+                ) +
+                container.mixin.resources.withRequests({
+                  cpu: '${JAEGER_PROXY_CPU_REQUEST}',
+                  memory: '${JAEGER_PROXY_MEMORY_REQUEST}',
+                }) +
+                container.mixin.resources.withLimits({
+                  cpu: '${JAEGER_PROXY_CPU_LIMITS}',
+                  memory: '${JAEGER_PROXY_MEMORY_LIMITS}',
+                }),
               ],
 
               serviceAccount: 'prometheus-telemeter',
@@ -91,5 +99,9 @@ local app =
     { name: 'REPLICAS', value: '1' },
     { name: 'PROXY_IMAGE', value: 'openshift/oauth-proxy' },
     { name: 'PROXY_IMAGE_TAG', value: 'v1.1.0' },
+    { name: 'JAEGER_PROXY_CPU_REQUEST', value: '100m' },
+    { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100m' },
+    { name: 'JAEGER_PROXY_CPU_LIMITS', value: '200m' },
+    { name: 'JAEGER_PROXY_MEMORY_LIMITS', value: '200m' },
   ],
 }
