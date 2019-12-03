@@ -1,5 +1,5 @@
 local tenants = import '../../tenants.libsonnet';
-local prom = import '../openshift/prometheus.libsonnet';
+local prom = import '../openshift/prometheus.jsonnet';
 local sm =
   (import '../openshift/thanos.jsonnet') +
   (import 'kube-thanos/kube-thanos-servicemonitors.libsonnet') +
