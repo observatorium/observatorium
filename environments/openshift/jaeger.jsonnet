@@ -60,13 +60,13 @@ local app =
                   ]
                 ) +
                 container.mixin.resources.withRequests({
-                    cpu: '${JAEGER_PROXY_CPU_REQUEST}',
-                    memory: '${JAEGER_PROXY_MEMORY_REQUEST}',
-               }) +
-               container.mixin.resources.withLimits({
-                   cpu: '${JAEGER_PROXY_CPU_LIMITS}',
-                   memory: '${JAEGER_PROXY_MEMORY_LIMITS}',
-               }),
+                  cpu: '${JAEGER_PROXY_CPU_REQUEST}',
+                  memory: '${JAEGER_PROXY_MEMORY_REQUEST}',
+                }) +
+                container.mixin.resources.withLimits({
+                  cpu: '${JAEGER_PROXY_CPU_LIMITS}',
+                  memory: '${JAEGER_PROXY_MEMORY_LIMITS}',
+                }),
               ],
 
               serviceAccount: 'prometheus-telemeter',
