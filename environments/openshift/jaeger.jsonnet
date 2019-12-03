@@ -100,8 +100,8 @@ local app =
     { name: 'PROXY_IMAGE', value: 'openshift/oauth-proxy' },
     { name: 'PROXY_IMAGE_TAG', value: 'v1.1.0' },
     { name: 'JAEGER_PROXY_CPU_REQUEST', value: '100m' },
-    { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100m' },
+    { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100Mi' },
     { name: 'JAEGER_PROXY_CPU_LIMITS', value: '200m' },
-    { name: 'JAEGER_PROXY_MEMORY_LIMITS', value: '200m' },
+    { name: 'JAEGER_PROXY_MEMORY_LIMITS', value: '200Mi' },
   ],
 }
