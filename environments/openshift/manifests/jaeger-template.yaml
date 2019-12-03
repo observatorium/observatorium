@@ -208,8 +208,8 @@ parameters:
 - name: JAEGER_PROXY_CPU_REQUEST
   value: 100m
 - name: JAEGER_PROXY_MEMORY_REQUEST
-  value: 100m
+  value: 100Mi
 - name: JAEGER_PROXY_CPU_LIMITS
   value: 200m
 - name: JAEGER_PROXY_MEMORY_LIMITS
-  value: 200m
+  value: 200Mi

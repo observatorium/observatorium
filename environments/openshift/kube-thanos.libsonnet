@@ -122,7 +122,15 @@ local list = import 'telemeter/lib/list.libsonnet';
                       volumeMount.new('secret-querier-tls', '/etc/tls/private'),
                       volumeMount.new('secret-querier-proxy', '/etc/proxy/secrets'),
                     ]
-                  ),
+                  ) +
+                  container.mixin.resources.withRequests({
+                    cpu: '${JAEGER_PROXY_CPU_REQUEST}',
+                    memory: '${JAEGER_PROXY_MEMORY_REQUEST}',
+                  }) +
+                  container.mixin.resources.withLimits({
+                    cpu: '${JAEGER_PROXY_CPU_LIMITS}',
+                    memory: '${JAEGER_PROXY_MEMORY_LIMITS}',
+                  }),
                 ],
               },
             },
@@ -363,7 +371,15 @@ local list = import 'telemeter/lib/list.libsonnet';
                       volumeMount.new('secret-querier-cache-tls', '/etc/tls/private'),
                       volumeMount.new('secret-querier-cache-proxy', '/etc/proxy/secrets'),
                     ]
-                  ),
+                  ) +
+                  container.mixin.resources.withRequests({
+                    cpu: '${JAEGER_PROXY_CPU_REQUEST}',
+                    memory: '${JAEGER_PROXY_MEMORY_REQUEST}',
+                  }) +
+                  container.mixin.resources.withLimits({
+                    cpu: '${JAEGER_PROXY_CPU_LIMITS}',
+                    memory: '${JAEGER_PROXY_MEMORY_LIMITS}',
+                  }),
                 ],
                 volumes+: [
                   volume.fromSecret('secret-querier-cache-tls', 'querier-cache-tls'),
@@ -439,6 +455,10 @@ local list = import 'telemeter/lib/list.libsonnet';
         { name: 'THANOS_COMPACTOR_MEMORY_REQUEST', value: '1Gi' },
         { name: 'THANOS_COMPACTOR_MEMORY_LIMIT', value: '5Gi' },
         { name: 'THANOS_QUERIER_SVC_URL', value: 'http://thanos-querier.observatorium.svc:9090' },
+        { name: 'JAEGER_PROXY_CPU_REQUEST', value: '100m' },
+        { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100Mi' },
+        { name: 'JAEGER_PROXY_CPU_LIMITS', value: '200m' },
+        { name: 'JAEGER_PROXY_MEMORY_LIMITS', value: '200Mi' },
       ]),
   },
 }
