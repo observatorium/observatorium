@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/name: jaeger-agent
-  name: jaeger-agent
+  name: jaeger-agent-discovery
   namespace: observatorium
 spec:
   ports:

@@ -49,7 +49,7 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
 
     agentService:
       service.new(
-        'jaeger-agent',
+        'jaeger-agent-discovery',
         jaegerAgent.labels,
         [
           service.mixin.spec.portsType.newNamed('metrics', jaegerAgent.metricsPort, jaegerAgent.metricsPort),
