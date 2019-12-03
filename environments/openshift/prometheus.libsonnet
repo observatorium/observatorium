@@ -286,4 +286,12 @@ local list = import 'telemeter/lib/list.libsonnet';
       ],
     },
   },
+
+  apiVersion: 'v1',
+  kind: 'Template',
+  metadata: {
+    name: 'observatorium-prometheus',
+  },
+  objects: $.prometheusAms.template.objects,
+  parameters: $.prometheusAms.template.parameters,
 }
