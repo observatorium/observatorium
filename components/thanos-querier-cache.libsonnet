@@ -83,6 +83,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         deployment.mixin.metadata.withNamespace('observatorium') +
         deployment.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.thanos.querierCache.deployment.metadata.name }) +
         deployment.mixin.spec.selector.withMatchLabels($.thanos.querierCache.deployment.metadata.labels) +
+        deployment.mixin.spec.template.spec.withEnableServiceLinks(false) +
         deployment.mixin.spec.template.spec.withVolumes([
           { name: 'querier-cache-config', configMap: { name: $.thanos.querierCache.configmap.metadata.name } },
         ]),
