@@ -15,8 +15,8 @@ local containerEnv = container.envType;
       containerEnv.fromFieldPath('NAMESPACE', 'metadata.namespace'),
       containerEnv.fromFieldPath('POD', 'metadata.name'),
     ]) +
-    container.mixin.resources.withRequests({ cpu: '32m', memory: '16Mi' }) +
-    container.mixin.resources.withLimits({ cpu: '128m', memory: '64Mi' }) +
+    container.mixin.resources.withRequests({ cpu: '32m', memory: '64Mi' }) +
+    container.mixin.resources.withLimits({ cpu: '128m', memory: '128Mi' }) +
     container.mixin.livenessProbe.withFailureThreshold(5) +
     container.mixin.livenessProbe.httpGet.withPath('/').withPort(self.metricsPort).withScheme('HTTP') +
     container.withPorts([
