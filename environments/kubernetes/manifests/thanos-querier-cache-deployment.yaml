@@ -33,7 +33,6 @@ spec:
         - mountPath: /etc/cache-config/
           name: querier-cache-config
           readOnly: false
-      enableServiceLinks: false
       volumes:
       - configMap:
           name: observatorium-cache-conf
