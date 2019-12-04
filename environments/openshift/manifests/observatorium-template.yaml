@@ -122,10 +122,10 @@ objects:
           resources:
             limits:
               cpu: 128m
-              memory: 64Mi
+              memory: 128Mi
             requests:
               cpu: 32m
-              memory: 16Mi
+              memory: 64Mi
         volumes:
         - emptyDir: {}
           name: thanos-compactor-data
@@ -359,10 +359,10 @@ objects:
           resources:
             limits:
               cpu: 128m
-              memory: 64Mi
+              memory: 128Mi
             requests:
               cpu: 32m
-              memory: 16Mi
+              memory: 64Mi
         - args:
           - -provider=openshift
           - -https-address=:9091
@@ -735,10 +735,10 @@ objects:
           resources:
             limits:
               cpu: 128m
-              memory: 64Mi
+              memory: 128Mi
             requests:
               cpu: 32m
-              memory: 16Mi
+              memory: 64Mi
         volumes:
         - configMap:
             name: observatorium-tenants-generated
@@ -874,10 +874,10 @@ objects:
           resources:
             limits:
               cpu: 128m
-              memory: 64Mi
+              memory: 128Mi
             requests:
               cpu: 32m
-              memory: 16Mi
+              memory: 64Mi
         volumes: null
     volumeClaimTemplates:
     - metadata:
