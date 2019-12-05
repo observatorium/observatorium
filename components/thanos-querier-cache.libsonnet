@@ -79,7 +79,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
             containerVolumeMount.new('querier-cache-config', '/etc/cache-config/'),
           ],);
 
-        deployment.new('observatorium-querier-cache', 1, c, $.thanos.querierCache.deployment.metadata.labels) +
+        deployment.new('observatorium-querier-cache', 3, c, $.thanos.querierCache.deployment.metadata.labels) +
         deployment.mixin.metadata.withNamespace('observatorium') +
         deployment.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.thanos.querierCache.deployment.metadata.name }) +
         deployment.mixin.spec.selector.withMatchLabels($.thanos.querierCache.deployment.metadata.labels) +
