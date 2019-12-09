@@ -82,13 +82,13 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
       local c =
         container.new($.jaeger.deployment.metadata.name, j.image) +
         container.withArgs([
-          '--badger.directory-key=/var/jaeger/store/keys',
-          '--badger.directory-value=/var/jaeger/store/values',
-          '--badger.ephemeral=false',
+          // '--badger.directory-key=/var/jaeger/store/keys',
+          // '--badger.directory-value=/var/jaeger/store/values',
+          // '--badger.ephemeral=false',
           '--collector.queue-size=4000',
         ],) +
         container.withEnv([
-          env.new('SPAN_STORAGE_TYPE', 'badger'),
+          env.new('SPAN_STORAGE_TYPE', 'memory'),
         ]) + container.withPorts(
           [
             containerPort.newNamed(14250, 'grpc'),

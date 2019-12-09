@@ -21,14 +21,11 @@ spec:
     spec:
       containers:
       - args:
-        - --badger.directory-key=/var/jaeger/store/keys
-        - --badger.directory-value=/var/jaeger/store/values
-        - --badger.ephemeral=false
         - --collector.queue-size=4000
         env:
         - name: SPAN_STORAGE_TYPE
-          value: badger
-        image: jaegertracing/all-in-one:1.14.0
+          value: memory
+        image: jaegertracing/all-in-one:1.15.0
         livenessProbe:
           failureThreshold: 4
           httpGet:
