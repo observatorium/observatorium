@@ -55,6 +55,7 @@ objects:
         containers:
         - args:
           - --collector.queue-size=4000
+          - --memory.max-traces 1000
           env:
           - name: SPAN_STORAGE_TYPE
             value: memory

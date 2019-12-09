@@ -82,10 +82,13 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
       local c =
         container.new($.jaeger.deployment.metadata.name, j.image) +
         container.withArgs([
+          // TODO: Use again, once we move back to badger, currently testing the memory store
           // '--badger.directory-key=/var/jaeger/store/keys',
           // '--badger.directory-value=/var/jaeger/store/values',
           // '--badger.ephemeral=false',
           '--collector.queue-size=4000',
+          '--memory.max-traces 1000',
+
         ],) +
         container.withEnv([
           env.new('SPAN_STORAGE_TYPE', 'memory'),
