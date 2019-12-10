@@ -63,39 +63,13 @@ spec:
         severity: warning
   - name: thanos-querier.rules
     rules:
-    - alert: ThanosQuerierHttpRequestQueryErrorRateHigh
-      annotations:
-        message: Thanos Querier {{$labels.job}} is failing to handle {{ $value | humanize
-          }}% of "query" requests.
-      expr: |
-        (
-          sum(rate(http_requests_total{code=~"5..", job=~"thanos-querier.*",namespace="telemeter-production", handler="query"}[5m]))
-        /
-          sum(rate(http_requests_total{job=~"thanos-querier.*",namespace="telemeter-production", handler="query"}[5m]))
-        ) * 100 > 5
-      for: 5m
-      labels:
-        severity: critical
-    - alert: ThanosQuerierHttpRequestQueryRangeErrorRateHigh
-      annotations:
-        message: Thanos Querier {{$labels.job}} is failing to handle {{ $value | humanize
-          }}% of "query_range" requests.
-      expr: |
-        (
-          sum(rate(http_requests_total{code=~"5..", job=~"thanos-querier.*",namespace="telemeter-production", handler="query_range"}[5m]))
-        /
-          sum(rate(http_requests_total{job=~"thanos-querier.*",namespace="telemeter-production", handler="query_range"}[5m]))
-        ) * 100 > 5
-      for: 5m
-      labels:
-        severity: critical
     - alert: ThanosQuerierGrpcServerErrorRate
       annotations:
         message: Thanos Querier {{$labels.job}} is failing to handle {{ $value | humanize
           }}% of requests.
       expr: |
         (
-          sum by (job) (rate(grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable|DataLoss|DeadlineExceeded", job=~"thanos-querier.*",namespace="telemeter-production"}[5m]))
+          sum by (job) (rate(grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable", job=~"thanos-querier.*",namespace="telemeter-production"}[5m]))
         /
           sum by (job) (rate(grpc_server_started_total{job=~"thanos-querier.*",namespace="telemeter-production"}[5m]))
         * 100 > 5
@@ -159,23 +133,10 @@ spec:
         severity: critical
   - name: thanos-receive.rules
     rules:
-    - alert: ThanosReceiveHttpRequestErrorRateHigh
-      annotations:
-        message: Thanos Receive {{$labels.job}} is failing to handle {{ $value | humanize
-          }}% of requests.
-      expr: |
-        (
-          sum(rate(http_requests_total{code=~"5..", job=~"thanos-receive.*",namespace="telemeter-production", handler="receive"}[5m]))
-        /
-          sum(rate(http_requests_total{job=~"thanos-receive.*",namespace="telemeter-production", handler="receive"}[5m]))
-        ) * 100 > 5
-      for: 5m
-      labels:
-        severity: critical
     - alert: ThanosReceiveHttpRequestLatencyHigh
       annotations:
         message: Thanos Receive {{$labels.job}} has a 99th percentile latency of {{
-          $value }} seconds for requests.
+          $value }} seconds for HTTP requests.
       expr: |
         (
           histogram_quantile(0.99, sum by (job, le) (http_request_duration_seconds_bucket{job=~"thanos-receive.*",namespace="telemeter-production", handler="receive"})) > 10
@@ -196,7 +157,7 @@ spec:
           sum by (job) (rate(thanos_receive_forward_requests_total{job=~"thanos-receive.*",namespace="telemeter-production"}[5m]))
         * 100 > 5
         )
-      for: 5m
+      for: 15m
       labels:
         severity: critical
     - alert: ThanosReceiveHighHashringFileRefreshFailures
@@ -230,7 +191,7 @@ spec:
           }}% of requests.
       expr: |
         (
-          sum by (job) (rate(grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable|DataLoss|DeadlineExceeded", job=~"thanos-store.*",namespace="telemeter-production"}[5m]))
+          sum by (job) (rate(grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable", job=~"thanos-store.*",namespace="telemeter-production"}[5m]))
         /
           sum by (job) (rate(grpc_server_started_total{job=~"thanos-store.*",namespace="telemeter-production"}[5m]))
         * 100 > 5
@@ -244,7 +205,7 @@ spec:
           $value }} seconds for store series gate requests.
       expr: |
         (
-          histogram_quantile(0.9, sum by (job, le) (thanos_bucket_store_series_gate_duration_seconds_bucket{job=~"thanos-store.*",namespace="telemeter-production"})) > 2
+          histogram_quantile(0.99, sum by (job, le) (thanos_bucket_store_series_gate_duration_seconds_bucket{job=~"thanos-store.*",namespace="telemeter-production"})) > 2
         and
           sum by (job) (rate(thanos_bucket_store_series_gate_duration_seconds_count{job=~"thanos-store.*",namespace="telemeter-production"}[5m])) > 0
         )
@@ -271,21 +232,21 @@ spec:
           of {{ $value }} seconds for the bucket operations.
       expr: |
         (
-          histogram_quantile(0.9, sum by (job, le) (thanos_objstore_bucket_operation_duration_seconds_bucket{job=~"thanos-store.*",namespace="telemeter-production"})) > 15
+          histogram_quantile(0.99, sum by (job, le) (thanos_objstore_bucket_operation_duration_seconds_bucket{job=~"thanos-store.*",namespace="telemeter-production"})) > 15
         and
           sum by (job) (rate(thanos_objstore_bucket_operation_duration_seconds_count{job=~"thanos-store.*",namespace="telemeter-production"}[5m])) > 0
         )
       for: 10m
       labels:
         severity: warning
-  - name: thanos-component-absent.rules
+  - name: thanos-component-absent
     rules:
     - alert: ThanosCompactIsDown
       annotations:
         message: ThanosCompact has disappeared from Prometheus target discovery.
       expr: |
         absent(up{job=~"thanos-compactor.*",namespace="telemeter-production"} == 1)
-      for: 5m
+      for: 10m
       labels:
         severity: critical
     - alert: ThanosQuerierIsDown
@@ -293,7 +254,7 @@ spec:
         message: ThanosQuerier has disappeared from Prometheus target discovery.
       expr: |
         absent(up{job=~"thanos-querier.*",namespace="telemeter-production"} == 1)
-      for: 5m
+      for: 10m
       labels:
         severity: critical
     - alert: ThanosReceiveDefaultIsDown
@@ -301,7 +262,7 @@ spec:
         message: ThanosReceiveDefault has disappeared from Prometheus target discovery.
       expr: |
         absent(up{job="thanos-receive-default", namespace="telemeter-production"} == 1)
-      for: 5m
+      for: 10m
       labels:
         severity: critical
     - alert: ThanosStoreIsDown
@@ -309,7 +270,7 @@ spec:
         message: ThanosStore has disappeared from Prometheus target discovery.
       expr: |
         absent(up{job=~"thanos-store.*",namespace="telemeter-production"} == 1)
-      for: 5m
+      for: 10m
       labels:
         severity: critical
   - name: thanos-receive-controller.rules

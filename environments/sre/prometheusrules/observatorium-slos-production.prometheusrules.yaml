@@ -170,38 +170,32 @@ spec:
         namespace: telemeter-production
         severity: info
     - expr: |
-        sum(label_replace(increase(http_requests_total{job="thanos-querier",namespace="telemeter-production"}[30d]), "status_class", "${1}xx", "code", "([0-9])..")) by (status_class)
+        sum(label_replace(increase(http_requests_total{job="thanos-querier",namespace="telemeter-production"}[30d]), "status_code", "${1}xx", "code", "([0-9])..")) by (status_code)
       labels:
         job: thanos-querier
         namespace: telemeter-production
-      record: status_class:http_requests_total:increase30d
+      record: status_code:http_requests_total:increase30d:sum
     - expr: |
-        (
-          0.010000
-        *
-          sum(status_class:http_requests_total:increase30d)
-        )
+        status_code:http_requests_total:increase30d:sum{job="thanos-querier",namespace="telemeter-production",status_code="5xx"}
       labels:
         job: thanos-querier
         namespace: telemeter-production
-      record: http_requests_total_errorbudget_requests
+      record: errors:status_code:http_requests_total:increase30d:sum
     - expr: |
-        (
-          sum(http_requests_total_errorbudget_requests{job="thanos-querier",namespace="telemeter-production"})
-        -
-          sum(status_class:http_requests_total:increase30d{job="thanos-querier",namespace="telemeter-production",status_class="5xx"})
-        )
+        (0.010000) * sum(status_code:http_requests_total:increase30d:sum)
       labels:
         job: thanos-querier
         namespace: telemeter-production
-      record: http_requests_total_errorbudget_remaining
+      record: errorbudget_requests:status_code:http_requests_total:increase30d:sum
     - expr: |
-        (
-          http_requests_total_errorbudget_remaining
-        /
-          http_requests_total_errorbudget_requests
-        )
+        sum(errorbudget_requests:status_code:http_requests_total:increase30d:sum{job="thanos-querier",namespace="telemeter-production"}) - sum(errors:status_code:http_requests_total:increase30d:sum{job="thanos-querier",namespace="telemeter-production"})
       labels:
         job: thanos-querier
         namespace: telemeter-production
-      record: http_requests_total_errorbudget
+      record: errorbudget_remaining:status_code:http_requests_total:increase30d:sum
+    - expr: |
+        errorbudget_remaining:status_code:http_requests_total:increase30d:sum / errorbudget_requests:status_code:http_requests_total:increase30d:sum
+      labels:
+        job: thanos-querier
+        namespace: telemeter-production
+      record: errorbudget:status_code:http_requests_total:increase30d:sum

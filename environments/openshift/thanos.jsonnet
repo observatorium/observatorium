@@ -459,8 +459,8 @@ local list = import 'telemeter/lib/list.libsonnet';
     ['querier-cache-' + name]: $.thanos.querierCache[name]
     for name in std.objectFields($.thanos.querierCache)
   } + {
-    ['rule-' + name]: thanos.rule[name]
-    for name in std.objectFields(thanos.compactor)
+    ['rule-' + name]: $.thanos.rule[name]
+    for name in std.objectFields($.thanos.rule)
   },
   parameters: [
     { name: 'NAMESPACE', value: 'telemeter' },
