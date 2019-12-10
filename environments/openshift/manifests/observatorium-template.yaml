@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Template
 metadata:
-  name: observatorium-telemeter
+  name: observatorium
 objects:
 - apiVersion: v1
   data:
@@ -124,6 +124,7 @@ objects:
           - --oidc-issuer=$(OIDC_ISSUER)
           - --client-id=$(CLIENT_ID)
           - --client-secret=$(CLIENT_SECRET)
+          - --whitelist={__name__=~"cluster:usage:.*"}
           - --whitelist={__name__="up"}
           - --whitelist={__name__="cluster_version"}
           - --whitelist={__name__="cluster_version_available_updates"}
@@ -151,6 +152,8 @@ objects:
           - --whitelist={__name__="node_role_os_version_machine:cpu_capacity_cores:sum"}
           - --whitelist={__name__="node_role_os_version_machine:cpu_capacity_sockets:sum"}
           - --whitelist={__name__="subscription_sync_total"}
+          - --whitelist={__name__="csv_succeeded"}
+          - --whitelist={__name__="csv_abnormal"}
           - --whitelist={__name__="ceph_cluster_total_bytes"}
           - --whitelist={__name__="ceph_cluster_total_used_raw_bytes"}
           - --whitelist={__name__="ceph_health_status"}
@@ -167,6 +170,7 @@ objects:
           - --whitelist={__name__="console_url"}
           - --whitelist={__name__="cluster:network_attachment_definition_instances:max"}
           - --whitelist={__name__="cluster:network_attachment_definition_enabled_instance_up:max"}
+          - --whitelist={__name__="insightsclient_request_send_total"}
           - --elide-label=prometheus_replica
           - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}
@@ -228,11 +232,184 @@ objects:
         - name: telemeter-server-tls
           secret:
             secretName: telemeter-server-shared
+- apiVersion: v1
+  data:
+    nginx.conf: |
+      daemon off;
+      worker_processes 1;
+      error_log /dev/stderr;
+      pid /tmp/nginx.pid;
+
+      events {
+          worker_connections 1024;
+      }
+
+      http {
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+
+        server {
+          listen *:8080;
+          server_name _;
+          access_log  /dev/stdout  main;
+          error_log /dev/stderr;
+
+          location / {
+            proxy_set_header THANOS-TENANT FB870BF3-9F3A-44FF-9BF7-D7A047A52F43;
+            proxy_pass http://thanos-receive.${NAMESPACE}.svc.cluster.local:19291;
+          }
+        }
+      }
+  kind: ConfigMap
+  metadata:
+    labels:
+      app.kubernetes.io/instance: remote-write-proxy
+      app.kubernetes.io/name: nginx
+      app.kubernetes.io/part-of: prometheus-ams
+    name: prometheus-remote-write-proxy-config
+    namespace: ${NAMESPACE}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app.kubernetes.io/instance: remote-write-proxy
+      app.kubernetes.io/name: nginx
+      app.kubernetes.io/part-of: prometheus-ams
+    name: prometheus-remote-write-proxy
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/instance: remote-write-proxy
+        app.kubernetes.io/name: nginx
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/instance: remote-write-proxy
+          app.kubernetes.io/name: nginx
+      spec:
+        containers:
+        - args:
+          - -c
+          - /config/nginx.conf
+          command:
+          - nginx
+          image: ${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE}:${PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION}
+          name: remote-write-proxy
+          ports:
+          - containerPort: 8080
+            name: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 64Mi
+            requests:
+              cpu: 50m
+              memory: 16Mi
+          volumeMounts:
+          - mountPath: /config
+            name: prometheus-remote-write-proxy-config
+            readOnly: true
+        volumes:
+        - configMap:
+            name: prometheus-remote-write-proxy-config
+          name: prometheus-remote-write-proxy-config
+- apiVersion: monitoring.coreos.com/v1
+  kind: Prometheus
+  metadata:
+    labels:
+      app.kubernetes.io/instance: ams
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: prometheus-ams
+      prometheus: ams
+    name: ams
+    namespace: ${NAMESPACE}
+  spec:
+    baseImage: ${PROMETHEUS_AMS_IMAGE}
+    containers: []
+    remoteWrite:
+    - url: http://prometheus-ams-remote-write-proxy.${NAMESPACE}.svc.cluster.local:8080/api/v1/receive
+      writeRelabelConfigs:
+      - action: keep
+        regex: subscription_labels
+        sourceLabels:
+        - __name__
+    replicas: 1
+    resources:
+      limits:
+        cpu: ${PROMETHEUS_AMS_CPU_LIMIT}
+        memory: ${PROMETHEUS_AMS_MEMORY_LIMIT}
+      requests:
+        cpu: ${PROMETHEUS_AMS_CPU_REQUEST}
+        memory: ${PROMETHEUS_AMS_MEMORY_REQUEST}
+    ruleSelector:
+      matchLabels:
+        prometheus: ams
+        role: alert-rules
+    securityContext: {}
+    serviceAccount: prometheus-telemeter
+    serviceAccountName: prometheus-telemeter
+    serviceMonitorSelector:
+      matchLabels:
+        prometheus: ams
+    version: ${PROMETHEUS_AMS_IMAGE_TAG}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/instance: remote-write-proxy
+      app.kubernetes.io/name: nginx
+      app.kubernetes.io/part-of: prometheus-ams
+    name: prometheus-ams-remote-write-proxy
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      targetPort: http
+    selector:
+      app.kubernetes.io/instance: remote-write-proxy
+      app.kubernetes.io/name: nginx
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/instance: ams
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: prometheus-ams
+      prometheus: ams
+    name: prometheus-ams
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - name: web
+      port: 9090
+      targetPort: web
+    selector:
+      prometheus: ams
+    sessionAffinity: ClientIP
+- apiVersion: monitoring.coreos.com/v1
+  kind: ServiceMonitor
+  metadata:
+    labels:
+      app.kubernetes.io/instance: ams
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: prometheus-ams
+    name: prometheus-ams
+    namespace: ${NAMESPACE}
+  spec:
+    endpoints:
+    - interval: 30s
+      port: web
+    selector:
+      matchLabels:
+        app.kubernetes.io/instance: ams
+        app.kubernetes.io/name: prometheus
 parameters:
 - name: AUTHORIZE_URL
   value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
-- name: NAMESPACE
-  value: observatorium
 - name: IMAGE
   value: quay.io/openshift/origin-telemeter
 - name: IMAGE_TAG
@@ -245,3 +422,21 @@ parameters:
   value: 500Mi
 - name: TELEMETER_SERVER_MEMORY_LIMIT
   value: 1Gi
+- name: TELEMETER_FORWARD_URL
+  value: ""
+- name: PROMETHEUS_AMS_REMOTE_WRITE_PROXY_IMAGE
+  value: quay.io/app-sre/observatorium-receive-proxy
+- name: PROMETHEUS_AMS_REMOTE_WRITE_PROXY_VERSION
+  value: 14e844d
+- name: PROMETHEUS_AMS_IMAGE
+  value: quay.io/prometheus/prometheus
+- name: PROMETHEUS_AMS_IMAGE_TAG
+  value: v2.12.0
+- name: PROMETHEUS_AMS_CPU_REQUEST
+  value: "0"
+- name: PROMETHEUS_AMS_CPU_LIMIT
+  value: "0"
+- name: PROMETHEUS_AMS_MEMORY_REQUEST
+  value: "0"
+- name: PROMETHEUS_AMS_MEMORY_LIMIT
+  value: "0"
