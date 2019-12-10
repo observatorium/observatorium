@@ -41,4 +41,13 @@ local list = import 'telemeter/lib/list.libsonnet';
       ],
     },
   },
+
+
+  apiVersion: 'v1',
+  kind: 'Template',
+  metadata: {
+    name: 'observatorium-telemeter',
+  },
+  objects: $.telemeterServer.list.objects,
+  parameters: $.telemeterServer.list.parameters,
 }

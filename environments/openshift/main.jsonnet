@@ -4,21 +4,20 @@ local list = import 'telemeter/lib/list.libsonnet';
 // generates an OpenShift specific Template on top of that.
 
 local app =
-  (import 'kube-thanos.libsonnet') +
-  (import 'prometheus.libsonnet') +
-  (import 'telemeter.libsonnet') +
+  (import 'prometheus.jsonnet') +
+  (import 'telemeter.jsonnet') +
   {
-    local thanos = super.thanos,
+    local thanos = (import 'thanos.jsonnet'),
 
     template:
       list.asList('observatorium', {}, []) + {
         objects:
-          $.thanos.template.objects +
+          [thanos.objects[name] for name in std.objectFields(thanos.objects)] +
           $.telemeterServer.list.objects +
           $.prometheusAms.template.objects,
 
         parameters:
-          $.thanos.template.parameters +
+          thanos.parameters +
           $.telemeterServer.list.parameters + [
             { name: 'TELEMETER_FORWARD_URL', value: '' },
           ] +

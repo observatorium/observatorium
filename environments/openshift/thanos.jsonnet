@@ -395,70 +395,70 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
   },
 } + {
-  local thanos = super.thanos,
-  thanos+:: {
-    template+:
-      local objects = {
-        ['querier-' + name]: thanos.querier[name]
-        for name in std.objectFields(thanos.querier)
-      } + {
-        ['store-' + name]: thanos.store[name]
-        for name in std.objectFields(thanos.store)
-      } + {
-        ['compactor-' + name]: thanos.compactor[name]
-        for name in std.objectFields(thanos.compactor)
-      } + {
-        ['receive-' + name]: thanos.receive[name]
-        for name in std.objectFields(thanos.receive)
-      } + {
-        ['receive-controller-' + name]: thanos.receiveController[name]
-        for name in std.objectFields(thanos.receiveController)
-      } + {
-        ['querier-cache-' + name]: thanos.querierCache[name]
-        for name in std.objectFields(thanos.querierCache)
-      };
-
-      list.asList('thanos', objects, [
-        { name: 'NAMESPACE', value: 'telemeter' },
-        { name: 'THANOS_IMAGE', value: 'quay.io/thanos/thanos' },
-        { name: 'THANOS_IMAGE_TAG', value: 'v0.8.1' },
-        { name: 'PROXY_IMAGE', value: 'openshift/oauth-proxy' },
-        { name: 'PROXY_IMAGE_TAG', value: 'v1.1.0' },
-        { name: 'JAEGER_AGENT_IMAGE', value: 'jaegertracing/jaeger-agent' },
-        { name: 'JAEGER_AGENT_IMAGE_TAG', value: '1.14.0' },
-        { name: 'THANOS_RECEIVE_CONTROLLER_IMAGE', value: 'quay.io/observatorium/thanos-receive-controller' },
-        { name: 'THANOS_RECEIVE_CONTROLLER_IMAGE_TAG', value: 'master-2019-10-18-d55fee2' },
-        { name: 'THANOS_QUERIER_REPLICAS', value: '3' },
-        { name: 'THANOS_STORE_REPLICAS', value: '5' },
-        { name: 'THANOS_COMPACTOR_REPLICAS', value: '1' },
-        { name: 'THANOS_RECEIVE_REPLICAS', value: '5' },
-        { name: 'THANOS_CONFIG_SECRET', value: 'thanos-objectstorage' },
-        { name: 'THANOS_S3_SECRET', value: 'telemeter-thanos-stage-s3' },
-        { name: 'THANOS_QUERIER_CPU_REQUEST', value: '100m' },
-        { name: 'THANOS_QUERIER_CPU_LIMIT', value: '1' },
-        { name: 'THANOS_QUERIER_MEMORY_REQUEST', value: '256Mi' },
-        { name: 'THANOS_QUERIER_MEMORY_LIMIT', value: '1Gi' },
-        { name: 'THANOS_QUERIER_CACHE_CPU_REQUEST', value: '100m' },
-        { name: 'THANOS_QUERIER_CACHE_CPU_LIMIT', value: '1' },
-        { name: 'THANOS_QUERIER_CACHE_MEMORY_REQUEST', value: '256Mi' },
-        { name: 'THANOS_QUERIER_CACHE_MEMORY_LIMIT', value: '1Gi' },
-        { name: 'THANOS_STORE_CPU_REQUEST', value: '500m' },
-        { name: 'THANOS_STORE_CPU_LIMIT', value: '2' },
-        { name: 'THANOS_STORE_MEMORY_REQUEST', value: '1Gi' },
-        { name: 'THANOS_STORE_MEMORY_LIMIT', value: '8Gi' },
-        { name: 'THANOS_RECEIVE_CPU_REQUEST', value: '100m' },
-        { name: 'THANOS_RECEIVE_CPU_LIMIT', value: '1' },
-        { name: 'THANOS_RECEIVE_MEMORY_REQUEST', value: '512Mi' },
-        { name: 'THANOS_RECEIVE_MEMORY_LIMIT', value: '1Gi' },
-        { name: 'THANOS_COMPACTOR_CPU_REQUEST', value: '100m' },
-        { name: 'THANOS_COMPACTOR_CPU_LIMIT', value: '1' },
-        { name: 'THANOS_COMPACTOR_MEMORY_REQUEST', value: '1Gi' },
-        { name: 'THANOS_COMPACTOR_MEMORY_LIMIT', value: '5Gi' },
-        { name: 'THANOS_QUERIER_SVC_URL', value: 'http://thanos-querier.observatorium.svc:9090' },
-        { name: 'JAEGER_PROXY_CPU_REQUEST', value: '100m' },
-        { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100Mi' },
-        { name: 'JAEGER_PROXY_CPU_LIMITS', value: '200m' },
-        { name: 'JAEGER_PROXY_MEMORY_LIMITS', value: '200Mi' },
-      ]),
+  apiVersion: 'v1',
+  kind: 'Template',
+  metadata: {
+    name: 'observatorium-thanos',
   },
+  objects: {
+    ['querier-' + name]: $.thanos.querier[name]
+    for name in std.objectFields($.thanos.querier)
+  } + {
+    ['store-' + name]: $.thanos.store[name]
+    for name in std.objectFields($.thanos.store)
+  } + {
+    ['compactor-' + name]: $.thanos.compactor[name]
+    for name in std.objectFields($.thanos.compactor)
+  } + {
+    ['receive-' + name]: $.thanos.receive[name]
+    for name in std.objectFields($.thanos.receive)
+  } + {
+    ['receive-controller-' + name]: $.thanos.receiveController[name]
+    for name in std.objectFields($.thanos.receiveController)
+  } + {
+    ['querier-cache-' + name]: $.thanos.querierCache[name]
+    for name in std.objectFields($.thanos.querierCache)
+  },
+  parameters: [
+    { name: 'NAMESPACE', value: 'telemeter' },
+    { name: 'THANOS_IMAGE', value: 'quay.io/thanos/thanos' },
+    { name: 'THANOS_IMAGE_TAG', value: 'v0.8.1' },
+    { name: 'PROXY_IMAGE', value: 'openshift/oauth-proxy' },
+    { name: 'PROXY_IMAGE_TAG', value: 'v1.1.0' },
+    { name: 'JAEGER_AGENT_IMAGE', value: 'jaegertracing/jaeger-agent' },
+    { name: 'JAEGER_AGENT_IMAGE_TAG', value: '1.14.0' },
+    { name: 'THANOS_RECEIVE_CONTROLLER_IMAGE', value: 'quay.io/observatorium/thanos-receive-controller' },
+    { name: 'THANOS_RECEIVE_CONTROLLER_IMAGE_TAG', value: 'master-2019-10-18-d55fee2' },
+    { name: 'THANOS_QUERIER_REPLICAS', value: '3' },
+    { name: 'THANOS_STORE_REPLICAS', value: '5' },
+    { name: 'THANOS_COMPACTOR_REPLICAS', value: '1' },
+    { name: 'THANOS_RECEIVE_REPLICAS', value: '5' },
+    { name: 'THANOS_CONFIG_SECRET', value: 'thanos-objectstorage' },
+    { name: 'THANOS_S3_SECRET', value: 'telemeter-thanos-stage-s3' },
+    { name: 'THANOS_QUERIER_CPU_REQUEST', value: '100m' },
+    { name: 'THANOS_QUERIER_CPU_LIMIT', value: '1' },
+    { name: 'THANOS_QUERIER_MEMORY_REQUEST', value: '256Mi' },
+    { name: 'THANOS_QUERIER_MEMORY_LIMIT', value: '1Gi' },
+    { name: 'THANOS_QUERIER_CACHE_CPU_REQUEST', value: '100m' },
+    { name: 'THANOS_QUERIER_CACHE_CPU_LIMIT', value: '1' },
+    { name: 'THANOS_QUERIER_CACHE_MEMORY_REQUEST', value: '256Mi' },
+    { name: 'THANOS_QUERIER_CACHE_MEMORY_LIMIT', value: '1Gi' },
+    { name: 'THANOS_STORE_CPU_REQUEST', value: '500m' },
+    { name: 'THANOS_STORE_CPU_LIMIT', value: '2' },
+    { name: 'THANOS_STORE_MEMORY_REQUEST', value: '1Gi' },
+    { name: 'THANOS_STORE_MEMORY_LIMIT', value: '8Gi' },
+    { name: 'THANOS_RECEIVE_CPU_REQUEST', value: '100m' },
+    { name: 'THANOS_RECEIVE_CPU_LIMIT', value: '1' },
+    { name: 'THANOS_RECEIVE_MEMORY_REQUEST', value: '512Mi' },
+    { name: 'THANOS_RECEIVE_MEMORY_LIMIT', value: '1Gi' },
+    { name: 'THANOS_COMPACTOR_CPU_REQUEST', value: '100m' },
+    { name: 'THANOS_COMPACTOR_CPU_LIMIT', value: '1' },
+    { name: 'THANOS_COMPACTOR_MEMORY_REQUEST', value: '1Gi' },
+    { name: 'THANOS_COMPACTOR_MEMORY_LIMIT', value: '5Gi' },
+    { name: 'THANOS_QUERIER_SVC_URL', value: 'http://thanos-querier.observatorium.svc:9090' },
+    { name: 'JAEGER_PROXY_CPU_REQUEST', value: '100m' },
+    { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100Mi' },
+    { name: 'JAEGER_PROXY_CPU_LIMITS', value: '200m' },
+    { name: 'JAEGER_PROXY_MEMORY_LIMITS', value: '200Mi' },
+  ],
 }

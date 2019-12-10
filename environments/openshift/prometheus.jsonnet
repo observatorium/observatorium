@@ -18,9 +18,9 @@ local list = import 'telemeter/lib/list.libsonnet';
     ams+:: {
       proxyPort: 8080,
       remoteWriteTarget: 'http://%s.%s.svc.cluster.local:%d' % [
-        $.thanos.receive.service.metadata.name,
+        'thanos-receive',
         '${NAMESPACE}',
-        $.thanos.receive.service.spec.ports[2].port,
+        19291,
       ],
       remoteWriteProxy: 'http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
         $.prometheusRemoteWriteProxy.proxyService.metadata.name,
@@ -286,4 +286,12 @@ local list = import 'telemeter/lib/list.libsonnet';
       ],
     },
   },
+
+  apiVersion: 'v1',
+  kind: 'Template',
+  metadata: {
+    name: 'observatorium-prometheus',
+  },
+  objects: $.prometheusAms.template.objects,
+  parameters: $.prometheusAms.template.parameters,
 }
