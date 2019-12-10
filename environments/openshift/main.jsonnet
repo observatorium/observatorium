@@ -7,6 +7,7 @@ local app =
   (import 'kube-thanos.libsonnet') +
   (import 'prometheus.libsonnet') +
   (import 'telemeter.libsonnet') +
+  (import 'memcached.libsonnet') +
   {
     local thanos = super.thanos,
 
@@ -15,14 +16,16 @@ local app =
         objects:
           $.thanos.template.objects +
           $.telemeterServer.list.objects +
-          $.prometheusAms.template.objects,
+          $.prometheusAms.template.objects +
+          $.memcached.list.objects,
 
         parameters:
           $.thanos.template.parameters +
           $.telemeterServer.list.parameters + [
             { name: 'TELEMETER_FORWARD_URL', value: '' },
           ] +
-          $.prometheusAms.template.parameters,
+          $.prometheusAms.template.parameters +
+          $.memcached.list.parameters,
       },
   } + {
     template+: {

@@ -34,6 +34,9 @@ spec:
         - --client-secret=$(CLIENT_SECRET)
         - --token-expire-seconds=3600
         - --forward-url=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
+        - --memcached=memcached-1.memcached.observatorium.svc.cluster.local:11211
+        - --memcached=memcached-2.memcached.observatorium.svc.cluster.local:11211
+        - --memcached=memcached-3.memcached.observatorium.svc.cluster.local:11211
         env:
         - name: NAME
           valueFrom:

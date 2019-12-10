@@ -1060,6 +1060,9 @@ objects:
           - --elide-label=prometheus_replica
           - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}
+          - --memcached=memcached-1.memcached.observatorium.svc.cluster.local:11211
+          - --memcached=memcached-2.memcached.observatorium.svc.cluster.local:11211
+          - --memcached=memcached-3.memcached.observatorium.svc.cluster.local:11211
           env:
           - name: NAME
             valueFrom:
@@ -1293,6 +1296,52 @@ objects:
       matchLabels:
         app.kubernetes.io/instance: ams
         app.kubernetes.io/name: prometheus
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/name: memcached
+    name: memcached
+    namespace: ${NAMESPACE}
+  spec:
+    clusterIP: None
+    ports:
+    - name: memcached
+      port: 11211
+      targetPort: 11211
+    selector:
+      app.kubernetes.io/name: memcached
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    labels:
+      app.kubernetes.io/name: memcached
+    name: memcached
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: 3
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: memcached
+    serviceName: memcached
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: memcached
+      spec:
+        containers:
+        - image: docker.io/memcached:1.5.20-alpine
+          name: memcached
+          ports:
+          - containerPort: 11211
+            name: memcached
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 512Mi
 parameters:
 - name: NAMESPACE
   value: telemeter
@@ -1406,3 +1455,5 @@ parameters:
   value: "0"
 - name: PROMETHEUS_AMS_MEMORY_LIMIT
   value: "0"
+- name: MEMCACHED_IMAGE
+  value: docker.io/memcached:1.5.20-alpine
