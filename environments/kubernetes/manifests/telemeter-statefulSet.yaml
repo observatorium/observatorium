@@ -33,7 +33,7 @@ spec:
         - --client-id=$(CLIENT_ID)
         - --client-secret=$(CLIENT_SECRET)
         - --token-expire-seconds=3600
-        - --forward-url=http://thanos-receive.${NAMESPACE}.svc.cluster.local:19291/api/v1/receive
+        - --forward-url=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
         env:
         - name: NAME
           valueFrom:
