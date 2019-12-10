@@ -7,13 +7,17 @@ local app =
   (import 'prometheus.jsonnet') +
   (import 'telemeter.jsonnet') +
   {
+    local thanos = (import 'thanos.jsonnet'),
+
     template:
       list.asList('observatorium', {}, []) + {
         objects:
+          [thanos.objects[name] for name in std.objectFields(thanos.objects)] +
           $.telemeterServer.list.objects +
           $.prometheusAms.template.objects,
 
         parameters:
+          thanos.parameters +
           $.telemeterServer.list.parameters + [
             { name: 'TELEMETER_FORWARD_URL', value: '' },
           ] +
