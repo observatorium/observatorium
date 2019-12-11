@@ -32,6 +32,7 @@ spec:
         - --oidc-issuer=$(OIDC_ISSUER)
         - --client-id=$(CLIENT_ID)
         - --client-secret=$(CLIENT_SECRET)
+        - --memcached=memcached-0.memcached.observatorium.svc.cluster.local:11211
         - --token-expire-seconds=3600
         - --forward-url=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
         env:

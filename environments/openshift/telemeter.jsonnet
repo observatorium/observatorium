@@ -23,14 +23,43 @@ local list = import 'telemeter/lib/list.libsonnet';
       },
     },
   },
+  memcached+:: {
+    service+: {
+      metadata+: {
+        namespace: '${NAMESPACE}',
+      },
+    },
+  },
 } + {
   local ts = super.telemeterServer,
+  local m = super.memcached,
+  local tsList = list.asList('telemeter', ts, [])
+                 + list.withAuthorizeURL($._config)
+                 + list.withNamespace($._config)
+                 + list.withServerImage($._config)
+                 + list.withResourceRequestsAndLimits('telemeter-server', $._config.telemeterServer.resourceRequests, $._config.telemeterServer.resourceLimits),
+  local mList = list.asList('memcached', m, [
+                  {
+                    name: 'MEMCACHED_IMAGE',
+                    value: 'docker.io/memcached',
+                  },
+                  {
+                    name: 'MEMCACHED_IMAGE_TAG',
+                    value: '1.5.20-alpine',
+                  },
+                ])
+                + list.withNamespace($._config),
+
   telemeterServer+:: {
-    list: list.asList('telemeter', ts, [])
-          + list.withAuthorizeURL($._config)
-          + list.withNamespace($._config)
-          + list.withServerImage($._config)
-          + list.withResourceRequestsAndLimits('telemeter-server', $._config.telemeterServer.resourceRequests, $._config.telemeterServer.resourceLimits),
+    list: list.asList('telemeter', {}, []) + {
+      objects:
+        tsList.objects +
+        mList.objects,
+
+      parameters:
+        tsList.parameters +
+        mList.parameters,
+    },
   },
 
   _config+:: {
@@ -40,6 +69,9 @@ local list = import 'telemeter/lib/list.libsonnet';
         'prometheus_replica',
       ],
     },
+  },
+  memcached+:: {
+    image:: '${MEMCACHED_IMAGE}:${MEMCACHED_IMAGE_TAG}',
   },
 
 

@@ -31,4 +31,7 @@
       },
     },
   },
+  memcached+:: {
+    replicas:: 1,
+  },
 }
