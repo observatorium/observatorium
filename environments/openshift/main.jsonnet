@@ -4,7 +4,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 // generates an OpenShift specific Template on top of that.
 
 local app =
-  (import 'prometheus.jsonnet') +
+  (import 'telemeter-prometheus-ams.jsonnet') +
   (import 'telemeter.jsonnet') +
   {
     local thanos = (import 'thanos.jsonnet'),

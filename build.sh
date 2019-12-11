@@ -19,7 +19,7 @@ rm -rf environments/openshift/manifests
 mkdir environments/openshift/manifests
 
 jsonnet -J vendor environments/openshift/main.jsonnet | gojsontoyaml >environments/openshift/manifests/observatorium-template.yaml
-jsonnet -J vendor environments/openshift/prometheus.jsonnet | gojsontoyaml >environments/openshift/manifests/prometheus-template.yaml
+jsonnet -J vendor environments/openshift/telemeter-prometheus-ams.jsonnet | gojsontoyaml >environments/openshift/manifests/telemeter-prometheus-ams-template.yaml
 jsonnet -J vendor environments/openshift/telemeter.jsonnet | gojsontoyaml >environments/openshift/manifests/telemeter-template.yaml
 jsonnet -J vendor environments/openshift/thanos.jsonnet | gojsontoyaml >environments/openshift/manifests/thanos-template.yaml
 jsonnet -J vendor environments/openshift/jaeger.jsonnet | gojsontoyaml >environments/openshift/manifests/jaeger-template.yaml
