@@ -124,6 +124,7 @@ objects:
           - --oidc-issuer=$(OIDC_ISSUER)
           - --client-id=$(CLIENT_ID)
           - --client-secret=$(CLIENT_SECRET)
+          - --memcached=memcached-0.memcached.${NAMESPACE}.svc.cluster.local:11211
           - --whitelist={__name__=~"cluster:usage:.*"}
           - --whitelist={__name__="up"}
           - --whitelist={__name__="cluster_version"}
@@ -232,6 +233,52 @@ objects:
         - name: telemeter-server-tls
           secret:
             secretName: telemeter-server-shared
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/name: memcached
+    name: memcached
+    namespace: ${NAMESPACE}
+  spec:
+    clusterIP: None
+    ports:
+    - name: memcached
+      port: 11211
+      targetPort: 11211
+    selector:
+      app.kubernetes.io/name: memcached
+- apiVersion: apps/v1beta2
+  kind: StatefulSet
+  metadata:
+    labels:
+      app.kubernetes.io/name: memcached
+    name: memcached
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: memcached
+    serviceName: memcached
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: memcached
+      spec:
+        containers:
+        - image: ${MEMCACHED_IMAGE}:${MEMCACHED_IMAGE_TAG}
+          name: memcached
+          ports:
+          - containerPort: 11211
+            name: memcached
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 512Mi
 parameters:
 - name: AUTHORIZE_URL
   value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
@@ -249,3 +296,9 @@ parameters:
   value: 500Mi
 - name: TELEMETER_SERVER_MEMORY_LIMIT
   value: 1Gi
+- name: MEMCACHED_IMAGE
+  value: docker.io/memcached
+- name: MEMCACHED_IMAGE_TAG
+  value: 1.5.20-alpine
+- name: NAMESPACE
+  value: observatorium
