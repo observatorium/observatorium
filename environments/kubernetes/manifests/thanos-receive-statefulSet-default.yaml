@@ -57,6 +57,13 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         image: quay.io/thanos/thanos:v0.8.1
+        livenessProbe:
+          failureThreshold: 4
+          httpGet:
+            path: /-/healthy
+            port: 10902
+            scheme: HTTP
+          periodSeconds: 30
         name: thanos-receive
         ports:
         - containerPort: 10901

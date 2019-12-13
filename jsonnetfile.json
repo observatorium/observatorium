@@ -38,7 +38,7 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "master"
+      "version": "v0.9.0"
     },
     {
       "name": "slo-libsonnet",

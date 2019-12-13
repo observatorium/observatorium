@@ -60,22 +60,12 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                     $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
                   ]
                   for tenant in tenants
-                ] } + {
-                  readinessProbe+: {
-                    initialDelaySeconds: 10,
-                    periodSeconds: 30,
-                  },
-                } + container.mixin.livenessProbe +
-                container.mixin.livenessProbe.withPeriodSeconds(30) +
-                container.mixin.livenessProbe.withFailureThreshold(4) +
-                container.mixin.livenessProbe.httpGet.withPort($.thanos.querier.service.spec.ports[1].port) +
-                container.mixin.livenessProbe.httpGet.withScheme('HTTP') +
-                container.mixin.livenessProbe.httpGet.withPath('/-/healthy'),
+                ] },
               ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
           },
         },
-      } + deployment.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
+      },
     },
     store+: {
       replicas:: 1,
@@ -95,17 +85,12 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                   args+: [
                     jaegerAgent.thanosFlag % $.thanos.store.statefulSet.metadata.name,
                   ],
-                } + {
-                  readinessProbe+: {
-                    initialDelaySeconds: 10,
-                    periodSeconds: 30,
-                  },
                 },
               ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
           },
         },
-      } + statefulset.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
+      },
     },
     compactor+: {
       statefulSet+: {
@@ -129,17 +114,12 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                     '--debug.accept-malformed-index',
                     jaegerAgent.thanosFlag % $.thanos.compactor.statefulSet.metadata.name,
                   ],
-                } + {
-                  readinessProbe+: {
-                    initialDelaySeconds: 10,
-                    periodSeconds: 30,
-                  },
                 },
               ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
           },
         },
-      } + statefulset.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120),
+      },
     },
     receive+: {
       pvc+:: {
@@ -206,11 +186,6 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 
                       env.fromFieldPath('NAMESPACE', 'metadata.namespace'),
                     ],
-                  } + {
-                    readinessProbe+: {
-                      initialDelaySeconds: 10,
-                      periodSeconds: 30,
-                    },
                   } else c
                   for c in super.containers
                 ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
@@ -223,7 +198,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
               },
             },
           },
-        } + statefulset.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120)
+        }
       for tenant in tenants
     },
     receiveController+: {

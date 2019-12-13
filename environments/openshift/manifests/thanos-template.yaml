@@ -73,6 +73,13 @@ objects:
                   key: aws_secret_access_key
                   name: ${THANOS_S3_SECRET}
             image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+            livenessProbe:
+              failureThreshold: 4
+              httpGet:
+                path: /-/healthy
+                port: 10902
+                scheme: HTTP
+              periodSeconds: 30
             name: thanos-compactor
             ports:
             - containerPort: 10902
@@ -710,6 +717,13 @@ objects:
                   key: aws_secret_access_key
                   name: ${THANOS_S3_SECRET}
             image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+            livenessProbe:
+              failureThreshold: 4
+              httpGet:
+                path: /-/healthy
+                port: 10902
+                scheme: HTTP
+              periodSeconds: 30
             name: thanos-receive
             ports:
             - containerPort: 10901
@@ -858,6 +872,13 @@ objects:
                   key: aws_secret_access_key
                   name: ${THANOS_S3_SECRET}
             image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+            livenessProbe:
+              failureThreshold: 4
+              httpGet:
+                path: /-/healthy
+                port: 10902
+                scheme: HTTP
+              periodSeconds: 30
             name: thanos-store
             ports:
             - containerPort: 10901
