@@ -422,7 +422,7 @@ local list = import 'telemeter/lib/list.libsonnet';
   parameters: [
     { name: 'NAMESPACE', value: 'telemeter' },
     { name: 'THANOS_IMAGE', value: 'quay.io/thanos/thanos' },
-    { name: 'THANOS_IMAGE_TAG', value: 'v0.8.1' },
+    { name: 'THANOS_IMAGE_TAG', value: 'v0.9.0' },
     { name: 'PROXY_IMAGE', value: 'openshift/oauth-proxy' },
     { name: 'PROXY_IMAGE_TAG', value: 'v1.1.0' },
     { name: 'JAEGER_AGENT_IMAGE', value: 'jaegertracing/jaeger-agent' },

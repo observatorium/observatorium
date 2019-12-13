@@ -4,7 +4,6 @@ local service = k.core.v1.service;
 local configmap = k.core.v1.configMap;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
-local statefulset = k.apps.v1.statefulSet;
 local container = deployment.mixin.spec.template.spec.containersType;
 local containerEnv = container.envType;
 local sa = k.core.v1.serviceAccount;
@@ -22,7 +21,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
   thanos+:: {
-    image: 'quay.io/thanos/thanos:v0.8.1',
+    image: 'quay.io/thanos/thanos:v0.9.0',
     imageJaegerAgent: 'jaegertracing/jaeger-agent:1.14.0',
     objectStorageConfig+: {
       name: 'thanos-objectstorage',

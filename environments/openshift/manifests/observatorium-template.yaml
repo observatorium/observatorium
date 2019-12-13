@@ -1417,7 +1417,7 @@ parameters:
 - name: THANOS_IMAGE
   value: quay.io/thanos/thanos
 - name: THANOS_IMAGE_TAG
-  value: v0.8.1
+  value: v0.9.0
 - name: PROXY_IMAGE
   value: openshift/oauth-proxy
 - name: PROXY_IMAGE_TAG
