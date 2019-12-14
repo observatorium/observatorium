@@ -243,11 +243,29 @@ objects:
   spec:
     clusterIP: None
     ports:
-    - name: memcached
+    - name: client
       port: 11211
       targetPort: 11211
+    - name: metrics
+      port: 9150
+      targetPort: 9150
     selector:
       app.kubernetes.io/name: memcached
+- apiVersion: monitoring.coreos.com/v1
+  kind: ServiceMonitor
+  metadata:
+    labels:
+      app.kubernetes.io/name: memcached
+    name: memcached
+    namespace: ${NAMESPACE}
+  spec:
+    endpoints:
+    - interval: 30s
+      port: metrics
+    jobLabel: app.kubernetes.io/name
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: memcached
 - apiVersion: apps/v1beta2
   kind: StatefulSet
   metadata:
@@ -267,18 +285,31 @@ objects:
           app.kubernetes.io/name: memcached
       spec:
         containers:
-        - image: ${MEMCACHED_IMAGE}:${MEMCACHED_IMAGE_TAG}
+        - args:
+          - -m 1024
+          - -I 1m
+          - -c 1024
+          - -v
+          image: ${MEMCACHED_IMAGE}:${MEMCACHED_IMAGE_TAG}
           name: memcached
           ports:
           - containerPort: 11211
-            name: memcached
+            name: client
           resources:
             limits:
-              cpu: "1"
-              memory: 1Gi
+              cpu: ${MEMCACHED_CPU_LIMIT}
+              memory: ${MEMCACHED_MEMORY_LIMIT}
             requests:
-              cpu: 100m
-              memory: 512Mi
+              cpu: ${MEMCACHED_CPU_REQUEST}
+              memory: ${MEMCACHED_MEMORY_REQUEST}
+        - args:
+          - --memcached.address=localhost:11211
+          - --web.listen-address=0.0.0.0:9150
+          image: ${MEMCACHED_EXPORTER_IMAGE}:${MEMCACHED_EXPORTER_IMAGE_TAG}
+          name: exporter
+          ports:
+          - containerPort: 9150
+            name: metrics
 parameters:
 - name: AUTHORIZE_URL
   value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
@@ -300,5 +331,17 @@ parameters:
   value: docker.io/memcached
 - name: MEMCACHED_IMAGE_TAG
   value: 1.5.20-alpine
+- name: MEMCACHED_EXPORTER_IMAGE
+  value: docker.io/prom/memcached-exporter
+- name: MEMCACHED_EXPORTER_IMAGE_TAG
+  value: v0.6.0
+- name: MEMCACHED_CPU_REQUEST
+  value: 500m
+- name: MEMCACHED_CPU_LIMIT
+  value: "3"
+- name: MEMCACHED_MEMORY_REQUEST
+  value: 1329Mi
+- name: MEMCACHED_MEMORY_LIMIT
+  value: 1844Mi
 - name: NAMESPACE
   value: observatorium

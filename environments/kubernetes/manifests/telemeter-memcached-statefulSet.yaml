@@ -17,15 +17,28 @@ spec:
         app.kubernetes.io/name: memcached
     spec:
       containers:
-      - image: docker.io/memcached:1.5.20-alpine
+      - args:
+        - -m 1024
+        - -I 1m
+        - -c 1024
+        - -v
+        image: docker.io/memcached:1.5.20-alpine
         name: memcached
         ports:
         - containerPort: 11211
-          name: memcached
+          name: client
         resources:
           limits:
-            cpu: "1"
-            memory: 1Gi
+            cpu: "3"
+            memory: 1844Mi
           requests:
-            cpu: 100m
-            memory: 512Mi
+            cpu: 500m
+            memory: 1329Mi
+      - args:
+        - --memcached.address=localhost:11211
+        - --web.listen-address=0.0.0.0:9150
+        image: docker.io/prom/memcached-exporter:v0.6.0
+        name: exporter
+        ports:
+        - containerPort: 9150
+          name: metrics
