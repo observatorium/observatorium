@@ -1,6 +1,0 @@
-commonLabels:
-  app.kubernetes.io/name: thanos-store
-resources:
-- resources/thanos-store-statefulSet.yaml
-- resources/thanos-store-service.yaml
-
