@@ -52,8 +52,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "13609ffdb70eab93c5341180fd9ebf9dd8ba60af",
-      "sum": "1cyDaR05OAJ76DRFyDeQdFOUJlNGgmGvhBc7+YeF4AQ="
+      "version": "3c0a850eed94cd1676e9213b96ff1855553bcdcd",
+      "sum": "dEIlIxE8OhSZ6dSod9Xaihf3FIcFnkPMNBJJQAa1iDk="
     },
     {
       "name": "prometheus-operator",
