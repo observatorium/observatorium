@@ -1,6 +1,0 @@
-commonLabels:
-  app.kubernetes.io/name: thanos-querier
-
-resources:
-- resources/thanos-querier-deployment.yaml
-- resources/thanos-querier-service.yaml
