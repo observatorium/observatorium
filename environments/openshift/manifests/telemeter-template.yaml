@@ -306,10 +306,17 @@ objects:
           - --memcached.address=localhost:11211
           - --web.listen-address=0.0.0.0:9150
           image: ${MEMCACHED_EXPORTER_IMAGE}:${MEMCACHED_EXPORTER_IMAGE_TAG}
-          name: exporter
+          name: memcached-exporter
           ports:
           - containerPort: 9150
             name: metrics
+          resources:
+            limits:
+              cpu: ${MEMCACHED_EXPORTER_CPU_LIMIT}
+              memory: ${MEMCACHED_EXPORTER_MEMORY_LIMIT}
+            requests:
+              cpu: ${MEMCACHED_EXPORTER_CPU_REQUEST}
+              memory: ${MEMCACHED_EXPORTER_MEMORY_REQUEST}
 parameters:
 - name: AUTHORIZE_URL
   value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
@@ -343,5 +350,13 @@ parameters:
   value: 1329Mi
 - name: MEMCACHED_MEMORY_LIMIT
   value: 1844Mi
+- name: MEMCACHED_EXPORTER_CPU_REQUEST
+  value: 50m
+- name: MEMCACHED_EXPORTER_CPU_LIMIT
+  value: 200m
+- name: MEMCACHED_EXPORTER_MEMORY_REQUEST
+  value: 50Mi
+- name: MEMCACHED_EXPORTER_MEMORY_LIMIT
+  value: 200Mi
 - name: NAMESPACE
   value: observatorium

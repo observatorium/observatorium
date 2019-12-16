@@ -33,5 +33,20 @@
   },
   memcached+:: {
     replicas:: 1,
+
+    statefulSet+: {
+      spec+: {
+        template+: {
+          spec+: {
+            containers: [
+              super.containers[0],
+              super.containers[1] {
+                name: 'memcached-exporter',
+              },
+            ],
+          },
+        },
+      },
+    },
   },
 }
