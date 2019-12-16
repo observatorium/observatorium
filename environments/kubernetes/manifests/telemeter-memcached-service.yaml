@@ -8,8 +8,11 @@ metadata:
 spec:
   clusterIP: None
   ports:
-  - name: memcached
+  - name: client
     port: 11211
     targetPort: 11211
+  - name: metrics
+    port: 9150
+    targetPort: 9150
   selector:
     app.kubernetes.io/name: memcached

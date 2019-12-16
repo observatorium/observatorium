@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    prometheus: app-sre
+  name: telemeter-memcached-stage
+spec:
+  endpoints:
+  - interval: 30s
+    port: metrics
+  jobLabel: app.kubernetes.io/name
+  namespaceSelector:
+    matchNames:
+    - telemeter-stage
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: memcached

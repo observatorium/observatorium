@@ -23,13 +23,6 @@ local list = import 'telemeter/lib/list.libsonnet';
       },
     },
   },
-  memcached+:: {
-    service+: {
-      metadata+: {
-        namespace: '${NAMESPACE}',
-      },
-    },
-  },
 } + {
   local ts = super.telemeterServer,
   local m = super.memcached,
@@ -41,13 +34,22 @@ local list = import 'telemeter/lib/list.libsonnet';
   local mList = list.asList('memcached', m, [
                   {
                     name: 'MEMCACHED_IMAGE',
-                    value: 'docker.io/memcached',
+                    value: m.images.memcached,
                   },
                   {
                     name: 'MEMCACHED_IMAGE_TAG',
-                    value: '1.5.20-alpine',
+                    value: m.tags.memcached,
+                  },
+                  {
+                    name: 'MEMCACHED_EXPORTER_IMAGE',
+                    value: m.images.exporter,
+                  },
+                  {
+                    name: 'MEMCACHED_EXPORTER_IMAGE_TAG',
+                    value: m.tags.exporter,
                   },
                 ])
+                + list.withResourceRequestsAndLimits('memcached', $.memcached.resourceRequests, $.memcached.resourceLimits)
                 + list.withNamespace($._config),
 
   telemeterServer+:: {
@@ -71,10 +73,15 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
   },
   memcached+:: {
-    image:: '${MEMCACHED_IMAGE}:${MEMCACHED_IMAGE_TAG}',
+    images:: {
+      memcached: '${MEMCACHED_IMAGE}',
+      exporter: '${MEMCACHED_EXPORTER_IMAGE}',
+    },
+    tags:: {
+      memcached: '${MEMCACHED_IMAGE_TAG}',
+      exporter: '${MEMCACHED_EXPORTER_IMAGE_TAG}',
+    },
   },
-
-
   apiVersion: 'v1',
   kind: 'Template',
   metadata: {

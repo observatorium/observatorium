@@ -3,6 +3,7 @@ local prom = import '../openshift/telemeter-prometheus-ams.jsonnet';
 local sm =
   (import '../openshift/thanos.jsonnet') +
   (import 'kube-thanos/kube-thanos-servicemonitors.libsonnet') +
+  (import '../openshift/telemeter.jsonnet') +
   {
     thanos+:: {
       querier+: {
@@ -72,6 +73,14 @@ local sm =
             },
           }
         for tenant in tenants
+      },
+    },
+    memcached+: {
+      serviceMonitor+: {
+        metadata: {
+          name: 'telemeter-memcached',
+          labels: { prometheus: 'app-sre' },
+        },
       },
     },
   } + (import '../../components/jaeger-collector.libsonnet') {
@@ -179,6 +188,14 @@ local sm =
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
   'observatorium-jaeger-agent-stage.servicemonitor': sm.jaeger.agent.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  },
+  'telemeter-memcached.servicemonitor': sm.memcached.serviceMonitor {
+    metadata+: { name+: '-production' },
+    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
+  },
+  'telemeter-memcached-stage.servicemonitor': sm.memcached.serviceMonitor {
+    metadata+: { name+: '-stage' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
 }
