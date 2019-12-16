@@ -116,3 +116,4 @@ spec:
         requests:
           storage: 50Gi
       storageClassName: standard
+  volumes: null

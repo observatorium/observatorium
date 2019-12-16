@@ -1030,6 +1030,7 @@ objects:
           requests:
             storage: 50Gi
         storageClassName: gp2-encrypted
+    volumes: null
 - apiVersion: v1
   data:
     client_id: ""

@@ -15,6 +15,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 (import 'kube-thanos/kube-thanos-store.libsonnet') +
 (import 'kube-thanos/kube-thanos-store-pvc.libsonnet') +
 (import 'kube-thanos/kube-thanos-receive.libsonnet') +
+(import 'kube-thanos/kube-thanos-receive-pvc.libsonnet') +
 (import 'kube-thanos/kube-thanos-compactor.libsonnet') +
 (import 'kube-thanos/kube-thanos-rule.libsonnet') +
 (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') +
@@ -94,6 +95,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
               ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
           },
+          volumes: null,
         },
       },
     },
@@ -204,26 +206,6 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                 ],
               },
             },
-            // NOTICE: Keep these claims, even though same claims exists in kube-thanos
-            // - because of a jsonnet inherence discrepancies
-            volumeClaimTemplates::: [
-              {
-                metadata: {
-                  name: $.thanos.receive.statefulSet.metadata.name + '-data',
-                },
-                spec: {
-                  accessModes: [
-                    'ReadWriteOnce',
-                  ],
-                  storageClassName: tr.pvc.class,
-                  resources: {
-                    requests: {
-                      storage: tr.pvc.size,
-                    },
-                  },
-                },
-              },
-            ],
           },
         }
       for tenant in tenants
