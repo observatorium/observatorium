@@ -71,6 +71,13 @@ objects:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
           name: thanos-compactor
           ports:
           - containerPort: 10902
@@ -80,6 +87,8 @@ objects:
               path: /-/ready
               port: 10902
               scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
           resources:
             limits:
               cpu: ${THANOS_COMPACTOR_CPU_LIMIT}
@@ -126,6 +135,7 @@ objects:
             requests:
               cpu: 32m
               memory: 64Mi
+        terminationGracePeriodSeconds: 120
         volumes:
         - emptyDir: {}
           name: thanos-compactor-data
@@ -310,6 +320,13 @@ objects:
                 sampler_param: 2
           - --store=dnssrv+_grpc._tcp.thanos-receive-default.${NAMESPACE}.svc.cluster.local
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /-/healthy
+              port: 9090
+              scheme: HTTP
+            periodSeconds: 30
           name: thanos-querier
           ports:
           - containerPort: 10901
@@ -321,6 +338,8 @@ objects:
               path: /-/ready
               port: 9090
               scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
           resources:
             limits:
               cpu: ${THANOS_QUERIER_CPU_LIMIT}
@@ -402,6 +421,7 @@ objects:
             readOnly: false
         serviceAccount: prometheus-telemeter
         serviceAccountName: prometheus-telemeter
+        terminationGracePeriodSeconds: 120
         volumes:
         - name: secret-querier-tls
           secret:
@@ -678,6 +698,13 @@ objects:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
           name: thanos-receive
           ports:
           - containerPort: 10901
@@ -691,6 +718,8 @@ objects:
               path: /-/ready
               port: 10902
               scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
           resources:
             limits:
               cpu: ${THANOS_RECEIVE_CPU_LIMIT}
@@ -739,6 +768,7 @@ objects:
             requests:
               cpu: 32m
               memory: 64Mi
+        terminationGracePeriodSeconds: 120
         volumes:
         - configMap:
             name: observatorium-tenants-generated
@@ -821,6 +851,13 @@ objects:
                 key: aws_secret_access_key
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
           name: thanos-store
           ports:
           - containerPort: 10901
@@ -832,6 +869,8 @@ objects:
               path: /-/ready
               port: 10902
               scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
           resources:
             limits:
               cpu: ${THANOS_STORE_CPU_LIMIT}
@@ -878,6 +917,7 @@ objects:
             requests:
               cpu: 32m
               memory: 64Mi
+        terminationGracePeriodSeconds: 120
         volumes: null
     volumeClaimTemplates:
     - metadata:
@@ -1377,7 +1417,7 @@ parameters:
 - name: THANOS_IMAGE
   value: quay.io/thanos/thanos
 - name: THANOS_IMAGE_TAG
-  value: v0.8.1
+  value: v0.9.0
 - name: PROXY_IMAGE
   value: openshift/oauth-proxy
 - name: PROXY_IMAGE_TAG

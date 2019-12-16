@@ -32,7 +32,14 @@ spec:
               sampler_type: ratelimiting
               sampler_param: 2
         - --store=dnssrv+_grpc._tcp.thanos-receive-default.observatorium.svc.cluster.local
-        image: quay.io/thanos/thanos:v0.8.1
+        image: quay.io/thanos/thanos:v0.9.0
+        livenessProbe:
+          failureThreshold: 4
+          httpGet:
+            path: /-/healthy
+            port: 9090
+            scheme: HTTP
+          periodSeconds: 30
         name: thanos-querier
         ports:
         - containerPort: 10901
@@ -44,6 +51,8 @@ spec:
             path: /-/ready
             port: 9090
             scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
         resources:
           limits:
             cpu: "1"
@@ -86,3 +95,4 @@ spec:
           requests:
             cpu: 32m
             memory: 64Mi
+      terminationGracePeriodSeconds: 120

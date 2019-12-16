@@ -37,7 +37,14 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
-        image: quay.io/thanos/thanos:v0.8.1
+        image: quay.io/thanos/thanos:v0.9.0
+        livenessProbe:
+          failureThreshold: 4
+          httpGet:
+            path: /-/healthy
+            port: 10902
+            scheme: HTTP
+          periodSeconds: 30
         name: thanos-store
         ports:
         - containerPort: 10901
@@ -49,6 +56,8 @@ spec:
             path: /-/ready
             port: 10902
             scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
         resources:
           limits:
             cpu: "2"
@@ -95,6 +104,7 @@ spec:
           requests:
             cpu: 32m
             memory: 64Mi
+      terminationGracePeriodSeconds: 120
       volumes: null
   volumeClaimTemplates:
   - metadata:

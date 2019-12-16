@@ -21,7 +21,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
   thanos+:: {
-    image: 'quay.io/thanos/thanos:v0.8.1',
+    image: 'quay.io/thanos/thanos:v0.9.0',
     imageJaegerAgent: 'jaegertracing/jaeger-agent:1.14.0',
     objectStorageConfig+: {
       name: 'thanos-objectstorage',
