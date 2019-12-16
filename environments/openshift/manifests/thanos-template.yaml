@@ -803,7 +803,7 @@ objects:
             requests:
               storage: 50Gi
           storageClassName: gp2-encrypted
-  rule-service:
+  ruler-service:
     apiVersion: v1
     kind: Service
     metadata:
@@ -821,7 +821,7 @@ objects:
         targetPort: http
       selector:
         app.kubernetes.io/name: thanos-rule
-  rule-statefulSet:
+  ruler-statefulSet:
     apiVersion: apps/v1
     kind: StatefulSet
     metadata:
@@ -1053,7 +1053,6 @@ objects:
             requests:
               storage: 50Gi
           storageClassName: gp2-encrypted
-      volumes: null
 parameters:
 - name: NAMESPACE
   value: telemeter
