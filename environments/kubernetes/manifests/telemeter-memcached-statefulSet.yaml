@@ -38,7 +38,7 @@ spec:
         - --memcached.address=localhost:11211
         - --web.listen-address=0.0.0.0:9150
         image: docker.io/prom/memcached-exporter:v0.6.0
-        name: exporter
+        name: memcached-exporter
         ports:
         - containerPort: 9150
           name: metrics

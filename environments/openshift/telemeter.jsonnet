@@ -50,6 +50,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                   },
                 ])
                 + list.withResourceRequestsAndLimits('memcached', $.memcached.resourceRequests, $.memcached.resourceLimits)
+                + list.withResourceRequestsAndLimits('memcached-exporter', { cpu: '50m', memory: '50Mi' }, { cpu: '200m', memory: '200Mi' })
                 + list.withNamespace($._config),
 
   telemeterServer+:: {
