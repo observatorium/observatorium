@@ -190,7 +190,7 @@ local sm =
   'observatorium-jaeger-agent-stage.servicemonitor': sm.jaeger.agent.serviceMonitor {
     spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
   },
-  'telemeter-memcached.servicemonitor': sm.memcached.serviceMonitor {
+  'telemeter-memcached-production.servicemonitor': sm.memcached.serviceMonitor {
     metadata+: { name+: '-production' },
     spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
   },
