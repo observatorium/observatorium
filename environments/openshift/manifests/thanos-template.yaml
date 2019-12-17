@@ -812,6 +812,7 @@ objects:
       name: thanos-ruler
       namespace: ${NAMESPACE}
     spec:
+      clusterIP: None
       ports:
       - name: grpc
         port: 10901
