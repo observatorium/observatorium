@@ -43,7 +43,7 @@ local list = import 'telemeter/lib/list.libsonnet';
             c.name == $.thanos.querier.deployment.metadata.name ||
             c.name == $.thanos.store.statefulSet.metadata.name ||
             c.name == $.thanos.compactor.statefulSet.metadata.name ||
-            c.name == $.thanos.rule.statefulSet.metadata.name ||
+            c.name == $.thanos.ruler.statefulSet.metadata.name ||
             c.name == $.thanos.receive.statefulSet.metadata.name
           then c {
             env+: [
@@ -222,8 +222,9 @@ local list = import 'telemeter/lib/list.libsonnet';
       },
     },
 
-    rule+: {
+    ruler+: {
       ruleFiles:: [],
+
       service+:
         service.mixin.metadata.withNamespace(namespace),
       statefulSet+: {
@@ -241,7 +242,7 @@ local list = import 'telemeter/lib/list.libsonnet';
                 local container = sts.mixin.spec.template.spec.containersType;
                 local env = container.envType;
 
-                if c.name == 'thanos-rule' then c {
+                if c.name == 'thanos-ruler' then c {
                   resources: {
                     requests: {
                       cpu: '${THANOS_RULER_CPU_REQUEST}',
@@ -459,8 +460,8 @@ local list = import 'telemeter/lib/list.libsonnet';
     ['querier-cache-' + name]: $.thanos.querierCache[name]
     for name in std.objectFields($.thanos.querierCache)
   } + {
-    ['ruler-' + name]: $.thanos.rule[name]
-    for name in std.objectFields($.thanos.rule)
+    ['ruler-' + name]: $.thanos.ruler[name]
+    for name in std.objectFields($.thanos.ruler)
   },
   parameters: [
     { name: 'NAMESPACE', value: 'telemeter' },

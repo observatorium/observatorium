@@ -17,7 +17,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 (import 'kube-thanos/kube-thanos-receive.libsonnet') +
 (import 'kube-thanos/kube-thanos-receive-pvc.libsonnet') +
 (import 'kube-thanos/kube-thanos-compactor.libsonnet') +
-(import 'kube-thanos/kube-thanos-rule.libsonnet') +
+(import 'kube-thanos/kube-thanos-ruler.libsonnet') +
 (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') +
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
@@ -55,8 +55,8 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                       $.thanos.store.service.metadata.namespace,
                     ],
                     '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
-                      $.thanos.rule.service.metadata.name,
-                      $.thanos.rule.service.metadata.namespace,
+                      $.thanos.ruler.service.metadata.name,
+                      $.thanos.ruler.service.metadata.namespace,
                     ],
                     jaegerAgent.thanosFlag % $.thanos.querier.deployment.metadata.name,
                   ] + [
@@ -225,7 +225,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
         deployment.mixin.metadata.withNamespace(namespace),
     },
 
-    rule+: {
+    ruler+: {
       replicas: 2,
     },
   },

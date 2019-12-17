@@ -8,7 +8,7 @@ local dashboards = thanos {
     thanosQuerierJobPrefix: 'thanos-querier',
     thanosStoreJobPrefix: 'thanos-store',
     thanosReceiveJobPrefix: 'thanos-receive',
-    thanosRuleJobPrefix: 'thanos-rule',
+    thanosRuleJobPrefix: 'thanos-ruler',
     thanosCompactJobPrefix: 'thanos-compactor',
     thanosSidecarJobPrefix: 'thanos-sidecar',
 

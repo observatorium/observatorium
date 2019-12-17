@@ -1647,7 +1647,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_alert_sender_alerts_sent_total{namespace=\"$namespace\",job=~\"thanos-rule.*\"}[$interval])) by (job, alertmanager)",
+                  "expr": "sum(rate(thanos_alert_sender_alerts_sent_total{namespace=\"$namespace\",job=~\"thanos-ruler.*\"}[$interval])) by (job, alertmanager)",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "{{job}} {{alertmanager}}",
@@ -1740,7 +1740,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(thanos_alert_sender_errors_total{namespace=\"$namespace\",job=~\"thanos-rule.*\"}[$interval])) / sum(rate(thanos_alert_sender_alerts_sent_total{namespace=\"$namespace\",job=~\"thanos-rule.*\"}[$interval]))",
+                  "expr": "sum(rate(thanos_alert_sender_errors_total{namespace=\"$namespace\",job=~\"thanos-ruler.*\"}[$interval])) / sum(rate(thanos_alert_sender_alerts_sent_total{namespace=\"$namespace\",job=~\"thanos-ruler.*\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -1833,7 +1833,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "histogram_quantile(0.99, sum(rate(thanos_alert_sender_latency_seconds_bucket{namespace=\"$namespace\",job=~\"thanos-rule.*\"}[$interval])) by (job, le))",
+                  "expr": "histogram_quantile(0.99, sum(rate(thanos_alert_sender_latency_seconds_bucket{namespace=\"$namespace\",job=~\"thanos-ruler.*\"}[$interval])) by (job, le))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "{{job}} P99",
