@@ -231,7 +231,7 @@ local list = import 'telemeter/lib/list.libsonnet';
           namespace: namespace,
         },
         spec+: {
-          replicas: '${{THANOS_RULE_REPLICAS}}',
+          replicas: '${{THANOS_RULER_REPLICAS}}',
 
           // As we use Vault and want to be able to use rotation of credentials,
           // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
@@ -244,12 +244,12 @@ local list = import 'telemeter/lib/list.libsonnet';
                 if c.name == 'thanos-rule' then c {
                   resources: {
                     requests: {
-                      cpu: '${THANOS_RULE_CPU_REQUEST}',
-                      memory: '${THANOS_RULE_MEMORY_REQUEST}',
+                      cpu: '${THANOS_RULER_CPU_REQUEST}',
+                      memory: '${THANOS_RULER_MEMORY_REQUEST}',
                     },
                     limits: {
-                      cpu: '${THANOS_RULE_CPU_LIMIT}',
-                      memory: '${THANOS_RULE_MEMORY_LIMIT}',
+                      cpu: '${THANOS_RULER_CPU_LIMIT}',
+                      memory: '${THANOS_RULER_MEMORY_LIMIT}',
                     },
                   },
                 } else c
@@ -498,11 +498,11 @@ local list = import 'telemeter/lib/list.libsonnet';
     { name: 'THANOS_COMPACTOR_CPU_LIMIT', value: '1' },
     { name: 'THANOS_COMPACTOR_MEMORY_REQUEST', value: '1Gi' },
     { name: 'THANOS_COMPACTOR_MEMORY_LIMIT', value: '5Gi' },
-    { name: 'THANOS_RULE_REPLICAS', value: '2' },
-    { name: 'THANOS_RULE_CPU_REQUEST', value: '100m' },
-    { name: 'THANOS_RULE_CPU_LIMIT', value: '1' },
-    { name: 'THANOS_RULE_MEMORY_REQUEST', value: '512Mi' },
-    { name: 'THANOS_RULE_MEMORY_LIMIT', value: '1Gi' },
+    { name: 'THANOS_RULER_REPLICAS', value: '2' },
+    { name: 'THANOS_RULER_CPU_REQUEST', value: '100m' },
+    { name: 'THANOS_RULER_CPU_LIMIT', value: '1' },
+    { name: 'THANOS_RULER_MEMORY_REQUEST', value: '512Mi' },
+    { name: 'THANOS_RULER_MEMORY_LIMIT', value: '1Gi' },
     { name: 'THANOS_QUERIER_SVC_URL', value: 'http://thanos-querier.observatorium.svc:9090' },
     { name: 'JAEGER_PROXY_CPU_REQUEST', value: '100m' },
     { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100Mi' },

@@ -830,7 +830,7 @@ objects:
       name: thanos-rule
       namespace: ${NAMESPACE}
     spec:
-      replicas: ${{THANOS_RULE_REPLICAS}}
+      replicas: ${{THANOS_RULER_REPLICAS}}
       selector:
         matchLabels:
           app.kubernetes.io/name: thanos-rule
@@ -893,11 +893,11 @@ objects:
               periodSeconds: 30
             resources:
               limits:
-                cpu: ${THANOS_RULE_CPU_LIMIT}
-                memory: ${THANOS_RULE_MEMORY_LIMIT}
+                cpu: ${THANOS_RULER_CPU_LIMIT}
+                memory: ${THANOS_RULER_MEMORY_LIMIT}
               requests:
-                cpu: ${THANOS_RULE_CPU_REQUEST}
-                memory: ${THANOS_RULE_MEMORY_REQUEST}
+                cpu: ${THANOS_RULER_CPU_REQUEST}
+                memory: ${THANOS_RULER_MEMORY_REQUEST}
             volumeMounts:
             - mountPath: /var/thanos/rule
               name: thanos-rule-data
@@ -1124,15 +1124,15 @@ parameters:
   value: 1Gi
 - name: THANOS_COMPACTOR_MEMORY_LIMIT
   value: 5Gi
-- name: THANOS_RULE_REPLICAS
+- name: THANOS_RULER_REPLICAS
   value: "2"
-- name: THANOS_RULE_CPU_REQUEST
+- name: THANOS_RULER_CPU_REQUEST
   value: 100m
-- name: THANOS_RULE_CPU_LIMIT
+- name: THANOS_RULER_CPU_LIMIT
   value: "1"
-- name: THANOS_RULE_MEMORY_REQUEST
+- name: THANOS_RULER_MEMORY_REQUEST
   value: 512Mi
-- name: THANOS_RULE_MEMORY_LIMIT
+- name: THANOS_RULER_MEMORY_LIMIT
   value: 1Gi
 - name: THANOS_QUERIER_SVC_URL
   value: http://thanos-querier.observatorium.svc:9090
