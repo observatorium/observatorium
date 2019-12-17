@@ -1944,7 +1944,7 @@ data:
             "useTags": false
           },
           {
-            "allValue": "thanos-rule.*",
+            "allValue": "thanos-ruler.*",
             "current": {
               "text": "all",
               "value": "$__all"
@@ -1958,7 +1958,7 @@ data:
             "options": [
 
             ],
-            "query": "label_values(up{namespace=\"$namespace\",job=~\"thanos-rule.*\"}, job)",
+            "query": "label_values(up{namespace=\"$namespace\",job=~\"thanos-ruler.*\"}, job)",
             "refresh": 1,
             "regex": "",
             "sort": 2,
@@ -1985,7 +1985,7 @@ data:
             "options": [
 
             ],
-            "query": "label_values(kube_pod_info{namespace=\"$namespace\",created_by_name=~\"thanos-rule.*\"}, pod)",
+            "query": "label_values(kube_pod_info{namespace=\"$namespace\",created_by_name=~\"thanos-ruler.*\"}, pod)",
             "refresh": 1,
             "regex": "",
             "sort": 2,

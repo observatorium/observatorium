@@ -24,6 +24,7 @@ spec:
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:9090
         - --store=dnssrv+_grpc._tcp.thanos-store.observatorium.svc.cluster.local
+        - --store=dnssrv+_grpc._tcp.thanos-ruler.observatorium.svc.cluster.local
         - |
           --tracing.config=
             type: JAEGER

@@ -17,6 +17,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 (import 'kube-thanos/kube-thanos-receive.libsonnet') +
 (import 'kube-thanos/kube-thanos-receive-pvc.libsonnet') +
 (import 'kube-thanos/kube-thanos-compactor.libsonnet') +
+(import 'kube-thanos/kube-thanos-ruler.libsonnet') +
 (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') +
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
@@ -42,24 +43,30 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
             spec+: {
               containers: [
                 super.containers[0]
-                { args: [
-                  'query',
-                  '--query.replica-label=replica',
-                  '--query.replica-label=prometheus_replica',
-                  '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
-                  '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
-                  '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
-                    $.thanos.store.service.metadata.name,
-                    $.thanos.store.service.metadata.namespace,
+                {
+                  args: [
+                    'query',
+                    '--query.replica-label=replica',
+                    '--query.replica-label=prometheus_replica',
+                    '--grpc-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[0].port,
+                    '--http-address=0.0.0.0:%d' % $.thanos.querier.service.spec.ports[1].port,
+                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                      $.thanos.store.service.metadata.name,
+                      $.thanos.store.service.metadata.namespace,
+                    ],
+                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                      $.thanos.ruler.service.metadata.name,
+                      $.thanos.ruler.service.metadata.namespace,
+                    ],
+                    jaegerAgent.thanosFlag % $.thanos.querier.deployment.metadata.name,
+                  ] + [
+                    '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
+                      $.thanos.receive['service-' + tenant.hashring].metadata.name,
+                      $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
+                    ]
+                    for tenant in tenants
                   ],
-                  jaegerAgent.thanosFlag % $.thanos.querier.deployment.metadata.name,
-                ] + [
-                  '--store=dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [
-                    $.thanos.receive['service-' + tenant.hashring].metadata.name,
-                    $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
-                  ]
-                  for tenant in tenants
-                ] },
+                },
               ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
           },
@@ -86,6 +93,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                   ],
                 },
               ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
+              volumes: null,
             },
           },
         },
@@ -122,6 +130,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
     },
     receive+: {
       pvc+:: {
+        class: 'standard',
         size: '50Gi',
       },
       statefulSet+:: sts.mixin.metadata.withNamespace(namespace),
@@ -144,6 +153,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
       // - while overarching statefulset will have cluster IP.
       service+: { spec+: { clusterIP:: '' } },
     } + {
+      local tr = self,
       ['statefulSet-' + tenant.hashring]:
         super.statefulSet +
         {
@@ -213,6 +223,10 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
         service.mixin.metadata.withNamespace(namespace),
       deployment+:
         deployment.mixin.metadata.withNamespace(namespace),
+    },
+
+    ruler+: {
+      replicas: 2,
     },
   },
 }

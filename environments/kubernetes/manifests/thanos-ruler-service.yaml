@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: thanos-ruler
+  name: thanos-ruler
+  namespace: observatorium
+spec:
+  ports:
+  - name: grpc
+    port: 10901
+    targetPort: grpc
+  - name: http
+    port: 10902
+    targetPort: http
+  selector:
+    app.kubernetes.io/name: thanos-ruler

@@ -318,6 +318,7 @@ objects:
             - --grpc-address=0.0.0.0:10901
             - --http-address=0.0.0.0:9090
             - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
+            - --store=dnssrv+_grpc._tcp.thanos-ruler.${NAMESPACE}.svc.cluster.local
             - |
               --tracing.config=
                 type: JAEGER
@@ -802,6 +803,108 @@ objects:
             requests:
               storage: 50Gi
           storageClassName: gp2-encrypted
+  ruler-service:
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/name: thanos-ruler
+      name: thanos-ruler
+      namespace: ${NAMESPACE}
+    spec:
+      ports:
+      - name: grpc
+        port: 10901
+        targetPort: grpc
+      - name: http
+        port: 10902
+        targetPort: http
+      selector:
+        app.kubernetes.io/name: thanos-ruler
+  ruler-statefulSet:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app.kubernetes.io/name: thanos-ruler
+      name: thanos-ruler
+      namespace: ${NAMESPACE}
+    spec:
+      replicas: ${{THANOS_RULER_REPLICAS}}
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: thanos-ruler
+      serviceName: thanos-ruler
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: thanos-ruler
+        spec:
+          containers:
+          - args:
+            - rule
+            - --grpc-address=0.0.0.0:10901
+            - --http-address=0.0.0.0:10902
+            - --objstore.config=$(OBJSTORE_CONFIG)
+            - --data-dir=/var/thanos/ruler
+            - --label=ruler_replica="$(NAME)"
+            - --alert.label-drop="ruler_replica"
+            - --query=dnssrv+_grpc._tcp.thanos-querier.${NAMESPACE}.svc.cluster.local
+            env:
+            - name: NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OBJSTORE_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  key: thanos.yaml
+                  name: ${THANOS_CONFIG_SECRET}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: aws_access_key_id
+                  name: ${THANOS_S3_SECRET}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: aws_secret_access_key
+                  name: ${THANOS_S3_SECRET}
+            image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+            livenessProbe:
+              failureThreshold: 4
+              httpGet:
+                path: /-/healthy
+                port: 10902
+                scheme: HTTP
+              periodSeconds: 30
+            name: thanos-ruler
+            ports:
+            - containerPort: 10901
+              name: grpc
+            - containerPort: 10902
+              name: http
+            readinessProbe:
+              httpGet:
+                path: /-/ready
+                port: 10902
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 30
+            resources:
+              limits:
+                cpu: ${THANOS_RULER_CPU_LIMIT}
+                memory: ${THANOS_RULER_MEMORY_LIMIT}
+              requests:
+                cpu: ${THANOS_RULER_CPU_REQUEST}
+                memory: ${THANOS_RULER_MEMORY_REQUEST}
+            volumeMounts:
+            - mountPath: /var/thanos/ruler
+              name: thanos-ruler-data
+              readOnly: false
+          volumes:
+          - emptyDir: {}
+            name: thanos-ruler-data
   store-service:
     apiVersion: v1
     kind: Service
@@ -1021,6 +1124,16 @@ parameters:
   value: 1Gi
 - name: THANOS_COMPACTOR_MEMORY_LIMIT
   value: 5Gi
+- name: THANOS_RULER_REPLICAS
+  value: "2"
+- name: THANOS_RULER_CPU_REQUEST
+  value: 100m
+- name: THANOS_RULER_CPU_LIMIT
+  value: "1"
+- name: THANOS_RULER_MEMORY_REQUEST
+  value: 512Mi
+- name: THANOS_RULER_MEMORY_LIMIT
+  value: 1Gi
 - name: THANOS_QUERIER_SVC_URL
   value: http://thanos-querier.observatorium.svc:9090
 - name: JAEGER_PROXY_CPU_REQUEST

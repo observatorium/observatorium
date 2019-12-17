@@ -43,6 +43,7 @@ local list = import 'telemeter/lib/list.libsonnet';
             c.name == $.thanos.querier.deployment.metadata.name ||
             c.name == $.thanos.store.statefulSet.metadata.name ||
             c.name == $.thanos.compactor.statefulSet.metadata.name ||
+            c.name == $.thanos.ruler.statefulSet.metadata.name ||
             c.name == $.thanos.receive.statefulSet.metadata.name
           then c {
             env+: [
@@ -210,6 +211,46 @@ local list = import 'telemeter/lib/list.libsonnet';
                     limits: {
                       cpu: '${THANOS_COMPACTOR_CPU_LIMIT}',
                       memory: '${THANOS_COMPACTOR_MEMORY_LIMIT}',
+                    },
+                  },
+                } else c
+                for c in super.containers
+              ],
+            },
+          },
+        },
+      },
+    },
+
+    ruler+: {
+      ruleFiles:: [],
+
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+      statefulSet+: {
+        metadata+: {
+          namespace: namespace,
+        },
+        spec+: {
+          replicas: '${{THANOS_RULER_REPLICAS}}',
+
+          // As we use Vault and want to be able to use rotation of credentials,
+          // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
+          template+: s3Envvars {
+            spec+: {
+              containers: [
+                local container = sts.mixin.spec.template.spec.containersType;
+                local env = container.envType;
+
+                if c.name == 'thanos-ruler' then c {
+                  resources: {
+                    requests: {
+                      cpu: '${THANOS_RULER_CPU_REQUEST}',
+                      memory: '${THANOS_RULER_MEMORY_REQUEST}',
+                    },
+                    limits: {
+                      cpu: '${THANOS_RULER_CPU_LIMIT}',
+                      memory: '${THANOS_RULER_MEMORY_LIMIT}',
                     },
                   },
                 } else c
@@ -418,6 +459,9 @@ local list = import 'telemeter/lib/list.libsonnet';
   } + {
     ['querier-cache-' + name]: $.thanos.querierCache[name]
     for name in std.objectFields($.thanos.querierCache)
+  } + {
+    ['ruler-' + name]: $.thanos.ruler[name]
+    for name in std.objectFields($.thanos.ruler)
   },
   parameters: [
     { name: 'NAMESPACE', value: 'telemeter' },
@@ -455,6 +499,11 @@ local list = import 'telemeter/lib/list.libsonnet';
     { name: 'THANOS_COMPACTOR_CPU_LIMIT', value: '1' },
     { name: 'THANOS_COMPACTOR_MEMORY_REQUEST', value: '1Gi' },
     { name: 'THANOS_COMPACTOR_MEMORY_LIMIT', value: '5Gi' },
+    { name: 'THANOS_RULER_REPLICAS', value: '2' },
+    { name: 'THANOS_RULER_CPU_REQUEST', value: '100m' },
+    { name: 'THANOS_RULER_CPU_LIMIT', value: '1' },
+    { name: 'THANOS_RULER_MEMORY_REQUEST', value: '512Mi' },
+    { name: 'THANOS_RULER_MEMORY_LIMIT', value: '1Gi' },
     { name: 'THANOS_QUERIER_SVC_URL', value: 'http://thanos-querier.observatorium.svc:9090' },
     { name: 'JAEGER_PROXY_CPU_REQUEST', value: '100m' },
     { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100Mi' },
