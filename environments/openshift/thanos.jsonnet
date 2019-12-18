@@ -493,6 +493,9 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
   } + {
     ['ruler-' + name]: $.thanos.ruler[name]
     for name in std.objectFields($.thanos.ruler)
+  } + {
+    ['thanos-rules-' + name]: $.thanos.rules[name]
+    for name in std.objectFields($.thanos.rules)
   },
   parameters: [
     { name: 'NAMESPACE', value: 'telemeter' },
