@@ -240,6 +240,7 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
           // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
           template+: s3Envvars {
             local volume = sts.mixin.spec.template.spec.volumesType,
+            local item = sts.mixin.spec.template.spec.volumesType.mixin.configMapType.itemsType,
             spec+: {
               containers: [
                 local container = sts.mixin.spec.template.spec.containersType;
@@ -266,9 +267,9 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
                 for c in super.containers
               ],
               volumes+: [
-                volume.fromConfigMap('telemeter-rules', tr.configmap.metadata.name, [
-                  'telemeter-rules.yaml',
-                ]),
+                volume.fromConfigMap('telemeter-rules-config', tr.configmap.metadata.name) {
+                  configMap+: { items:: null }
+                },
               ],
             },
           },
