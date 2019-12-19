@@ -239,6 +239,7 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
           // As we use Vault and want to be able to use rotation of credentials,
           // we need to provide the AWS key and secret via envvars, cause the thanos.yaml is written by hand.
           template+: s3Envvars {
+            local volume = sts.mixin.spec.template.spec.volumesType,
             spec+: {
               containers: [
                 local container = sts.mixin.spec.template.spec.containersType;
@@ -263,6 +264,11 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
                 }
                 else c
                 for c in super.containers
+              ],
+              volumes+: [
+                volume.fromConfigMap('telemeter-rules', tr.configmap.metadata.name, [
+                  'telemeter-rules.yaml',
+                ]),
               ],
             },
           },
