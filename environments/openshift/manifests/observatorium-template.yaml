@@ -850,7 +850,7 @@ objects:
           - --data-dir=/var/thanos/ruler
           - --label=ruler_replica="$(NAME)"
           - --alert.label-drop="ruler_replica"
-          - --query=dnssrv+_grpc._tcp.thanos-querier.${NAMESPACE}.svc.cluster.local
+          - --query=dnssrv+_http._tcp.thanos-querier.${NAMESPACE}.svc.cluster.local
           - --rule-file=/var/thanos/config/ruler/telemeter-rules.yaml
           env:
           - name: NAME
