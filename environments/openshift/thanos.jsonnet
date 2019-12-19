@@ -1,20 +1,18 @@
 local tenants = import '../../tenants.libsonnet';
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
+local list = import 'telemeter/lib/list.libsonnet';
+
 local service = k.core.v1.service;
 local configmap = k.core.v1.configMap;
 local secret = k.core.v1.secret;
 local sts = k.apps.v1.statefulSet;
 local deployment = k.apps.v1.deployment;
-local container = deployment.mixin.spec.template.spec.containersType;
-local volume = k.apps.v1beta2.statefulSet.mixin.spec.template.spec.volumesType;
-local volumeMount = container.volumeMountsType;
 local serviceAccount = k.core.v1.serviceAccount;
 local role = k.rbac.v1.role;
 local roleBinding = k.rbac.v1.roleBinding;
 local clusterRole = k.rbac.v1.clusterRole;
 local policyRule = clusterRole.rulesType;
 local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
-local list = import 'telemeter/lib/list.libsonnet';
 
 (import '../kubernetes/kube-thanos.libsonnet') +
 {
@@ -76,7 +74,9 @@ local list = import 'telemeter/lib/list.libsonnet';
             ],
           },
         },
-
+      local volume = deployment.mixin.spec.template.spec.volumesType,
+      local container = deployment.mixin.spec.template.spec.containersType,
+      local volumeMount = container.volumeMountsType,
       deployment+:
         {
           spec+: {
@@ -223,8 +223,10 @@ local list = import 'telemeter/lib/list.libsonnet';
     },
 
     ruler+: {
-      ruleFiles:: [],
-
+      local tr = $.thanos.ruler,
+      ruleFiles:: [
+        '/var/thanos/config/ruler/telemeter-rules.yaml',
+      ],
       service+:
         service.mixin.metadata.withNamespace(namespace),
       statefulSet+: {
@@ -240,6 +242,7 @@ local list = import 'telemeter/lib/list.libsonnet';
             spec+: {
               containers: [
                 local container = sts.mixin.spec.template.spec.containersType;
+                local volumeMount = container.volumeMountsType;
                 local env = container.envType;
 
                 if c.name == 'thanos-ruler' then c {
@@ -253,13 +256,30 @@ local list = import 'telemeter/lib/list.libsonnet';
                       memory: '${THANOS_RULER_MEMORY_LIMIT}',
                     },
                   },
-                } else c
+
+                  volumeMounts+: [
+                    volumeMount.new(tr.configmap.metadata.name, '/var/thanos/config/ruler', true)
+                  ],
+                }
+                else c
                 for c in super.containers
               ],
             },
           },
         },
       },
+      configmap:
+        local configmap = k.core.v1.configMap;
+
+        configmap.new() +
+        configmap.mixin.metadata.withName('telemeter-rules-config') +
+        configmap.mixin.metadata.withNamespace(namespace) +
+        configmap.mixin.metadata.withLabels($.thanos.ruler.labels) +
+        configmap.withData({
+          local rules = (import 'telemeter/rules.libsonnet'),
+
+          'telemeter-rules.yaml': std.manifestYamlDoc(rules.prometheus.recordingrules),
+        }),
     },
 
     receive+: {
@@ -365,6 +385,10 @@ local list = import 'telemeter/lib/list.libsonnet';
             ],
           },
         },
+
+      local volume = deployment.mixin.spec.template.spec.volumesType,
+      local container = deployment.mixin.spec.template.spec.containersType,
+      local volumeMount = container.volumeMountsType,
       deployment+:
         {
           spec+: {

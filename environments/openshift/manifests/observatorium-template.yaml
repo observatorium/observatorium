@@ -785,6 +785,27 @@ objects:
             storage: 50Gi
         storageClassName: gp2-encrypted
 - apiVersion: v1
+  data:
+    telemeter-rules.yaml: |-
+      "groups":
+      - "name": "telemeter.rules"
+        "rules":
+        - "expr": |
+            count by (name,reason) (cluster_operator_conditions{condition="Degraded"} == 1)
+          "record": "name_reason:cluster_operator_degraded:count"
+        - "expr": |
+            count by (name,reason) (cluster_operator_conditions{condition="Available"} == 0)
+          "record": "name_reason:cluster_operator_unavailable:count"
+        - "expr": |
+            sort_desc(max by (_id,code) (code:apiserver_request_count:rate:sum{code=~"(4|5)\\d\\d"}) > 0.5)
+          "record": "id_code:apiserver_request_error_rate_sum:max"
+  kind: ConfigMap
+  metadata:
+    labels:
+      app.kubernetes.io/name: thanos-ruler
+    name: telemeter-rules-config
+    namespace: ${NAMESPACE}
+- apiVersion: v1
   kind: Service
   metadata:
     labels:
@@ -830,6 +851,7 @@ objects:
           - --label=ruler_replica="$(NAME)"
           - --alert.label-drop="ruler_replica"
           - --query=dnssrv+_grpc._tcp.thanos-querier.${NAMESPACE}.svc.cluster.local
+          - --rule-file=/var/thanos/config/ruler/telemeter-rules.yaml
           env:
           - name: NAME
             valueFrom:
@@ -882,6 +904,9 @@ objects:
           - mountPath: /var/thanos/ruler
             name: thanos-ruler-data
             readOnly: false
+          - mountPath: /var/thanos/config/ruler
+            name: telemeter-rules-config
+            readOnly: true
         volumes:
         - emptyDir: {}
           name: thanos-ruler-data
