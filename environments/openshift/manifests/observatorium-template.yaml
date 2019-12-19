@@ -911,10 +911,8 @@ objects:
         - emptyDir: {}
           name: thanos-ruler-data
         - configMap:
-            items:
-            - telemeter-rules.yaml
             name: telemeter-rules-config
-          name: telemeter-rules
+          name: telemeter-rules-config
 - apiVersion: v1
   kind: Service
   metadata:
