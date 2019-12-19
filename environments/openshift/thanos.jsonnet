@@ -268,7 +268,7 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
               ],
               volumes+: [
                 volume.fromConfigMap('telemeter-rules-config', tr.configmap.metadata.name) {
-                  configMap+: { items:: null }
+                  configMap+: { items:: null },
                 },
               ],
             },
