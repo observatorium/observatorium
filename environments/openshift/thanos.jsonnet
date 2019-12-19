@@ -258,7 +258,7 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
                   },
 
                   volumeMounts+: [
-                    volumeMount.new(tr.configmap.metadata.name, '/var/thanos/config/ruler', true)
+                    volumeMount.new(tr.configmap.metadata.name, '/var/thanos/config/ruler', true),
                   ],
                 }
                 else c
