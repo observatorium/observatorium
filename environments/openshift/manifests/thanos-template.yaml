@@ -1200,9 +1200,9 @@ objects:
             {{ $value }} seconds for HTTP requests.
         expr: |
           (
-            histogram_quantile(0.99, sum by (job, le) (http_request_duration_seconds_bucket{job="thanos-receive", handler="receive"})) > 10
+            histogram_quantile(0.99, sum by (job, le) (http_request_duration_seconds_bucket{job=~"thanos-receive-.*", handler="receive"})) > 10
           and
-            sum by (job) (rate(http_request_duration_seconds_count{job="thanos-receive", handler="receive"}[5m])) > 0
+            sum by (job) (rate(http_request_duration_seconds_count{job=~"thanos-receive-.*", handler="receive"}[5m])) > 0
           )
         for: 10m
         labels:
@@ -1213,9 +1213,9 @@ objects:
             | humanize }}% of requests.
         expr: |
           (
-            sum by (job) (rate(thanos_receive_forward_requests_total{result="error", job="thanos-receive"}[5m]))
+            sum by (job) (rate(thanos_receive_forward_requests_total{result="error", job=~"thanos-receive-.*"}[5m]))
           /
-            sum by (job) (rate(thanos_receive_forward_requests_total{job="thanos-receive"}[5m]))
+            sum by (job) (rate(thanos_receive_forward_requests_total{job=~"thanos-receive-.*"}[5m]))
           * 100 > 5
           )
         for: 15m
@@ -1227,9 +1227,9 @@ objects:
             {{ $value | humanize }} of attempts failed.
         expr: |
           (
-            sum by (job) (rate(thanos_receive_hashrings_file_errors_total{job="thanos-receive"}[5m]))
+            sum by (job) (rate(thanos_receive_hashrings_file_errors_total{job=~"thanos-receive-.*"}[5m]))
           /
-            sum by (job) (rate(thanos_receive_hashrings_file_refreshes_total{job="thanos-receive"}[5m]))
+            sum by (job) (rate(thanos_receive_hashrings_file_refreshes_total{job=~"thanos-receive-.*"}[5m]))
           > 0
           )
         for: 15m
@@ -1239,7 +1239,7 @@ objects:
         annotations:
           message: Thanos Receive {{$labels.job}} has not been able to reload hashring
             configurations.
-        expr: avg(thanos_receive_config_last_reload_successful{job="thanos-receive"})
+        expr: avg(thanos_receive_config_last_reload_successful{job=~"thanos-receive-.*"})
           by (job) != 1
         for: 5m
         labels:
@@ -1388,7 +1388,7 @@ objects:
           message: The configuration of the instances of Thanos Receive `{{$labels.job}}`
             are out of sync.
         expr: |
-          avg(thanos_receive_config_hash{job="thanos-receive"}) BY (namespace, job)
+          avg(thanos_receive_config_hash{job=~"thanos-receive-.*"}) BY (namespace, job)
             /
           on (namespace)
           group_left

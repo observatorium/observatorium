@@ -53,13 +53,13 @@ local capitalize(str) =
           _config+:: {
             thanosQuerierJobPrefix: 'thanos-querier',
             thanosStoreJobPrefix: 'thanos-store',
-            thanosReceiveJobPrefix: 'thanos-receive',
+            thanosReceiveJobPrefix: 'thanos-receive-.*',
             thanosCompactJobPrefix: 'thanos-compactor',
             thanosReceiveControllerJobPrefix: 'thanos-receive-controller',
 
             thanosQuerierSelector: 'job="%s"' % self.thanosQuerierJobPrefix,
             thanosStoreSelector: 'job="%s"' % self.thanosStoreJobPrefix,
-            thanosReceiveSelector: 'job="%s"' % self.thanosReceiveJobPrefix,
+            thanosReceiveSelector: 'job=~"%s"' % self.thanosReceiveJobPrefix,
             thanosCompactSelector: 'job="%s"' % self.thanosCompactJobPrefix,
             thanosReceiveControllerSelector: 'job="%s"' % self.thanosReceiveControllerJobPrefix,
 
