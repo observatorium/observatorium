@@ -70,7 +70,7 @@ local capitalize(str) =
               ThanosStore: config.thanosStoreSelector,
               ThanosCompact: config.thanosCompactSelector,
             } + {
-              ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s", namespace="telemeter-stage"' % tenant.hashring
+              ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s"' % tenant.hashring
               for tenant in tenants
             },
           },

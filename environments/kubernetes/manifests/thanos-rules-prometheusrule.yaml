@@ -269,7 +269,7 @@ spec:
       annotations:
         message: ThanosReceiveDefault has disappeared from Prometheus target discovery.
       expr: |
-        absent(up{job="thanos-receive-default", namespace="telemeter-stage"} == 1)
+        absent(up{job="thanos-receive-default"} == 1)
       for: 10m
       labels:
         severity: critical
