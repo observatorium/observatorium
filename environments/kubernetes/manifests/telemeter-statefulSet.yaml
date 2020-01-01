@@ -28,7 +28,7 @@ spec:
         - --tls-crt=/etc/pki/service/tls.crt
         - --internal-tls-key=/etc/pki/service/tls.key
         - --internal-tls-crt=/etc/pki/service/tls.crt
-        - --authorize=https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
+        - --authorize=$(AUTHORIZE_URL)
         - --oidc-issuer=$(OIDC_ISSUER)
         - --client-id=$(CLIENT_ID)
         - --client-secret=$(CLIENT_SECRET)
@@ -40,6 +40,11 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        - name: AUTHORIZE_URL
+          valueFrom:
+            secretKeyRef:
+              key: authorize_url
+              name: telemeter-server
         - name: OIDC_ISSUER
           valueFrom:
             secretKeyRef:

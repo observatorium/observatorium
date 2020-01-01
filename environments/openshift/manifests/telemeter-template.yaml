@@ -5,6 +5,7 @@ metadata:
 objects:
 - apiVersion: v1
   data:
+    authorize_url: ""
     client_id: ""
     client_secret: ""
     oidc_issuer: ""
