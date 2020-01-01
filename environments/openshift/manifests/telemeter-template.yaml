@@ -120,7 +120,7 @@ objects:
           - --tls-crt=/etc/pki/service/tls.crt
           - --internal-tls-key=/etc/pki/service/tls.key
           - --internal-tls-crt=/etc/pki/service/tls.crt
-          - --authorize=${AUTHORIZE_URL}
+          - --authorize=$(AUTHORIZE_URL)
           - --oidc-issuer=$(OIDC_ISSUER)
           - --client-id=$(CLIENT_ID)
           - --client-secret=$(CLIENT_SECRET)
@@ -180,6 +180,11 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
+          - name: AUTHORIZE_URL
+            valueFrom:
+              secretKeyRef:
+                key: authorize_url
+                name: telemeter-server
           - name: OIDC_ISSUER
             valueFrom:
               secretKeyRef:
@@ -318,8 +323,6 @@ objects:
               cpu: ${MEMCACHED_EXPORTER_CPU_REQUEST}
               memory: ${MEMCACHED_EXPORTER_MEMORY_REQUEST}
 parameters:
-- name: AUTHORIZE_URL
-  value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
 - name: NAMESPACE
   value: observatorium
 - name: IMAGE

@@ -1534,7 +1534,7 @@ objects:
           - --tls-crt=/etc/pki/service/tls.crt
           - --internal-tls-key=/etc/pki/service/tls.key
           - --internal-tls-crt=/etc/pki/service/tls.crt
-          - --authorize=${AUTHORIZE_URL}
+          - --authorize=$(AUTHORIZE_URL)
           - --oidc-issuer=$(OIDC_ISSUER)
           - --client-id=$(CLIENT_ID)
           - --client-secret=$(CLIENT_SECRET)
@@ -1594,6 +1594,11 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
+          - name: AUTHORIZE_URL
+            valueFrom:
+              secretKeyRef:
+                key: authorize_url
+                name: telemeter-server
           - name: OIDC_ISSUER
             valueFrom:
               secretKeyRef:
@@ -1997,8 +2002,6 @@ parameters:
   value: 200m
 - name: JAEGER_PROXY_MEMORY_LIMITS
   value: 200Mi
-- name: AUTHORIZE_URL
-  value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
 - name: IMAGE
   value: quay.io/openshift/origin-telemeter
 - name: IMAGE_TAG
