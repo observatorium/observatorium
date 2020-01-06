@@ -10,7 +10,7 @@ local sa = k.core.v1.serviceAccount;
 local role = k.rbac.v1.role;
 local rolebinding = k.rbac.v1.roleBinding;
 local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
-local thanos = (import 'thanos-mixin/mixin.libsonnet');
+local thanos = import 'thanos-mixin/mixin.libsonnet';
 local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.libsonnet');
 
 local capitalize(str) =
@@ -49,6 +49,7 @@ local capitalize(str) =
             role: 'alert-rules',
           },
         },
+
         local alerts = thanos + thanosReceiveController {
           _config+:: {
             thanosQuerierJobPrefix: 'thanos-querier',
@@ -73,6 +74,11 @@ local capitalize(str) =
               ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s"' % tenant.hashring
               for tenant in tenants
             },
+          },
+
+          // Filter rule groups that we don't care about, like the sidecar
+          prometheusAlerts+:: {
+            groups: std.filter(function(g) (g.name != 'thanos-sidecar.rules'), super.groups),
           },
         },
         spec: alerts.prometheusAlerts,
