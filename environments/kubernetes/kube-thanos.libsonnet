@@ -10,6 +10,12 @@ local sa = k.core.v1.serviceAccount;
 local role = k.rbac.v1.role;
 local rolebinding = k.rbac.v1.roleBinding;
 local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
+local thanos = import 'thanos-mixin/mixin.libsonnet';
+local thanosReceiveController = import 'thanos-receive-controller-mixin/mixin.libsonnet';
+
+local capitalize(str) =
+  std.asciiUpper(std.substr(str, 0, 1)) +
+  std.asciiLower(std.substr(str, 1, std.length(str)));
 
 (import 'kube-thanos/kube-thanos-querier.libsonnet') +
 (import 'kube-thanos/kube-thanos-store.libsonnet') +
@@ -31,6 +37,53 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 
     local namespace = 'observatorium',
     namespace:: namespace,
+
+    rules+: {
+      prometheusrule+: {
+        apiVersion: 'monitoring.coreos.com/v1',
+        kind: 'PrometheusRule',
+        metadata: {
+          name: 'observatorium-thanos',
+          labels: {
+            prometheus: 'app-sre',
+            role: 'alert-rules',
+          },
+        },
+
+        local alerts = thanos + thanosReceiveController {
+          _config+:: {
+            thanosQuerierJobPrefix: 'thanos-querier',
+            thanosStoreJobPrefix: 'thanos-store',
+            thanosReceiveJobPrefix: 'thanos-receive-.*',
+            thanosCompactJobPrefix: 'thanos-compactor',
+            thanosReceiveControllerJobPrefix: 'thanos-receive-controller',
+
+            thanosQuerierSelector: 'job="%s"' % self.thanosQuerierJobPrefix,
+            thanosStoreSelector: 'job="%s"' % self.thanosStoreJobPrefix,
+            thanosReceiveSelector: 'job=~"%s"' % self.thanosReceiveJobPrefix,
+            thanosCompactSelector: 'job="%s"' % self.thanosCompactJobPrefix,
+            thanosReceiveControllerSelector: 'job="%s"' % self.thanosReceiveControllerJobPrefix,
+
+            local config = self,
+            // We build alerts for the presence of all these jobs.
+            jobs: {
+              ThanosQuerier: config.thanosQuerierSelector,
+              ThanosStore: config.thanosStoreSelector,
+              ThanosCompact: config.thanosCompactSelector,
+            } + {
+              ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s"' % tenant.hashring
+              for tenant in tenants
+            },
+          },
+
+          // Filter rule groups that we don't care about, like the sidecar
+          prometheusAlerts+:: {
+            groups: std.filter(function(g) (g.name != 'thanos-sidecar.rules'), super.groups),
+          },
+        },
+        spec: alerts.prometheusAlerts,
+      },
+    },
 
     querier+: {
       replicas:: 3,

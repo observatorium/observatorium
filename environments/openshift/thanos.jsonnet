@@ -472,28 +472,31 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
   metadata: {
     name: 'observatorium-thanos',
   },
-  objects: {
-    ['querier-' + name]: $.thanos.querier[name]
+  objects: [
+    $.thanos.querier[name]
     for name in std.objectFields($.thanos.querier)
-  } + {
-    ['store-' + name]: $.thanos.store[name]
+  ] + [
+    $.thanos.store[name]
     for name in std.objectFields($.thanos.store)
-  } + {
-    ['compactor-' + name]: $.thanos.compactor[name]
+  ] + [
+    $.thanos.compactor[name]
     for name in std.objectFields($.thanos.compactor)
-  } + {
-    ['receive-' + name]: $.thanos.receive[name]
+  ] + [
+    $.thanos.receive[name]
     for name in std.objectFields($.thanos.receive)
-  } + {
-    ['receive-controller-' + name]: $.thanos.receiveController[name]
+  ] + [
+    $.thanos.receiveController[name]
     for name in std.objectFields($.thanos.receiveController)
-  } + {
-    ['querier-cache-' + name]: $.thanos.querierCache[name]
+  ] + [
+    $.thanos.querierCache[name]
     for name in std.objectFields($.thanos.querierCache)
-  } + {
-    ['ruler-' + name]: $.thanos.ruler[name]
+  ] + [
+    $.thanos.ruler[name]
     for name in std.objectFields($.thanos.ruler)
-  },
+  ] + [
+    $.thanos.rules[name]
+    for name in std.objectFields($.thanos.rules)
+  ],
   parameters: [
     { name: 'NAMESPACE', value: 'telemeter' },
     { name: 'THANOS_IMAGE', value: 'quay.io/thanos/thanos' },

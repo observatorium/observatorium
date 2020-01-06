@@ -12,7 +12,7 @@ local app =
     template:
       list.asList('observatorium', {}, []) + {
         objects:
-          [thanos.objects[name] for name in std.objectFields(thanos.objects)] +
+          thanos.objects +
           $.telemeterServer.list.objects +
           $.prometheusAms.template.objects,
 
