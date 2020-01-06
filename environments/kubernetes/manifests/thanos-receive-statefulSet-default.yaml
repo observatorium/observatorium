@@ -42,6 +42,7 @@ spec:
               service_name: thanos-receive-default
               sampler_type: ratelimiting
               sampler_param: 2
+        - --receive.replication-factor=3
         env:
         - name: NAME
           valueFrom:

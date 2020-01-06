@@ -186,7 +186,7 @@ local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
                         $.thanos.receive['service-' + tenant.hashring].spec.ports[2].port,
                       ],
                       jaegerAgent.thanosFlag % $.thanos.receive['statefulSet-' + tenant.hashring].metadata.name,
-                    ],
+                    ] + (if tenant.replicas >= 3 then ['--receive.replication-factor=3']),
                     volumeMounts+: [
                       { name: 'observatorium-tenants', mountPath: '/var/lib/thanos-receive' },
                     ],
