@@ -11,7 +11,7 @@ local role = k.rbac.v1.role;
 local rolebinding = k.rbac.v1.roleBinding;
 local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
 local thanos = import 'thanos-mixin/mixin.libsonnet';
-local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.libsonnet');
+local thanosReceiveController = import 'thanos-receive-controller-mixin/mixin.libsonnet';
 
 local capitalize(str) =
   std.asciiUpper(std.substr(str, 0, 1)) +
