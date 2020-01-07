@@ -9,7 +9,7 @@ spec:
   - port: admin-http
   namespaceSelector:
     matchNames:
-    - telemeter-production
+    - '{{namespace}}'
   selector:
     matchLabels:
       app.kubernetes.io/name: jaeger-all-in-one

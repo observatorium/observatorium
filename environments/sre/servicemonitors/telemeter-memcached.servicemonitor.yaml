@@ -3,14 +3,15 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: observatorium-thanos-receive-default-production
+  name: telemeter-memcached-{{environment}}
 spec:
   endpoints:
-  - port: http
+  - interval: 30s
+    port: metrics
+  jobLabel: app.kubernetes.io/name
   namespaceSelector:
     matchNames:
-    - telemeter-production
+    - '{{namespace}}'
   selector:
     matchLabels:
-      app.kubernetes.io/instance: default
-      app.kubernetes.io/name: thanos-receive
+      app.kubernetes.io/name: memcached

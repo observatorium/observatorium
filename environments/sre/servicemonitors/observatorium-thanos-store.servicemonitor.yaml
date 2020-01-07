@@ -3,13 +3,13 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: observatorium-jaeger-agent
+  name: observatorium-thanos-store-{{environment}}
 spec:
   endpoints:
-  - port: metrics
+  - port: http
   namespaceSelector:
     matchNames:
-    - telemeter-stage
+    - '{{namespace}}'
   selector:
     matchLabels:
-      app.kubernetes.io/name: jaeger-agent
+      app.kubernetes.io/name: thanos-store

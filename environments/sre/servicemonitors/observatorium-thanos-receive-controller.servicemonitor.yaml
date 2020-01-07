@@ -3,13 +3,13 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: observatorium-thanos-receive-controller-stage
+  name: observatorium-thanos-receive-controller-{{environment}}
 spec:
   endpoints:
   - port: http
   namespaceSelector:
     matchNames:
-    - telemeter-stage
+    - '{{namespace}}'
   selector:
     matchLabels:
       app.kubernetes.io/name: thanos-receive-controller
