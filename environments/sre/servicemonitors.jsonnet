@@ -160,7 +160,7 @@ local sm =
   for tenant in tenants
 } {
   'observatorium-prometheus-ams.servicemonitor': prom.prometheusAms.serviceMonitor {
-    metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name + '-{{environment}}' },
+    metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name + '-{{environment}}', labels: { prometheus: 'app-sre' } },
     spec+: { namespaceSelector+: { matchNames: ['{{namespace}}'] } },
   },
 } {
