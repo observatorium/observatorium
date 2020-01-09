@@ -146,24 +146,21 @@ local sm =
 
 {
   namespace:: '{{namespace}}',
-  environment:: '{{environment}}',
 }
 {
   [if std.objectHas(sm.thanos[name], 'serviceMonitor') then
     sm.thanos[name].serviceMonitor.metadata.name + '.servicemonitor']: sm.thanos[name].serviceMonitor {
-    metadata+: { name+: '-%s' % $.environment },
     spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
   }
   for name in std.objectFields(sm.thanos)
 } {
   [sm.thanos.receive['serviceMonitor' + tenant.hashring].metadata.name + '.servicemonitor']: sm.thanos.receive['serviceMonitor' + tenant.hashring] {
-    metadata+: { name+: '-%s' % $.environment },
     spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
   }
   for tenant in tenants
 } {
   'observatorium-prometheus-ams.servicemonitor': prom.prometheusAms.serviceMonitor {
-    metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name + '-{{environment}}', labels: { prometheus: 'app-sre' } },
+    metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name, labels: { prometheus: 'app-sre' } },
     spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
   },
 } {
@@ -172,11 +169,9 @@ local sm =
   },
 } {
   'observatorium-jaeger-agent.servicemonitor': sm.jaeger.agent.serviceMonitor {
-    metadata+: { name+: '-%s' % $.environment },
     spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
   },
   'telemeter-memcached.servicemonitor': sm.memcached.serviceMonitor {
-    metadata+: { name+: '-%s' % $.environment },
     spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
   },
 }

@@ -3,7 +3,7 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: telemeter-memcached-{{environment}}
+  name: telemeter-memcached
 spec:
   endpoints:
   - interval: 30s

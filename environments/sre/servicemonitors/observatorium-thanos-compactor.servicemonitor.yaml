@@ -3,7 +3,7 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: observatorium-thanos-compactor-{{environment}}
+  name: observatorium-thanos-compactor
 spec:
   endpoints:
   - port: http

@@ -3,7 +3,7 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: observatorium-thanos-receive-controller-{{environment}}
+  name: observatorium-thanos-receive-controller
 spec:
   endpoints:
   - port: http

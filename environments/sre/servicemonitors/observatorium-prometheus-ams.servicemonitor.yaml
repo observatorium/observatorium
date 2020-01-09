@@ -3,7 +3,7 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: prometheus-ams-{{environment}}
+  name: prometheus-ams
 spec:
   endpoints:
   - interval: 30s
