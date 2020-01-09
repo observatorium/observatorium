@@ -1,5 +1,6 @@
 local tenants = import '../../tenants.libsonnet';
 local prom = import '../openshift/telemeter-prometheus-ams.jsonnet';
+
 local sm =
   (import '../openshift/thanos.jsonnet') +
   (import 'kube-thanos/kube-thanos-servicemonitors.libsonnet') +
@@ -73,6 +74,26 @@ local sm =
             },
           }
         for tenant in tenants
+      } {
+        serviceMonitor+: {
+          metadata: {
+            name: 'observatorium-thanos-receive',
+            labels: { prometheus: 'app-sre' },
+          },
+        },
+      },
+      ruler+: {
+        serviceMonitor+: {
+          metadata: {
+            name: 'observatorium-thanos-ruler',
+            labels: { prometheus: 'app-sre' },
+          },
+          spec+: {
+            selector+: {
+              matchLabels: $.thanos.ruler.service.metadata.labels,
+            },
+          },
+        },
       },
     },
     memcached+: {
@@ -124,78 +145,33 @@ local sm =
   };
 
 {
-  'observatorium-thanos-querier-stage.servicemonitor': sm.thanos.querier.serviceMonitor {
-    metadata+: { name+: '-stage' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
-  },
-  'observatorium-thanos-store-stage.servicemonitor': sm.thanos.store.serviceMonitor {
-    metadata+: { name+: '-stage' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
-  },
-  'observatorium-thanos-compactor-stage.servicemonitor': sm.thanos.compactor.serviceMonitor {
-    metadata+: { name+: '-stage' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
-  },
-  'observatorium-thanos-receive-controller-stage.servicemonitor': sm.thanos.receiveController.serviceMonitor {
-    metadata+: { name+: '-stage' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
-  },
-  'observatorium-prometheus-ams-stage.servicemonitor': prom.prometheusAms.serviceMonitor {
-    metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name + '-stage', labels: { prometheus: 'app-sre' } },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
-  },
-  'observatorium-thanos-querier-production.servicemonitor': sm.thanos.querier.serviceMonitor {
-    metadata+: { name+: '-production' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
-  },
-  'observatorium-thanos-store-production.servicemonitor': sm.thanos.store.serviceMonitor {
-    metadata+: { name+: '-production' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
-  },
-  'observatorium-thanos-compactor-production.servicemonitor': sm.thanos.compactor.serviceMonitor {
-    metadata+: { name+: '-production' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
-  },
-  'observatorium-thanos-receive-controller-production.servicemonitor': sm.thanos.receiveController.serviceMonitor {
-    metadata+: { name+: '-production' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
-  },
-  'observatorium-prometheus-ams-production.servicemonitor': prom.prometheusAms.serviceMonitor {
-    metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name + '-production', labels: { prometheus: 'app-sre' } },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
-  },
+  namespace:: '{{namespace}}',
+}
+{
+  [if std.objectHas(sm.thanos[name], 'serviceMonitor') then
+    sm.thanos[name].serviceMonitor.metadata.name + '.servicemonitor']: sm.thanos[name].serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
+  }
+  for name in std.objectFields(sm.thanos)
 } {
-  ['observatorium-thanos-receive-%s-stage.servicemonitor' % tenant.hashring]: sm.thanos.receive['serviceMonitor' + tenant.hashring] {
-    metadata+: { name+: '-stage' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  [sm.thanos.receive['serviceMonitor' + tenant.hashring].metadata.name + '.servicemonitor']: sm.thanos.receive['serviceMonitor' + tenant.hashring] {
+    spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
   }
   for tenant in tenants
 } {
-  ['observatorium-thanos-receive-%s-production.servicemonitor' % tenant.hashring]: sm.thanos.receive['serviceMonitor' + tenant.hashring] {
-    metadata+: { name+: '-production' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
-  }
-  for tenant in tenants
+  'observatorium-prometheus-ams.servicemonitor': prom.prometheusAms.serviceMonitor {
+    metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name, labels: { prometheus: 'app-sre' } },
+    spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
+  },
 } {
   'observatorium-jaeger.servicemonitor': sm.jaeger.serviceMonitor {
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
-  },
-  'observatorium-jaeger-stage.servicemonitor': sm.jaeger.serviceMonitor {
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+    spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
   },
 } {
   'observatorium-jaeger-agent.servicemonitor': sm.jaeger.agent.serviceMonitor {
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
+    spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
   },
-  'observatorium-jaeger-agent-stage.servicemonitor': sm.jaeger.agent.serviceMonitor {
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
-  },
-  'telemeter-memcached-production.servicemonitor': sm.memcached.serviceMonitor {
-    metadata+: { name+: '-production' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-production'] } },
-  },
-  'telemeter-memcached-stage.servicemonitor': sm.memcached.serviceMonitor {
-    metadata+: { name+: '-stage' },
-    spec+: { namespaceSelector+: { matchNames: ['telemeter-stage'] } },
+  'telemeter-memcached.servicemonitor': sm.memcached.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
   },
 }

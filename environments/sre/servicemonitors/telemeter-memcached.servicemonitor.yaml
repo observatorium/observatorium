@@ -3,13 +3,15 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: app-sre
-  name: observatorium-thanos-receive-controller-stage
+  name: telemeter-memcached
 spec:
   endpoints:
-  - port: http
+  - interval: 30s
+    port: metrics
+  jobLabel: app.kubernetes.io/name
   namespaceSelector:
     matchNames:
-    - telemeter-stage
+    - '{{namespace}}'
   selector:
     matchLabels:
-      app.kubernetes.io/name: thanos-receive-controller
+      app.kubernetes.io/name: memcached

@@ -9,7 +9,7 @@ spec:
   - port: metrics
   namespaceSelector:
     matchNames:
-    - telemeter-production
+    - '{{namespace}}'
   selector:
     matchLabels:
       app.kubernetes.io/name: jaeger-agent
