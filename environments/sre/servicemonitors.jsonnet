@@ -142,7 +142,7 @@ local sm =
         },
       },
     },
-  } + (import '../openshift/observatorium.jsonnet') + {
+  } + (import '../openshift/observatorium.libsonnet') + {
     observatorium+:: {
       api+: {
         serviceMonitor+: {
