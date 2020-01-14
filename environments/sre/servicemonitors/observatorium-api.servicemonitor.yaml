@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    prometheus: app-sre
+  name: observatorium-api
+spec:
+  endpoints:
+  - port: http
+  namespaceSelector:
+    matchNames:
+    - '{{namespace}}'
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: observatorium-api
