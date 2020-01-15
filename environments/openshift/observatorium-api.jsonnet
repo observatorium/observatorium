@@ -27,6 +27,10 @@ local app =
       { name: 'OBSERVATORIUM_API_CPU_LIMIT', value: '1' },
       { name: 'OBSERVATORIUM_API_MEMORY_REQUEST', value: '256Mi' },
       { name: 'OBSERVATORIUM_API_MEMORY_LIMIT', value: '1Gi' },
+      { name: 'OBSERVATORIUM_API_PROXY_CPU_REQUEST', value: '100m' },
+      { name: 'OBSERVATORIUM_API_PROXY_MEMORY_REQUEST', value: '100Mi' },
+      { name: 'OBSERVATORIUM_API_PROXY_CPU_LIMITS', value: '200m' },
+      { name: 'OBSERVATORIUM_API_PROXY_MEMORY_LIMITS', value: '200Mi' },
     ],
     template:
       list.asList('observatorium-api', {}, []) + {

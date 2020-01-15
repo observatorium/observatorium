@@ -88,7 +88,15 @@ local deployment = k.apps.v1.deployment;
                       volumeMount.new('secret-api-tls', '/etc/tls/private'),
                       volumeMount.new('secret-api-proxy', '/etc/proxy/secrets'),
                     ]
-                  ),
+                  ) +
+                  container.mixin.resources.withRequests({
+                    cpu: '${OBSERVATORIUM_API_PROXY_CPU_REQUEST}',
+                    memory: '${OBSERVATORIUM_API_PROXY_MEMORY_REQUEST}',
+                  }) +
+                  container.mixin.resources.withLimits({
+                    cpu: '${OBSERVATORIUM_API_PROXY_CPU_LIMITS}',
+                    memory: '${OBSERVATORIUM_API_PROXY_MEMORY_LIMITS}',
+                  }),
                 ],
               },
             },
