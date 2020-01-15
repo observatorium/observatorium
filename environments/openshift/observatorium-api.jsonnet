@@ -16,6 +16,8 @@ local app =
     ],
     parameters: [
       { name: 'NAMESPACE', value: 'telemeter' },
+      { name: 'IMAGE', value: '' },
+      { name: 'IMAGE_TAG', value: '' },
       { name: 'OBSERVATORIUM_API_IMAGE', value: 'quay.io/observatorium/observatorium' },
       { name: 'OBSERVATORIUM_API_IMAGE_TAG', value: 'master-2020-01-14-d076eab' },
       { name: 'PROXY_IMAGE', value: 'openshift/oauth-proxy' },
