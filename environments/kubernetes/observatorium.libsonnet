@@ -1,10 +1,16 @@
-local kt = (import 'kube-thanos.libsonnet');
-
 (import 'observatorium/observatorium-api.libsonnet') {
   observatorium+:: {
     namespace:: 'observatorium',
+
+    local kt = (import 'kube-thanos.libsonnet') + {
+      thanos+:: {
+        namespace:: $.observatorium.namespace,
+      },
+    },
+
     api+: {
       replicas:: 3,
+
       deployment+: {
         spec+: {
           template+: {

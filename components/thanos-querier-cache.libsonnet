@@ -8,7 +8,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
         configmap.new() +
         configmap.mixin.metadata.withName('observatorium-cache-conf') +
-        configmap.mixin.metadata.withNamespace('observatorium') +
+        configmap.mixin.metadata.withNamespace($.thanos.namespace) +
         configmap.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.thanos.querierCache.deployment.metadata.name }) +
         configmap.withData({
           'observatorium-cache-conf.yaml': std.manifestYamlDoc(
@@ -50,7 +50,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
             ports.newNamed('cache', 9090, 9090),
           ],
         ) +
-        service.mixin.metadata.withNamespace('observatorium') +
+        service.mixin.metadata.withNamespace($.thanos.namespace) +
         service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.thanos.querierCache.deployment.metadata.name }),
 
       deployment:
@@ -80,7 +80,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           ],);
 
         deployment.new('observatorium-querier-cache', 3, c, $.thanos.querierCache.deployment.metadata.labels) +
-        deployment.mixin.metadata.withNamespace('observatorium') +
+        deployment.mixin.metadata.withNamespace($.thanos.namespace) +
         deployment.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.thanos.querierCache.deployment.metadata.name }) +
         deployment.mixin.spec.selector.withMatchLabels($.thanos.querierCache.deployment.metadata.labels) +
         deployment.mixin.spec.template.spec.withVolumes([

@@ -27,9 +27,9 @@ objects:
         containers:
         - args:
           - --web.listen=0.0.0.0:8080
-          - --metrics.ui.endpoint=http://thanos-querier.observatorium.svc.cluster.local:9090
-          - --metrics.query.endpoint=http://observatorium-cache.observatorium.svc.cluster.local:9090/api/v1/query
-          - --metrics.write.endpoint=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
+          - --metrics.ui.endpoint=http://thanos-querier.${NAMESPACE}.svc.cluster.local:9090
+          - --metrics.query.endpoint=http://observatorium-cache.${NAMESPACE}.svc.cluster.local:9090/api/v1/query
+          - --metrics.write.endpoint=http://thanos-receive.${NAMESPACE}.svc.cluster.local:19291/api/v1/receive
           - --log.level=warn
           image: ${OBSERVATORIUM_API_IMAGE}:${OBSERVATORIUM_API_IMAGE_TAG}
           livenessProbe:
