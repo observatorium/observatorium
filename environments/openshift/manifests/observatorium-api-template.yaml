@@ -11,7 +11,7 @@ objects:
     name: observatorium-api
     namespace: ${NAMESPACE}
   spec:
-    replicas: ${OBSERVATORIUM_API_REPLICAS}
+    replicas: ${{OBSERVATORIUM_API_REPLICAS}}
     selector:
       matchLabels:
         app.kubernetes.io/name: observatorium-api
