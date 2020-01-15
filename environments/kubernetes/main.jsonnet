@@ -1,5 +1,3 @@
-local namespace = 'observatorium';
-
 local app =
   (import 'kube-thanos.libsonnet') +
   (import 'telemeter.libsonnet') +
