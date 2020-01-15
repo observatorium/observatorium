@@ -95,7 +95,7 @@ local deployment = k.apps.v1.deployment;
           },
         } +
         deployment.mixin.metadata.withNamespace(namespace) +
-        deployment.mixin.spec.withReplicas('${OBSERVATORIUM_API_REPLICAS}') +
+        deployment.mixin.spec.withReplicas('${{OBSERVATORIUM_API_REPLICAS}}') +  // additional parenthesis does matter, they convert argument to an int.
         deployment.mixin.spec.template.spec.withServiceAccount('prometheus-telemeter') +
         deployment.mixin.spec.template.spec.withServiceAccountName('prometheus-telemeter') +
         deployment.mixin.spec.template.spec.withVolumes([
