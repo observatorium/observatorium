@@ -8,7 +8,7 @@ local app =
     apiVersion: 'v1',
     kind: 'Template',
     metadata: {
-      name: 'observatorium',
+      name: 'observatorium-api',
     },
     objects: [
       $.observatorium.api[name]
