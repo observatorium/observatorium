@@ -81,6 +81,13 @@ objects:
           ports:
           - containerPort: 8081
             name: https
+          resources:
+            limits:
+              cpu: ${OBSERVATORIUM_API_PROXY_CPU_LIMITS}
+              memory: ${OBSERVATORIUM_API_PROXY_MEMORY_LIMITS}
+            requests:
+              cpu: ${OBSERVATORIUM_API_PROXY_CPU_REQUEST}
+              memory: ${OBSERVATORIUM_API_PROXY_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /etc/tls/private
             name: secret-api-tls
@@ -149,3 +156,11 @@ parameters:
   value: 256Mi
 - name: OBSERVATORIUM_API_MEMORY_LIMIT
   value: 1Gi
+- name: OBSERVATORIUM_API_PROXY_CPU_REQUEST
+  value: 100m
+- name: OBSERVATORIUM_API_PROXY_MEMORY_REQUEST
+  value: 100Mi
+- name: OBSERVATORIUM_API_PROXY_CPU_LIMITS
+  value: 200m
+- name: OBSERVATORIUM_API_PROXY_MEMORY_LIMITS
+  value: 200Mi
