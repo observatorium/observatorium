@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: observatorium-api
+spec:
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/name: observatorium-api

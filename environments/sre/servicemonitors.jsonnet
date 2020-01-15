@@ -142,6 +142,27 @@ local sm =
         },
       },
     },
+  } + (import '../openshift/observatorium.libsonnet') + {
+    observatorium+:: {
+      api+: {
+        serviceMonitor+: {
+          apiVersion: 'monitoring.coreos.com/v1',
+          kind: 'ServiceMonitor',
+          metadata: {
+            name: 'observatorium-api',
+            labels: { prometheus: 'app-sre' },
+          },
+          spec+: {
+            selector+: {
+              matchLabels: $.observatorium.api.labels,
+            },
+            endpoints: [
+              { port: $.observatorium.api.service.spec.ports[0].name },
+            ],
+          },
+        },
+      },
+    },
   };
 
 {
@@ -159,6 +180,9 @@ local sm =
   }
   for tenant in tenants
 } {
+  'observatorium-api.servicemonitor': sm.observatorium.api.serviceMonitor {
+    spec+: { namespaceSelector+: { matchNames: [$.namespace] } },
+  },
   'observatorium-prometheus-ams.servicemonitor': prom.prometheusAms.serviceMonitor {
     metadata: { name: prom.prometheusAms.serviceMonitor.metadata.name, labels: { prometheus: 'app-sre' } },
     spec+: { namespaceSelector+: { matchNames: [$.namespace] } },

@@ -56,6 +56,17 @@
       "sum": "ASNsquhtTSMENd7OFq2IOtGQlrNQ9apnfzAJRMEFflU="
     },
     {
+      "name": "observatorium",
+      "source": {
+        "git": {
+          "remote": "https://github.com/observatorium/observatorium",
+          "subdir": "jsonnet/lib"
+        }
+      },
+      "version": "d076eab78dfb3c2fd95101fb8a27149177770c8d",
+      "sum": "10pjPejBy1oGkIdqigomiPv9PCFtuZBoAPbR/3bKKvc="
+    },
+    {
       "name": "prometheus-operator",
       "source": {
         "git": {

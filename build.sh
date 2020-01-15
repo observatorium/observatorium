@@ -23,6 +23,7 @@ jsonnet -J vendor environments/openshift/telemeter-prometheus-ams.jsonnet | gojs
 jsonnet -J vendor environments/openshift/telemeter.jsonnet | gojsontoyaml >environments/openshift/manifests/telemeter-template.yaml
 jsonnet -J vendor environments/openshift/thanos.jsonnet | gojsontoyaml >environments/openshift/manifests/thanos-template.yaml
 jsonnet -J vendor environments/openshift/jaeger.jsonnet | gojsontoyaml >environments/openshift/manifests/jaeger-template.yaml
+jsonnet -J vendor environments/openshift/observatorium-api.jsonnet | gojsontoyaml >environments/openshift/manifests/observatorium-api-template.yaml
 find environments/openshift/manifests -type f ! -name '*.yaml' -delete
 
 # Make sure to start with a clean 'servicemonitors' dir

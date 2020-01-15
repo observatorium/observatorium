@@ -89,6 +89,16 @@
         }
       },
       "version": "master"
+    },
+    {
+      "name": "observatorium",
+      "source": {
+        "git": {
+          "remote": "https://github.com/observatorium/observatorium",
+          "subdir": "jsonnet/lib"
+        }
+      },
+      "version": "master"
     }
   ]
 }
