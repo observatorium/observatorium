@@ -1,7 +1,6 @@
 (import 'observatorium/observatorium-api.libsonnet') {
   observatorium+:: {
-    local namespace = 'observatorium',
-    namespace:: namespace,
+    namespace:: 'observatorium',
 
     local kt = (import 'kube-thanos.libsonnet') + {
       thanos+:: {
