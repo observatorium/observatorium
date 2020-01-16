@@ -1,23 +1,28 @@
-local thanos = (import 'thanos-mixin/mixin.libsonnet');
+local thanos = (import 'thanos-mixin/mixin.libsonnet') + (import 'thanos-mixin/defaults.libsonnet');
 local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.libsonnet');
 local jaeger = (import 'jaeger-mixin/mixin.libsonnet');
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
 local dashboards = thanos {
-  _config+:: {
-    thanosQuerierJobPrefix: 'thanos-querier',
-    thanosStoreJobPrefix: 'thanos-store',
-    thanosReceiveJobPrefix: 'thanos-receive',
-    thanosRuleJobPrefix: 'thanos-ruler',
-    thanosCompactJobPrefix: 'thanos-compactor',
-    thanosSidecarJobPrefix: 'thanos-sidecar',
-
-    thanosQuerierSelector: 'job=~"%s.*"' % self.thanosQuerierJobPrefix,
-    thanosStoreSelector: 'job=~"%s.*"' % self.thanosStoreJobPrefix,
-    thanosReceiveSelector: 'job=~"%s.*"' % self.thanosReceiveJobPrefix,
-    thanosRuleSelector: 'job=~"%s.*"' % self.thanosRuleJobPrefix,
-    thanosCompactSelector: 'job=~"%s.*"' % self.thanosCompactJobPrefix,
-    thanosSidecarSelector: 'job=~"%s.*"' % self.thanosSidecarJobPrefix,
+  compactor+:: {
+    jobPrefix: 'thanos-compactor',
+    selector: 'job=~"%s.*"' % self.jobPrefix,
+  },
+  querier+:: {
+    jobPrefix: 'thanos-querier',
+    selector: 'job=~"%s.*"' % self.jobPrefix,
+  },
+  receiver+:: {
+    jobPrefix: 'thanos-receive',
+    selector: 'job=~"%s.*"' % self.jobPrefix,
+  },
+  store+:: {
+    jobPrefix: 'thanos-store',
+    selector: 'job=~"%s.*"' % self.jobPrefix,
+  },
+  ruler+:: {
+    jobPrefix: 'thanos-ruler',
+    selector: 'job=~"%s.*"' % self.jobPrefix,
   },
 }.grafanaDashboards;
 

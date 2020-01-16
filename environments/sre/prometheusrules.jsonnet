@@ -1,4 +1,4 @@
-local thanos = (import 'thanos-mixin/mixin.libsonnet');
+local thanos = (import 'thanos-mixin/mixin.libsonnet') + (import 'thanos-mixin/defaults.libsonnet');
 local thanosReceiveController = (import 'thanos-receive-controller-mixin/mixin.libsonnet');
 local jaeger = (import 'jaeger-mixin/mixin.libsonnet');
 local slo = import 'slo-libsonnet/slo.libsonnet';
@@ -19,29 +19,36 @@ local capitalize(str) = std.asciiUpper(std.substr(str, 0, 1)) + std.asciiLower(s
       },
     },
     local alerts = thanos + thanosReceiveController {
+      compactor+:: {
+        jobPrefix: 'thanos-compactor',
+        selector: 'job="%s", namespace="telemeter-stage"' % self.jobPrefix,
+      },
+      querier+:: {
+        jobPrefix: 'thanos-querier',
+        selector: 'job=~"%s.*", namespace="telemeter-stage"' % self.jobPrefix,
+      },
+      receiver+:: {
+        jobPrefix: 'thanos-receive',
+        selector: 'job=~"%s-.*", namespace="telemeter-stage"' % self.jobPrefix,
+      },
+      store+:: {
+        jobPrefix: 'thanos-store',
+        selector: 'job="%s", namespace="telemeter-stage"' % self.jobPrefix,
+      },
+      ruler+:: {
+        jobPrefix: 'thanos-ruler',
+        selector: 'job=~"%s.*", namespace="telemeter-stage"' % self.jobPrefix,
+      },
+
+      // We build alerts for the presence of all these jobs.
+      jobs+: {
+        ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s", namespace="telemeter-stage"' % tenant.hashring
+        for tenant in tenants
+      },
+
       _config+:: {
-        thanosQuerierJobPrefix: 'thanos-querier',
-        thanosStoreJobPrefix: 'thanos-store',
-        thanosReceiveJobPrefix: 'thanos-receive',
-        thanosCompactJobPrefix: 'thanos-compactor',
         thanosReceiveControllerJobPrefix: 'thanos-receive-controller',
-
-        thanosQuerierSelector: 'job=~"%s.*", namespace="telemeter-stage"' % self.thanosQuerierJobPrefix,
-        thanosStoreSelector: 'job=~"%s.*", namespace="telemeter-stage"' % self.thanosStoreJobPrefix,
-        thanosReceiveSelector: 'job=~"%s.*", namespace="telemeter-stage"' % self.thanosReceiveJobPrefix,
-        thanosCompactSelector: 'job=~"%s.*", namespace="telemeter-stage"' % self.thanosCompactJobPrefix,
         thanosReceiveControllerSelector: 'job=~"%s.*",namespace="telemeter-stage"' % self.thanosReceiveControllerJobPrefix,
-
-        local config = self,
-        // We build alerts for the presence of all these jobs.
-        jobs: {
-          ThanosQuerier: config.thanosQuerierSelector,
-          ThanosStore: config.thanosStoreSelector,
-          ThanosCompact: config.thanosCompactSelector,
-        } + {
-          ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s", namespace="telemeter-stage"' % tenant.hashring
-          for tenant in tenants
-        },
       },
     } + {
       prometheusAlerts+:: {
@@ -66,29 +73,36 @@ local capitalize(str) = std.asciiUpper(std.substr(str, 0, 1)) + std.asciiLower(s
       },
     },
     local alerts = thanos + thanosReceiveController {
+      compactor+:: {
+        jobPrefix: 'thanos-compactor',
+        selector: 'job="%s", namespace="telemeter-production"' % self.jobPrefix,
+      },
+      querier+:: {
+        jobPrefix: 'thanos-querier',
+        selector: 'job=~"%s.*", namespace="telemeter-production"' % self.jobPrefix,
+      },
+      receiver+:: {
+        jobPrefix: 'thanos-receive',
+        selector: 'job=~"%s-.*", namespace="telemeter-production"' % self.jobPrefix,
+      },
+      store+:: {
+        jobPrefix: 'thanos-store',
+        selector: 'job="%s", namespace="telemeter-production"' % self.jobPrefix,
+      },
+      ruler+:: {
+        jobPrefix: 'thanos-ruler',
+        selector: 'job=~"%s.*", namespace="telemeter-production"' % self.jobPrefix,
+      },
+
+      // We build alerts for the presence of all these jobs.
+      jobs+: {
+        ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s", namespace="telemeter-production"' % tenant.hashring
+        for tenant in tenants
+      },
+
       _config+:: {
-        thanosQuerierJobPrefix: 'thanos-querier',
-        thanosStoreJobPrefix: 'thanos-store',
-        thanosReceiveJobPrefix: 'thanos-receive',
-        thanosCompactJobPrefix: 'thanos-compactor',
         thanosReceiveControllerJobPrefix: 'thanos-receive-controller',
-
-        thanosQuerierSelector: 'job=~"%s.*",namespace="telemeter-production"' % self.thanosQuerierJobPrefix,
-        thanosStoreSelector: 'job=~"%s.*",namespace="telemeter-production"' % self.thanosStoreJobPrefix,
-        thanosReceiveSelector: 'job=~"%s.*",namespace="telemeter-production"' % self.thanosReceiveJobPrefix,
-        thanosCompactSelector: 'job=~"%s.*",namespace="telemeter-production"' % self.thanosCompactJobPrefix,
         thanosReceiveControllerSelector: 'job=~"%s.*",namespace="telemeter-production"' % self.thanosReceiveControllerJobPrefix,
-
-        local config = self,
-        // We build alerts for the presence of all these jobs.
-        jobs: {
-          ThanosQuerier: config.thanosQuerierSelector,
-          ThanosStore: config.thanosStoreSelector,
-          ThanosCompact: config.thanosCompactSelector,
-        } + {
-          ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s", namespace="telemeter-production"' % tenant.hashring
-          for tenant in tenants
-        },
       },
     } + {
       prometheusAlerts+:: {

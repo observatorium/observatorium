@@ -164,7 +164,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"thanos-querier.*\",handler=\"query\",code!~\"2..\"}[$interval])) / sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"thanos-querier.*\",handler=\"query\"}[$interval]))",
+                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"thanos-querier.*\",handler=\"query\",code=~\"5..\"}[$interval])) / sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"thanos-querier.*\",handler=\"query\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -476,7 +476,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"thanos-querier.*\",handler=\"query_range\",code!~\"2..\"}[$interval])) / sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"thanos-querier.*\",handler=\"query_range\"}[$interval]))",
+                  "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"thanos-querier.*\",handler=\"query_range\",code=~\"5..\"}[$interval])) / sum(rate(http_requests_total{namespace=\"$namespace\",job=~\"thanos-querier.*\",handler=\"query_range\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -799,7 +799,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_server_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=~\"thanos-store.*\",grpc_type=\"unary\"}[$interval])) / sum(rate(grpc_server_started_total{namespace=\"$namespace\",job=~\"thanos-store.*\",grpc_type=\"unary\"}[$interval]))",
+                  "expr": "sum(rate(grpc_server_handled_total{grpc_code=~\"Unknown|ResourceExhausted|Internal|Unavailable\",namespace=\"$namespace\",job=~\"thanos-store.*\",grpc_type=\"unary\"}[$interval])) / sum(rate(grpc_server_started_total{namespace=\"$namespace\",job=~\"thanos-store.*\",grpc_type=\"unary\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -1122,7 +1122,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(grpc_server_handled_total{grpc_code!=\"OK\",namespace=\"$namespace\",job=~\"thanos-sidecar.*\",grpc_type=\"unary\"}[$interval])) / sum(rate(grpc_server_started_total{namespace=\"$namespace\",job=~\"thanos-sidecar.*\",grpc_type=\"unary\"}[$interval]))",
+                  "expr": "sum(rate(grpc_server_handled_total{grpc_code=~\"Unknown|ResourceExhausted|Internal|Unavailable\",namespace=\"$namespace\",job=~\"thanos-sidecar.*\",grpc_type=\"unary\"}[$interval])) / sum(rate(grpc_server_started_total{namespace=\"$namespace\",job=~\"thanos-sidecar.*\",grpc_type=\"unary\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -1320,10 +1320,10 @@ data:
               "linewidth": 0,
               "links": [
                 {
-                  "dashboard": "Thanos / Receive",
+                  "dashboard": "Thanos / Receiver",
                   "includeVars": true,
                   "keepTime": true,
-                  "title": "Thanos / Receive",
+                  "title": "Thanos / Receiver",
                   "type": "dashboard"
                 }
               ],
@@ -1413,10 +1413,10 @@ data:
               "linewidth": 0,
               "links": [
                 {
-                  "dashboard": "Thanos / Receive",
+                  "dashboard": "Thanos / Receiver",
                   "includeVars": true,
                   "keepTime": true,
-                  "title": "Thanos / Receive",
+                  "title": "Thanos / Receiver",
                   "type": "dashboard"
                 }
               ],
@@ -1434,7 +1434,7 @@ data:
               "steppedLine": false,
               "targets": [
                 {
-                  "expr": "sum(rate(http_requests_total{handler=\"receive\",namespace=\"$namespace\",job=~\"thanos-receive.*\",code!~\"2..\"}[$interval])) / sum(rate(http_requests_total{handler=\"receive\",namespace=\"$namespace\",job=~\"thanos-receive.*\"}[$interval]))",
+                  "expr": "sum(rate(http_requests_total{handler=\"receive\",namespace=\"$namespace\",job=~\"thanos-receive.*\",code=~\"5..\"}[$interval])) / sum(rate(http_requests_total{handler=\"receive\",namespace=\"$namespace\",job=~\"thanos-receive.*\"}[$interval]))",
                   "format": "time_series",
                   "intervalFactor": 2,
                   "legendFormat": "error",
@@ -1506,10 +1506,10 @@ data:
               "linewidth": 1,
               "links": [
                 {
-                  "dashboard": "Thanos / Receive",
+                  "dashboard": "Thanos / Receiver",
                   "includeVars": true,
                   "keepTime": true,
-                  "title": "Thanos / Receive",
+                  "title": "Thanos / Receiver",
                   "type": "dashboard"
                 }
               ],
@@ -1626,10 +1626,10 @@ data:
               "linewidth": 0,
               "links": [
                 {
-                  "dashboard": "Thanos / Rule",
+                  "dashboard": "Thanos / Ruler",
                   "includeVars": true,
                   "keepTime": true,
-                  "title": "Thanos / Rule",
+                  "title": "Thanos / Ruler",
                   "type": "dashboard"
                 }
               ],
@@ -1719,10 +1719,10 @@ data:
               "linewidth": 0,
               "links": [
                 {
-                  "dashboard": "Thanos / Rule",
+                  "dashboard": "Thanos / Ruler",
                   "includeVars": true,
                   "keepTime": true,
-                  "title": "Thanos / Rule",
+                  "title": "Thanos / Ruler",
                   "type": "dashboard"
                 }
               ],
@@ -1812,10 +1812,10 @@ data:
               "linewidth": 1,
               "links": [
                 {
-                  "dashboard": "Thanos / Rule",
+                  "dashboard": "Thanos / Ruler",
                   "includeVars": true,
                   "keepTime": true,
-                  "title": "Thanos / Rule",
+                  "title": "Thanos / Ruler",
                   "type": "dashboard"
                 }
               ],
@@ -1932,10 +1932,10 @@ data:
               "linewidth": 0,
               "links": [
                 {
-                  "dashboard": "Thanos / Compact",
+                  "dashboard": "Thanos / Compactor",
                   "includeVars": true,
                   "keepTime": true,
-                  "title": "Thanos / Compact",
+                  "title": "Thanos / Compactor",
                   "type": "dashboard"
                 }
               ],
@@ -2025,10 +2025,10 @@ data:
               "linewidth": 0,
               "links": [
                 {
-                  "dashboard": "Thanos / Compact",
+                  "dashboard": "Thanos / Compactor",
                   "includeVars": true,
                   "keepTime": true,
-                  "title": "Thanos / Compact",
+                  "title": "Thanos / Compactor",
                   "type": "dashboard"
                 }
               ],

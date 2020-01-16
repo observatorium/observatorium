@@ -10,7 +10,7 @@ local sa = k.core.v1.serviceAccount;
 local role = k.rbac.v1.role;
 local rolebinding = k.rbac.v1.roleBinding;
 local jaegerAgent = import '../../components/jaeger-agent.libsonnet';
-local thanos = import 'thanos-mixin/mixin.libsonnet';
+local thanos = (import 'thanos-mixin/mixin.libsonnet') + (import 'thanos-mixin/defaults.libsonnet');
 local thanosReceiveController = import 'thanos-receive-controller-mixin/mixin.libsonnet';
 
 local capitalize(str) =
@@ -51,29 +51,39 @@ local capitalize(str) =
         },
 
         local alerts = thanos + thanosReceiveController {
+          compactor+:: {
+            jobPrefix: 'thanos-compactor',
+            selector: 'job="%s"' % self.jobPrefix,
+          },
+          querier+:: {
+            jobPrefix: 'thanos-querier',
+            selector: 'job=~"%s.*"' % self.jobPrefix,
+          },
+          receiver+:: {
+            jobPrefix: 'thanos-receive',
+            selector: 'job=~"%s-.*"' % self.jobPrefix,
+          },
+          store+:: {
+            jobPrefix: 'thanos-store',
+            selector: 'job="%s"' % self.jobPrefix,
+          },
+          ruler+:: {
+            jobPrefix: 'thanos-ruler',
+            selector: 'job=~"%s.*"' % self.jobPrefix,
+          },
+
+          jobs: {
+            ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s"' % tenant.hashring
+            for tenant in tenants
+          },
+
           _config+:: {
-            thanosQuerierJobPrefix: 'thanos-querier',
-            thanosStoreJobPrefix: 'thanos-store',
-            thanosReceiveJobPrefix: 'thanos-receive-.*',
-            thanosCompactJobPrefix: 'thanos-compactor',
-            thanosReceiveControllerJobPrefix: 'thanos-receive-controller',
-
-            thanosQuerierSelector: 'job="%s"' % self.thanosQuerierJobPrefix,
-            thanosStoreSelector: 'job="%s"' % self.thanosStoreJobPrefix,
+            // NOTICE: Needed by thanos-receive-controller, it needs an update.
+            thanosReceiveJobPrefix: 'thanos-receive.*',
             thanosReceiveSelector: 'job=~"%s"' % self.thanosReceiveJobPrefix,
-            thanosCompactSelector: 'job="%s"' % self.thanosCompactJobPrefix,
-            thanosReceiveControllerSelector: 'job="%s"' % self.thanosReceiveControllerJobPrefix,
 
-            local config = self,
-            // We build alerts for the presence of all these jobs.
-            jobs: {
-              ThanosQuerier: config.thanosQuerierSelector,
-              ThanosStore: config.thanosStoreSelector,
-              ThanosCompact: config.thanosCompactSelector,
-            } + {
-              ['ThanosReceive' + capitalize(tenant.hashring)]: 'job="thanos-receive-%s"' % tenant.hashring
-              for tenant in tenants
-            },
+            thanosReceiveControllerJobPrefix: 'thanos-receive-controller',
+            thanosReceiveControllerSelector: 'job="%s"' % self.thanosReceiveControllerJobPrefix,
           },
 
           // Filter rule groups that we don't care about, like the sidecar

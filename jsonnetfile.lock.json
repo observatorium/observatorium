@@ -103,12 +103,12 @@
       "name": "thanos-mixin",
       "source": {
         "git": {
-          "remote": "https://github.com/thanos-io/kube-thanos",
-          "subdir": "jsonnet/thanos-mixin"
+          "remote": "https://github.com/thanos-io/thanos",
+          "subdir": "mixin/thanos"
         }
       },
-      "version": "5e78521e47947bd3fc69e4e8d8f837c8561d2dca",
-      "sum": "sGk0IQJcux6rkzpuDKfBB8Of8z439K8xL7gs4yNR7EQ="
+      "version": "46a97fdc9765bbe7eb9d75d801abf186015e1b01",
+      "sum": "mL37OD8YTCYcYBvjL9tRiAo6kZ9nKALgRejl9Kb5gQQ="
     },
     {
       "name": "thanos-receive-controller",
