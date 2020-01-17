@@ -52,8 +52,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "0c90793e469a6822c4f0c7de57ccf5ab0449f676",
-      "sum": "ASNsquhtTSMENd7OFq2IOtGQlrNQ9apnfzAJRMEFflU="
+      "version": "b6a6a410c594f05efcf535a8c18c51a662c09373",
+      "sum": "4F71yoLSRKIKQlDIZGmLVabNGo13/DDkk9odBWth7Co="
     },
     {
       "name": "observatorium",
