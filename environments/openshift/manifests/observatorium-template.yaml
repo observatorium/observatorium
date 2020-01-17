@@ -68,12 +68,12 @@ objects:
           - containerPort: 9090
             name: http
           readinessProbe:
+            failureThreshold: 20
             httpGet:
               path: /-/ready
               port: 9090
               scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 30
+            periodSeconds: 5
           resources:
             limits:
               cpu: ${THANOS_QUERIER_CPU_LIMIT}
@@ -264,7 +264,7 @@ objects:
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           livenessProbe:
-            failureThreshold: 4
+            failureThreshold: 8
             httpGet:
               path: /-/healthy
               port: 10902
@@ -277,12 +277,12 @@ objects:
           - containerPort: 10902
             name: http
           readinessProbe:
+            failureThreshold: 20
             httpGet:
               path: /-/ready
               port: 10902
               scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 30
+            periodSeconds: 5
           resources:
             limits:
               cpu: ${THANOS_STORE_CPU_LIMIT}
@@ -421,12 +421,12 @@ objects:
           - containerPort: 10902
             name: http
           readinessProbe:
+            failureThreshold: 20
             httpGet:
               path: /-/ready
               port: 10902
               scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 30
+            periodSeconds: 5
           resources:
             limits:
               cpu: ${THANOS_COMPACTOR_CPU_LIMIT}
@@ -605,7 +605,7 @@ objects:
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           livenessProbe:
-            failureThreshold: 4
+            failureThreshold: 8
             httpGet:
               path: /-/healthy
               port: 10902
@@ -620,12 +620,12 @@ objects:
           - containerPort: 19291
             name: remote-write
           readinessProbe:
+            failureThreshold: 20
             httpGet:
               path: /-/ready
               port: 10902
               scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 30
+            periodSeconds: 5
           resources:
             limits:
               cpu: ${THANOS_RECEIVE_CPU_LIMIT}
@@ -1050,12 +1050,12 @@ objects:
                 name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           livenessProbe:
-            failureThreshold: 4
+            failureThreshold: 24
             httpGet:
               path: /-/healthy
               port: 10902
               scheme: HTTP
-            periodSeconds: 30
+            periodSeconds: 5
           name: thanos-ruler
           ports:
           - containerPort: 10901
@@ -1063,12 +1063,13 @@ objects:
           - containerPort: 10902
             name: http
           readinessProbe:
+            failureThreshold: 18
             httpGet:
               path: /-/ready
               port: 10902
               scheme: HTTP
             initialDelaySeconds: 10
-            periodSeconds: 30
+            periodSeconds: 5
           resources:
             limits:
               cpu: ${THANOS_RULER_CPU_LIMIT}
