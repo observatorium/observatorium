@@ -25,17 +25,3 @@ jsonnet -J vendor environments/openshift/thanos.jsonnet | gojsontoyaml >environm
 jsonnet -J vendor environments/openshift/jaeger.jsonnet | gojsontoyaml >environments/openshift/manifests/jaeger-template.yaml
 jsonnet -J vendor environments/openshift/observatorium-api.jsonnet | gojsontoyaml >environments/openshift/manifests/observatorium-api-template.yaml
 find environments/openshift/manifests -type f ! -name '*.yaml' -delete
-
-# Make sure to start with a clean 'servicemonitors' dir
-rm -rf environments/sre/servicemonitors
-mkdir environments/sre/servicemonitors
-
-jsonnet -J vendor -m environments/sre/servicemonitors environments/sre/servicemonitors.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
-find environments/sre/servicemonitors -type f ! -name '*.yaml' -delete
-
-# Make sure to start with a clean 'grafana' dir
-rm -rf environments/sre/grafana
-mkdir environments/sre/grafana
-
-jsonnet -J vendor -m environments/sre/grafana environments/sre/grafana.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
-find environments/sre/grafana -type f ! -name '*.yaml' -delete
