@@ -31,7 +31,7 @@ local deployment = k.apps.v1.deployment;
       service+:
         service.mixin.metadata.withNamespace(namespace) +
         service.mixin.metadata.withAnnotations({
-          'service.alpha.openshift.io/serving-cert-secret-name': 'observatorium-tls',
+          'service.alpha.openshift.io/serving-cert-secret-name': 'observatorium-api-tls',
         }) + {
           spec+: {
             ports+: [
@@ -107,8 +107,8 @@ local deployment = k.apps.v1.deployment;
         deployment.mixin.spec.template.spec.withServiceAccount('prometheus-telemeter') +
         deployment.mixin.spec.template.spec.withServiceAccountName('prometheus-telemeter') +
         deployment.mixin.spec.template.spec.withVolumes([
-          volume.fromSecret('secret-api-tls', 'api-tls'),
-          volume.fromSecret('secret-api-proxy', 'api-proxy'),
+          volume.fromSecret('secret-api-tls', 'observatorium-api-tls'),
+          volume.fromSecret('secret-api-proxy', 'observatorium-api-proxy'),
         ]),
     },
   },

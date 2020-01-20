@@ -100,10 +100,10 @@ objects:
         volumes:
         - name: secret-api-tls
           secret:
-            secretName: api-tls
+            secretName: observatorium-api-tls
         - name: secret-api-proxy
           secret:
-            secretName: api-proxy
+            secretName: observatorium-api-proxy
 - apiVersion: v1
   data:
     session_secret: ""
@@ -118,7 +118,7 @@ objects:
   kind: Service
   metadata:
     annotations:
-      service.alpha.openshift.io/serving-cert-secret-name: observatorium-tls
+      service.alpha.openshift.io/serving-cert-secret-name: observatorium-api-tls
     name: observatorium-api
     namespace: ${NAMESPACE}
   spec:
