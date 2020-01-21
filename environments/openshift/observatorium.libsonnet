@@ -22,7 +22,7 @@ local deployment = k.apps.v1.deployment;
 
       // The proxy secret is there to encrypt session created by the oauth proxy.
       proxySecret:
-        secret.new('observatorium-proxy', {
+        secret.new('observatorium-api-proxy', {
           session_secret: std.base64($.observatorium.proxyConfig.sessionSecret),
         }) +
         secret.mixin.metadata.withNamespace(namespace) +

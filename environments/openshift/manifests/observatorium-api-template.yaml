@@ -111,7 +111,7 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/name: observatorium-api
-    name: observatorium-proxy
+    name: observatorium-api-proxy
     namespace: ${NAMESPACE}
   type: Opaque
 - apiVersion: v1
