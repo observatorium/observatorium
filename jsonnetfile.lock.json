@@ -96,8 +96,8 @@
           "subdir": "jsonnet/telemeter"
         }
       },
-      "version": "04e896229a25482642a38937d9ff452302710ac6",
-      "sum": "s62onQakVZ2xrTyahP9G3gVMu+ovTG9STA8PukCJy3U="
+      "version": "c00c46c43677bf0c73a8f3d4fdc7fdad07d14954",
+      "sum": "Rux+eJyhxygzgTCcUWfomfSezL39Vj/Xfy7xopIDy+o="
     },
     {
       "name": "thanos-mixin",
