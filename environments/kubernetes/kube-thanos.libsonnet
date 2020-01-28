@@ -87,6 +87,8 @@ local capitalize(str) =
 
     querier+: {
       replicas:: 3,
+      externalPrefix:: '',
+
       deployment+: {
         spec+: {
           template+: {
@@ -119,7 +121,11 @@ local capitalize(str) =
                       $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
                     ]
                     for tenant in tenants
-                  ],
+                  ] + (
+                    if $.thanos.querier.externalPrefix != '' && $.thanos.querier.externalPrefix != null
+                    then ['--web.external-prefix=%s' % $.thanos.querier.externalPrefix]
+                    else []
+                  ),
                 },
               ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
@@ -127,6 +133,7 @@ local capitalize(str) =
         },
       },
     },
+
     store+: {
       replicas:: 1,
       pvc+:: {
@@ -153,6 +160,7 @@ local capitalize(str) =
         },
       },
     },
+
     compactor+: {
       statefulSet+: {
         spec+: {
@@ -182,6 +190,7 @@ local capitalize(str) =
         },
       },
     },
+
     receive+: {
       pvc+:: {
         class: 'standard',
@@ -264,6 +273,7 @@ local capitalize(str) =
         }
       for tenant in tenants
     },
+
     receiveController+: {
       serviceAccount+:
         sa.mixin.metadata.withNamespace(namespace),

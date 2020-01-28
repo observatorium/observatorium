@@ -2,7 +2,15 @@ local app =
   (import 'kube-thanos.libsonnet') +
   (import 'telemeter.libsonnet') +
   (import 'observatorium.libsonnet') +
-  (import 'jaeger.libsonnet');
+  (import 'jaeger.libsonnet') + {
+    thanos+:: {
+      namespace:: $.observatorium.namespace,
+
+      querier+:: {
+        externalPrefix: '/ui/v1/metrics',
+      },
+    },
+  };
 
 { ['observatorium-api-' + name]: app.observatorium.api[name] for name in std.objectFields(app.observatorium.api) } +
 { ['thanos-querier-' + name]: app.thanos.querier[name] for name in std.objectFields(app.thanos.querier) } +
