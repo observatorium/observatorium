@@ -4,13 +4,13 @@ local app =
   (import 'observatorium.libsonnet') +
   (import 'jaeger.libsonnet') + {
     thanos+:: {
-        namespace:: $.observatorium.namespace,
-        externalURL:: 'https://observatorium.api.stage.openshift.com',
+      namespace:: $.observatorium.namespace,
+      externalURL:: 'https://observatorium.api.stage.openshift.com',
 
-        querier+:: {
-          externalPrefix: '%s/ui/v1/metrics' % $.observatorium.api.externalURL,
-        },
+      querier+:: {
+        externalPrefix: '%s/ui/v1/metrics' % $.observatorium.api.externalURL,
       },
+    },
   };
 
 { ['observatorium-api-' + name]: app.observatorium.api[name] for name in std.objectFields(app.observatorium.api) } +

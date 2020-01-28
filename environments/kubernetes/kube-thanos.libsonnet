@@ -125,7 +125,7 @@ local capitalize(str) =
                     if $.thanos.querier.externalPrefix != '' && $.thanos.querier.externalPrefix != null
                     then ['--web.external-prefix=%s' % $.thanos.querier.externalPrefix]
                     else []
-                    ),
+                  ),
                 },
               ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
