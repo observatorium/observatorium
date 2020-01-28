@@ -48,7 +48,7 @@ spec:
               sampler_type: ratelimiting
               sampler_param: 2
         - --store=dnssrv+_grpc._tcp.thanos-receive-default.observatorium.svc.cluster.local
-        - --web.external-prefix=https://observatorium.api.stage.openshift.com/ui/v1/metrics
+        - --web.external-prefix=/ui/v1/metrics
         image: quay.io/thanos/thanos:v0.9.0
         livenessProbe:
           failureThreshold: 4

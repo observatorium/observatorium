@@ -10,7 +10,6 @@
 
     api+: {
       replicas:: 3,
-      externalURL:: 'https://observatorium.api.stage.openshift.com',
 
       deployment+: {
         spec+: {

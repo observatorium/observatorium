@@ -19,7 +19,6 @@ local deployment = k.apps.v1.deployment;
 
     api+: {
       image:: '${OBSERVATORIUM_API_IMAGE}:${OBSERVATORIUM_API_IMAGE_TAG}',
-      externalURL:: '${OBSERVATORIUM_API_EXTERNAL_URL}',
 
       // The proxy secret is there to encrypt session created by the oauth proxy.
       proxySecret:

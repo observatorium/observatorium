@@ -164,5 +164,3 @@ parameters:
   value: 200m
 - name: OBSERVATORIUM_API_PROXY_MEMORY_LIMITS
   value: 200Mi
-- name: OBSERVATORIUM_API_EXTERNAL_URL
-  value: https://observatorium.api.stage.openshift.com
