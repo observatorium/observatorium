@@ -257,7 +257,7 @@ parameters:
 - name: OBSERVATORIUM_API_PROXY_MEMORY_LIMITS
   value: 200Mi
 - name: OBSERVATORIUM_API_EXTERNAL_URL
-  value: https://observatorium.api
+  value: https://observatorium.api.stage.openshift.com
 - name: OBSERVATORIUM_API_THANOS_QUERIER_CPU_REQUEST
   value: 100m
 - name: OBSERVATORIUM_API_THANOS_QUERIER_CPU_LIMIT

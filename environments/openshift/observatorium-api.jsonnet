@@ -34,7 +34,7 @@ local app =
       { name: 'OBSERVATORIUM_API_PROXY_MEMORY_REQUEST', value: '100Mi' },
       { name: 'OBSERVATORIUM_API_PROXY_CPU_LIMITS', value: '200m' },
       { name: 'OBSERVATORIUM_API_PROXY_MEMORY_LIMITS', value: '200Mi' },
-      { name: 'OBSERVATORIUM_API_EXTERNAL_URL', value: 'https://observatorium.api' },
+      { name: 'OBSERVATORIUM_API_EXTERNAL_URL', value: 'https://observatorium.api.stage.openshift.com' },
       { name: 'OBSERVATORIUM_API_THANOS_QUERIER_CPU_REQUEST', value: '100m' },
       { name: 'OBSERVATORIUM_API_THANOS_QUERIER_CPU_LIMIT', value: '1' },
       { name: 'OBSERVATORIUM_API_THANOS_QUERIER_MEMORY_REQUEST', value: '256Mi' },
