@@ -55,6 +55,8 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
     },
 
     querier+: {
+      externalPrefix:: '/ui/v1/metrics',
+
       // The proxy secret is there to encrypt session created by the oauth proxy.
       proxySecret:
         secret.new('querier-proxy', {

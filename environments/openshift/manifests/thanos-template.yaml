@@ -53,6 +53,7 @@ objects:
                 sampler_type: ratelimiting
                 sampler_param: 2
           - --store=dnssrv+_grpc._tcp.thanos-receive-default.${NAMESPACE}.svc.cluster.local
+          - --web.external-prefix=/ui/v1/metrics
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           livenessProbe:
             failureThreshold: 4

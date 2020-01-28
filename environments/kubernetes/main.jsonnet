@@ -7,7 +7,7 @@ local app =
       namespace:: $.observatorium.namespace,
 
       querier+:: {
-        externalPrefix: '/ui/v1/metrics',
+        externalPrefix:: '/ui/v1/metrics',
       },
     },
   };
