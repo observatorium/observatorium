@@ -127,6 +127,7 @@ local capitalize(str) =
         },
       },
     },
+
     store+: {
       replicas:: 1,
       pvc+:: {
@@ -153,6 +154,7 @@ local capitalize(str) =
         },
       },
     },
+
     compactor+: {
       statefulSet+: {
         spec+: {
@@ -182,6 +184,7 @@ local capitalize(str) =
         },
       },
     },
+
     receive+: {
       pvc+:: {
         class: 'standard',
@@ -264,6 +267,7 @@ local capitalize(str) =
         }
       for tenant in tenants
     },
+
     receiveController+: {
       serviceAccount+:
         sa.mixin.metadata.withNamespace(namespace),

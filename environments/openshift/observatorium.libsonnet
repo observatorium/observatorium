@@ -17,8 +17,43 @@ local deployment = k.apps.v1.deployment;
       sessionSecret: '',
     },
 
+    querier+: {
+      service+:
+        service.mixin.metadata.withNamespace(namespace),
+
+      deployment+:
+        {
+          spec+: {
+            template+: {
+              spec+: {
+                containers: [
+                  if c.name == 'observatorium-api-thanos-querier' then c {
+                    resources: {
+                      requests: {
+                        cpu: '${OBSERVATORIUM_API_THANOS_QUERIER_CPU_REQUEST}',
+                        memory: '${OBSERVATORIUM_API_THANOS_QUERIER_MEMORY_REQUEST}',
+                      },
+                      limits: {
+                        cpu: '${OBSERVATORIUM_API_THANOS_QUERIER_CPU_LIMIT}',
+                        memory: '${OBSERVATORIUM_API_THANOS_QUERIER_MEMORY_LIMIT}',
+                      },
+                    },
+                  } else c
+                  for c in super.containers
+                ],
+              },
+            },
+          },
+        } +
+        deployment.mixin.metadata.withNamespace(namespace) +
+        deployment.mixin.spec.withReplicas('${{OBSERVATORIUM_API_THANOS_QUERIER_REPLICAS}}') +
+        deployment.mixin.spec.template.spec.withServiceAccount('prometheus-telemeter') +
+        deployment.mixin.spec.template.spec.withServiceAccountName('prometheus-telemeter'),
+    },
+
     api+: {
       image:: '${OBSERVATORIUM_API_IMAGE}:${OBSERVATORIUM_API_IMAGE_TAG}',
+      externalURL:: '${OBSERVATORIUM_API_EXTERNAL_URL}',
 
       // The proxy secret is there to encrypt session created by the oauth proxy.
       proxySecret:
