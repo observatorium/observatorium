@@ -27,7 +27,7 @@ objects:
         containers:
         - args:
           - --web.listen=0.0.0.0:8080
-          - --metrics.ui.endpoint=http://observatorium-api-thanos-querier.${NAMESPACE}.svc.cluster.local:9090
+          - --metrics.ui.endpoint=http://thanos-querier.${NAMESPACE}.svc.cluster.local:9090
           - --metrics.query.endpoint=http://observatorium-cache.${NAMESPACE}.svc.cluster.local:9090/api/v1/query
           - --metrics.write.endpoint=http://thanos-receive.${NAMESPACE}.svc.cluster.local:19291/api/v1/receive
           - --log.level=warn
@@ -131,98 +131,6 @@ objects:
       targetPort: https
     selector:
       app.kubernetes.io/name: observatorium-api
-- apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    labels:
-      app.kubernetes.io/name: observatorium-api-thanos-querier
-    name: observatorium-api-thanos-querier
-    namespace: ${NAMESPACE}
-  spec:
-    replicas: ${{OBSERVATORIUM_API_THANOS_QUERIER_REPLICAS}}
-    selector:
-      matchLabels:
-        app.kubernetes.io/name: observatorium-api-thanos-querier
-    template:
-      metadata:
-        labels:
-          app.kubernetes.io/name: observatorium-api-thanos-querier
-          app.kubernetes.io/tracing: jaeger-agent
-      spec:
-        affinity:
-          podAntiAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-            - podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                    - observatorium-api-thanos-querier
-                namespaces:
-                - ${NAMESPACE}
-                topologyKey: kubernetes.io/hostname
-              weight: 100
-        containers:
-        - args:
-          - query
-          - --query.replica-label=replica
-          - --query.replica-label=ruler_replica
-          - --query.replica-label=prometheus_replica
-          - --web.external-prefix=${OBSERVATORIUM_API_EXTERNAL_URL}/ui/v1/metrics
-          - --grpc-address=0.0.0.0:10901
-          - --http-address=0.0.0.0:9090
-          - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
-          - --store=dnssrv+_grpc._tcp.thanos-ruler.${NAMESPACE}.svc.cluster.local
-          - --store=dnssrv+_grpc._tcp.thanos-receive-default.${NAMESPACE}.svc.cluster.local
-          image: quay.io/thanos/thanos:v0.9.0
-          livenessProbe:
-            failureThreshold: 4
-            httpGet:
-              path: /-/healthy
-              port: 9090
-              scheme: HTTP
-            periodSeconds: 30
-          name: observatorium-api-thanos-querier
-          ports:
-          - containerPort: 10901
-            name: grpc
-          - containerPort: 9090
-            name: http
-          readinessProbe:
-            failureThreshold: 20
-            httpGet:
-              path: /-/ready
-              port: 9090
-              scheme: HTTP
-            periodSeconds: 5
-          resources:
-            limits:
-              cpu: ${OBSERVATORIUM_API_THANOS_QUERIER_CPU_LIMIT}
-              memory: ${OBSERVATORIUM_API_THANOS_QUERIER_MEMORY_LIMIT}
-            requests:
-              cpu: ${OBSERVATORIUM_API_THANOS_QUERIER_CPU_REQUEST}
-              memory: ${OBSERVATORIUM_API_THANOS_QUERIER_MEMORY_REQUEST}
-        serviceAccount: prometheus-telemeter
-        serviceAccountName: prometheus-telemeter
-        terminationGracePeriodSeconds: 120
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app.kubernetes.io/name: observatorium-api-thanos-querier
-    name: observatorium-api-thanos-querier
-    namespace: ${NAMESPACE}
-  spec:
-    ports:
-    - name: grpc
-      port: 10901
-      targetPort: grpc
-    - name: http
-      port: 9090
-      targetPort: http
-    selector:
-      app.kubernetes.io/name: observatorium-api-thanos-querier
 parameters:
 - name: NAMESPACE
   value: telemeter
@@ -258,11 +166,3 @@ parameters:
   value: 200Mi
 - name: OBSERVATORIUM_API_EXTERNAL_URL
   value: https://observatorium.api.stage.openshift.com
-- name: OBSERVATORIUM_API_THANOS_QUERIER_CPU_REQUEST
-  value: 100m
-- name: OBSERVATORIUM_API_THANOS_QUERIER_CPU_LIMIT
-  value: "1"
-- name: OBSERVATORIUM_API_THANOS_QUERIER_MEMORY_REQUEST
-  value: 256Mi
-- name: OBSERVATORIUM_API_THANOS_QUERIER_MEMORY_LIMIT
-  value: 1Gi

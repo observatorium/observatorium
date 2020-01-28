@@ -13,9 +13,6 @@ local app =
     objects: [
       $.observatorium.api[name]
       for name in std.objectFields($.observatorium.api)
-    ] + [
-      $.observatorium.querier[name]
-      for name in std.objectFields($.observatorium.querier)
     ],
     parameters: [
       { name: 'NAMESPACE', value: 'telemeter' },
@@ -35,10 +32,6 @@ local app =
       { name: 'OBSERVATORIUM_API_PROXY_CPU_LIMITS', value: '200m' },
       { name: 'OBSERVATORIUM_API_PROXY_MEMORY_LIMITS', value: '200Mi' },
       { name: 'OBSERVATORIUM_API_EXTERNAL_URL', value: 'https://observatorium.api.stage.openshift.com' },
-      { name: 'OBSERVATORIUM_API_THANOS_QUERIER_CPU_REQUEST', value: '100m' },
-      { name: 'OBSERVATORIUM_API_THANOS_QUERIER_CPU_LIMIT', value: '1' },
-      { name: 'OBSERVATORIUM_API_THANOS_QUERIER_MEMORY_REQUEST', value: '256Mi' },
-      { name: 'OBSERVATORIUM_API_THANOS_QUERIER_MEMORY_LIMIT', value: '1Gi' },
     ],
     template:
       list.asList('observatorium-api', {}, []) + {

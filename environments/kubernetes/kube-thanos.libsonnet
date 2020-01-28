@@ -87,6 +87,8 @@ local capitalize(str) =
 
     querier+: {
       replicas:: 3,
+      externalPrefix:: '',
+
       deployment+: {
         spec+: {
           template+: {
@@ -119,7 +121,11 @@ local capitalize(str) =
                       $.thanos.receive['service-' + tenant.hashring].metadata.namespace,
                     ]
                     for tenant in tenants
-                  ],
+                  ] + (
+                    if $.thanos.querier.externalPrefix != '' && $.thanos.querier.externalPrefix != null
+                    then ['--web.external-prefix=%s' % $.thanos.querier.externalPrefix]
+                    else []
+                    ),
                 },
               ] + [jaegerAgent.container($.thanos.imageJaegerAgent)],
             },
