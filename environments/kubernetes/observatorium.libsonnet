@@ -57,7 +57,7 @@ local tenants = import '../../tenants.libsonnet';
 
     api+: {
       replicas:: 3,
-      externalURL:: '',
+      externalURL:: 'https://observatorium.api',
 
       deployment+: {
         spec+: {

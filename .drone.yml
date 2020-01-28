@@ -12,6 +12,7 @@ steps:
   image: quay.io/coreos/jsonnet-ci
   commands:
   - find . -type f -not -path './vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \) | xargs -L1 jsonnetfmt --test
+  - go get github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb@v0.2.0
   - jb install
   - ./build.sh
   - git diff --exit-code

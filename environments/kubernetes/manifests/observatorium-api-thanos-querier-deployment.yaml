@@ -36,7 +36,7 @@ spec:
         - --query.replica-label=replica
         - --query.replica-label=ruler_replica
         - --query.replica-label=prometheus_replica
-        - --web.external-prefix=/ui/v1/metrics
+        - --web.external-prefix=https://observatorium.api/ui/v1/metrics
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:9090
         - --store=dnssrv+_grpc._tcp.thanos-store.observatorium.svc.cluster.local
