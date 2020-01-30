@@ -52,8 +52,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "b6a6a410c594f05efcf535a8c18c51a662c09373",
-      "sum": "4F71yoLSRKIKQlDIZGmLVabNGo13/DDkk9odBWth7Co="
+      "version": "14ecdd5932d1750314bebcc2fb455f9b8865084b",
+      "sum": "nzWV8NBTizK7fbEP/Uiy9dmjpN22kaxH0/wb26T2zds="
     },
     {
       "name": "observatorium",
@@ -63,8 +63,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "d076eab78dfb3c2fd95101fb8a27149177770c8d",
-      "sum": "10pjPejBy1oGkIdqigomiPv9PCFtuZBoAPbR/3bKKvc="
+      "version": "e009b4adfef6b4134073310f8e84bb3aa4215cde",
+      "sum": "fFeO0W9LXd9Qn9bF81CSQfG0+eF//rUSxZJk3LvKWN0="
     },
     {
       "name": "prometheus-operator",

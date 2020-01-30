@@ -70,13 +70,6 @@ spec:
             port: 9090
             scheme: HTTP
           periodSeconds: 5
-        resources:
-          limits:
-            cpu: "1"
-            memory: 1Gi
-          requests:
-            cpu: 100m
-            memory: 256Mi
       - args:
         - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
         - --reporter.type=grpc

@@ -41,6 +41,16 @@
       "version": "master"
     },
     {
+      "name": "observatorium",
+      "source": {
+        "git": {
+          "remote": "https://github.com/observatorium/observatorium",
+          "subdir": "jsonnet/lib"
+        }
+      },
+      "version": "master"
+    },
+    {
       "name": "slo-libsonnet",
       "source": {
         "git": {
@@ -86,16 +96,6 @@
         "git": {
           "remote": "https://github.com/observatorium/thanos-receive-controller",
           "subdir": "jsonnet/thanos-receive-controller-mixin"
-        }
-      },
-      "version": "master"
-    },
-    {
-      "name": "observatorium",
-      "source": {
-        "git": {
-          "remote": "https://github.com/observatorium/observatorium",
-          "subdir": "jsonnet/lib"
         }
       },
       "version": "master"

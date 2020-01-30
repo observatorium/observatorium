@@ -27,6 +27,10 @@ local capitalize(str) =
 (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') +
 (import '../../components/thanos-querier-cache.libsonnet') +
 {
+  _config+:: {
+    version:: 'master-2019-10-18-d55fee2',
+  },
+
   thanos+:: {
     image: 'quay.io/thanos/thanos:v0.9.0',
     imageJaegerAgent: 'jaegertracing/jaeger-agent:1.14.0',
