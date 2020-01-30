@@ -2,4 +2,4 @@
 
 This repository contains the configuration for the Observatorium instances that the team runs.
 
-[![Build Status](https://cloud.drone.io/api/badges/observatorium/configuration/status.svg)](https://cloud.drone.io/observatorium/configuration)
+[![Build Status](https://circleci.com/gh/observatorium/configuration.svg?style=svg)](https://circleci.com/gh/observatorium/configuration)
