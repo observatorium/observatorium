@@ -3,6 +3,9 @@
 {
   _config+:: {
     namespace: 'observatorium',
+    telemeterServer+: {
+      whitelist: (import 'metrics.json'),
+    },
   },
 
   telemeterServer+:: {

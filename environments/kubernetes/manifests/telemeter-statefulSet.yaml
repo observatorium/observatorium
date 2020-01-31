@@ -33,6 +33,54 @@ spec:
         - --client-id=$(CLIENT_ID)
         - --client-secret=$(CLIENT_SECRET)
         - --memcached=memcached-0.memcached.observatorium.svc.cluster.local:11211
+        - --whitelist={__name__=~"cluster:usage:.*"}
+        - --whitelist={__name__="up"}
+        - --whitelist={__name__="cluster_version"}
+        - --whitelist={__name__="cluster_version_available_updates"}
+        - --whitelist={__name__="cluster_operator_up"}
+        - --whitelist={__name__="cluster_operator_conditions"}
+        - --whitelist={__name__="cluster_version_payload"}
+        - --whitelist={__name__="cluster_installer"}
+        - --whitelist={__name__="cluster_infrastructure_provider"}
+        - --whitelist={__name__="cluster_feature_set"}
+        - --whitelist={__name__="node_uname_info"}
+        - --whitelist={__name__="instance:etcd_object_counts:sum"}
+        - --whitelist={__name__="alerts",alertstate="firing"}
+        - --whitelist={__name__="code:apiserver_request_count:rate:sum"}
+        - --whitelist={__name__="cluster:capacity_cpu_cores:sum"}
+        - --whitelist={__name__="cluster:capacity_memory_bytes:sum"}
+        - --whitelist={__name__="cluster:cpu_usage_cores:sum"}
+        - --whitelist={__name__="cluster:memory_usage_bytes:sum"}
+        - --whitelist={__name__="openshift:cpu_usage_cores:sum"}
+        - --whitelist={__name__="openshift:memory_usage_bytes:sum"}
+        - --whitelist={__name__="workload:cpu_usage_cores:sum"}
+        - --whitelist={__name__="workload:memory_usage_bytes:sum"}
+        - --whitelist={__name__="cluster:virt_platform_nodes:sum"}
+        - --whitelist={__name__="cluster:node_instance_type_count:sum"}
+        - --whitelist={__name__="cnv:vmi_status_running:count"}
+        - --whitelist={__name__="node_role_os_version_machine:cpu_capacity_cores:sum"}
+        - --whitelist={__name__="node_role_os_version_machine:cpu_capacity_sockets:sum"}
+        - --whitelist={__name__="subscription_sync_total"}
+        - --whitelist={__name__="csv_succeeded"}
+        - --whitelist={__name__="csv_abnormal"}
+        - --whitelist={__name__="ceph_cluster_total_bytes"}
+        - --whitelist={__name__="ceph_cluster_total_used_raw_bytes"}
+        - --whitelist={__name__="ceph_health_status"}
+        - --whitelist={__name__="job:ceph_osd_metadata:count"}
+        - --whitelist={__name__="job:kube_pv:count"}
+        - --whitelist={__name__="job:ceph_pools_iops:total"}
+        - --whitelist={__name__="job:ceph_pools_iops_bytes:total"}
+        - --whitelist={__name__="job:ceph_versions_running:count"}
+        - --whitelist={__name__="job:noobaa_total_unhealthy_buckets:sum"}
+        - --whitelist={__name__="job:noobaa_bucket_count:sum"}
+        - --whitelist={__name__="job:noobaa_total_object_count:sum"}
+        - --whitelist={__name__="noobaa_accounts_num"}
+        - --whitelist={__name__="noobaa_total_usage"}
+        - --whitelist={__name__="console_url"}
+        - --whitelist={__name__="cluster:network_attachment_definition_instances:max"}
+        - --whitelist={__name__="cluster:network_attachment_definition_enabled_instance_up:max"}
+        - --whitelist={__name__="insightsclient_request_send_total"}
+        - --whitelist={__name__="cam_app_workload_migrations"}
         - --token-expire-seconds=3600
         - --forward-url=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
         env:
