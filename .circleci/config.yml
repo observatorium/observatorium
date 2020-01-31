@@ -16,9 +16,9 @@ jobs:
     steps:
       - checkout
       - run: |
-          ./tests/kind.sh
-          ./tests/deploy.sh
-          ./tests/test.sh
+          ./tests/e2e.sh kind
+          ./tests/e2e.sh deploy
+          ./tests/e2e.sh test
 
 workflows:
   version: 2
