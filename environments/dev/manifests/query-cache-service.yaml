@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: cortex-query-frontend
+    app.kubernetes.io/instance: cortex-query-cache
+    app.kubernetes.io/name: observatorium
+    app.kubernetes.io/version: master-8533a216
+  name: cortex-query-cache
+  namespace: observatorium
+spec:
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090
+  selector:
+    app.kubernetes.io/component: cortex-query-frontend
+    app.kubernetes.io/instance: cortex-query-cache
+    app.kubernetes.io/name: observatorium

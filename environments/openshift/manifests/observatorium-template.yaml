@@ -3,85 +3,278 @@ kind: Template
 metadata:
   name: observatorium
 objects:
+- apiVersion: v1
+  data:
+    config.yaml: |-
+      "auth_enabled": false
+      "frontend":
+        "align_queries_with_step": true
+        "cache_results": true
+        "compress_responses": true
+        "results_cache":
+          "cache":
+            "enable_fifocache": true
+            "fifocache":
+              "size": 1024
+              "validity": "6h"
+          "max_freshness": "1m"
+        "split_queries_by_day": true
+      "http_prefix": null
+      "server":
+        "http_listen_port": 9090
+      "target": "query-frontend"
+  kind: ConfigMap
+  metadata:
+    labels:
+      app.kubernetes.io/component: cortex-query-frontend
+      app.kubernetes.io/instance: cortex-query-cache
+      app.kubernetes.io/name: observatorium
+      app.kubernetes.io/version: master-8533a216
+    name: cortex-query-cache
+    namespace: ${NAMESPACE}
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
-      app.kubernetes.io/name: thanos-querier
-    name: thanos-querier
+      app.kubernetes.io/component: cortex-query-frontend
+      app.kubernetes.io/instance: cortex-query-cache
+      app.kubernetes.io/name: observatorium
+      app.kubernetes.io/version: master-8533a216
+    name: cortex-query-cache
     namespace: ${NAMESPACE}
   spec:
-    replicas: ${{THANOS_QUERIER_REPLICAS}}
+    replicas: 3
     selector:
       matchLabels:
-        app.kubernetes.io/name: thanos-querier
+        app.kubernetes.io/component: cortex-query-frontend
+        app.kubernetes.io/instance: cortex-query-cache
+        app.kubernetes.io/name: observatorium
     template:
       metadata:
         labels:
-          app.kubernetes.io/name: thanos-querier
-          app.kubernetes.io/tracing: jaeger-agent
+          app.kubernetes.io/component: cortex-query-frontend
+          app.kubernetes.io/instance: cortex-query-cache
+          app.kubernetes.io/name: observatorium
+          app.kubernetes.io/version: master-8533a216
       spec:
-        affinity:
-          podAntiAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-            - podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                    - thanos-querier
-                namespaces:
-                - ${NAMESPACE}
-                topologyKey: kubernetes.io/hostname
-              weight: 100
         containers:
         - args:
-          - query
-          - --query.replica-label=replica
-          - --query.replica-label=ruler_replica
-          - --query.replica-label=prometheus_replica
-          - --grpc-address=0.0.0.0:10901
-          - --http-address=0.0.0.0:9090
-          - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
-          - --store=dnssrv+_grpc._tcp.thanos-ruler.${NAMESPACE}.svc.cluster.local
+          - -config.file=/etc/cache-config/config.yaml
+          - -frontend.downstream-url=http://thanos-query.${NAMESPACE}.svc.cluster.local.:9090
+          image: quay.io/cortexproject/cortex:master-8533a216
+          name: cortex-query-frontend
+          ports:
+          - containerPort: 9090
+            name: http
+          resources:
+            limits:
+              cpu: ${THANOS_QUERIER_CACHE_CPU_LIMIT}
+              memory: ${THANOS_QUERIER_CACHE_MEMORY_LIMIT}
+            requests:
+              cpu: ${THANOS_QUERIER_CACHE_CPU_REQUEST}
+              memory: ${THANOS_QUERIER_CACHE_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /etc/cache-config/
+            name: query-cache-config
+            readOnly: false
+        - args:
+          - -provider=openshift
+          - -https-address=:9091
+          - -http-address=
+          - -email-domain=*
+          - -upstream=http://localhost:9090
+          - -openshift-service-account=telemeter-production
+          - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
+            "namespace": "${NAMESPACE}"}'
+          - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",
+            "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}'
+          - -tls-cert=/etc/tls/private/tls.crt
+          - -tls-key=/etc/tls/private/tls.key
+          - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
+          - -cookie-secret-file=/etc/proxy/secrets/session_secret
+          - -openshift-ca=/etc/pki/tls/cert.pem
+          - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
+          name: oauth-proxy
+          ports:
+          - containerPort: "9091"
+            name: https
+          resources:
+            limits:
+              cpu: ${JAEGER_PROXY_CPU_LIMITS}
+              memory: ${JAEGER_PROXY_MEMORY_LIMITS}
+            requests:
+              cpu: ${JAEGER_PROXY_CPU_REQUEST}
+              memory: ${JAEGER_PROXY_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /etc/tls/private
+            name: query-cache-tls
+            readOnly: false
+          - mountPath: /etc/proxy/secrets
+            name: query-cache-proxy
+            readOnly: false
+        volumes:
+        - configMap:
+            name: cortex-query-cache
+          name: query-cache-config
+        - name: query-cache-tls
+          secret:
+            secretName: query-cache-tls
+        - name: query-cache-proxy
+          secret:
+            secretName: query-cache-proxy
+- apiVersion: v1
+  data:
+    session_secret: ""
+  kind: Secret
+  metadata:
+    labels:
+      app.kubernetes.io/component: cortex-query-frontend
+      app.kubernetes.io/instance: cortex-query-cache
+      app.kubernetes.io/name: observatorium
+      app.kubernetes.io/version: master-8533a216
+    name: query-cache-proxy
+    namespace: ${NAMESPACE}
+  type: Opaque
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      service.alpha.openshift.io/serving-cert-secret-name: query-cache-tls
+    labels:
+      app.kubernetes.io/component: cortex-query-frontend
+      app.kubernetes.io/instance: cortex-query-cache
+      app.kubernetes.io/name: observatorium
+      app.kubernetes.io/version: master-8533a216
+    name: cortex-query-cache
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+    - name: https
+      port: "9091"
+      targetPort: https
+    selector:
+      app.kubernetes.io/component: cortex-query-frontend
+      app.kubernetes.io/instance: cortex-query-cache
+      app.kubernetes.io/name: observatorium
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-compact
+      app.kubernetes.io/instance: thanos-compact
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
+    name: thanos-compact
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - name: http
+      port: 10902
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: thanos-compact
+      app.kubernetes.io/instance: thanos-compact
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-compact
+      app.kubernetes.io/instance: thanos-compact
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
+    name: thanos-compact
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: thanos-compact
+        app.kubernetes.io/instance: thanos-compact
+        app.kubernetes.io/name: thanos
+        app.kubernetes.io/tracing: jaeger-agent
+    serviceName: thanos-compact
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: thanos-compact
+          app.kubernetes.io/instance: thanos-compact
+          app.kubernetes.io/name: thanos
+          app.kubernetes.io/tracing: jaeger-agent
+          app.kubernetes.io/version: v0.9.0
+      spec:
+        containers:
+        - args:
+          - compact
+          - --wait
+          - --objstore.config=$(OBJSTORE_CONFIG)
+          - --data-dir=/var/thanos/compact
+          - --debug.accept-malformed-index
+          - --retention.resolution-raw=14d
+          - --retention.resolution-5m=1s
+          - --retention.resolution-1h=1s
+          - --downsampling.disable
           - |
             --tracing.config=
               type: JAEGER
               config:
-                service_name: thanos-querier
+                service_name: thanos-compact
                 sampler_type: ratelimiting
                 sampler_param: 2
-          - --store=dnssrv+_grpc._tcp.thanos-receive-default.${NAMESPACE}.svc.cluster.local
-          - --web.external-prefix=/ui/v1/metrics
+          env:
+          - name: OBJSTORE_CONFIG
+            valueFrom:
+              secretKeyRef:
+                key: thanos.yaml
+                name: ${THANOS_CONFIG_SECRET}
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: ${THANOS_S3_SECRET}
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: ${THANOS_S3_SECRET}
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
           livenessProbe:
             failureThreshold: 4
             httpGet:
               path: /-/healthy
-              port: 9090
+              port: 10902
               scheme: HTTP
             periodSeconds: 30
-          name: thanos-querier
+          name: thanos-compact
           ports:
-          - containerPort: 10901
-            name: grpc
-          - containerPort: 9090
+          - containerPort: 10902
             name: http
           readinessProbe:
             failureThreshold: 20
             httpGet:
               path: /-/ready
-              port: 9090
+              port: 10902
               scheme: HTTP
             periodSeconds: 5
           resources:
             limits:
-              cpu: ${THANOS_QUERIER_CPU_LIMIT}
-              memory: ${THANOS_QUERIER_MEMORY_LIMIT}
+              cpu: ${THANOS_COMPACTOR_CPU_LIMIT}
+              memory: ${THANOS_COMPACTOR_MEMORY_LIMIT}
+            replicas: ${{THANOS_COMPACTOR_REPLICAS}}
             requests:
-              cpu: ${THANOS_QUERIER_CPU_REQUEST}
-              memory: ${THANOS_QUERIER_MEMORY_REQUEST}
+              cpu: ${THANOS_COMPACTOR_CPU_REQUEST}
+              memory: ${THANOS_COMPACTOR_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /var/thanos/compact
+            name: data
+            readOnly: false
         - args:
           - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
           - --reporter.type=grpc
@@ -110,20 +303,113 @@ objects:
             name: configs
           - containerPort: 14271
             name: metrics
+        terminationGracePeriodSeconds: 120
+        volumes: null
+    volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-query
+      app.kubernetes.io/instance: thanos-query
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
+    name: thanos-query
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: ${{THANOS_QUERIER_REPLICAS}}
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: thanos-query
+        app.kubernetes.io/instance: thanos-query
+        app.kubernetes.io/name: thanos
+        app.kubernetes.io/tracing: jaeger-agent
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: thanos-query
+          app.kubernetes.io/instance: thanos-query
+          app.kubernetes.io/name: thanos
+          app.kubernetes.io/tracing: jaeger-agent
+          app.kubernetes.io/version: v0.9.0
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                    - thanos
+                namespaces:
+                - ${NAMESPACE}
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+        containers:
+        - args:
+          - query
+          - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:9090
+          - --query.replica-label=prometheus_replica
+          - --query.replica-label=ruler_replica
+          - --query.replica-label=replica
+          - --store=dnssrv+_grpc._tcp.thanos-rule.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.thanos-store.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.thanos-receive-default.${NAMESPACE}.svc.cluster.local
+          - --web.external-prefix=/ui/v1/metrics
+          - |
+            --tracing.config=
+              type: JAEGER
+              config:
+                service_name: thanos-query
+                sampler_type: ratelimiting
+                sampler_param: 2
+          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /-/healthy
+              port: 9090
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-query
+          ports:
+          - containerPort: 10901
+            name: grpc
+          - containerPort: 9090
+            name: http
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 9090
+              scheme: HTTP
+            periodSeconds: 5
           resources:
             limits:
-              cpu: 128m
-              memory: 128Mi
+              cpu: ${THANOS_QUERIER_CPU_LIMIT}
+              memory: ${THANOS_QUERIER_MEMORY_LIMIT}
             requests:
-              cpu: 32m
-              memory: 64Mi
+              cpu: ${THANOS_QUERIER_CPU_REQUEST}
+              memory: ${THANOS_QUERIER_MEMORY_REQUEST}
         - args:
           - -provider=openshift
           - -https-address=:9091
           - -http-address=
           - -email-domain=*
           - -upstream=http://localhost:9090
-          - -openshift-service-account=prometheus-telemeter
+          - -openshift-service-account=telemeter-production
           - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
             "namespace": "${NAMESPACE}"}'
           - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",
@@ -134,11 +420,10 @@ objects:
           - -cookie-secret-file=/etc/proxy/secrets/session_secret
           - -openshift-ca=/etc/pki/tls/cert.pem
           - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-          - -skip-auth-regex=^/metrics
           image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
-          name: proxy
+          name: oauth-proxy
           ports:
-          - containerPort: 9091
+          - containerPort: "9091"
             name: https
           resources:
             limits:
@@ -149,39 +434,73 @@ objects:
               memory: ${JAEGER_PROXY_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /etc/tls/private
-            name: secret-querier-tls
+            name: query-tls
             readOnly: false
           - mountPath: /etc/proxy/secrets
-            name: secret-querier-proxy
+            name: query-proxy
             readOnly: false
-        serviceAccount: prometheus-telemeter
-        serviceAccountName: prometheus-telemeter
+        - args:
+          - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
+          - --reporter.type=grpc
+          - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
+          env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 14271
+              scheme: HTTP
+          name: jaeger-agent
+          ports:
+          - containerPort: 6831
+            name: jaeger-thrift
+          - containerPort: 5778
+            name: configs
+          - containerPort: 14271
+            name: metrics
         terminationGracePeriodSeconds: 120
         volumes:
-        - name: secret-querier-tls
+        - name: query-tls
           secret:
-            secretName: querier-tls
-        - name: secret-querier-proxy
+            secretName: query-tls
+        - name: query-proxy
           secret:
-            secretName: querier-proxy
+            secretName: query-proxy
 - apiVersion: v1
   data:
     session_secret: ""
   kind: Secret
   metadata:
     labels:
-      app.kubernetes.io/name: thanos-querier
-    name: querier-proxy
+      app.kubernetes.io/component: thanos-query
+      app.kubernetes.io/instance: thanos-query
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
+    name: query-proxy
     namespace: ${NAMESPACE}
   type: Opaque
 - apiVersion: v1
   kind: Service
   metadata:
     annotations:
-      service.alpha.openshift.io/serving-cert-secret-name: querier-tls
+      service.alpha.openshift.io/serving-cert-secret-name: query-tls
     labels:
-      app.kubernetes.io/name: thanos-querier
-    name: thanos-querier
+      app.kubernetes.io/component: thanos-query
+      app.kubernetes.io/instance: thanos-query
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
+    name: thanos-query
     namespace: ${NAMESPACE}
   spec:
     ports:
@@ -192,15 +511,519 @@ objects:
       port: 9090
       targetPort: http
     - name: https
-      port: 9091
+      port: "9091"
       targetPort: https
     selector:
-      app.kubernetes.io/name: thanos-querier
+      app.kubernetes.io/component: thanos-query
+      app.kubernetes.io/instance: thanos-query
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+- apiVersion: v1
+  data:
+    hashrings.json: |-
+      [
+        {
+          "hashring": "default",
+          "tenants": [
+
+          ]
+        }
+      ]
+  kind: ConfigMap
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-receive-controller
+      app.kubernetes.io/instance: thanos-receive-controller
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/version: master-2019-10-18-d55fee2
+    name: thanos-receive-controller-tenants
+    namespace: ${NAMESPACE}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-receive-controller
+      app.kubernetes.io/instance: thanos-receive-controller
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/version: master-2019-10-18-d55fee2
+    name: thanos-receive-controller
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: thanos-receive-controller
+        app.kubernetes.io/instance: thanos-receive-controller
+        app.kubernetes.io/name: thanos
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: thanos-receive-controller
+          app.kubernetes.io/instance: thanos-receive-controller
+          app.kubernetes.io/name: thanos
+          app.kubernetes.io/version: master-2019-10-18-d55fee2
+      spec:
+        containers:
+        - args:
+          - --configmap-name=thanos-receive-controller-tenants
+          - --configmap-generated-name=thanos-receive-controller-tenants-generated
+          - --file-name=hashrings.json
+          - --namespace=$(NAMESPACE)
+          env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          image: ${THANOS_RECEIVE_CONTROLLER_IMAGE}:${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
+          name: thanos-receive-controller
+          ports:
+          - containerPort: 8080
+            name: http
+          resources:
+            limits:
+              cpu: 64m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 24Mi
+        serviceAccount: thanos-receive-controller
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-receive-controller
+      app.kubernetes.io/instance: thanos-receive-controller
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/version: master-2019-10-18-d55fee2
+    name: thanos-receive-controller
+    namespace: ${NAMESPACE}
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    verbs:
+    - list
+    - watch
+    - get
+    - create
+    - update
+  - apiGroups:
+    - apps
+    resources:
+    - statefulsets
+    verbs:
+    - list
+    - watch
+    - get
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-receive-controller
+      app.kubernetes.io/instance: thanos-receive-controller
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/version: master-2019-10-18-d55fee2
+    name: thanos-receive-controller
+    namespace: ${NAMESPACE}
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: thanos-receive-controller
+  subjects:
+  - kind: ServiceAccount
+    name: thanos-receive-controller
+    namespace: ${NAMESPACE}
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
-      app.kubernetes.io/name: thanos-store
+      app.kubernetes.io/component: thanos-receive-controller
+      app.kubernetes.io/instance: thanos-receive-controller
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/version: master-2019-10-18-d55fee2
+    name: thanos-receive-controller
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    selector:
+      app.kubernetes.io/component: thanos-receive-controller
+      app.kubernetes.io/instance: thanos-receive-controller
+      app.kubernetes.io/name: thanos
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-receive-controller
+      app.kubernetes.io/instance: thanos-receive-controller
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/version: master-2019-10-18-d55fee2
+    name: thanos-receive-controller
+    namespace: ${NAMESPACE}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-receive
+      app.kubernetes.io/instance: thanos-receive-default
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
+    name: thanos-receive-default
+    namespace: ${NAMESPACE}
+  spec:
+    clusterIP: None
+    ports:
+    - name: grpc
+      port: 10901
+      targetPort: 10901
+    - name: http
+      port: 10902
+      targetPort: 10902
+    - name: remote-write
+      port: 19291
+      targetPort: 19291
+    selector:
+      app.kubernetes.io/component: thanos-receive
+      app.kubernetes.io/instance: thanos-receive-default
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-receive
+      app.kubernetes.io/instance: thanos-receive-default
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
+      controller.receive.thanos.io: thanos-receive-controller
+      controller.receive.thanos.io/hashring: default
+    name: thanos-receive-default
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: ${{THANOS_RECEIVE_REPLICAS}}
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: thanos-receive
+        app.kubernetes.io/instance: thanos-receive-default
+        app.kubernetes.io/name: thanos
+        app.kubernetes.io/tracing: jaeger-agent
+    serviceName: thanos-receive-default
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: thanos-receive
+          app.kubernetes.io/instance: thanos-receive-default
+          app.kubernetes.io/name: thanos
+          app.kubernetes.io/tracing: jaeger-agent
+          app.kubernetes.io/version: v0.9.0
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app.kubernetes.io/instance
+                    operator: In
+                    values:
+                    - thanos-receive-default
+                namespaces:
+                - ${NAMESPACE}
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+        containers:
+        - args:
+          - receive
+          - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:10902
+          - --remote-write.address=0.0.0.0:19291
+          - --receive.replication-factor=3
+          - --objstore.config=$(OBJSTORE_CONFIG)
+          - --tsdb.path=/var/thanos/receive
+          - --label=replica="$(NAME)"
+          - --label=receive="true"
+          - --receive.local-endpoint=http://$(NAME).thanos-receive-default.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
+          - --tsdb.retention=6h
+          - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
+          - |
+            --tracing.config=
+              type: JAEGER
+              config:
+                service_name: thanos-receive
+                sampler_type: ratelimiting
+                sampler_param: 2
+          env:
+          - name: NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: OBJSTORE_CONFIG
+            valueFrom:
+              secretKeyRef:
+                key: thanos.yaml
+                name: ${THANOS_CONFIG_SECRET}
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: ${THANOS_S3_SECRET}
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: ${THANOS_S3_SECRET}
+          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-receive
+          ports:
+          - containerPort: 10901
+            name: grpc
+          - containerPort: 10902
+            name: http
+          - containerPort: 19291
+            name: remote-write
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          volumeMounts:
+          - mountPath: /var/thanos/receive
+            name: data
+            readOnly: false
+          - mountPath: /var/lib/thanos-receive
+            name: hashring-config
+        - args:
+          - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
+          - --reporter.type=grpc
+          - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
+          env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 14271
+              scheme: HTTP
+          name: jaeger-agent
+          ports:
+          - containerPort: 6831
+            name: jaeger-thrift
+          - containerPort: 5778
+            name: configs
+          - containerPort: 14271
+            name: metrics
+        terminationGracePeriodSeconds: 120
+        volumes:
+        - configMap:
+            name: thanos-receive-controller-tenants-generated
+          name: hashring-config
+    volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi,
+        storageClassName: gp2-encrypted
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-rule
+      app.kubernetes.io/instance: thanos-rule
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
+    name: thanos-rule
+    namespace: ${NAMESPACE}
+  spec:
+    clusterIP: None
+    ports:
+    - name: grpc
+      port: 10901
+      targetPort: grpc
+    - name: http
+      port: 10902
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: thanos-rule
+      app.kubernetes.io/instance: thanos-rule
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-rule
+      app.kubernetes.io/instance: thanos-rule
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
+    name: thanos-rule
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: ${{THANOS_RULER_REPLICAS}}
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: thanos-rule
+        app.kubernetes.io/instance: thanos-rule
+        app.kubernetes.io/name: thanos
+        app.kubernetes.io/tracing: jaeger-agent
+    serviceName: thanos-rule
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: thanos-rule
+          app.kubernetes.io/instance: thanos-rule
+          app.kubernetes.io/name: thanos
+          app.kubernetes.io/tracing: jaeger-agent
+          app.kubernetes.io/version: v0.9.0
+      spec:
+        containers:
+        - args:
+          - rule
+          - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:10902
+          - --objstore.config=$(OBJSTORE_CONFIG)
+          - --data-dir=/var/thanos/rule
+          - --label=rule_replica="$(NAME)"
+          - --alert.label-drop="rule_replica"
+          - --query=dnssrv+_http._tcp.thanos-query.${NAMESPACE}.svc.cluster.local
+          - |
+            --tracing.config=
+              type: JAEGER
+              config:
+                service_name: thanos-rule
+                sampler_type: ratelimiting
+                sampler_param: 2
+          env:
+          - name: NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: OBJSTORE_CONFIG
+            valueFrom:
+              secretKeyRef:
+                key: thanos.yaml
+                name: ${THANOS_CONFIG_SECRET}
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: ${THANOS_S3_SECRET}
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: ${THANOS_S3_SECRET}
+          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 24
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          name: thanos-rule
+          ports:
+          - containerPort: 10901
+            name: grpc
+          - containerPort: 10902
+            name: http
+          readinessProbe:
+            failureThreshold: 18
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: ${THANOS_RULER_CPU_LIMIT}
+              memory: ${THANOS_RULER_MEMORY_LIMIT}
+            requests:
+              cpu: ${THANOS_RULER_CPU_REQUEST}
+              memory: ${THANOS_RULER_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /var/thanos/rule
+            name: data
+            readOnly: false
+        - args:
+          - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
+          - --reporter.type=grpc
+          - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
+          env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 14271
+              scheme: HTTP
+          name: jaeger-agent
+          ports:
+          - containerPort: 6831
+            name: jaeger-thrift
+          - containerPort: 5778
+            name: configs
+          - containerPort: 14271
+            name: metrics
+        volumes: null
+    volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/component: thanos-store
+      app.kubernetes.io/instance: thanos-store
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
     name: thanos-store
     namespace: ${NAMESPACE}
   spec:
@@ -213,25 +1036,38 @@ objects:
       port: 10902
       targetPort: 10902
     selector:
-      app.kubernetes.io/name: thanos-store
+      app.kubernetes.io/component: thanos-store
+      app.kubernetes.io/instance: thanos-store
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
     labels:
-      app.kubernetes.io/name: thanos-store
+      app.kubernetes.io/component: thanos-store
+      app.kubernetes.io/instance: thanos-store
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/tracing: jaeger-agent
+      app.kubernetes.io/version: v0.9.0
     name: thanos-store
     namespace: ${NAMESPACE}
   spec:
     replicas: ${{THANOS_STORE_REPLICAS}}
     selector:
       matchLabels:
-        app.kubernetes.io/name: thanos-store
+        app.kubernetes.io/component: thanos-store
+        app.kubernetes.io/instance: thanos-store
+        app.kubernetes.io/name: thanos
+        app.kubernetes.io/tracing: jaeger-agent
     serviceName: thanos-store
     template:
       metadata:
         labels:
-          app.kubernetes.io/name: thanos-store
+          app.kubernetes.io/component: thanos-store
+          app.kubernetes.io/instance: thanos-store
+          app.kubernetes.io/name: thanos
           app.kubernetes.io/tracing: jaeger-agent
+          app.kubernetes.io/version: v0.9.0
       spec:
         containers:
         - args:
@@ -293,7 +1129,7 @@ objects:
               memory: ${THANOS_STORE_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /var/thanos/store
-            name: thanos-store-data
+            name: data
             readOnly: false
         - args:
           - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
@@ -323,166 +1159,21 @@ objects:
             name: configs
           - containerPort: 14271
             name: metrics
-          resources:
-            limits:
-              cpu: 128m
-              memory: 128Mi
-            requests:
-              cpu: 32m
-              memory: 64Mi
         terminationGracePeriodSeconds: 120
         volumes: null
     volumeClaimTemplates:
     - metadata:
-        name: thanos-store-data
+        name: data
       spec:
         accessModes:
         - ReadWriteOnce
         resources:
           requests:
-            storage: 50Gi
+            storage: 50Gi,
         storageClassName: gp2-encrypted
 - apiVersion: v1
   kind: Service
   metadata:
-    labels:
-      app.kubernetes.io/name: thanos-compactor
-    name: thanos-compactor
-    namespace: ${NAMESPACE}
-  spec:
-    ports:
-    - name: http
-      port: 10902
-      targetPort: http
-    selector:
-      app.kubernetes.io/name: thanos-compactor
-- apiVersion: apps/v1
-  kind: StatefulSet
-  metadata:
-    labels:
-      app.kubernetes.io/name: thanos-compactor
-    name: thanos-compactor
-    namespace: ${NAMESPACE}
-  spec:
-    replicas: ${{THANOS_COMPACTOR_REPLICAS}}
-    selector:
-      matchLabels:
-        app.kubernetes.io/name: thanos-compactor
-    serviceName: thanos-compactor
-    template:
-      metadata:
-        labels:
-          app.kubernetes.io/name: thanos-compactor
-          app.kubernetes.io/tracing: jaeger-agent
-      spec:
-        containers:
-        - args:
-          - compact
-          - --wait
-          - --retention.resolution-raw=14d
-          - --downsampling.disable
-          - --retention.resolution-5m=1s
-          - --retention.resolution-1h=1s
-          - --objstore.config=$(OBJSTORE_CONFIG)
-          - --data-dir=/var/thanos/compactor
-          - --debug.accept-malformed-index
-          - |
-            --tracing.config=
-              type: JAEGER
-              config:
-                service_name: thanos-compactor
-                sampler_type: ratelimiting
-                sampler_param: 2
-          env:
-          - name: OBJSTORE_CONFIG
-            valueFrom:
-              secretKeyRef:
-                key: thanos.yaml
-                name: ${THANOS_CONFIG_SECRET}
-          - name: AWS_ACCESS_KEY_ID
-            valueFrom:
-              secretKeyRef:
-                key: aws_access_key_id
-                name: ${THANOS_S3_SECRET}
-          - name: AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                key: aws_secret_access_key
-                name: ${THANOS_S3_SECRET}
-          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
-          livenessProbe:
-            failureThreshold: 4
-            httpGet:
-              path: /-/healthy
-              port: 10902
-              scheme: HTTP
-            periodSeconds: 30
-          name: thanos-compactor
-          ports:
-          - containerPort: 10902
-            name: http
-          readinessProbe:
-            failureThreshold: 20
-            httpGet:
-              path: /-/ready
-              port: 10902
-              scheme: HTTP
-            periodSeconds: 5
-          resources:
-            limits:
-              cpu: ${THANOS_COMPACTOR_CPU_LIMIT}
-              memory: ${THANOS_COMPACTOR_MEMORY_LIMIT}
-            requests:
-              cpu: ${THANOS_COMPACTOR_CPU_REQUEST}
-              memory: ${THANOS_COMPACTOR_MEMORY_REQUEST}
-          volumeMounts:
-          - mountPath: /var/thanos/compactor
-            name: thanos-compactor-data
-            readOnly: false
-        - args:
-          - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
-          - --reporter.type=grpc
-          - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
-          env:
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: POD
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
-          livenessProbe:
-            failureThreshold: 5
-            httpGet:
-              path: /
-              port: 14271
-              scheme: HTTP
-          name: jaeger-agent
-          ports:
-          - containerPort: 6831
-            name: jaeger-thrift
-          - containerPort: 5778
-            name: configs
-          - containerPort: 14271
-            name: metrics
-          resources:
-            limits:
-              cpu: 128m
-              memory: 128Mi
-            requests:
-              cpu: 32m
-              memory: 64Mi
-        terminationGracePeriodSeconds: 120
-        volumes:
-        - emptyDir: {}
-          name: thanos-compactor-data
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app.kubernetes.io/name: thanos-receive
     name: thanos-receive
     namespace: ${NAMESPACE}
   spec:
@@ -497,929 +1188,10 @@ objects:
       port: 19291
       targetPort: 19291
     selector:
-      app.kubernetes.io/name: thanos-receive
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app.kubernetes.io/instance: default
-      app.kubernetes.io/name: thanos-receive
-    name: thanos-receive-default
-    namespace: ${NAMESPACE}
-  spec:
-    clusterIP: None
-    ports:
-    - name: grpc
-      port: 10901
-      targetPort: 10901
-    - name: http
-      port: 10902
-      targetPort: 10902
-    - name: remote-write
-      port: 19291
-      targetPort: 19291
-    selector:
-      app.kubernetes.io/instance: default
-      app.kubernetes.io/name: thanos-receive
-- apiVersion: apps/v1
-  kind: StatefulSet
-  metadata:
-    labels:
-      app.kubernetes.io/instance: default
-      app.kubernetes.io/name: thanos-receive
-      app.kubernetes.io/tracing: jaeger-agent
-      controller.receive.thanos.io: thanos-receive-controller
-      controller.receive.thanos.io/hashring: default
-    name: thanos-receive-default
-    namespace: ${NAMESPACE}
-  spec:
-    replicas: ${{THANOS_RECEIVE_REPLICAS}}
-    selector:
-      matchLabels:
-        app.kubernetes.io/instance: default
-        app.kubernetes.io/name: thanos-receive
-    serviceName: thanos-receive-default
-    template:
-      metadata:
-        labels:
-          app.kubernetes.io/instance: default
-          app.kubernetes.io/name: thanos-receive
-      spec:
-        affinity:
-          podAntiAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-            - podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                  - key: app.kubernetes.io/name
-                    operator: In
-                    values:
-                    - thanos-receive
-                namespaces:
-                - ${NAMESPACE}
-                topologyKey: kubernetes.io/hostname
-              weight: 100
-        containers:
-        - args:
-          - receive
-          - --grpc-address=0.0.0.0:10901
-          - --http-address=0.0.0.0:10902
-          - --remote-write.address=0.0.0.0:19291
-          - --objstore.config=$(OBJSTORE_CONFIG)
-          - --tsdb.path=/var/thanos/receive
-          - --label=replica="$(NAME)"
-          - --label=receive="true"
-          - --tsdb.retention=6h
-          - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
-          - --receive.local-endpoint=http://$(NAME).thanos-receive-default.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
-          - |
-            --tracing.config=
-              type: JAEGER
-              config:
-                service_name: thanos-receive-default
-                sampler_type: ratelimiting
-                sampler_param: 2
-          - --receive.replication-factor=3
-          env:
-          - name: NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: OBJSTORE_CONFIG
-            valueFrom:
-              secretKeyRef:
-                key: thanos.yaml
-                name: ${THANOS_CONFIG_SECRET}
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: AWS_ACCESS_KEY_ID
-            valueFrom:
-              secretKeyRef:
-                key: aws_access_key_id
-                name: ${THANOS_S3_SECRET}
-          - name: AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                key: aws_secret_access_key
-                name: ${THANOS_S3_SECRET}
-          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
-          livenessProbe:
-            failureThreshold: 8
-            httpGet:
-              path: /-/healthy
-              port: 10902
-              scheme: HTTP
-            periodSeconds: 30
-          name: thanos-receive
-          ports:
-          - containerPort: 10901
-            name: grpc
-          - containerPort: 10902
-            name: http
-          - containerPort: 19291
-            name: remote-write
-          readinessProbe:
-            failureThreshold: 20
-            httpGet:
-              path: /-/ready
-              port: 10902
-              scheme: HTTP
-            periodSeconds: 5
-          resources:
-            limits:
-              cpu: ${THANOS_RECEIVE_CPU_LIMIT}
-              memory: ${THANOS_RECEIVE_MEMORY_LIMIT}
-            requests:
-              cpu: ${THANOS_RECEIVE_CPU_REQUEST}
-              memory: ${THANOS_RECEIVE_MEMORY_REQUEST}
-          volumeMounts:
-          - mountPath: /var/thanos/receive
-            name: thanos-receive-data
-            readOnly: false
-          - mountPath: /var/lib/thanos-receive
-            name: observatorium-tenants
-        - args:
-          - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
-          - --reporter.type=grpc
-          - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
-          env:
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: POD
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
-          livenessProbe:
-            failureThreshold: 5
-            httpGet:
-              path: /
-              port: 14271
-              scheme: HTTP
-          name: jaeger-agent
-          ports:
-          - containerPort: 6831
-            name: jaeger-thrift
-          - containerPort: 5778
-            name: configs
-          - containerPort: 14271
-            name: metrics
-          resources:
-            limits:
-              cpu: 128m
-              memory: 128Mi
-            requests:
-              cpu: 32m
-              memory: 64Mi
-        terminationGracePeriodSeconds: 120
-        volumes:
-        - configMap:
-            name: observatorium-tenants-generated
-          name: observatorium-tenants
-    volumeClaimTemplates:
-    - metadata:
-        name: thanos-receive-data
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 50Gi
-        storageClassName: gp2-encrypted
+      app.kubernetes.io/component: thanos-receive
 - apiVersion: v1
   data:
-    hashrings.json: |-
-      [
-        {
-          "hashring": "default",
-          "tenants": [
-
-          ]
-        }
-      ]
-  kind: ConfigMap
-  metadata:
-    labels:
-      app.kubernetes.io/name: thanos-receive-controller
-    name: observatorium-tenants
-    namespace: ${NAMESPACE}
-- apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    labels:
-      app.kubernetes.io/name: thanos-receive-controller
-    name: thanos-receive-controller
-    namespace: ${NAMESPACE}
-  spec:
-    replicas: 1
-    selector:
-      matchLabels:
-        app.kubernetes.io/name: thanos-receive-controller
-    template:
-      metadata:
-        labels:
-          app.kubernetes.io/name: thanos-receive-controller
-      spec:
-        containers:
-        - args:
-          - --configmap-name=observatorium-tenants
-          - --configmap-generated-name=observatorium-tenants-generated
-          - --file-name=hashrings.json
-          - --namespace=$(NAMESPACE)
-          env:
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          image: ${THANOS_RECEIVE_CONTROLLER_IMAGE}:${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
-          name: thanos-receive-controller
-          ports:
-          - containerPort: 8080
-            name: http
-          resources:
-            limits:
-              cpu: 64m
-              memory: 128Mi
-            requests:
-              cpu: 10m
-              memory: 24Mi
-        serviceAccount: thanos-receive-controller
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    name: thanos-receive-controller
-    namespace: ${NAMESPACE}
-  rules:
-  - apiGroups:
-    - ""
-    resources:
-    - configmaps
-    verbs:
-    - list
-    - watch
-    - get
-    - create
-    - update
-  - apiGroups:
-    - apps
-    resources:
-    - statefulsets
-    verbs:
-    - list
-    - watch
-    - get
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: RoleBinding
-  metadata:
-    name: thanos-receive-controller
-    namespace: ${NAMESPACE}
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: Role
-    name: thanos-receive-controller
-  subjects:
-  - kind: ServiceAccount
-    name: thanos-receive-controller
-    namespace: ${NAMESPACE}
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app.kubernetes.io/name: thanos-receive-controller
-    name: thanos-receive-controller
-    namespace: ${NAMESPACE}
-  spec:
-    ports:
-    - name: http
-      port: 8080
-      targetPort: 8080
-    selector:
-      app.kubernetes.io/name: thanos-receive-controller
-- apiVersion: v1
-  kind: ServiceAccount
-  metadata:
-    name: thanos-receive-controller
-    namespace: ${NAMESPACE}
-- apiVersion: monitoring.coreos.com/v1
-  kind: ServiceMonitor
-  metadata:
-    name: thanos-receive-controller
-    namespace: ${NAMESPACE}
-  spec:
-    endpoints:
-    - port: http
-    selector:
-      matchLabels:
-        app.kubernetes.io/name: thanos-receive-controller
-- apiVersion: v1
-  data:
-    observatorium-cache-conf.yaml: |-
-      "auth_enabled": false
-      "frontend":
-        "align_queries_with_step": true
-        "cache_results": true
-        "compress_responses": true
-        "results_cache":
-          "cache":
-            "enable_fifocache": true
-            "fifocache":
-              "size": 1024
-              "validity": "6h"
-          "max_freshness": "1m"
-        "split_queries_by_day": true
-      "http_prefix": null
-      "server":
-        "http_listen_port": 9090
-      "target": "query-frontend"
-  kind: ConfigMap
-  metadata:
-    labels:
-      app.kubernetes.io/name: observatorium-querier-cache
-    name: observatorium-cache-conf
-    namespace: ${NAMESPACE}
-- apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    labels:
-      app.kubernetes.io/name: observatorium-querier-cache
-    name: observatorium-querier-cache
-    namespace: ${NAMESPACE}
-  spec:
-    replicas: 3
-    selector:
-      matchLabels:
-        app.kubernetes.io/name: observatorium-querier-cache
-    template:
-      metadata:
-        labels:
-          app.kubernetes.io/name: observatorium-querier-cache
-      spec:
-        containers:
-        - args:
-          - -config.file=/etc/cache-config/observatorium-cache-conf.yaml
-          - -frontend.downstream-url=http://thanos-querier.${NAMESPACE}.svc.cluster.local:9090
-          env:
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          image: quay.io/cortexproject/cortex:master-8533a216
-          name: observatorium-querier-cache
-          ports:
-          - containerPort: 9001
-            name: http
-          resources:
-            limits:
-              cpu: ${THANOS_QUERIER_CACHE_CPU_LIMIT}
-              memory: ${THANOS_QUERIER_CACHE_MEMORY_LIMIT}
-            requests:
-              cpu: ${THANOS_QUERIER_CACHE_CPU_REQUEST}
-              memory: ${THANOS_QUERIER_CACHE_MEMORY_REQUEST}
-          volumeMounts:
-          - mountPath: /etc/cache-config/
-            name: querier-cache-config
-            readOnly: false
-        - args:
-          - -provider=openshift
-          - -https-address=:9091
-          - -http-address=
-          - -email-domain=*
-          - -upstream=http://localhost:9090
-          - -openshift-service-account=prometheus-telemeter
-          - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
-            "namespace": "${NAMESPACE}"}'
-          - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",
-            "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}'
-          - -tls-cert=/etc/tls/private/tls.crt
-          - -tls-key=/etc/tls/private/tls.key
-          - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
-          - -cookie-secret-file=/etc/proxy/secrets/session_secret
-          - -openshift-ca=/etc/pki/tls/cert.pem
-          - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-          - -skip-auth-regex=^/metrics
-          image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
-          name: proxy
-          ports:
-          - containerPort: 9091
-            name: https
-          resources:
-            limits:
-              cpu: ${JAEGER_PROXY_CPU_LIMITS}
-              memory: ${JAEGER_PROXY_MEMORY_LIMITS}
-            requests:
-              cpu: ${JAEGER_PROXY_CPU_REQUEST}
-              memory: ${JAEGER_PROXY_MEMORY_REQUEST}
-          volumeMounts:
-          - mountPath: /etc/tls/private
-            name: secret-querier-cache-tls
-            readOnly: false
-          - mountPath: /etc/proxy/secrets
-            name: secret-querier-cache-proxy
-            readOnly: false
-        serviceAccount: prometheus-telemeter
-        serviceAccountName: prometheus-telemeter
-        volumes:
-        - configMap:
-            name: observatorium-cache-conf
-          name: querier-cache-config
-        - name: secret-querier-cache-tls
-          secret:
-            secretName: querier-cache-tls
-        - name: secret-querier-cache-proxy
-          secret:
-            secretName: querier-cache-proxy
-- apiVersion: v1
-  data:
-    session_secret: ""
-  kind: Secret
-  metadata:
-    labels:
-      app.kubernetes.io/name: thanos-querier
-    name: querier-cache-proxy
-    namespace: ${NAMESPACE}
-  type: Opaque
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      service.alpha.openshift.io/serving-cert-secret-name: querier-cache-tls
-    labels:
-      app.kubernetes.io/name: observatorium-querier-cache
-    name: observatorium-cache
-    namespace: ${NAMESPACE}
-  spec:
-    ports:
-    - name: cache
-      port: 9090
-      targetPort: 9090
-    - name: proxy
-      port: 9091
-      targetPort: https
-    selector:
-      app.kubernetes.io/name: observatorium-querier-cache
-- apiVersion: v1
-  data:
-    telemeter-rules.yaml: |-
-      "groups":
-      - "name": "telemeter.rules"
-        "rules":
-        - "expr": |
-            count by (name,reason) (cluster_operator_conditions{condition="Degraded"} == 1)
-          "record": "name_reason:cluster_operator_degraded:count"
-        - "expr": |
-            count by (name,reason) (cluster_operator_conditions{condition="Available"} == 0)
-          "record": "name_reason:cluster_operator_unavailable:count"
-        - "expr": |
-            sort_desc(max by (_id,code) (code:apiserver_request_count:rate:sum{code=~"(4|5)\\d\\d"}) > 0.5)
-          "record": "id_code:apiserver_request_error_rate_sum:max"
-  kind: ConfigMap
-  metadata:
-    labels:
-      app.kubernetes.io/name: thanos-ruler
-    name: telemeter-rules-config
-    namespace: ${NAMESPACE}
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app.kubernetes.io/name: thanos-ruler
-    name: thanos-ruler
-    namespace: ${NAMESPACE}
-  spec:
-    clusterIP: None
-    ports:
-    - name: grpc
-      port: 10901
-      targetPort: grpc
-    - name: http
-      port: 10902
-      targetPort: http
-    selector:
-      app.kubernetes.io/name: thanos-ruler
-- apiVersion: apps/v1
-  kind: StatefulSet
-  metadata:
-    labels:
-      app.kubernetes.io/name: thanos-ruler
-    name: thanos-ruler
-    namespace: ${NAMESPACE}
-  spec:
-    replicas: ${{THANOS_RULER_REPLICAS}}
-    selector:
-      matchLabels:
-        app.kubernetes.io/name: thanos-ruler
-    serviceName: thanos-ruler
-    template:
-      metadata:
-        labels:
-          app.kubernetes.io/name: thanos-ruler
-      spec:
-        containers:
-        - args:
-          - rule
-          - --grpc-address=0.0.0.0:10901
-          - --http-address=0.0.0.0:10902
-          - --objstore.config=$(OBJSTORE_CONFIG)
-          - --data-dir=/var/thanos/ruler
-          - --label=ruler_replica="$(NAME)"
-          - --alert.label-drop="ruler_replica"
-          - --query=dnssrv+_http._tcp.thanos-querier.${NAMESPACE}.svc.cluster.local
-          - --rule-file=/var/thanos/config/ruler/telemeter-rules.yaml
-          env:
-          - name: NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: OBJSTORE_CONFIG
-            valueFrom:
-              secretKeyRef:
-                key: thanos.yaml
-                name: ${THANOS_CONFIG_SECRET}
-          - name: AWS_ACCESS_KEY_ID
-            valueFrom:
-              secretKeyRef:
-                key: aws_access_key_id
-                name: ${THANOS_S3_SECRET}
-          - name: AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                key: aws_secret_access_key
-                name: ${THANOS_S3_SECRET}
-          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
-          livenessProbe:
-            failureThreshold: 24
-            httpGet:
-              path: /-/healthy
-              port: 10902
-              scheme: HTTP
-            periodSeconds: 5
-          name: thanos-ruler
-          ports:
-          - containerPort: 10901
-            name: grpc
-          - containerPort: 10902
-            name: http
-          readinessProbe:
-            failureThreshold: 18
-            httpGet:
-              path: /-/ready
-              port: 10902
-              scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          resources:
-            limits:
-              cpu: ${THANOS_RULER_CPU_LIMIT}
-              memory: ${THANOS_RULER_MEMORY_LIMIT}
-            requests:
-              cpu: ${THANOS_RULER_CPU_REQUEST}
-              memory: ${THANOS_RULER_MEMORY_REQUEST}
-          volumeMounts:
-          - mountPath: /var/thanos/ruler
-            name: thanos-ruler-data
-            readOnly: false
-          - mountPath: /var/thanos/config/ruler
-            name: telemeter-rules-config
-            readOnly: true
-        volumes:
-        - emptyDir: {}
-          name: thanos-ruler-data
-        - configMap:
-            name: telemeter-rules-config
-          name: telemeter-rules-config
-- apiVersion: monitoring.coreos.com/v1
-  kind: PrometheusRule
-  metadata:
-    labels:
-      prometheus: app-sre
-      role: alert-rules
-    name: observatorium-thanos
-  spec:
-    groups:
-    - name: thanos-compact.rules
-      rules:
-      - alert: ThanosCompactMultipleCompactsAreRunning
-        annotations:
-          message: You should never run more than one Thanos Compact at once. You
-            have {{ $value }}
-        expr: sum(up{job="thanos-compactor"}) > 1
-        for: 5m
-        labels:
-          severity: warning
-      - alert: ThanosCompactHalted
-        annotations:
-          message: Thanos Compact {{$labels.job}} has failed to run and now is halted.
-        expr: thanos_compactor_halted{job="thanos-compactor"} == 1
-        for: 5m
-        labels:
-          severity: warning
-      - alert: ThanosCompactHighCompactionFailures
-        annotations:
-          message: Thanos Compact {{$labels.job}} is failing to execute {{ $value
-            | humanize }}% of compactions.
-        expr: |
-          (
-            sum by (job) (rate(thanos_compact_group_compactions_failures_total{job="thanos-compactor"}[5m]))
-          /
-            sum by (job) (rate(thanos_compact_group_compactions_total{job="thanos-compactor"}[5m]))
-          * 100 > 5
-          )
-        for: 15m
-        labels:
-          severity: warning
-      - alert: ThanosCompactBucketHighOperationFailures
-        annotations:
-          message: Thanos Compact {{$labels.job}} Bucket is failing to execute {{
-            $value | humanize }}% of operations.
-        expr: |
-          (
-            sum by (job) (rate(thanos_objstore_bucket_operation_failures_total{job="thanos-compactor"}[5m]))
-          /
-            sum by (job) (rate(thanos_objstore_bucket_operations_total{job="thanos-compactor"}[5m]))
-          * 100 > 5
-          )
-        for: 15m
-        labels:
-          severity: warning
-      - alert: ThanosCompactHasNotRun
-        annotations:
-          message: Thanos Compact {{$labels.job}} has not uploaded anything for 24
-            hours.
-        expr: (time() - max(thanos_objstore_bucket_last_successful_upload_time{job="thanos-compactor"}))
-          / 60 / 60 > 24
-        labels:
-          severity: warning
-    - name: thanos-querier.rules
-      rules:
-      - alert: ThanosQuerierGrpcServerErrorRate
-        annotations:
-          message: Thanos Querier {{$labels.job}} is failing to handle {{ $value |
-            humanize }}% of requests.
-        expr: |
-          (
-            sum by (job) (rate(grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable", job="thanos-querier"}[5m]))
-          /
-            sum by (job) (rate(grpc_server_started_total{job="thanos-querier"}[5m]))
-          * 100 > 5
-          )
-        for: 5m
-        labels:
-          severity: warning
-      - alert: ThanosQuerierGrpcClientErrorRate
-        annotations:
-          message: Thanos Querier {{$labels.job}} is failing to send {{ $value | humanize
-            }}% of requests.
-        expr: |
-          (
-            sum by (job) (rate(grpc_client_handled_total{grpc_code!="OK", job="thanos-querier"}[5m]))
-          /
-            sum by (job) (rate(grpc_client_started_total{job="thanos-querier"}[5m]))
-          * 100 > 5
-          )
-        for: 5m
-        labels:
-          severity: warning
-      - alert: ThanosQuerierHighDNSFailures
-        annotations:
-          message: Thanos Queriers {{$labels.job}} have {{ $value }} of failing DNS
-            queries.
-        expr: |
-          (
-            sum by (job) (rate(thanos_querier_store_apis_dns_failures_total{job="thanos-querier"}[5m]))
-          /
-            sum by (job) (rate(thanos_querier_store_apis_dns_lookups_total{job="thanos-querier"}[5m]))
-          > 1
-          )
-        for: 15m
-        labels:
-          severity: warning
-      - alert: ThanosQuerierInstantLatencyHigh
-        annotations:
-          message: Thanos Querier {{$labels.job}} has a 99th percentile latency of
-            {{ $value }} seconds for instant queries.
-        expr: |
-          (
-            histogram_quantile(0.99, sum by (job, le) (http_request_duration_seconds_bucket{job="thanos-querier", handler="query"})) > 10
-          and
-            sum by (job) (rate(http_request_duration_seconds_bucket{job="thanos-querier", handler="query"}[5m])) > 0
-          )
-        for: 10m
-        labels:
-          severity: critical
-      - alert: ThanosQuerierRangeLatencyHigh
-        annotations:
-          message: Thanos Querier {{$labels.job}} has a 99th percentile latency of
-            {{ $value }} seconds for instant queries.
-        expr: |
-          (
-            histogram_quantile(0.99, sum by (job, le) (http_request_duration_seconds_bucket{job="thanos-querier", handler="query_range"})) > 10
-          and
-            sum by (job) (rate(http_request_duration_seconds_count{job="thanos-querier", handler="query_range"}[5m])) > 0
-          )
-        for: 10m
-        labels:
-          severity: critical
-    - name: thanos-receive.rules
-      rules:
-      - alert: ThanosReceiveHttpRequestLatencyHigh
-        annotations:
-          message: Thanos Receive {{$labels.job}} has a 99th percentile latency of
-            {{ $value }} seconds for HTTP requests.
-        expr: |
-          (
-            histogram_quantile(0.99, sum by (job, le) (http_request_duration_seconds_bucket{job=~"thanos-receive-.*", handler="receive"})) > 10
-          and
-            sum by (job) (rate(http_request_duration_seconds_count{job=~"thanos-receive-.*", handler="receive"}[5m])) > 0
-          )
-        for: 10m
-        labels:
-          severity: critical
-      - alert: ThanosReceiveHighForwardRequestFailures
-        annotations:
-          message: Thanos Receive {{$labels.job}} is failing to forward {{ $value
-            | humanize }}% of requests.
-        expr: |
-          (
-            sum by (job) (rate(thanos_receive_forward_requests_total{result="error", job=~"thanos-receive-.*"}[5m]))
-          /
-            sum by (job) (rate(thanos_receive_forward_requests_total{job=~"thanos-receive-.*"}[5m]))
-          * 100 > 5
-          )
-        for: 15m
-        labels:
-          severity: critical
-      - alert: ThanosReceiveHighHashringFileRefreshFailures
-        annotations:
-          message: Thanos Receive {{$labels.job}} is failing to refresh hashring file,
-            {{ $value | humanize }} of attempts failed.
-        expr: |
-          (
-            sum by (job) (rate(thanos_receive_hashrings_file_errors_total{job=~"thanos-receive-.*"}[5m]))
-          /
-            sum by (job) (rate(thanos_receive_hashrings_file_refreshes_total{job=~"thanos-receive-.*"}[5m]))
-          > 0
-          )
-        for: 15m
-        labels:
-          severity: warning
-      - alert: ThanosReceiveConfigReloadFailure
-        annotations:
-          message: Thanos Receive {{$labels.job}} has not been able to reload hashring
-            configurations.
-        expr: avg(thanos_receive_config_last_reload_successful{job=~"thanos-receive-.*"})
-          by (job) != 1
-        for: 5m
-        labels:
-          severity: warning
-    - name: thanos-store.rules
-      rules:
-      - alert: ThanosStoreGrpcErrorRate
-        annotations:
-          message: Thanos Store {{$labels.job}} is failing to handle {{ $value | humanize
-            }}% of requests.
-        expr: |
-          (
-            sum by (job) (rate(grpc_server_handled_total{grpc_code=~"Unknown|ResourceExhausted|Internal|Unavailable", job="thanos-store"}[5m]))
-          /
-            sum by (job) (rate(grpc_server_started_total{job="thanos-store"}[5m]))
-          * 100 > 5
-          )
-        for: 5m
-        labels:
-          severity: warning
-      - alert: ThanosStoreSeriesGateLatencyHigh
-        annotations:
-          message: Thanos Store {{$labels.job}} has a 99th percentile latency of {{
-            $value }} seconds for store series gate requests.
-        expr: |
-          (
-            histogram_quantile(0.99, sum by (job, le) (thanos_bucket_store_series_gate_duration_seconds_bucket{job="thanos-store"})) > 2
-          and
-            sum by (job) (rate(thanos_bucket_store_series_gate_duration_seconds_count{job="thanos-store"}[5m])) > 0
-          )
-        for: 10m
-        labels:
-          severity: warning
-      - alert: ThanosStoreBucketHighOperationFailures
-        annotations:
-          message: Thanos Store {{$labels.job}} Bucket is failing to execute {{ $value
-            | humanize }}% of operations.
-        expr: |
-          (
-            sum by (job) (rate(thanos_objstore_bucket_operation_failures_total{job="thanos-store"}[5m]))
-          /
-            sum by (job) (rate(thanos_objstore_bucket_operations_total{job="thanos-store"}[5m]))
-          * 100 > 5
-          )
-        for: 15m
-        labels:
-          severity: warning
-      - alert: ThanosStoreObjstoreOperationLatencyHigh
-        annotations:
-          message: Thanos Store {{$labels.job}} Bucket has a 99th percentile latency
-            of {{ $value }} seconds for the bucket operations.
-        expr: |
-          (
-            histogram_quantile(0.99, sum by (job, le) (thanos_objstore_bucket_operation_duration_seconds_bucket{job="thanos-store"})) > 15
-          and
-            sum by (job) (rate(thanos_objstore_bucket_operation_duration_seconds_count{job="thanos-store"}[5m])) > 0
-          )
-        for: 10m
-        labels:
-          severity: warning
-    - name: thanos-component-absent
-      rules:
-      - alert: ThanosCompactIsDown
-        annotations:
-          message: ThanosCompact has disappeared from Prometheus target discovery.
-        expr: |
-          absent(up{job="thanos-compactor"} == 1)
-        for: 10m
-        labels:
-          severity: critical
-      - alert: ThanosQuerierIsDown
-        annotations:
-          message: ThanosQuerier has disappeared from Prometheus target discovery.
-        expr: |
-          absent(up{job="thanos-querier"} == 1)
-        for: 10m
-        labels:
-          severity: critical
-      - alert: ThanosReceiveDefaultIsDown
-        annotations:
-          message: ThanosReceiveDefault has disappeared from Prometheus target discovery.
-        expr: |
-          absent(up{job="thanos-receive-default"} == 1)
-        for: 10m
-        labels:
-          severity: critical
-      - alert: ThanosStoreIsDown
-        annotations:
-          message: ThanosStore has disappeared from Prometheus target discovery.
-        expr: |
-          absent(up{job="thanos-store"} == 1)
-        for: 10m
-        labels:
-          severity: critical
-    - name: thanos-receive-controller.rules
-      rules:
-      - alert: ThanosReceiveControllerIsDown
-        annotations:
-          message: Thanos Receive Controller has disappeared from Prometheus target
-            discovery.
-        expr: |
-          absent(up{job="thanos-receive-controller"} == 1)
-        for: 5m
-        labels:
-          severity: critical
-      - alert: ThanosReceiveControllerReconcileErrorRate
-        annotations:
-          message: Thanos Receive Controller failing to reconcile changes, {{ $value
-            | humanize }}% of attempts failed.
-        expr: |
-          sum(
-            rate(thanos_receive_controller_reconcile_errors_total{job="thanos-receive-controller"}[5m])
-            /
-            on (namespace) group_left
-            rate(thanos_receive_controller_reconcile_attempts_total{job="thanos-receive-controller"}[5m])
-          ) * 100 >= 10
-        for: 5m
-        labels:
-          severity: warning
-      - alert: ThanosReceiveControllerConfigmapChangeErrorRate
-        annotations:
-          message: Thanos Receive Controller failing to refresh configmap, {{ $value
-            | humanize }}% of attempts failed.
-        expr: |
-          sum(
-            rate(thanos_receive_controller_configmap_change_errors_total{job="thanos-receive-controller"}[5m])
-            /
-            on (namespace) group_left
-            rate(thanos_receive_controller_configmap_change_attempts_total{job="thanos-receive-controller"}[5m])
-          ) * 100 >= 10
-        for: 5m
-        labels:
-          severity: warning
-      - alert: ThanosReceiveConfigInconsistent
-        annotations:
-          message: The configuration of the instances of Thanos Receive `{{$labels.job}}`
-            are out of sync.
-        expr: |
-          avg(thanos_receive_config_hash{job=~"thanos-receive-.*"}) BY (namespace, job)
-            /
-          on (namespace)
-          group_left
-          thanos_receive_controller_configmap_hash{job="thanos-receive-controller"}
-          != 1
-        for: 5m
-        labels:
-          severity: critical
-- apiVersion: v1
-  data:
+    authorize_url: ""
     client_id: ""
     client_secret: ""
     oidc_issuer: ""
@@ -1587,6 +1359,7 @@ objects:
           - --whitelist={__name__="cluster:network_attachment_definition_instances:max"}
           - --whitelist={__name__="cluster:network_attachment_definition_enabled_instance_up:max"}
           - --whitelist={__name__="insightsclient_request_send_total"}
+          - --whitelist={__name__="cam_app_workload_migrations"}
           - --elide-label=prometheus_replica
           - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}

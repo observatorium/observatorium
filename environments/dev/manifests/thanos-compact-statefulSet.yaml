@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: thanos-compact
+    app.kubernetes.io/instance: thanos-compact
+    app.kubernetes.io/name: thanos
+    app.kubernetes.io/version: v0.9.0
+  name: thanos-compact
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: thanos-compact
+      app.kubernetes.io/instance: thanos-compact
+      app.kubernetes.io/name: thanos
+  serviceName: thanos-compact
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: thanos-compact
+        app.kubernetes.io/instance: thanos-compact
+        app.kubernetes.io/name: thanos
+        app.kubernetes.io/version: v0.9.0
+    spec:
+      containers:
+      - args:
+        - compact
+        - --wait
+        - --objstore.config=$(OBJSTORE_CONFIG)
+        - --data-dir=/var/thanos/compact
+        - --debug.accept-malformed-index
+        - --retention.resolution-raw=14d
+        - --retention.resolution-5m=1s
+        - --retention.resolution-1h=1s
+        - --downsampling.disable
+        env:
+        - name: OBJSTORE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              key: thanos.yaml
+              name: thanos-objectstorage
+        image: quay.io/thanos/thanos:v0.9.0
+        livenessProbe:
+          failureThreshold: 4
+          httpGet:
+            path: /-/healthy
+            port: 10902
+            scheme: HTTP
+          periodSeconds: 30
+        name: thanos-compact
+        ports:
+        - containerPort: 10902
+          name: http
+        readinessProbe:
+          failureThreshold: 20
+          httpGet:
+            path: /-/ready
+            port: 10902
+            scheme: HTTP
+          periodSeconds: 5
+        volumeMounts:
+        - mountPath: /var/thanos/compact
+          name: data
+          readOnly: false
+      terminationGracePeriodSeconds: 120
+      volumes: null
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: cortex-query-frontend
+    app.kubernetes.io/instance: cortex-query-cache
+    app.kubernetes.io/name: observatorium
+    app.kubernetes.io/version: master-8533a216
+  name: cortex-query-cache
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: cortex-query-frontend
+      app.kubernetes.io/instance: cortex-query-cache
+      app.kubernetes.io/name: observatorium
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: cortex-query-frontend
+        app.kubernetes.io/instance: cortex-query-cache
+        app.kubernetes.io/name: observatorium
+        app.kubernetes.io/version: master-8533a216
+    spec:
+      containers:
+      - args:
+        - -config.file=/etc/cache-config/config.yaml
+        - -frontend.downstream-url=http://thanos-query.observatorium.svc.cluster.local.:9090
+        image: quay.io/cortexproject/cortex:master-8533a216
+        name: cortex-query-frontend
+        ports:
+        - containerPort: 9090
+          name: http
+        volumeMounts:
+        - mountPath: /etc/cache-config/
+          name: query-cache-config
+          readOnly: false
+      volumes:
+      - configMap:
+          name: cortex-query-cache
+        name: query-cache-config

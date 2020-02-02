@@ -468,7 +468,9 @@ local clusterRoleBinding = k.rbac.v1.clusterRoleBinding;
         deployment.mixin.spec.template.spec.withServiceAccountName('prometheus-telemeter'),
     },
   },
-} + {
+}
+
+{
   apiVersion: 'v1',
   kind: 'Template',
   metadata: {
