@@ -21,9 +21,10 @@ data:
 kind: ConfigMap
 metadata:
   labels:
-    app.kubernetes.io/component: cortex-query-frontend
-    app.kubernetes.io/instance: cortex-query-cache
-    app.kubernetes.io/name: observatorium
+    app.kubernetes.io/component: query-cache
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: cortex-query-frontend
+    app.kubernetes.io/part-of: observatorium
     app.kubernetes.io/version: master-8533a216
-  name: cortex-query-cache
+  name: observatorium-xyz-cortex-query-frontend
   namespace: observatorium

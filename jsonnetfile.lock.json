@@ -52,8 +52,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "ded5e9aa711221be9688a3c7ae4995b4444b4d45",
-      "sum": "uax6Ab0P3pPKAbxs7TL19V8qLeebajalm7iGH5fgvFA="
+      "version": "445dac1fce0d3e425c6739cf95ff8fc363c93a0e",
+      "sum": "TLC7hmAyaYrYHqPX0m2NUgxRkqvFx3PT9IaLWLktcV8="
     },
     {
       "name": "observatorium",
@@ -74,8 +74,8 @@
           "subdir": "jsonnet/prometheus-operator"
         }
       },
-      "version": "198aae953735bbc4776a53fc29489aef036eff7c",
-      "sum": "5U7/8MD3pF9O0YDTtUhg4vctkUBRVFxZxWUyhtNiBM8="
+      "version": "1aa773ddbbbd9b05405e9785e0190b975b1faadc",
+      "sum": "PlruMWn3QMjgLQVzn0DqlD1G8ijkew9icNNW4cpwRVA="
     },
     {
       "name": "slo-libsonnet",
@@ -118,8 +118,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "353162e3c98ea33042d6f631d5025191a6821c22",
-      "sum": "8z50OmTaLxqILSC8Z2lRlgMw/PzIzN+Y9qWAysThFao="
+      "version": "b66e0c82724007bd40ac40b054ca2cba779d5d75",
+      "sum": "iUbwzPZ/0QrozWTfoXlmRhd1CMAnkcCaWtATTlSnoMk="
     },
     {
       "name": "thanos-receive-controller-mixin",
@@ -129,7 +129,7 @@
           "subdir": "jsonnet/thanos-receive-controller-mixin"
         }
       },
-      "version": "353162e3c98ea33042d6f631d5025191a6821c22",
+      "version": "b66e0c82724007bd40ac40b054ca2cba779d5d75",
       "sum": "TK16wpgsxCEimR2oxw6V8TIs+BRi6Rk+mENkcaOW5m8="
     }
   ]

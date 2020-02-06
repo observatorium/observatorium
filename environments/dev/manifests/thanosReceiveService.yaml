@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: thanos-receive
+  name: observatorium-xyz-thanos-receive
   namespace: observatorium
 spec:
   ports:
@@ -15,4 +15,4 @@ spec:
     port: 19291
     targetPort: 19291
   selector:
-    app.kubernetes.io/component: thanos-receive
+    app.kubernetes.io/name: thanos-receive

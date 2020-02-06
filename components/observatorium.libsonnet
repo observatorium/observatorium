@@ -4,23 +4,34 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 {
   local obs = self,
 
+  config:: {
+    commonLabels:: {
+      'app.kubernetes.io/part-of': 'observatorium',
+      'app.kubernetes.io/instance': obs.config.name,
+    },
+  },
+
   compact::
     t.compact +
     t.compact.withVolumeClaimTemplate +
     t.compact.withRetention +
     t.compact.withDownsamplingDisabled + {
       config+:: {
-        name: 'thanos-compact',
+        local cfg = self,
+        name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
         namespace: obs.config.namespace,
         replicas: 1,
+        commonLabels+:: obs.config.commonLabels,
       },
     },
 
   thanosReceiveController:: (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') + {
     config+:: {
-      name: 'thanos-receive-controller',
+      local cfg = self,
+      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
       replicas: 1,
+      commonLabels+:: obs.config.commonLabels,
     },
   },
 
@@ -31,7 +42,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       t.receive.withRetention +
       t.receive.withHashringConfigMap + {
         config+:: {
-          name: 'thanos-receive-' + hashring.hashring,
+          local cfg = self,
+          name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'] + '-' + hashring.hashring,
           namespace: obs.config.namespace,
           image: error 'must provide image',
           version: error 'must provide version',
@@ -41,6 +53,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           replicationFactor: 3,
           retention: '6h',
           hashringConfigMapName: '%s-generated' % obs.thanosReceiveController.configmap.metadata.name,
+          commonLabels+:: obs.config.commonLabels,
         },
         statefulSet+: {
           metadata+: {
@@ -56,24 +69,30 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   rule:: t.rule + t.rule.withVolumeClaimTemplate + {
     config+:: {
-      name: 'thanos-rule',
+      local cfg = self,
+      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
       replicas: 2,
+      commonLabels+:: obs.config.commonLabels,
     },
   },
 
   store:: t.store + t.store.withVolumeClaimTemplate + {
     config+:: {
-      name: 'thanos-store',
+      local cfg = self,
+      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
+      commonLabels+:: obs.config.commonLabels,
       replicas: 1,
     },
   },
 
   query:: t.query {
     config+:: {
-      name: 'thanos-query',
+      local cfg = self,
+      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
+      commonLabels+:: obs.config.commonLabels,
       replicas: 1,
       stores: [
         'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
@@ -85,8 +104,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   queryCache:: (import 'cortex-query-frontend.libsonnet') + {
     config+:: {
-      name: 'cortex-query-cache',
+      local cfg = self,
+      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
+      commonLabels+:: obs.config.commonLabels,
       downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
         obs.query.service.metadata.name,
         obs.query.service.metadata.namespace,
@@ -119,8 +140,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       local ports = service.mixin.spec.portsType;
 
       service.new(
-        'thanos-receive',
-        { 'app.kubernetes.io/component': 'thanos-receive' },
+        obs.config.name + '-thanos-receive',
+        { 'app.kubernetes.io/name': 'thanos-receive' },
         [
           ports.newNamed('grpc', 10901, 10901),
           ports.newNamed('http', 10902, 10902),

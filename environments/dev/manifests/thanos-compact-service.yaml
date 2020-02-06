@@ -2,11 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app.kubernetes.io/component: thanos-compact
-    app.kubernetes.io/instance: thanos-compact
-    app.kubernetes.io/name: thanos
+    app.kubernetes.io/component: database-compactor
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: thanos-compact
+    app.kubernetes.io/part-of: observatorium
     app.kubernetes.io/version: v0.9.0
-  name: thanos-compact
+  name: observatorium-xyz-thanos-compact
   namespace: observatorium
 spec:
   ports:
@@ -14,6 +15,7 @@ spec:
     port: 10902
     targetPort: http
   selector:
-    app.kubernetes.io/component: thanos-compact
-    app.kubernetes.io/instance: thanos-compact
-    app.kubernetes.io/name: thanos
+    app.kubernetes.io/component: database-compactor
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: thanos-compact
+    app.kubernetes.io/part-of: observatorium

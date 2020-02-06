@@ -2,31 +2,34 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/component: thanos-receive-controller
-    app.kubernetes.io/instance: thanos-receive-controller
-    app.kubernetes.io/name: thanos
+    app.kubernetes.io/component: kubernetes-controller
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: thanos-receive-controller
+    app.kubernetes.io/part-of: observatorium
     app.kubernetes.io/version: master-2019-10-18-d55fee2
-  name: thanos-receive-controller
+  name: observatorium-xyz-thanos-receive-controller
   namespace: observatorium
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/component: thanos-receive-controller
-      app.kubernetes.io/instance: thanos-receive-controller
-      app.kubernetes.io/name: thanos
+      app.kubernetes.io/component: kubernetes-controller
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: thanos-receive-controller
+      app.kubernetes.io/part-of: observatorium
   template:
     metadata:
       labels:
-        app.kubernetes.io/component: thanos-receive-controller
-        app.kubernetes.io/instance: thanos-receive-controller
-        app.kubernetes.io/name: thanos
+        app.kubernetes.io/component: kubernetes-controller
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: thanos-receive-controller
+        app.kubernetes.io/part-of: observatorium
         app.kubernetes.io/version: master-2019-10-18-d55fee2
     spec:
       containers:
       - args:
-        - --configmap-name=thanos-receive-controller-tenants
-        - --configmap-generated-name=thanos-receive-controller-tenants-generated
+        - --configmap-name=observatorium-xyz-thanos-receive-controller-tenants
+        - --configmap-generated-name=observatorium-xyz-thanos-receive-controller-tenants-generated
         - --file-name=hashrings.json
         - --namespace=$(NAMESPACE)
         env:
@@ -39,4 +42,4 @@ spec:
         ports:
         - containerPort: 8080
           name: http
-      serviceAccount: thanos-receive-controller
+      serviceAccount: observatorium-xyz-thanos-receive-controller

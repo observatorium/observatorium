@@ -14,8 +14,8 @@ spec:
       - name: observatorium-up
         image: quay.io/observatorium/up:master-2020-01-09-89757a5
         args:
-          - --endpoint-write=http://thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
-          - --endpoint-read=http://cortex-query-cache.observatorium.svc.cluster.local:9090/api/v1/query
+          - --endpoint-write=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
+          - --endpoint-read=http://observatorium-xyz-cortex-query-frontend.observatorium.svc.cluster.local:9090/api/v1/query
           - --period=1s
           - --duration=2m
           - --name=foo

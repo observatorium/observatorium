@@ -12,10 +12,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     downstreamURL: error 'must provide downstreamURL',
 
     commonLabels:: {
-      'app.kubernetes.io/name': 'observatorium',
+      'app.kubernetes.io/name': 'cortex-query-frontend',
       'app.kubernetes.io/instance': cq.config.name,
       'app.kubernetes.io/version': cq.config.version,
-      'app.kubernetes.io/component': 'cortex-query-frontend',
+      'app.kubernetes.io/component': 'query-cache',
     },
 
     podLabelSelector:: {
