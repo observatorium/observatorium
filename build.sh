@@ -15,11 +15,11 @@ jsonnet -J vendor -m environments/dev/manifests environments/dev/main.jsonnet | 
 find environments/dev/manifests -type f ! -name '*.yaml' -delete
 
 # Make sure to start with a clean 'manifests' dir
-rm -rf environments/kubernetes/manifests
-mkdir environments/kubernetes/manifests
+rm -rf environments/base/manifests
+mkdir environments/base/manifests
 
-jsonnet -J vendor -m environments/kubernetes/manifests environments/kubernetes/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
-find environments/kubernetes/manifests -type f ! -name '*.yaml' -delete
+jsonnet -J vendor -m environments/base/manifests environments/base/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
+find environments/base/manifests -type f ! -name '*.yaml' -delete
 
 # Make sure to start with a clean 'manifests' dir
 rm -rf environments/openshift/manifests

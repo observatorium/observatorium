@@ -117,7 +117,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     cqf.withResources +
     (import '../../components/oauth-proxy.libsonnet'),
 } + {
-  config+:: (import '../kubernetes/default-config.libsonnet'),
+  config+:: (import '../base/default-config.libsonnet'),
 } + {
   local obs = self,
   config+:: {
