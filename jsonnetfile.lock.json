@@ -30,7 +30,7 @@
           "subdir": "monitoring/jaeger-mixin"
         }
       },
-      "version": "c29449a6690c870304d697eec0a486f9cb215658",
+      "version": "29e71310f3f275def3e07d257901b6e89ad0818e",
       "sum": "U/RwaRP/ps+5dVyeVxeFEb2psfZHQgEjHU2Jeb454Kg="
     },
     {
@@ -52,7 +52,7 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "445dac1fce0d3e425c6739cf95ff8fc363c93a0e",
+      "version": "7816a2b8c5cb8e95060b217a9aee7003bfd52e9c",
       "sum": "TLC7hmAyaYrYHqPX0m2NUgxRkqvFx3PT9IaLWLktcV8="
     },
     {
@@ -107,7 +107,7 @@
           "subdir": "jsonnet/thanos-mixin"
         }
       },
-      "version": "14ecdd5932d1750314bebcc2fb455f9b8865084b",
+      "version": "7816a2b8c5cb8e95060b217a9aee7003bfd52e9c",
       "sum": "oZH4t/rW4Va1IF47pvbtdakgDLKrXGD1SmrqU55N4xU="
     },
     {
