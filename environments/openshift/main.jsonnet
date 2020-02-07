@@ -1,0 +1,1 @@
+(import 'obs.jsonnet').openshiftTemplate

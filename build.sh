@@ -25,7 +25,7 @@ find environments/kubernetes/manifests -type f ! -name '*.yaml' -delete
 rm -rf environments/openshift/manifests
 mkdir environments/openshift/manifests
 
-jsonnet -J vendor environments/openshift/obs.jsonnet | gojsontoyaml >environments/openshift/manifests/observatorium-template.yaml
+jsonnet -J vendor environments/openshift/main.jsonnet | gojsontoyaml >environments/openshift/manifests/observatorium-template.yaml
 jsonnet -J vendor environments/openshift/jaeger.jsonnet | gojsontoyaml >environments/openshift/manifests/jaeger-template.yaml
 jsonnet -J vendor environments/openshift/observatorium-api.jsonnet | gojsontoyaml >environments/openshift/manifests/observatorium-api-template.yaml
 find environments/openshift/manifests -type f ! -name '*.yaml' -delete

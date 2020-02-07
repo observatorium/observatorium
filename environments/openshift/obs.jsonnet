@@ -2,7 +2,7 @@ local t = (import 'kube-thanos/thanos.libsonnet');
 local trc = (import 'thanos-receive-controller/thanos-receive-controller.libsonnet');
 local cqf = (import '../../components/cortex-query-frontend.libsonnet');
 
-local obs = (import '../../components/observatorium.libsonnet') {
+(import '../../components/observatorium.libsonnet') {
   local obs = self,
 
   local s3EnvVars = [
@@ -119,6 +119,7 @@ local obs = (import '../../components/observatorium.libsonnet') {
 } + {
   config+:: (import '../kubernetes/default-config.libsonnet'),
 } + {
+  local obs = self,
   config+:: {
     namespace: '${NAMESPACE}',
     thanosImage:: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
@@ -633,6 +634,4 @@ local obs = (import '../../components/observatorium.libsonnet') {
       },
     ],
   },
-};
-
-obs.openshiftTemplate
+}
