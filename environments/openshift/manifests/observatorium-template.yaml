@@ -27,36 +27,36 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: query-cache
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: master-8533a216
-    name: observatorium-xyz-cortex-query-frontend
+    name: observatorium-cortex-query-frontend
     namespace: ${NAMESPACE}
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
       app.kubernetes.io/component: query-cache
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: master-8533a216
-    name: observatorium-xyz-cortex-query-frontend
+    name: observatorium-cortex-query-frontend
     namespace: ${NAMESPACE}
   spec:
     replicas: 3
     selector:
       matchLabels:
         app.kubernetes.io/component: query-cache
-        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: cortex-query-frontend
         app.kubernetes.io/part-of: observatorium
     template:
       metadata:
         labels:
           app.kubernetes.io/component: query-cache
-          app.kubernetes.io/instance: observatorium-xyz
+          app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: cortex-query-frontend
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/version: master-8533a216
@@ -64,7 +64,7 @@ objects:
         containers:
         - args:
           - -config.file=/etc/cache-config/config.yaml
-          - -frontend.downstream-url=http://observatorium-xyz-thanos-query.${NAMESPACE}.svc.cluster.local.:9090
+          - -frontend.downstream-url=http://observatorium-thanos-query.${NAMESPACE}.svc.cluster.local.:9090
           image: quay.io/cortexproject/cortex:master-8533a216
           name: cortex-query-frontend
           ports:
@@ -119,7 +119,7 @@ objects:
             readOnly: false
         volumes:
         - configMap:
-            name: observatorium-xyz-cortex-query-frontend
+            name: observatorium-cortex-query-frontend
           name: query-cache-config
         - name: query-cache-tls
           secret:
@@ -134,7 +134,7 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: query-cache
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: master-8533a216
@@ -148,11 +148,11 @@ objects:
       service.alpha.openshift.io/serving-cert-secret-name: query-cache-tls
     labels:
       app.kubernetes.io/component: query-cache
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: master-8533a216
-    name: observatorium-xyz-cortex-query-frontend
+    name: observatorium-cortex-query-frontend
     namespace: ${NAMESPACE}
   spec:
     ports:
@@ -164,7 +164,7 @@ objects:
       targetPort: https
     selector:
       app.kubernetes.io/component: query-cache
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
 - apiVersion: v1
@@ -172,11 +172,11 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: database-compactor
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-compact
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
-    name: observatorium-xyz-thanos-compact
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-compact
     namespace: ${NAMESPACE}
   spec:
     ports:
@@ -185,7 +185,7 @@ objects:
       targetPort: http
     selector:
       app.kubernetes.io/component: database-compactor
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-compact
       app.kubernetes.io/part-of: observatorium
 - apiVersion: apps/v1
@@ -193,30 +193,30 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: database-compactor
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-compact
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
-    name: observatorium-xyz-thanos-compact
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-compact
     namespace: ${NAMESPACE}
   spec:
     replicas: 1
     selector:
       matchLabels:
         app.kubernetes.io/component: database-compactor
-        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-compact
         app.kubernetes.io/part-of: observatorium
-    serviceName: observatorium-xyz-thanos-compact
+    serviceName: observatorium-thanos-compact
     template:
       metadata:
         labels:
           app.kubernetes.io/component: database-compactor
-          app.kubernetes.io/instance: observatorium-xyz
+          app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-compact
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/tracing: jaeger-agent
-          app.kubernetes.io/version: v0.9.0
+          app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
       spec:
         containers:
         - args:
@@ -312,44 +312,38 @@ objects:
           - containerPort: 14271
             name: metrics
         terminationGracePeriodSeconds: 120
-        volumes: null
-    volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 50Gi
+        volumes:
+        - emptyDir: {}
+          name: data
+    volumeClaimTemplates: null
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
       app.kubernetes.io/component: query-layer
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-query
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
-    name: observatorium-xyz-thanos-query
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-query
     namespace: ${NAMESPACE}
   spec:
     replicas: ${{THANOS_QUERIER_REPLICAS}}
     selector:
       matchLabels:
         app.kubernetes.io/component: query-layer
-        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-query
         app.kubernetes.io/part-of: observatorium
     template:
       metadata:
         labels:
           app.kubernetes.io/component: query-layer
-          app.kubernetes.io/instance: observatorium-xyz
+          app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-query
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/tracing: jaeger-agent
-          app.kubernetes.io/version: v0.9.0
+          app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
       spec:
         affinity:
           podAntiAffinity:
@@ -373,9 +367,9 @@ objects:
           - --query.replica-label=prometheus_replica
           - --query.replica-label=ruler_replica
           - --query.replica-label=replica
-          - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-rule.${NAMESPACE}.svc.cluster.local
-          - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-store.${NAMESPACE}.svc.cluster.local
-          - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-receive-default.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.observatorium-thanos-rule.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.observatorium-thanos-store.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.observatorium-thanos-receive-default.${NAMESPACE}.svc.cluster.local
           - --web.external-prefix=/ui/v1/metrics
           - |
             --tracing.config=
@@ -491,10 +485,10 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: query-layer
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-query
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
     name: query-proxy
     namespace: ${NAMESPACE}
   type: Opaque
@@ -505,11 +499,11 @@ objects:
       service.alpha.openshift.io/serving-cert-secret-name: query-tls
     labels:
       app.kubernetes.io/component: query-layer
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-query
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
-    name: observatorium-xyz-thanos-query
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-query
     namespace: ${NAMESPACE}
   spec:
     ports:
@@ -524,7 +518,7 @@ objects:
       targetPort: https
     selector:
       app.kubernetes.io/component: query-layer
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-query
       app.kubernetes.io/part-of: observatorium
 - apiVersion: v1
@@ -542,44 +536,44 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: kubernetes-controller
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive-controller
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-2019-10-18-d55fee2
-    name: observatorium-xyz-thanos-receive-controller-tenants
+      app.kubernetes.io/version: ${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
+    name: observatorium-thanos-receive-controller-tenants
     namespace: ${NAMESPACE}
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
     labels:
       app.kubernetes.io/component: kubernetes-controller
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive-controller
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-2019-10-18-d55fee2
-    name: observatorium-xyz-thanos-receive-controller
+      app.kubernetes.io/version: ${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
+    name: observatorium-thanos-receive-controller
     namespace: ${NAMESPACE}
   spec:
     replicas: 1
     selector:
       matchLabels:
         app.kubernetes.io/component: kubernetes-controller
-        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-receive-controller
         app.kubernetes.io/part-of: observatorium
     template:
       metadata:
         labels:
           app.kubernetes.io/component: kubernetes-controller
-          app.kubernetes.io/instance: observatorium-xyz
+          app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-receive-controller
           app.kubernetes.io/part-of: observatorium
-          app.kubernetes.io/version: master-2019-10-18-d55fee2
+          app.kubernetes.io/version: ${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
       spec:
         containers:
         - args:
-          - --configmap-name=observatorium-xyz-thanos-receive-controller-tenants
-          - --configmap-generated-name=observatorium-xyz-thanos-receive-controller-tenants-generated
+          - --configmap-name=observatorium-thanos-receive-controller-tenants
+          - --configmap-generated-name=observatorium-thanos-receive-controller-tenants-generated
           - --file-name=hashrings.json
           - --namespace=$(NAMESPACE)
           env:
@@ -599,17 +593,17 @@ objects:
             requests:
               cpu: 10m
               memory: 24Mi
-        serviceAccount: observatorium-xyz-thanos-receive-controller
+        serviceAccount: observatorium-thanos-receive-controller
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: Role
   metadata:
     labels:
       app.kubernetes.io/component: kubernetes-controller
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive-controller
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-2019-10-18-d55fee2
-    name: observatorium-xyz-thanos-receive-controller
+      app.kubernetes.io/version: ${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
+    name: observatorium-thanos-receive-controller
     namespace: ${NAMESPACE}
   rules:
   - apiGroups:
@@ -635,30 +629,30 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: kubernetes-controller
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive-controller
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-2019-10-18-d55fee2
-    name: observatorium-xyz-thanos-receive-controller
+      app.kubernetes.io/version: ${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
+    name: observatorium-thanos-receive-controller
     namespace: ${NAMESPACE}
   roleRef:
     apiGroup: rbac.authorization.k8s.io
     kind: Role
-    name: observatorium-xyz-thanos-receive-controller
+    name: observatorium-thanos-receive-controller
   subjects:
   - kind: ServiceAccount
-    name: observatorium-xyz-thanos-receive-controller
+    name: observatorium-thanos-receive-controller
     namespace: ${NAMESPACE}
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
       app.kubernetes.io/component: kubernetes-controller
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive-controller
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-2019-10-18-d55fee2
-    name: observatorium-xyz-thanos-receive-controller
+      app.kubernetes.io/version: ${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
+    name: observatorium-thanos-receive-controller
     namespace: ${NAMESPACE}
   spec:
     ports:
@@ -667,7 +661,7 @@ objects:
       targetPort: 8080
     selector:
       app.kubernetes.io/component: kubernetes-controller
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive-controller
       app.kubernetes.io/part-of: observatorium
 - apiVersion: v1
@@ -675,22 +669,22 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: kubernetes-controller
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive-controller
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-2019-10-18-d55fee2
-    name: observatorium-xyz-thanos-receive-controller
+      app.kubernetes.io/version: ${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
+    name: observatorium-thanos-receive-controller
     namespace: ${NAMESPACE}
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
       app.kubernetes.io/component: database-write-hashring
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
-    name: observatorium-xyz-thanos-receive-default
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-receive-default
     namespace: ${NAMESPACE}
   spec:
     clusterIP: None
@@ -706,7 +700,7 @@ objects:
       targetPort: 19291
     selector:
       app.kubernetes.io/component: database-write-hashring
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive
       app.kubernetes.io/part-of: observatorium
 - apiVersion: apps/v1
@@ -714,32 +708,32 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: database-write-hashring
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
       controller.receive.thanos.io: thanos-receive-controller
       controller.receive.thanos.io/hashring: default
-    name: observatorium-xyz-thanos-receive-default
+    name: observatorium-thanos-receive-default
     namespace: ${NAMESPACE}
   spec:
     replicas: ${{THANOS_RECEIVE_REPLICAS}}
     selector:
       matchLabels:
         app.kubernetes.io/component: database-write-hashring
-        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-receive
         app.kubernetes.io/part-of: observatorium
-    serviceName: observatorium-xyz-thanos-receive-default
+    serviceName: observatorium-thanos-receive-default
     template:
       metadata:
         labels:
           app.kubernetes.io/component: database-write-hashring
-          app.kubernetes.io/instance: observatorium-xyz
+          app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-receive
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/tracing: jaeger-agent
-          app.kubernetes.io/version: v0.9.0
+          app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
       spec:
         affinity:
           podAntiAffinity:
@@ -750,7 +744,7 @@ objects:
                   - key: app.kubernetes.io/instance
                     operator: In
                     values:
-                    - observatorium-xyz
+                    - observatorium
                 namespaces:
                 - ${NAMESPACE}
                 topologyKey: kubernetes.io/hostname
@@ -766,7 +760,7 @@ objects:
           - --tsdb.path=/var/thanos/receive
           - --label=replica="$(NAME)"
           - --label=receive="true"
-          - --receive.local-endpoint=http://$(NAME).observatorium-xyz-thanos-receive-default.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
+          - --receive.local-endpoint=http://$(NAME).observatorium-thanos-receive-default.$(NAMESPACE).svc.cluster.local:19291/api/v1/receive
           - --tsdb.retention=6h
           - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
           - |
@@ -867,28 +861,19 @@ objects:
         terminationGracePeriodSeconds: 120
         volumes:
         - configMap:
-            name: observatorium-xyz-thanos-receive-controller-tenants-generated
+            name: observatorium-thanos-receive-controller-tenants-generated
           name: hashring-config
-    volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 50Gi,
-        storageClassName: gp2-encrypted
+    volumeClaimTemplates: null
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
       app.kubernetes.io/component: rule-evaluation-engine
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-rule
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
-    name: observatorium-xyz-thanos-rule
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-rule
     namespace: ${NAMESPACE}
   spec:
     clusterIP: None
@@ -901,7 +886,7 @@ objects:
       targetPort: http
     selector:
       app.kubernetes.io/component: rule-evaluation-engine
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-rule
       app.kubernetes.io/part-of: observatorium
 - apiVersion: apps/v1
@@ -909,30 +894,30 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: rule-evaluation-engine
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-rule
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
-    name: observatorium-xyz-thanos-rule
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-rule
     namespace: ${NAMESPACE}
   spec:
     replicas: ${{THANOS_RULER_REPLICAS}}
     selector:
       matchLabels:
         app.kubernetes.io/component: rule-evaluation-engine
-        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-rule
         app.kubernetes.io/part-of: observatorium
-    serviceName: observatorium-xyz-thanos-rule
+    serviceName: observatorium-thanos-rule
     template:
       metadata:
         labels:
           app.kubernetes.io/component: rule-evaluation-engine
-          app.kubernetes.io/instance: observatorium-xyz
+          app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-rule
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/tracing: jaeger-agent
-          app.kubernetes.io/version: v0.9.0
+          app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
       spec:
         containers:
         - args:
@@ -943,7 +928,7 @@ objects:
           - --data-dir=/var/thanos/rule
           - --label=rule_replica="$(NAME)"
           - --alert.label-drop="rule_replica"
-          - --query=dnssrv+_http._tcp.observatorium-xyz-thanos-query.${NAMESPACE}.svc.cluster.local
+          - --query=dnssrv+_http._tcp.observatorium-thanos-query.${NAMESPACE}.svc.cluster.local
           - |
             --tracing.config=
               type: JAEGER
@@ -1032,26 +1017,20 @@ objects:
             name: configs
           - containerPort: 14271
             name: metrics
-        volumes: null
-    volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 50Gi
+        volumes:
+        - emptyDir: {}
+          name: data
+    volumeClaimTemplates: null
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
       app.kubernetes.io/component: object-store-gateway
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
-    name: observatorium-xyz-thanos-store
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-store
     namespace: ${NAMESPACE}
   spec:
     clusterIP: None
@@ -1064,7 +1043,7 @@ objects:
       targetPort: 10902
     selector:
       app.kubernetes.io/component: object-store-gateway
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
 - apiVersion: apps/v1
@@ -1072,30 +1051,30 @@ objects:
   metadata:
     labels:
       app.kubernetes.io/component: object-store-gateway
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: v0.9.0
-    name: observatorium-xyz-thanos-store
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-store
     namespace: ${NAMESPACE}
   spec:
     replicas: ${{THANOS_STORE_REPLICAS}}
     selector:
       matchLabels:
         app.kubernetes.io/component: object-store-gateway
-        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
-    serviceName: observatorium-xyz-thanos-store
+    serviceName: observatorium-thanos-store
     template:
       metadata:
         labels:
           app.kubernetes.io/component: object-store-gateway
-          app.kubernetes.io/instance: observatorium-xyz
+          app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-store
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/tracing: jaeger-agent
-          app.kubernetes.io/version: v0.9.0
+          app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
       spec:
         containers:
         - args:
@@ -1188,21 +1167,14 @@ objects:
           - containerPort: 14271
             name: metrics
         terminationGracePeriodSeconds: 120
-        volumes: null
-    volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 50Gi,
-        storageClassName: gp2-encrypted
+        volumes:
+        - emptyDir: {}
+          name: data
+    volumeClaimTemplates: null
 - apiVersion: v1
   kind: Service
   metadata:
-    name: observatorium-xyz-thanos-receive
+    name: observatorium-thanos-receive
     namespace: ${NAMESPACE}
   spec:
     ports:

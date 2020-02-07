@@ -73,13 +73,7 @@ spec:
         - mountPath: /var/thanos/rule
           name: data
           readOnly: false
-      volumes: null
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          storage: 50Gi
+      volumes:
+      - emptyDir: {}
+        name: data
+  volumeClaimTemplates: null

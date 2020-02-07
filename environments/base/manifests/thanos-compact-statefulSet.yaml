@@ -68,13 +68,7 @@ spec:
           name: data
           readOnly: false
       terminationGracePeriodSeconds: 120
-      volumes: null
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          storage: 50Gi
+      volumes:
+      - emptyDir: {}
+        name: data
+  volumeClaimTemplates: null

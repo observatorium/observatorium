@@ -13,7 +13,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   compact::
     t.compact +
-    t.compact.withVolumeClaimTemplate +
     t.compact.withRetention +
     t.compact.withDownsamplingDisabled + {
       config+:: {
@@ -38,7 +37,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   receivers:: {
     [hashring.hashring]:
       t.receive +
-      t.receive.withVolumeClaimTemplate +
       t.receive.withRetention +
       t.receive.withHashringConfigMap + {
         config+:: {
@@ -48,7 +46,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           image: error 'must provide image',
           version: error 'must provide version',
           objectStorageConfig: error 'must provide objectStorageConfig',
-          volumeClaimTemplate: error 'must provide volumeClaimTemplate',
           replicas: 3,
           replicationFactor: 3,
           retention: '6h',
@@ -67,7 +64,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     for hashring in obs.config.hashrings
   },
 
-  rule:: t.rule + t.rule.withVolumeClaimTemplate + {
+  rule:: t.rule {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
@@ -77,7 +74,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  store:: t.store + t.store.withVolumeClaimTemplate + {
+  store:: t.store {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],

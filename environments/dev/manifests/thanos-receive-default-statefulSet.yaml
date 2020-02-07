@@ -105,12 +105,4 @@ spec:
       - configMap:
           name: observatorium-xyz-thanos-receive-controller-tenants-generated
         name: hashring-config
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          storage: 50Gi
+  volumeClaimTemplates: null

@@ -117,12 +117,13 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     cqf.withResources +
     (import '../../components/oauth-proxy.libsonnet'),
 } + {
-  config+:: (import '../base/default-config.libsonnet'),
-} + {
   local obs = self,
+
   config+:: {
-    namespace: '${NAMESPACE}',
+    name: 'observatorium',
+    namespace:: '${NAMESPACE}',
     thanosImage:: '${THANOS_IMAGE}:${THANOS_IMAGE_TAG}',
+    thanosVersion: '${THANOS_IMAGE_TAG}',
     oauthProxyImage:: '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}',
     jaegerAgentImage:: '${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}',
     jaegerAgentCollectorAddress:: 'dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250',
@@ -131,7 +132,24 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       key: 'thanos.yaml',
     },
 
+    hashrings: [
+      {
+        hashring: 'default',
+        tenants: [
+          // Match all for now
+          // 'foo',
+          // 'bar',
+        ],
+      },
+    ],
+
     compact+: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
+      objectStorageConfig: obs.config.objectStorageConfig,
+      retentionResolutionRaw: '14d',
+      retentionResolution5m: '1s',
+      retentionResolution1h: '1s',
       resources: {
         replicas: '${{THANOS_COMPACTOR_REPLICAS}}',
         requests: {
@@ -151,6 +169,8 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
 
     thanosReceiveController+: {
       image: '${THANOS_RECEIVE_CONTROLLER_IMAGE}:${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}',
+      version: '${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}',
+      hashrings: obs.config.hashrings,
       resources: {
         requests: {
           cpu: '10m',
@@ -168,6 +188,10 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     },
 
     receivers+: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
+      objectStorageConfig: obs.config.objectStorageConfig,
+      hashrings: obs.config.hashrings,
       replicas: '${{THANOS_RECEIVE_REPLICAS}}',
       resources: {
         requests: {
@@ -197,6 +221,9 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     },
 
     rule+: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
+      objectStorageConfig: obs.config.objectStorageConfig,
       replicas: '${{THANOS_RULER_REPLICAS}}',
       resources: {
         requests: {
@@ -215,6 +242,9 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     },
 
     store+: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
+      objectStorageConfig: obs.config.objectStorageConfig,
       replicas: '${{THANOS_STORE_REPLICAS}}',
       resources: {
         requests: {
@@ -244,6 +274,8 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     },
 
     query+: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
       replicas: '${{THANOS_QUERIER_REPLICAS}}',
       externalPrefix: '/ui/v1/metrics',
       resources: {
@@ -282,6 +314,9 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     },
 
     queryCache+: {
+      local qcConfig = self,
+      version: 'master-8533a216',
+      image: 'quay.io/cortexproject/cortex:' + qcConfig.version,
       replicas: 3,
       resources: {
         requests: {
