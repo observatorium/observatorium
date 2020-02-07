@@ -102,6 +102,8 @@ spec:
           name: hashring-config
       terminationGracePeriodSeconds: 120
       volumes:
+      - emptyDir: {}
+        name: data
       - configMap:
           name: observatorium-xyz-thanos-receive-controller-tenants-generated
         name: hashring-config
