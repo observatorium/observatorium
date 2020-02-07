@@ -68,6 +68,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     },
 
   store+::
+    t.store.withVolumeClaimTemplate +
     t.store.withResources +
     (import '../../components/jaeger-agent.libsonnet').statefulSetMixin {
       statefulSet+: {
@@ -88,6 +89,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
 
   receivers+:: {
     [hashring.hashring]+:
+      t.receive.withVolumeClaimTemplate +
       t.receive.withResources {
         statefulSet+: {
           spec+: {

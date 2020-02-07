@@ -859,11 +859,17 @@ objects:
           - containerPort: 14271
             name: metrics
         terminationGracePeriodSeconds: 120
-        volumes:
-        - configMap:
-            name: observatorium-thanos-receive-controller-tenants-generated
-          name: hashring-config
-    volumeClaimTemplates: null
+        volumes: null
+    volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi,
+        storageClassName: gp2-encrypted
 - apiVersion: v1
   kind: Service
   metadata:
@@ -1167,10 +1173,17 @@ objects:
           - containerPort: 14271
             name: metrics
         terminationGracePeriodSeconds: 120
-        volumes:
-        - emptyDir: {}
-          name: data
-    volumeClaimTemplates: null
+        volumes: null
+    volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi,
+        storageClassName: gp2-encrypted
 - apiVersion: v1
   kind: Service
   metadata:
