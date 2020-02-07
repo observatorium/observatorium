@@ -38,7 +38,7 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "receive-no-override-vol"
+      "version": "master"
     },
     {
       "name": "observatorium",
