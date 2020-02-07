@@ -836,6 +836,13 @@ objects:
               port: 10902
               scheme: HTTP
             periodSeconds: 5
+          resources:
+            limits:
+              cpu: ${THANOS_RECEIVE_CPU_LIMIT}
+              memory: ${THANOS_RECEIVE_MEMORY_LIMIT}
+            requests:
+              cpu: ${THANOS_RECEIVE_CPU_REQUEST}
+              memory: ${THANOS_RECEIVE_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /var/thanos/receive
             name: data

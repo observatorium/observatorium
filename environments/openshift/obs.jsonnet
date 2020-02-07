@@ -87,22 +87,23 @@ local obs = (import '../../components/observatorium.libsonnet') {
     },
 
   receivers+:: {
-    [hashring.hashring]+: {
-      statefulSet+: {
-        spec+: {
-          template+: {
-            spec+: {
-              containers: [
-                if c.name == 'thanos-receive' then c {
-                  env+: s3EnvVars,
-                } else c
-                for c in super.containers
-              ],
+    [hashring.hashring]+:
+      t.receive.withResources {
+        statefulSet+: {
+          spec+: {
+            template+: {
+              spec+: {
+                containers: [
+                  if c.name == 'thanos-receive' then c {
+                    env+: s3EnvVars,
+                  } else c
+                  for c in super.containers
+                ],
+              },
             },
           },
         },
-      },
-    } + (import '../../components/jaeger-agent.libsonnet').statefulSetMixin
+      } + (import '../../components/jaeger-agent.libsonnet').statefulSetMixin
     for hashring in obs.config.hashrings
   },
 
