@@ -22,6 +22,11 @@ local containerEnv = container.envType;
     },
     spec+: {
       template+: {
+        metadata+: {
+          labels+: {
+            'app.kubernetes.io/tracing': 'jaeger-agent',
+          },
+        },
         spec+: {
           containers+: [
             container.new('jaeger-agent', sm.config.jaegerAgent.image) +
@@ -70,9 +75,6 @@ local containerEnv = container.envType;
   deploymentMixin:: {
     local dm = self,
     config+:: {
-      commonLabels+:: {
-        'app.kubernetes.io/tracing': 'jaeger-agent',
-      },
       jaegerAgent: {
         image: error 'must provide image',
         collectorAddress: error 'must provide collectorAddress',
@@ -91,9 +93,6 @@ local containerEnv = container.envType;
   statefulSetMixin:: {
     local sm = self,
     config+:: {
-      commonLabels+:: {
-        'app.kubernetes.io/tracing': 'jaeger-agent',
-      },
       jaegerAgent: {
         image: error 'must provide image',
         collectorAddress: error 'must provide collectorAddress',

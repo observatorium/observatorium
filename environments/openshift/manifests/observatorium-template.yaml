@@ -175,7 +175,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-compact
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: observatorium-xyz-thanos-compact
     namespace: ${NAMESPACE}
@@ -189,7 +188,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-compact
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
@@ -198,7 +196,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-compact
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: observatorium-xyz-thanos-compact
     namespace: ${NAMESPACE}
@@ -210,7 +207,6 @@ objects:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-compact
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/tracing: jaeger-agent
     serviceName: observatorium-xyz-thanos-compact
     template:
       metadata:
@@ -334,7 +330,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-query
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: observatorium-xyz-thanos-query
     namespace: ${NAMESPACE}
@@ -346,7 +341,6 @@ objects:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-query
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/tracing: jaeger-agent
     template:
       metadata:
         labels:
@@ -500,7 +494,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-query
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: query-proxy
     namespace: ${NAMESPACE}
@@ -515,7 +508,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-query
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: observatorium-xyz-thanos-query
     namespace: ${NAMESPACE}
@@ -535,7 +527,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-query
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
 - apiVersion: v1
   data:
     hashrings.json: |-
@@ -698,7 +689,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-receive
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: observatorium-xyz-thanos-receive-default
     namespace: ${NAMESPACE}
@@ -719,7 +709,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-receive
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
@@ -728,7 +717,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-receive
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
       controller.receive.thanos.io: thanos-receive-controller
       controller.receive.thanos.io/hashring: default
@@ -742,7 +730,6 @@ objects:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-receive
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/tracing: jaeger-agent
     serviceName: observatorium-xyz-thanos-receive-default
     template:
       metadata:
@@ -900,7 +887,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-rule
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: observatorium-xyz-thanos-rule
     namespace: ${NAMESPACE}
@@ -918,7 +904,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-rule
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
@@ -927,7 +912,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-rule
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: observatorium-xyz-thanos-rule
     namespace: ${NAMESPACE}
@@ -939,7 +923,6 @@ objects:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-rule
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/tracing: jaeger-agent
     serviceName: observatorium-xyz-thanos-rule
     template:
       metadata:
@@ -1067,7 +1050,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: observatorium-xyz-thanos-store
     namespace: ${NAMESPACE}
@@ -1085,7 +1067,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
@@ -1094,7 +1075,6 @@ objects:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/tracing: jaeger-agent
       app.kubernetes.io/version: v0.9.0
     name: observatorium-xyz-thanos-store
     namespace: ${NAMESPACE}
@@ -1106,7 +1086,6 @@ objects:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/tracing: jaeger-agent
     serviceName: observatorium-xyz-thanos-store
     template:
       metadata:
