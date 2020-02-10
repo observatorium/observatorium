@@ -862,6 +862,11 @@ objects:
         volumes: null
     volumeClaimTemplates:
     - metadata:
+        labels:
+          app.kubernetes.io/component: database-write-hashring
+          app.kubernetes.io/instance: observatorium
+          app.kubernetes.io/name: thanos-receive
+          app.kubernetes.io/part-of: observatorium
         name: data
       spec:
         accessModes:
@@ -1176,6 +1181,11 @@ objects:
         volumes: null
     volumeClaimTemplates:
     - metadata:
+        labels:
+          app.kubernetes.io/component: object-store-gateway
+          app.kubernetes.io/instance: observatorium
+          app.kubernetes.io/name: thanos-store
+          app.kubernetes.io/part-of: observatorium
         name: data
       spec:
         accessModes:
