@@ -101,7 +101,7 @@ objects:
           image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
           name: oauth-proxy
           ports:
-          - containerPort: "9091"
+          - containerPort: 9091
             name: https
           resources:
             limits:
@@ -160,7 +160,7 @@ objects:
       port: 9090
       targetPort: 9090
     - name: https
-      port: "9091"
+      port: 9091
       targetPort: https
     selector:
       app.kubernetes.io/component: query-cache
@@ -426,7 +426,7 @@ objects:
           image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
           name: oauth-proxy
           ports:
-          - containerPort: "9091"
+          - containerPort: 9091
             name: https
           resources:
             limits:
@@ -514,7 +514,7 @@ objects:
       port: 9090
       targetPort: http
     - name: https
-      port: "9091"
+      port: 9091
       targetPort: https
     selector:
       app.kubernetes.io/component: query-layer

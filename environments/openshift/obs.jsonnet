@@ -294,7 +294,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       },
       oauthProxy: {
         image: obs.config.oauthProxyImage,
-        httpsPort: '9091',
+        httpsPort: 9091,
         upstream: 'http://localhost:' + obs.query.service.spec.ports[1].port,
         tlsSecretName: 'query-tls',
         sessionSecretName: 'query-proxy',
@@ -334,7 +334,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       },
       oauthProxy: {
         image: obs.config.oauthProxyImage,
-        httpsPort: '9091',
+        httpsPort: 9091,
         upstream: 'http://localhost:' + obs.query.service.spec.ports[1].port,
         tlsSecretName: 'query-cache-tls',
         sessionSecretName: 'query-cache-proxy',
