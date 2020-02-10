@@ -153,8 +153,8 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       retentionResolutionRaw: '14d',
       retentionResolution5m: '1s',
       retentionResolution1h: '1s',
+      replicas: '${{THANOS_COMPACTOR_REPLICAS}}',
       resources: {
-        replicas: '${{THANOS_COMPACTOR_REPLICAS}}',
         requests: {
           cpu: '${THANOS_COMPACTOR_CPU_REQUEST}',
           memory: '${THANOS_COMPACTOR_MEMORY_REQUEST}',
