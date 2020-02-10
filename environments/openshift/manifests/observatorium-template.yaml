@@ -275,7 +275,6 @@ objects:
             limits:
               cpu: ${THANOS_COMPACTOR_CPU_LIMIT}
               memory: ${THANOS_COMPACTOR_MEMORY_LIMIT}
-            replicas: ${{THANOS_COMPACTOR_REPLICAS}}
             requests:
               cpu: ${THANOS_COMPACTOR_CPU_REQUEST}
               memory: ${THANOS_COMPACTOR_MEMORY_REQUEST}
