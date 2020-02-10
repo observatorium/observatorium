@@ -50,13 +50,13 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
     agentService:
       service.new(
         'jaeger-agent-discovery',
-        jaegerAgent.labels,
+        { 'app.kubernetes.io/tracing': 'jaeger-agent' },
         [
-          service.mixin.spec.portsType.newNamed('metrics', jaegerAgent.metricsPort, jaegerAgent.metricsPort),
+          service.mixin.spec.portsType.newNamed('metrics', 14271, 14271),
         ],
       ) +
       service.mixin.metadata.withNamespace(j.namespace) +
-      service.mixin.metadata.withLabels(jaegerAgent.serviceLabels),
+      service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': 'jaeger-agent' }),
 
     volumeClaim:
       local claim = k.core.v1.persistentVolumeClaim;

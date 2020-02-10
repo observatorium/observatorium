@@ -1,0 +1,30 @@
+apiVersion: v1
+data:
+  config.yaml: |-
+    "auth_enabled": false
+    "frontend":
+      "align_queries_with_step": true
+      "cache_results": true
+      "compress_responses": true
+      "results_cache":
+        "cache":
+          "enable_fifocache": true
+          "fifocache":
+            "size": 1024
+            "validity": "6h"
+        "max_freshness": "1m"
+      "split_queries_by_day": true
+    "http_prefix": null
+    "server":
+      "http_listen_port": 9090
+    "target": "query-frontend"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: query-cache
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: cortex-query-frontend
+    app.kubernetes.io/part-of: observatorium
+    app.kubernetes.io/version: master-8533a216
+  name: observatorium-xyz-cortex-query-frontend
+  namespace: observatorium

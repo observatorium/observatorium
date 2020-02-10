@@ -1,7 +1,7 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
 local app =
-  (import '../kubernetes/jaeger.libsonnet') + {
+  (import 'kube-jaeger.libsonnet') + {
     jaeger+:: {
       namespace:: '${NAMESPACE}',
       image:: '${IMAGE}:${IMAGE_TAG}',

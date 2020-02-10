@@ -6,7 +6,7 @@ local configmap = k.core.v1.configMap;
 local secret = k.core.v1.secret;
 local deployment = k.apps.v1.deployment;
 
-(import '../kubernetes/observatorium.libsonnet') +
+(import '../base/observatorium-api.libsonnet') +
 {
   observatorium+:: {
     local namespace = '${NAMESPACE}',

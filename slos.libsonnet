@@ -2,7 +2,7 @@
   observatoriumQuery:: {
     errors: {
       metric: 'http_requests_total',
-      selectors: ['job="thanos-querier"'],
+      selectors: ['job="thanos-query"'],
 
       errorBudget: 1.0 - 0.99,
     },

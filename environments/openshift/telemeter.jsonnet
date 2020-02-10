@@ -1,6 +1,6 @@
 local list = import 'telemeter/lib/list.libsonnet';
 
-(import '../kubernetes/telemeter.libsonnet') +
+(import 'kube-telemeter.libsonnet') +
 {
   telemeterServer+:: {
     statefulSet+: {
@@ -67,7 +67,7 @@ local list = import 'telemeter/lib/list.libsonnet';
 
   _config+:: {
     telemeterServer+: {
-      whitelist+: (import 'telemeter/metrics.jsonnet'),
+      whitelist+: (import 'metrics.json'),
       elideLabels+: [
         'prometheus_replica',
       ],
