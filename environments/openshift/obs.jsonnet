@@ -212,7 +212,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
           accessModes: ['ReadWriteOnce'],
           resources: {
             requests: {
-              storage: '50Gi,',
+              storage: '50Gi',
             },
           },
           storageClassName: 'gp2-encrypted',
@@ -265,7 +265,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
           accessModes: ['ReadWriteOnce'],
           resources: {
             requests: {
-              storage: '50Gi,',
+              storage: '50Gi',
             },
           },
           storageClassName: 'gp2-encrypted',

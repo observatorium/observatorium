@@ -892,7 +892,7 @@ objects:
         - ReadWriteOnce
         resources:
           requests:
-            storage: 50Gi,
+            storage: 50Gi
         storageClassName: gp2-encrypted
 - apiVersion: v1
   kind: Service
@@ -1211,7 +1211,7 @@ objects:
         - ReadWriteOnce
         resources:
           requests:
-            storage: 50Gi,
+            storage: 50Gi
         storageClassName: gp2-encrypted
 - apiVersion: v1
   kind: Service
