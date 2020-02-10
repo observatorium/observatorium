@@ -675,6 +675,20 @@ objects:
       app.kubernetes.io/version: ${THANOS_RECEIVE_CONTROLLER_IMAGE_TAG}
     name: observatorium-thanos-receive-controller
     namespace: ${NAMESPACE}
+- apiVersion: policy/v1beta1
+  kind: PodDisruptionBudget
+  metadata:
+    name: observatorium-thanos-receive-default
+    namespace: ${NAMESPACE}
+  spec:
+    maxUnavailable: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: database-write-hashring
+        app.kubernetes.io/instance: observatorium
+        app.kubernetes.io/name: thanos-receive
+        app.kubernetes.io/part-of: observatorium
+        controller.receive.thanos.io/hashring: default
 - apiVersion: v1
   kind: Service
   metadata:
@@ -684,6 +698,7 @@ objects:
       app.kubernetes.io/name: thanos-receive
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+      controller.receive.thanos.io/hashring: default
     name: observatorium-thanos-receive-default
     namespace: ${NAMESPACE}
   spec:
@@ -703,6 +718,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-receive
       app.kubernetes.io/part-of: observatorium
+      controller.receive.thanos.io/hashring: default
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
@@ -724,6 +740,7 @@ objects:
         app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-receive
         app.kubernetes.io/part-of: observatorium
+        controller.receive.thanos.io/hashring: default
     serviceName: observatorium-thanos-receive-default
     template:
       metadata:
@@ -734,6 +751,7 @@ objects:
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/tracing: jaeger-agent
           app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+          controller.receive.thanos.io/hashring: default
       spec:
         affinity:
           podAntiAffinity:
@@ -867,6 +885,7 @@ objects:
           app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-receive
           app.kubernetes.io/part-of: observatorium
+          controller.receive.thanos.io/hashring: default
         name: data
       spec:
         accessModes:

@@ -47,12 +47,14 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           replicationFactor: 3,
           retention: '6h',
           hashringConfigMapName: '%s-generated' % obs.thanosReceiveController.configmap.metadata.name,
-          commonLabels+:: obs.config.commonLabels,
+          commonLabels+::
+            obs.config.commonLabels {
+              'controller.receive.thanos.io/hashring': hashring.hashring,
+            },
         },
         statefulSet+: {
           metadata+: {
             labels+: {
-              'controller.receive.thanos.io/hashring': hashring.hashring,
               'controller.receive.thanos.io': 'thanos-receive-controller',
             },
           },
