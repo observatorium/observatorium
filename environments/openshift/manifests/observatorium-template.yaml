@@ -87,7 +87,7 @@ objects:
           - -http-address=
           - -email-domain=*
           - -upstream=http://localhost:9090
-          - -openshift-service-account=telemeter-production
+          - -openshift-service-account=prometheus-telemeter
           - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
             "namespace": "${NAMESPACE}"}'
           - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",
@@ -412,7 +412,7 @@ objects:
           - -http-address=
           - -email-domain=*
           - -upstream=http://localhost:9090
-          - -openshift-service-account=telemeter-production
+          - -openshift-service-account=prometheus-telemeter
           - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
             "namespace": "${NAMESPACE}"}'
           - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",

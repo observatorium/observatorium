@@ -299,7 +299,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
         tlsSecretName: 'query-tls',
         sessionSecretName: 'query-proxy',
         sessionSecret: '',
-        serviceAccountName: 'telemeter-production',
+        serviceAccountName: 'prometheus-telemeter',
         resources: {
           requests: {
             cpu: '${JAEGER_PROXY_CPU_REQUEST}',
@@ -339,7 +339,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
         tlsSecretName: 'query-cache-tls',
         sessionSecretName: 'query-cache-proxy',
         sessionSecret: '',
-        serviceAccountName: 'telemeter-production',
+        serviceAccountName: 'prometheus-telemeter',
         resources: {
           requests: {
             cpu: '${JAEGER_PROXY_CPU_REQUEST}',
