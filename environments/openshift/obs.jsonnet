@@ -195,7 +195,6 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       version: obs.config.thanosVersion,
       objectStorageConfig: obs.config.objectStorageConfig,
       hashrings: obs.config.hashrings,
-      podDisruptionBudgetMinAvailable: 2,
       replicas: '${{THANOS_RECEIVE_REPLICAS}}',
       resources: {
         requests: {
