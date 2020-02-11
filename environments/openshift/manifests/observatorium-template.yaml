@@ -370,7 +370,6 @@ objects:
           - --store=dnssrv+_grpc._tcp.observatorium-thanos-rule.${NAMESPACE}.svc.cluster.local
           - --store=dnssrv+_grpc._tcp.observatorium-thanos-store.${NAMESPACE}.svc.cluster.local
           - --store=dnssrv+_grpc._tcp.observatorium-thanos-receive-default.${NAMESPACE}.svc.cluster.local
-          - --web.external-prefix=/ui/v1/metrics
           - |
             --tracing.config=
               type: JAEGER
