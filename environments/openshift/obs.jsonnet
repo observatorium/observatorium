@@ -112,7 +112,6 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
 
   query+::
     t.query.withResources +
-    t.query.withExternalPrefix +
     (import '../../components/oauth-proxy.libsonnet') +
     (import '../../components/jaeger-agent.libsonnet').deploymentMixin,
 
