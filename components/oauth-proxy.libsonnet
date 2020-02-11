@@ -73,6 +73,7 @@ local service = k.core.v1.service;
               resources: op.config.oauthProxy.resources,
             },
           ],
+          serviceAccountName: op.config.oauthProxy.serviceAccountName,
           volumes+: [
             volume.fromSecret(op.config.oauthProxy.tlsSecretName, op.config.oauthProxy.tlsSecretName),
             volume.fromSecret(op.config.oauthProxy.sessionSecretName, op.config.oauthProxy.sessionSecretName),
