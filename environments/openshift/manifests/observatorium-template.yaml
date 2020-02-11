@@ -878,7 +878,10 @@ objects:
           - containerPort: 14271
             name: metrics
         terminationGracePeriodSeconds: 120
-        volumes: null
+        volumes:
+        - configMap:
+            name: observatorium-thanos-receive-controller-tenants-generated
+          name: hashring-config
     volumeClaimTemplates:
     - metadata:
         labels:
@@ -1198,7 +1201,7 @@ objects:
           - containerPort: 14271
             name: metrics
         terminationGracePeriodSeconds: 120
-        volumes: null
+        volumes: []
     volumeClaimTemplates:
     - metadata:
         labels:
