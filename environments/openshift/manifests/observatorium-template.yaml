@@ -311,6 +311,13 @@ objects:
             name: configs
           - containerPort: 14271
             name: metrics
+          resources:
+            limits:
+              cpu: 128m
+              memory: 128Mi
+            requests:
+              cpu: 32m
+              memory: 64Mi
         terminationGracePeriodSeconds: 120
         volumes:
         - emptyDir: {}
@@ -469,6 +476,13 @@ objects:
             name: configs
           - containerPort: 14271
             name: metrics
+          resources:
+            limits:
+              cpu: 128m
+              memory: 128Mi
+            requests:
+              cpu: 32m
+              memory: 64Mi
         serviceAccountName: prometheus-telemeter
         terminationGracePeriodSeconds: 120
         volumes:
@@ -876,6 +890,13 @@ objects:
             name: configs
           - containerPort: 14271
             name: metrics
+          resources:
+            limits:
+              cpu: 128m
+              memory: 128Mi
+            requests:
+              cpu: 32m
+              memory: 64Mi
         terminationGracePeriodSeconds: 120
         volumes:
         - configMap:
@@ -1050,6 +1071,13 @@ objects:
             name: configs
           - containerPort: 14271
             name: metrics
+          resources:
+            limits:
+              cpu: 128m
+              memory: 128Mi
+            requests:
+              cpu: 32m
+              memory: 64Mi
         volumes:
         - emptyDir: {}
           name: data
@@ -1199,6 +1227,13 @@ objects:
             name: configs
           - containerPort: 14271
             name: metrics
+          resources:
+            limits:
+              cpu: 128m
+              memory: 128Mi
+            requests:
+              cpu: 32m
+              memory: 64Mi
         terminationGracePeriodSeconds: 120
         volumes: []
     volumeClaimTemplates:

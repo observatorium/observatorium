@@ -41,6 +41,8 @@ local containerEnv = container.envType;
             ]) +
             container.mixin.livenessProbe.withFailureThreshold(5) +
             container.mixin.livenessProbe.httpGet.withPath('/').withPort(14271).withScheme('HTTP') +
+            container.mixin.resources.withRequests({ cpu: '32m', memory: '64Mi' }) +
+            container.mixin.resources.withLimits({ cpu: '128m', memory: '128Mi' }) +
             container.withPorts([
               container.portsType.newNamed(6831, 'jaeger-thrift'),
               container.portsType.newNamed(5778, 'configs'),
