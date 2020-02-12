@@ -58,9 +58,20 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
               containers: [
                 if c.name == 'thanos-rule' then c {
                   env+: s3EnvVars,
+                  args+: ['--rule-file=/var/thanos/config/rules/telemeter-rules.yaml'],
+                  volumeMounts+: [{
+                    name: 'rules',
+                    mountPath: '/var/thanos/config/rules',
+                  }],
                 } else c
                 for c in super.containers
               ],
+              volumes+: [{
+                name: 'rules',
+                configMap: {
+                  name: 'telemeter-rules-config',
+                },
+              }],
             },
           },
         },

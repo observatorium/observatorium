@@ -990,6 +990,7 @@ objects:
                 service_name: thanos-rule
                 sampler_type: ratelimiting
                 sampler_param: 2
+          - --rule-file=/var/thanos/config/rules/telemeter-rules.yaml
           env:
           - name: NAME
             valueFrom:
@@ -1043,6 +1044,8 @@ objects:
           - mountPath: /var/thanos/rule
             name: data
             readOnly: false
+          - mountPath: /var/thanos/config/rules
+            name: rules
         - args:
           - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
           - --reporter.type=grpc
@@ -1081,6 +1084,9 @@ objects:
         volumes:
         - emptyDir: {}
           name: data
+        - configMap:
+            name: telemeter-rules-config
+          name: rules
     volumeClaimTemplates: null
 - apiVersion: v1
   kind: Service
