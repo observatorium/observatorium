@@ -20,7 +20,7 @@ local thanosReceiveController = import 'thanos-receive-controller-mixin/mixin.li
           thanosStoreJobPrefix: 'thanos-store',
           thanosReceiveJobPrefix: 'thanos-receive-.*',
           thanosCompactJobPrefix: 'thanos-compact',
-          thanosReceiveControllerJobPrefix: 'thanos-receive-controller',
+          thanosReceiveControllerJobPrefix: 'observatorium-thanos-receive-controller',
 
           thanosQuerierSelector: 'job="%s"' % self.thanosQuerierJobPrefix,
           thanosStoreSelector: 'job="%s"' % self.thanosStoreJobPrefix,
