@@ -1150,6 +1150,7 @@ objects:
           - --grpc-address=0.0.0.0:10901
           - --http-address=0.0.0.0:10902
           - --objstore.config=$(OBJSTORE_CONFIG)
+          - --experimental.enable-index-header
           - |
             --tracing.config=
               type: JAEGER
