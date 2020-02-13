@@ -740,10 +740,6 @@ local up = (import '../../components/up.libsonnet');
         value: '200Mi',
       },
       {
-        name: 'AUTHORIZE_URL',
-        value: 'https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations',
-      },
-      {
         name: 'IMAGE',
         value: 'quay.io/openshift/origin-telemeter',
       },
