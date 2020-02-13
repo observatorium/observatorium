@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: thanos-store
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: v0.10.1
+    app.kubernetes.io/version: master-2020-02-13-adfef4b5
   name: observatorium-xyz-thanos-store
   namespace: observatorium
 spec:
@@ -25,7 +25,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: v0.10.1
+        app.kubernetes.io/version: master-2020-02-13-adfef4b5
     spec:
       containers:
       - args:
@@ -40,7 +40,7 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
-        image: quay.io/thanos/thanos:v0.10.1
+        image: quay.io/thanos/thanos:master-2020-02-13-adfef4b5
         livenessProbe:
           failureThreshold: 8
           httpGet:

@@ -3,7 +3,7 @@
 
   name: 'observatorium-xyz',
   namespace: 'observatorium',
-  thanosVersion: 'v0.10.1',
+  thanosVersion: 'master-2020-02-13-adfef4b5',
   thanosImage: 'quay.io/thanos/thanos:' + defaultConfig.thanosVersion,
   objectStorageConfig: {
     name: 'thanos-objectstorage',
@@ -42,7 +42,7 @@
 
   thanosReceiveController: {
     local trcConfig = self,
-    version: 'master-2019-10-18-d55fee2',
+    version: 'master-2020-02-06-b66e0c8',
     image: 'quay.io/observatorium/thanos-receive-controller:' + trcConfig.version,
     hashrings: defaultConfig.hashrings,
   },
