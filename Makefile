@@ -64,16 +64,16 @@ format: ## Auto-formats jsonnet files.
 	@echo ">> formatting jsonnet"
 	@find . -type f -not -path './vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \) | xargs -n 1 -- $(JSONNET_FMT)
 
-.PHONY: gen
-gen: ## Generates manifests for all environments from jsonnet.
-gen: deps
-	@ENV="dev" $(MAKE) gen-env
-	@ENV="base" $(MAKE) gen-env
-	@ENV="openshift" $(MAKE) gen-env
+.PHONY: generate
+generate: ## Generates manifests for all environments from jsonnet.
+generate: deps
+	@ENV="dev" $(MAKE) generate-env
+	@ENV="base" $(MAKE) generate-env
+	@ENV="openshift" $(MAKE) generate-env
 
-.PHONY: gen-env
-gen-env: ## Generates manifests for environment given in ENV=... environment variable from jsonnet.
-gen-env: $(GO_JSONNET) $(GOJSONTOYAML)
+.PHONY: generate-env
+generate-env: ## Generates manifests for environment given in ENV=... environment variable from jsonnet.
+generate-env: $(GO_JSONNET) $(GOJSONTOYAML)
 	@echo ">> making sure to start with a clean 'manifests' dir for $(ENV)"
 	@rm -rf environments/$(ENV)/manifests
 	@mkdir environments/$(ENV)/manifests
@@ -101,15 +101,15 @@ JSONNET_CONTAINER_CMD:=docker run --rm \
 format-in-container: ## Auto-formats jsonnet files in docker contaier.
 	$(JSONNET_CONTAINER_CMD) $(MAKE) $(MFLAGS) format
 
-.PHONY: gen-in-container
-gen-in-container: ## Generates manifests for all environments from jsonnet in docker container.
+.PHONY: generate-in-container
+generate-in-container: ## Generates manifests for all environments from jsonnet in docker container.
 	@echo ">> Compiling and generating thanos-mixin"
 	$(JSONNET_CONTAINER_CMD) $(MAKE) $(MFLAGS) JSONNET_BUNDLER='/go/bin/jb' deps
 	$(JSONNET_CONTAINER_CMD) $(MAKE) $(MFLAGS) \
 		JSONNET='/go/bin/jsonnet' \
 		JSONNET_BUNDLER='/go/bin/jb' \
 		GOJSONTOYAML='/go/bin/gojsontoyaml' \
-		gen
+		generate
 
 $(GO_JSONNET):
 	$(call fetch_go_bin_version,github.com/google/go-jsonnet/cmd/jsonnet,$(GO_JSONNET_VERSION))

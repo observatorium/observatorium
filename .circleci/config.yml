@@ -6,7 +6,7 @@ jobs:
     steps:
       - checkout
       - run: make format
-      - run: make gen
+      - run: make generate
       - run: git diff --exit-code
 
   tests:
