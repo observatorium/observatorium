@@ -44,11 +44,11 @@
       "name": "observatorium",
       "source": {
         "git": {
-          "remote": "https://github.com/observatorium/observatorium",
+          "remote": "https://github.com/kakkoyun/observatorium",
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "master"
+      "version": "jsonnet_refactor"
     },
     {
       "name": "slo-libsonnet",

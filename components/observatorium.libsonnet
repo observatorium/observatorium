@@ -111,6 +111,46 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       ],
     },
   },
+
+  receiveService::
+    local service = k.core.v1.service;
+    local ports = service.mixin.spec.portsType;
+
+    service.new(
+      obs.config.name + '-thanos-receive',
+      { 'app.kubernetes.io/name': 'thanos-receive' },
+      [
+        ports.newNamed('grpc', 10901, 10901),
+        ports.newNamed('http', 10902, 10902),
+        ports.newNamed('remote-write', 19291, 19291),
+      ]
+    ) +
+    service.mixin.metadata.withNamespace(obs.config.namespace),
+
+  apiGateway:: (import 'observatorium/observatorium-api.libsonnet') + {
+    config+:: {
+      local cfg = self,
+      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+      namespace: obs.config.namespace,
+      replicas: 1,
+      commonLabels+:: obs.config.commonLabels,
+      uiEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+        obs.query.service.metadata.name,
+        obs.query.service.metadata.namespace,
+        obs.query.service.spec.ports[1].port,
+      ],
+      queryEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1/query' % [
+        obs.queryCache.service.metadata.name,
+        obs.queryCache.service.metadata.namespace,
+        obs.queryCache.service.spec.ports[0].port,
+      ],
+      writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
+        obs.receiveService.metadata.name,
+        obs.receiveService.metadata.namespace,
+        obs.receiveService.spec.ports[1].port,
+      ],
+    },
+  },
 } + {
   local obs = self,
 
@@ -131,20 +171,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     for hashring in std.objectFields(obs.receivers)
     for name in std.objectFields(obs.receivers[hashring])
   } + {
-    thanosReceiveService:
-      local service = k.core.v1.service;
-      local ports = service.mixin.spec.portsType;
-
-      service.new(
-        obs.config.name + '-thanos-receive',
-        { 'app.kubernetes.io/name': 'thanos-receive' },
-        [
-          ports.newNamed('grpc', 10901, 10901),
-          ports.newNamed('http', 10902, 10902),
-          ports.newNamed('remote-write', 19291, 19291),
-        ]
-      ) +
-      service.mixin.metadata.withNamespace(obs.config.namespace),
+    'thanos-receive-service': obs.receiveService,
   } + {
     ['thanos-compact-' + name]: obs.compact[name]
     for name in std.objectFields(obs.compact)
@@ -157,5 +184,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   } + {
     ['thanos-receive-controller-' + name]: obs.thanosReceiveController[name]
     for name in std.objectFields(obs.thanosReceiveController)
+  } + {
+    ['api-gateway-' + name]: obs.apiGateway[name]
+    for name in std.objectFields(obs.apiGateway)
   },
 }

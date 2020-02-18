@@ -31,4 +31,8 @@
   queryCache+:: {
     config+:: obs.config.queryCache,
   },
+
+  apiGateway+:: {
+    config+:: obs.config.apiGateway,
+  },
 }

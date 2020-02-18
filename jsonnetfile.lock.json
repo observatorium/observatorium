@@ -59,12 +59,12 @@
       "name": "observatorium",
       "source": {
         "git": {
-          "remote": "https://github.com/observatorium/observatorium",
+          "remote": "https://github.com/kakkoyun/observatorium",
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "e009b4adfef6b4134073310f8e84bb3aa4215cde",
-      "sum": "fFeO0W9LXd9Qn9bF81CSQfG0+eF//rUSxZJk3LvKWN0="
+      "version": "722e0fe321e79ccda887fd224b871be3db929c4d",
+      "sum": "kchcIxpNhfWjhdZ3hCFD92P7V65dO0dPnzfrAkK782g="
     },
     {
       "name": "prometheus-operator",

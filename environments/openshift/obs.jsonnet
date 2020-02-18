@@ -1,5 +1,6 @@
 local t = (import 'kube-thanos/thanos.libsonnet');
 local trc = (import 'thanos-receive-controller/thanos-receive-controller.libsonnet');
+local gw = (import 'observatorium/observatorium-api.libsonnet');
 local cqf = (import '../../components/cortex-query-frontend.libsonnet');
 
 (import '../../components/observatorium.libsonnet') {
@@ -128,6 +129,10 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
 
   queryCache+::
     cqf.withResources +
+    (import '../../components/oauth-proxy.libsonnet'),
+
+  apiGateway+::
+    gw.withResources +
     (import '../../components/oauth-proxy.libsonnet'),
 } + {
   local obs = self,
@@ -330,7 +335,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       local qcConfig = self,
       version: 'master-8533a216',
       image: 'quay.io/cortexproject/cortex:' + qcConfig.version,
-      replicas: 3,
+      replicas: '${{THANOS_QUERIER_CACHE_REPLICAS}}',
       resources: {
         requests: {
           cpu: '${THANOS_QUERIER_CACHE_CPU_REQUEST}',
@@ -347,6 +352,42 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
         upstream: 'http://localhost:' + obs.query.service.spec.ports[1].port,
         tlsSecretName: 'query-cache-tls',
         sessionSecretName: 'query-cache-proxy',
+        sessionSecret: '',
+        serviceAccountName: 'prometheus-telemeter',
+        resources: {
+          requests: {
+            cpu: '${JAEGER_PROXY_CPU_REQUEST}',
+            memory: '${JAEGER_PROXY_MEMORY_REQUEST}',
+          },
+          limits: {
+            cpu: '${JAEGER_PROXY_CPU_LIMITS}',
+            memory: '${JAEGER_PROXY_MEMORY_LIMITS}',
+          },
+        },
+      },
+    },
+
+    apiGateway+: {
+      local gwConfig = self,
+      version: 'master-2020-01-28-e009b4a',
+      image: 'quay.io/observatorium/observatorium:' + gwConfig.version,
+      replicas: '${{OBSERVATORIUM_API_REPLICAS}}',
+      resources: {
+        requests: {
+          cpu: '${OBSERVATORIUM_API_CPU_REQUEST}',
+          memory: '${OBSERVATORIUM_API_MEMORY_REQUEST}',
+        },
+        limits: {
+          cpu: '${OBSERVATORIUM_API_CPU_LIMIT}',
+          memory: '${OBSERVATORIUM_API_MEMORY_LIMIT}',
+        },
+      },
+      oauthProxy: {
+        image: obs.config.oauthProxyImage,
+        httpsPort: 9091,
+        upstream: 'http://localhost:' + obs.query.service.spec.ports[1].port,
+        tlsSecretName: 'observatorium-api-tls',
+        sessionSecretName: 'observatorium-api-proxy',
         sessionSecret: '',
         serviceAccountName: 'prometheus-telemeter',
         resources: {
@@ -465,6 +506,10 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
         value: '1Gi',
       },
       {
+        name: 'THANOS_QUERIER_CACHE_REPLICAS',
+        value: '3',
+      },
+      {
         name: 'THANOS_QUERIER_CACHE_CPU_REQUEST',
         value: '100m',
       },
@@ -551,6 +596,26 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       {
         name: 'THANOS_QUERIER_SVC_URL',
         value: 'http://thanos-querier.observatorium.svc:9090',
+      },
+      {
+        name: 'OBSERVATORIUM_API_REPLICAS',
+        value: '3',
+      },
+      {
+        name: 'OBSERVATORIUM_API_CPU_REQUEST',
+        value: '100m',
+      },
+      {
+        name: 'OBSERVATORIUM_API_CPU_LIMIT',
+        value: '1',
+      },
+      {
+        name: 'OBSERVATORIUM_API_MEMORY_REQUEST',
+        value: '256Mi',
+      },
+      {
+        name: 'OBSERVATORIUM_API_MEMORY_LIMIT',
+        value: '1Gi',
       },
       {
         name: 'JAEGER_PROXY_CPU_REQUEST',
