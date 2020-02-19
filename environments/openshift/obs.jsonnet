@@ -224,7 +224,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
               storage: '50Gi',
             },
           },
-          storageClassName: 'gp2-encrypted',
+          storageClassName: 'gp2',
         },
       },
       jaegerAgent: {
@@ -277,7 +277,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
               storage: '50Gi',
             },
           },
-          storageClassName: 'gp2-encrypted',
+          storageClassName: 'gp2',
         },
       },
       jaegerAgent: {

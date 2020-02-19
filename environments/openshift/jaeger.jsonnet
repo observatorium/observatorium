@@ -7,7 +7,7 @@ local app =
       image:: '${IMAGE}:${IMAGE_TAG}',
       replicas:: '${{REPLICAS}}',  // additional parenthesis does matter, they convert argument to an int.
       pvc+:: {
-        class: 'gp2-encrypted',
+        class: 'gp2',
       },
 
       queryService+: {
