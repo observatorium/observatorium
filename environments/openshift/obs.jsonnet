@@ -402,11 +402,11 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       },
       {
         name: 'PROXY_IMAGE',
-        value: 'openshift/oauth-proxy',
+        value: 'quay.io/openshift/origin-oauth-proxy',
       },
       {
         name: 'PROXY_IMAGE_TAG',
-        value: 'v1.1.0',
+        value: '4.4.0',
       },
       {
         name: 'JAEGER_AGENT_IMAGE',
