@@ -135,9 +135,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
       uiEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.query.service.metadata.name,
-        obs.query.service.metadata.namespace,
-        obs.query.service.spec.ports[1].port,
+        obs.apiGatewayQuery.service.metadata.name,
+        obs.apiGatewayQuery.service.metadata.namespace,
+        obs.apiGatewayQuery.service.spec.ports[1].port,
       ],
       queryEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1/query' % [
         obs.queryCache.service.metadata.name,
@@ -151,6 +151,27 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       ],
     },
   },
+
+  apiGatewayQuery::
+    t.query +
+    t.query.withExternalPrefix + {
+      config+:: {
+        local cfg = self,
+        name: obs.apiGateway.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+        namespace: obs.config.namespace,
+        commonLabels+::
+          obs.config.commonLabels {
+            'app.kubernetes.io/instance': obs.config.commonLabels['app.kubernetes.io/instance'] + '-api-gateway',
+          },
+        replicas: 1,
+        externalPrefix: '/ui/v1/metrics',
+        stores: [
+          'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
+          for service in [obs.rule.service, obs.store.service] + [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
+        ],
+        replicaLabels: ['prometheus_replica', 'ruler_replica', 'replica'],
+      },
+    },
 } + {
   local obs = self,
 
@@ -187,5 +208,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   } + {
     ['api-gateway-' + name]: obs.apiGateway[name]
     for name in std.objectFields(obs.apiGateway)
+  } + {
+    ['api-gateway-thanos-query-' + name]: obs.apiGatewayQuery[name]
+    for name in std.objectFields(obs.apiGatewayQuery)
   },
 }

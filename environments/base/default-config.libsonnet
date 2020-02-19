@@ -113,4 +113,9 @@
     version: 'master-2020-01-28-e009b4a',
     image: 'quay.io/observatorium/observatorium:' + gwConfig.version,
   },
+
+  apiGatewayQuery: {
+    image: defaultConfig.thanosImage,
+    version: defaultConfig.thanosVersion,
+  },
 }

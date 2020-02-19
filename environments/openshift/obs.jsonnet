@@ -134,6 +134,10 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
   apiGateway+::
     gw.withResources +
     (import '../../components/oauth-proxy.libsonnet'),
+
+  apiGatewayQuery+::
+    t.query.withResources +
+    (import '../../components/oauth-proxy.libsonnet'),
 } + {
   local obs = self,
 
@@ -295,7 +299,6 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       image: obs.config.thanosImage,
       version: obs.config.thanosVersion,
       replicas: '${{THANOS_QUERIER_REPLICAS}}',
-      externalPrefix: '/ui/v1/metrics',
       resources: {
         requests: {
           cpu: '${THANOS_QUERIER_CPU_REQUEST}',
@@ -400,6 +403,46 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
             memory: '${JAEGER_PROXY_MEMORY_LIMITS}',
           },
         },
+      },
+    },
+
+    apiGatewayQuery+: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
+      replicas: 1,
+      externalPrefix: '/ui/v1/metrics',
+      resources: {
+        requests: {
+          cpu: '${THANOS_QUERIER_CPU_REQUEST}',
+          memory: '${THANOS_QUERIER_MEMORY_REQUEST}',
+        },
+        limits: {
+          cpu: '${THANOS_QUERIER_CPU_LIMIT}',
+          memory: '${THANOS_QUERIER_MEMORY_LIMIT}',
+        },
+      },
+      oauthProxy: {
+        image: obs.config.oauthProxyImage,
+        httpsPort: 9091,
+        upstream: 'http://localhost:' + obs.apiGatewayQuery.service.spec.ports[1].port,
+        tlsSecretName: 'query-tls',
+        sessionSecretName: 'query-proxy',
+        sessionSecret: '',
+        serviceAccountName: 'prometheus-telemeter',
+        resources: {
+          requests: {
+            cpu: '${JAEGER_PROXY_CPU_REQUEST}',
+            memory: '${JAEGER_PROXY_MEMORY_REQUEST}',
+          },
+          limits: {
+            cpu: '${JAEGER_PROXY_CPU_LIMITS}',
+            memory: '${JAEGER_PROXY_MEMORY_LIMITS}',
+          },
+        },
+      },
+      jaegerAgent: {
+        image: obs.config.jaegerAgentImage,
+        collectorAddress: obs.config.jaegerAgentCollectorAddress,
       },
     },
   },
