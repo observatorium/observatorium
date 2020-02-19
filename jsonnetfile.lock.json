@@ -59,11 +59,11 @@
       "name": "observatorium",
       "source": {
         "git": {
-          "remote": "https://github.com/kakkoyun/observatorium",
+          "remote": "https://github.com/observatorium/observatorium",
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "722e0fe321e79ccda887fd224b871be3db929c4d",
+      "version": "f12953a09d50d1806d7e2c82b75b30ad9a958f0f",
       "sum": "kchcIxpNhfWjhdZ3hCFD92P7V65dO0dPnzfrAkK782g="
     },
     {
