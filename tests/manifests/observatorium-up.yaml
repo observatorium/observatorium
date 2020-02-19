@@ -7,23 +7,26 @@ spec:
   template:
     metadata:
       labels:
-        app: observatorium-up
+        app.kubernetes.io/component: test
+        app.kubernetes.io/instance: observatorium-up
+        app.kubernetes.io/name: observatorium-up
+        app.kubernetes.io/version: master-2020-01-09-89757a5
     spec:
-      restartPolicy: OnFailure
       containers:
-      - name: observatorium-up
+      - args:
+        - --endpoint-write=http://observatorium-xyz-observatorium-api-gateway.observatorium.svc.cluster.local:8080/api/v1/metrics/write
+        - --endpoint-read=http://observatorium-xyz-observatorium-api-gateway.observatorium.svc.cluster.local:8080/api/v1/metrics/query
+        - --period=1s
+        - --duration=2m
+        - --name=foo
+        - --labels=bar="baz"
+        - --latency=10s
+        - --initial-query-delay=5s
+        - --threshold=0.90
         image: quay.io/observatorium/up:master-2020-01-09-89757a5
-        args:
-          - --endpoint-write=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
-          - --endpoint-read=http://observatorium-xyz-cortex-query-frontend.observatorium.svc.cluster.local:9090/api/v1/query
-          - --period=1s
-          - --duration=2m
-          - --name=foo
-          - --labels=bar="baz"
-          - --latency=10s
-          - --initial-query-delay=5s
-          - --threshold=0.90
+        name: observatorium-up
         resources:
           limits:
-            memory: "128Mi"
-            cpu: "500m"
+            cpu: 500m
+            memory: 128Mi
+      restartPolicy: OnFailure

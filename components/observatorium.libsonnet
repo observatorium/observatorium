@@ -147,11 +147,13 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
         obs.receiveService.metadata.name,
         obs.receiveService.metadata.namespace,
-        obs.receiveService.spec.ports[1].port,
+        obs.receiveService.spec.ports[2].port,
       ],
     },
   },
 
+  // NOTICE: There is an additional Thanos Querier with an additional argument to configure externalPrefix for Thanos Query UI.
+  // This dedicated component only used by api gateway UI.
   apiGatewayQuery::
     t.query +
     t.query.withExternalPrefix + {

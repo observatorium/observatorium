@@ -406,6 +406,8 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       },
     },
 
+    // NOTICE: There is an additional Thanos Querier with an additional argument to configure externalPrefix for Thanos Query UI.
+    // This dedicated component only used by api gateway UI.
     apiGatewayQuery+: {
       image: obs.config.thanosImage,
       version: obs.config.thanosVersion,

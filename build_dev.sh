@@ -13,3 +13,6 @@ mkdir environments/dev/manifests
 
 jsonnet -J vendor -m environments/dev/manifests environments/dev/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
 find environments/dev/manifests -type f ! -name '*.yaml' -delete
+
+jsonnet -J vendor -m tests/manifests tests/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
+find tests/manifests -type f ! -name '*.yaml' -delete
