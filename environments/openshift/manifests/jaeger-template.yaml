@@ -282,7 +282,7 @@ objects:
     resources:
       requests:
         storage: 50Gi
-    storageClassName: gp2-encrypted
+    storageClassName: gp2
 parameters:
 - name: NAMESPACE
   value: telemeter
