@@ -398,7 +398,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       },
       {
         name: 'THANOS_IMAGE_TAG',
-        value: 'v0.9.0',
+        value: 'v0.11.0-rc.0',
       },
       {
         name: 'PROXY_IMAGE',
