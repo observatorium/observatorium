@@ -21,7 +21,10 @@
   },
 
   store+:: {
-    config+:: obs.config.store,
+    ['shard' + i]+: {
+      config+:: obs.config.store,
+    }
+    for i in std.range(0, obs.config.store.shards - 1)
   },
 
   query+:: {

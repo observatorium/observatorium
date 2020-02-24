@@ -84,6 +84,7 @@
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
     objectStorageConfig: defaultConfig.objectStorageConfig,
+    shards: 1,
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],

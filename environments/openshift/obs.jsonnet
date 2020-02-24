@@ -78,25 +78,28 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       },
     },
 
-  store+::
-    t.store.withVolumeClaimTemplate +
-    t.store.withResources +
-    (import '../../components/jaeger-agent.libsonnet').statefulSetMixin {
-      statefulSet+: {
-        spec+: {
-          template+: {
-            spec+: {
-              containers: [
-                if c.name == 'thanos-store' then c {
-                  env+: s3EnvVars,
-                } else c
-                for c in super.containers
-              ],
+  store+:: {
+    ['shard' + i]+:
+      t.store.withVolumeClaimTemplate +
+      t.store.withResources +
+      (import '../../components/jaeger-agent.libsonnet').statefulSetMixin {
+        statefulSet+: {
+          spec+: {
+            template+: {
+              spec+: {
+                containers: [
+                  if c.name == 'thanos-store' then c {
+                    env+: s3EnvVars,
+                  } else c
+                  for c in super.containers
+                ],
+              },
             },
           },
         },
-      },
-    },
+      }
+    for i in std.range(0, obs.config.store.shards - 1)
+  },
 
   receivers+:: {
     [hashring.hashring]+:
@@ -257,6 +260,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     store+: {
       image: obs.config.thanosImage,
       version: obs.config.thanosVersion,
+      shards: 3,
       objectStorageConfig: obs.config.objectStorageConfig,
       replicas: '${{THANOS_STORE_REPLICAS}}',
       resources: {
