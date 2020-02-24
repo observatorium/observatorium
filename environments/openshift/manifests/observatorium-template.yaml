@@ -375,7 +375,9 @@ objects:
           - --query.replica-label=ruler_replica
           - --query.replica-label=replica
           - --store=dnssrv+_grpc._tcp.observatorium-thanos-rule.${NAMESPACE}.svc.cluster.local
-          - --store=dnssrv+_grpc._tcp.observatorium-thanos-store.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-0.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-1.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-2.${NAMESPACE}.svc.cluster.local
           - --store=dnssrv+_grpc._tcp.observatorium-thanos-receive-default.${NAMESPACE}.svc.cluster.local
           - |
             --tracing.config=
@@ -1097,7 +1099,7 @@ objects:
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
-    name: observatorium-thanos-store
+    name: observatorium-thanos-store-shard-0
     namespace: ${NAMESPACE}
   spec:
     clusterIP: None
@@ -1122,7 +1124,7 @@ objects:
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
-    name: observatorium-thanos-store
+    name: observatorium-thanos-store-shard-0
     namespace: ${NAMESPACE}
   spec:
     replicas: ${{THANOS_STORE_REPLICAS}}
@@ -1132,7 +1134,7 @@ objects:
         app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
-    serviceName: observatorium-thanos-store
+    serviceName: observatorium-thanos-store-shard-0
     template:
       metadata:
         labels:
@@ -1151,6 +1153,373 @@ objects:
           - --http-address=0.0.0.0:10902
           - --objstore.config=$(OBJSTORE_CONFIG)
           - --experimental.enable-index-header
+          - |
+            --selector.relabel-config=
+              - action: hashmod
+                source_labels: ["__block_id"]
+                target_label: shard
+                modulus: 3
+              - action: keep
+                source_labels: ["shard"]
+                regex: 0
+          - |
+            --tracing.config=
+              type: JAEGER
+              config:
+                service_name: thanos-store
+                sampler_type: ratelimiting
+                sampler_param: 2
+          env:
+          - name: OBJSTORE_CONFIG
+            valueFrom:
+              secretKeyRef:
+                key: thanos.yaml
+                name: ${THANOS_CONFIG_SECRET}
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: ${THANOS_S3_SECRET}
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: ${THANOS_S3_SECRET}
+          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-store
+          ports:
+          - containerPort: 10901
+            name: grpc
+          - containerPort: 10902
+            name: http
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: ${THANOS_STORE_CPU_LIMIT}
+              memory: ${THANOS_STORE_MEMORY_LIMIT}
+            requests:
+              cpu: ${THANOS_STORE_CPU_REQUEST}
+              memory: ${THANOS_STORE_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /var/thanos/store
+            name: data
+            readOnly: false
+        - args:
+          - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
+          - --reporter.type=grpc
+          - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
+          env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 14271
+              scheme: HTTP
+          name: jaeger-agent
+          ports:
+          - containerPort: 6831
+            name: jaeger-thrift
+          - containerPort: 5778
+            name: configs
+          - containerPort: 14271
+            name: metrics
+          resources:
+            limits:
+              cpu: 128m
+              memory: 128Mi
+            requests:
+              cpu: 32m
+              memory: 64Mi
+        terminationGracePeriodSeconds: 120
+        volumes: []
+    volumeClaimTemplates:
+    - metadata:
+        labels:
+          app.kubernetes.io/component: object-store-gateway
+          app.kubernetes.io/instance: observatorium
+          app.kubernetes.io/name: thanos-store
+          app.kubernetes.io/part-of: observatorium
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: gp2
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/component: object-store-gateway
+      app.kubernetes.io/instance: observatorium
+      app.kubernetes.io/name: thanos-store
+      app.kubernetes.io/part-of: observatorium
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-store-shard-1
+    namespace: ${NAMESPACE}
+  spec:
+    clusterIP: None
+    ports:
+    - name: grpc
+      port: 10901
+      targetPort: 10901
+    - name: http
+      port: 10902
+      targetPort: 10902
+    selector:
+      app.kubernetes.io/component: object-store-gateway
+      app.kubernetes.io/instance: observatorium
+      app.kubernetes.io/name: thanos-store
+      app.kubernetes.io/part-of: observatorium
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    labels:
+      app.kubernetes.io/component: object-store-gateway
+      app.kubernetes.io/instance: observatorium
+      app.kubernetes.io/name: thanos-store
+      app.kubernetes.io/part-of: observatorium
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-store-shard-1
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: ${{THANOS_STORE_REPLICAS}}
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: object-store-gateway
+        app.kubernetes.io/instance: observatorium
+        app.kubernetes.io/name: thanos-store
+        app.kubernetes.io/part-of: observatorium
+    serviceName: observatorium-thanos-store-shard-1
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: object-store-gateway
+          app.kubernetes.io/instance: observatorium
+          app.kubernetes.io/name: thanos-store
+          app.kubernetes.io/part-of: observatorium
+          app.kubernetes.io/tracing: jaeger-agent
+          app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+      spec:
+        containers:
+        - args:
+          - store
+          - --data-dir=/var/thanos/store
+          - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:10902
+          - --objstore.config=$(OBJSTORE_CONFIG)
+          - --experimental.enable-index-header
+          - |
+            --selector.relabel-config=
+              - action: hashmod
+                source_labels: ["__block_id"]
+                target_label: shard
+                modulus: 3
+              - action: keep
+                source_labels: ["shard"]
+                regex: 1
+          - |
+            --tracing.config=
+              type: JAEGER
+              config:
+                service_name: thanos-store
+                sampler_type: ratelimiting
+                sampler_param: 2
+          env:
+          - name: OBJSTORE_CONFIG
+            valueFrom:
+              secretKeyRef:
+                key: thanos.yaml
+                name: ${THANOS_CONFIG_SECRET}
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: ${THANOS_S3_SECRET}
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: ${THANOS_S3_SECRET}
+          image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-store
+          ports:
+          - containerPort: 10901
+            name: grpc
+          - containerPort: 10902
+            name: http
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: ${THANOS_STORE_CPU_LIMIT}
+              memory: ${THANOS_STORE_MEMORY_LIMIT}
+            requests:
+              cpu: ${THANOS_STORE_CPU_REQUEST}
+              memory: ${THANOS_STORE_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /var/thanos/store
+            name: data
+            readOnly: false
+        - args:
+          - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
+          - --reporter.type=grpc
+          - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
+          env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 14271
+              scheme: HTTP
+          name: jaeger-agent
+          ports:
+          - containerPort: 6831
+            name: jaeger-thrift
+          - containerPort: 5778
+            name: configs
+          - containerPort: 14271
+            name: metrics
+          resources:
+            limits:
+              cpu: 128m
+              memory: 128Mi
+            requests:
+              cpu: 32m
+              memory: 64Mi
+        terminationGracePeriodSeconds: 120
+        volumes: []
+    volumeClaimTemplates:
+    - metadata:
+        labels:
+          app.kubernetes.io/component: object-store-gateway
+          app.kubernetes.io/instance: observatorium
+          app.kubernetes.io/name: thanos-store
+          app.kubernetes.io/part-of: observatorium
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: gp2
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/component: object-store-gateway
+      app.kubernetes.io/instance: observatorium
+      app.kubernetes.io/name: thanos-store
+      app.kubernetes.io/part-of: observatorium
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-store-shard-2
+    namespace: ${NAMESPACE}
+  spec:
+    clusterIP: None
+    ports:
+    - name: grpc
+      port: 10901
+      targetPort: 10901
+    - name: http
+      port: 10902
+      targetPort: 10902
+    selector:
+      app.kubernetes.io/component: object-store-gateway
+      app.kubernetes.io/instance: observatorium
+      app.kubernetes.io/name: thanos-store
+      app.kubernetes.io/part-of: observatorium
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    labels:
+      app.kubernetes.io/component: object-store-gateway
+      app.kubernetes.io/instance: observatorium
+      app.kubernetes.io/name: thanos-store
+      app.kubernetes.io/part-of: observatorium
+      app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+    name: observatorium-thanos-store-shard-2
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: ${{THANOS_STORE_REPLICAS}}
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: object-store-gateway
+        app.kubernetes.io/instance: observatorium
+        app.kubernetes.io/name: thanos-store
+        app.kubernetes.io/part-of: observatorium
+    serviceName: observatorium-thanos-store-shard-2
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: object-store-gateway
+          app.kubernetes.io/instance: observatorium
+          app.kubernetes.io/name: thanos-store
+          app.kubernetes.io/part-of: observatorium
+          app.kubernetes.io/tracing: jaeger-agent
+          app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+      spec:
+        containers:
+        - args:
+          - store
+          - --data-dir=/var/thanos/store
+          - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:10902
+          - --objstore.config=$(OBJSTORE_CONFIG)
+          - --experimental.enable-index-header
+          - |
+            --selector.relabel-config=
+              - action: hashmod
+                source_labels: ["__block_id"]
+                target_label: shard
+                modulus: 3
+              - action: keep
+                source_labels: ["shard"]
+                regex: 2
           - |
             --tracing.config=
               type: JAEGER

@@ -73,14 +73,44 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  store:: t.store {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-      namespace: obs.config.namespace,
-      commonLabels+:: obs.config.commonLabels,
-      replicas: 1,
-    },
+  store:: {
+    ['shard' + i]:
+      t.store {
+        config+:: {
+          local cfg = self,
+          name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'] + '-shard-' + i,
+          namespace: obs.config.namespace,
+          commonLabels+:: obs.config.commonLabels,
+          replicas: 1,
+        },
+      } + {
+        statefulSet+: {
+          spec+: {
+            template+: {
+              spec+: {
+                containers: [
+                  if c.name == 'thanos-store' then c {
+                    args+: [
+                      |||
+                        --selector.relabel-config=
+                          - action: hashmod
+                            source_labels: ["__block_id"]
+                            target_label: shard
+                            modulus: %d
+                          - action: keep
+                            source_labels: ["shard"]
+                            regex: %d
+                      ||| % [obs.config.store.shards, i],
+                    ],
+                  } else c
+                  for c in super.containers
+                ],
+              },
+            },
+          },
+        },
+      }
+    for i in std.range(0, obs.config.store.shards - 1)
   },
 
   query:: t.query {
@@ -92,7 +122,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       replicas: 1,
       stores: [
         'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
-        for service in [obs.rule.service, obs.store.service] + [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
+        for service in
+          [obs.rule.service] +
+          [obs.store[shard].service for shard in std.objectFields(obs.store)] +
+          [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
       ],
       replicaLabels: ['prometheus_replica', 'ruler_replica', 'replica'],
     },
@@ -149,8 +182,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ['thanos-compact-' + name]: obs.compact[name]
     for name in std.objectFields(obs.compact)
   } + {
-    ['thanos-store-' + name]: obs.store[name]
-    for name in std.objectFields(obs.store)
+    ['thanos-store-' + shard + '-' + name]: obs.store[shard][name]
+    for shard in std.objectFields(obs.store)
+    for name in std.objectFields(obs.store[shard])
   } + {
     ['thanos-rule-' + name]: obs.rule[name]
     for name in std.objectFields(obs.rule)
