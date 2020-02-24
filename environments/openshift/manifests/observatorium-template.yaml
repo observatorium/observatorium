@@ -919,7 +919,7 @@ objects:
         resources:
           requests:
             storage: 50Gi
-        storageClassName: gp2
+        storageClassName: ${STORAGE_CLASS}
 - apiVersion: v1
   kind: Service
   metadata:
@@ -1274,7 +1274,7 @@ objects:
         resources:
           requests:
             storage: 50Gi
-        storageClassName: gp2
+        storageClassName: ${STORAGE_CLASS}
 - apiVersion: v1
   kind: Service
   metadata:
@@ -1459,7 +1459,7 @@ objects:
         resources:
           requests:
             storage: 50Gi
-        storageClassName: gp2
+        storageClassName: ${STORAGE_CLASS}
 - apiVersion: v1
   kind: Service
   metadata:
@@ -1644,7 +1644,7 @@ objects:
         resources:
           requests:
             storage: 50Gi
-        storageClassName: gp2
+        storageClassName: ${STORAGE_CLASS}
 - apiVersion: v1
   kind: Service
   metadata:
@@ -2164,6 +2164,8 @@ parameters:
   value: quay.io/thanos/thanos
 - name: THANOS_IMAGE_TAG
   value: v0.11.0-rc.0
+- name: STORAGE_CLASS
+  value: gp2
 - name: PROXY_IMAGE
   value: quay.io/openshift/origin-oauth-proxy
 - name: PROXY_IMAGE_TAG
