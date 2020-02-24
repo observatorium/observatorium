@@ -1099,6 +1099,7 @@ objects:
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+      store.observatorium.io/shard: shard-0
     name: observatorium-thanos-store-shard-0
     namespace: ${NAMESPACE}
   spec:
@@ -1115,6 +1116,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
+      store.observatorium.io/shard: shard-0
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
@@ -1124,6 +1126,7 @@ objects:
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+      store.observatorium.io/shard: shard-0
     name: observatorium-thanos-store-shard-0
     namespace: ${NAMESPACE}
   spec:
@@ -1134,6 +1137,7 @@ objects:
         app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
+        store.observatorium.io/shard: shard-0
     serviceName: observatorium-thanos-store-shard-0
     template:
       metadata:
@@ -1144,6 +1148,7 @@ objects:
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/tracing: jaeger-agent
           app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+          store.observatorium.io/shard: shard-0
       spec:
         containers:
         - args:
@@ -1261,6 +1266,7 @@ objects:
           app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-store
           app.kubernetes.io/part-of: observatorium
+          store.observatorium.io/shard: shard-0
         name: data
       spec:
         accessModes:
@@ -1278,6 +1284,7 @@ objects:
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+      store.observatorium.io/shard: shard-1
     name: observatorium-thanos-store-shard-1
     namespace: ${NAMESPACE}
   spec:
@@ -1294,6 +1301,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
+      store.observatorium.io/shard: shard-1
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
@@ -1303,6 +1311,7 @@ objects:
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+      store.observatorium.io/shard: shard-1
     name: observatorium-thanos-store-shard-1
     namespace: ${NAMESPACE}
   spec:
@@ -1313,6 +1322,7 @@ objects:
         app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
+        store.observatorium.io/shard: shard-1
     serviceName: observatorium-thanos-store-shard-1
     template:
       metadata:
@@ -1323,6 +1333,7 @@ objects:
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/tracing: jaeger-agent
           app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+          store.observatorium.io/shard: shard-1
       spec:
         containers:
         - args:
@@ -1440,6 +1451,7 @@ objects:
           app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-store
           app.kubernetes.io/part-of: observatorium
+          store.observatorium.io/shard: shard-1
         name: data
       spec:
         accessModes:
@@ -1457,6 +1469,7 @@ objects:
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+      store.observatorium.io/shard: shard-2
     name: observatorium-thanos-store-shard-2
     namespace: ${NAMESPACE}
   spec:
@@ -1473,6 +1486,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
+      store.observatorium.io/shard: shard-2
 - apiVersion: apps/v1
   kind: StatefulSet
   metadata:
@@ -1482,6 +1496,7 @@ objects:
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
       app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+      store.observatorium.io/shard: shard-2
     name: observatorium-thanos-store-shard-2
     namespace: ${NAMESPACE}
   spec:
@@ -1492,6 +1507,7 @@ objects:
         app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
+        store.observatorium.io/shard: shard-2
     serviceName: observatorium-thanos-store-shard-2
     template:
       metadata:
@@ -1502,6 +1518,7 @@ objects:
           app.kubernetes.io/part-of: observatorium
           app.kubernetes.io/tracing: jaeger-agent
           app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
+          store.observatorium.io/shard: shard-2
       spec:
         containers:
         - args:
@@ -1619,6 +1636,7 @@ objects:
           app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-store
           app.kubernetes.io/part-of: observatorium
+          store.observatorium.io/shard: shard-2
         name: data
       spec:
         accessModes:

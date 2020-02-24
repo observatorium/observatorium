@@ -80,7 +80,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           local cfg = self,
           name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'] + '-shard-' + i,
           namespace: obs.config.namespace,
-          commonLabels+:: obs.config.commonLabels,
+          commonLabels+:: obs.config.commonLabels {
+            'store.observatorium.io/shard': 'shard-' + i,
+          },
           replicas: 1,
         },
       } + {
