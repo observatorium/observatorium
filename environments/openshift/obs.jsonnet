@@ -502,7 +502,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       },
       {
         name: 'THANOS_RECEIVE_CPU_REQUEST',
-        value: '100m',
+        value: '1',
       },
       {
         name: 'THANOS_RECEIVE_CPU_LIMIT',
@@ -510,7 +510,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       },
       {
         name: 'THANOS_RECEIVE_MEMORY_REQUEST',
-        value: '512Mi',
+        value: '1Gi',
       },
       {
         name: 'THANOS_RECEIVE_MEMORY_LIMIT',

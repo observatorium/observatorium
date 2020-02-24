@@ -2213,11 +2213,11 @@ parameters:
 - name: THANOS_STORE_MEMORY_LIMIT
   value: 8Gi
 - name: THANOS_RECEIVE_CPU_REQUEST
-  value: 100m
+  value: "1"
 - name: THANOS_RECEIVE_CPU_LIMIT
   value: "1"
 - name: THANOS_RECEIVE_MEMORY_REQUEST
-  value: 512Mi
+  value: 1Gi
 - name: THANOS_RECEIVE_MEMORY_LIMIT
   value: 1Gi
 - name: THANOS_COMPACTOR_CPU_REQUEST
