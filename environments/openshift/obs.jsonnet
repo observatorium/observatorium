@@ -227,7 +227,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
               storage: '50Gi',
             },
           },
-          storageClassName: 'gp2',
+          storageClassName: '${STORAGE_CLASS}',
         },
       },
       jaegerAgent: {
@@ -281,7 +281,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
               storage: '50Gi',
             },
           },
-          storageClassName: 'gp2',
+          storageClassName: '${STORAGE_CLASS}',
         },
       },
       jaegerAgent: {
@@ -403,6 +403,10 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
       {
         name: 'THANOS_IMAGE_TAG',
         value: 'v0.11.0-rc.0',
+      },
+      {
+        name: 'STORAGE_CLASS',
+        value: 'gp2',
       },
       {
         name: 'PROXY_IMAGE',
