@@ -279,6 +279,7 @@ objects:
             requests:
               cpu: ${THANOS_COMPACTOR_CPU_REQUEST}
               memory: ${THANOS_COMPACTOR_MEMORY_REQUEST}
+          terminationMessagePolicy: FallbackToLogsOnError
           volumeMounts:
           - mountPath: /var/thanos/compact
             name: data
@@ -414,6 +415,7 @@ objects:
             requests:
               cpu: ${THANOS_QUERIER_CPU_REQUEST}
               memory: ${THANOS_QUERIER_MEMORY_REQUEST}
+          terminationMessagePolicy: FallbackToLogsOnError
         - args:
           - -provider=openshift
           - -https-address=:9091
@@ -858,6 +860,7 @@ objects:
             requests:
               cpu: ${THANOS_RECEIVE_CPU_REQUEST}
               memory: ${THANOS_RECEIVE_MEMORY_REQUEST}
+          terminationMessagePolicy: FallbackToLogsOnError
           volumeMounts:
           - mountPath: /var/thanos/receive
             name: data
@@ -1042,6 +1045,7 @@ objects:
             requests:
               cpu: ${THANOS_RULER_CPU_REQUEST}
               memory: ${THANOS_RULER_MEMORY_REQUEST}
+          terminationMessagePolicy: FallbackToLogsOnError
           volumeMounts:
           - mountPath: /var/thanos/rule
             name: data
@@ -1218,6 +1222,7 @@ objects:
             requests:
               cpu: ${THANOS_STORE_CPU_REQUEST}
               memory: ${THANOS_STORE_MEMORY_REQUEST}
+          terminationMessagePolicy: FallbackToLogsOnError
           volumeMounts:
           - mountPath: /var/thanos/store
             name: data
@@ -1403,6 +1408,7 @@ objects:
             requests:
               cpu: ${THANOS_STORE_CPU_REQUEST}
               memory: ${THANOS_STORE_MEMORY_REQUEST}
+          terminationMessagePolicy: FallbackToLogsOnError
           volumeMounts:
           - mountPath: /var/thanos/store
             name: data
@@ -1588,6 +1594,7 @@ objects:
             requests:
               cpu: ${THANOS_STORE_CPU_REQUEST}
               memory: ${THANOS_STORE_MEMORY_REQUEST}
+          terminationMessagePolicy: FallbackToLogsOnError
           volumeMounts:
           - mountPath: /var/thanos/store
             name: data
