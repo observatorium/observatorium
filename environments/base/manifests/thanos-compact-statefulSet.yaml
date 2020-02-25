@@ -63,6 +63,7 @@ spec:
             port: 10902
             scheme: HTTP
           periodSeconds: 5
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /var/thanos/compact
           name: data
