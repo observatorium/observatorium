@@ -85,6 +85,7 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
           '--badger.directory-key=/var/jaeger/store/keys',
           '--badger.directory-value=/var/jaeger/store/values',
           '--badger.ephemeral=false',
+          '--badger.span-store-ttl=3h',
           '--collector.queue-size=4000',
         ],) +
         container.withEnv([
