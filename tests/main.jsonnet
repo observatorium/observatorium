@@ -6,6 +6,9 @@ local up = (import '../components/up.libsonnet') +
     name: 'observatorium-up',
     version: 'master-2020-01-09-89757a5',
     image: 'quay.io/observatorium/up:master-2020-01-09-89757a5',
+    commonLabels+:: {
+      'app.kubernetes.io/instance': 'e2e-test',
+    },
     backoffLimit: 5,
     resources: {
       limits: {

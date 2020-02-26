@@ -8,7 +8,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: test
-        app.kubernetes.io/instance: observatorium-up
+        app.kubernetes.io/instance: e2e-test
         app.kubernetes.io/name: observatorium-up
         app.kubernetes.io/version: master-2020-01-09-89757a5
     spec:
