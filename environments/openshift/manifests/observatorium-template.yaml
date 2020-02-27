@@ -373,6 +373,7 @@ objects:
           - --grpc-address=0.0.0.0:10901
           - --http-address=0.0.0.0:9090
           - --query.replica-label=prometheus_replica
+          - --query.replica-label=rule_replica
           - --query.replica-label=ruler_replica
           - --query.replica-label=replica
           - --store=dnssrv+_grpc._tcp.observatorium-thanos-rule.${NAMESPACE}.svc.cluster.local
