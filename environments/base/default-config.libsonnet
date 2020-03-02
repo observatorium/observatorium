@@ -108,4 +108,15 @@
     version: 'master-8533a216',
     image: 'quay.io/cortexproject/cortex:' + qcConfig.version,
   },
+
+  apiGateway: {
+    local gwConfig = self,
+    version: 'master-2020-01-28-e009b4a',
+    image: 'quay.io/observatorium/observatorium:' + gwConfig.version,
+  },
+
+  apiGatewayQuery: {
+    image: defaultConfig.thanosImage,
+    version: defaultConfig.thanosVersion,
+  },
 }

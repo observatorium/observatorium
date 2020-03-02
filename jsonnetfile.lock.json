@@ -63,8 +63,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "e009b4adfef6b4134073310f8e84bb3aa4215cde",
-      "sum": "fFeO0W9LXd9Qn9bF81CSQfG0+eF//rUSxZJk3LvKWN0="
+      "version": "f12953a09d50d1806d7e2c82b75b30ad9a958f0f",
+      "sum": "kchcIxpNhfWjhdZ3hCFD92P7V65dO0dPnzfrAkK782g="
     },
     {
       "name": "prometheus-operator",
