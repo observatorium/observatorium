@@ -20,9 +20,19 @@ jobs:
           ./tests/e2e.sh deploy
           ./tests/e2e.sh test
 
+  test-operator:
+    machine: true
+    steps:
+      - checkout
+      - run: |
+          ./tests/e2e.sh kind
+          ./tests/e2e.sh deploy-operator
+          ./tests/e2e.sh test
+
 workflows:
   version: 2
   build_and_test:
     jobs:
       - build
       - tests
+      - test-operator
