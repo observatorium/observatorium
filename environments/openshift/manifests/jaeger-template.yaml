@@ -88,11 +88,11 @@ objects:
             periodSeconds: 30
           resources:
             limits:
-              cpu: "4"
-              memory: 4Gi
+              cpu: ${JAEGER_CPU_LIMITS}
+              memory: ${JAEGER_MEMORY_LIMITS}
             requests:
-              cpu: "1"
-              memory: 1Gi
+              cpu: ${JAEGER_CPU_REQUEST}
+              memory: ${JAEGER_MEMORY_REQUEST}
           volumeMounts:
           - mountPath: /var/jaeger/store
             name: jaeger-store-data
@@ -293,6 +293,14 @@ parameters:
   value: 1.14.0
 - name: REPLICAS
   value: "1"
+- name: JAEGER_CPU_REQUEST
+  value: "1"
+- name: JAEGER_MEMORY_REQUEST
+  value: 4Gi
+- name: JAEGER_CPU_LIMITS
+  value: "4"
+- name: JAEGER_MEMORY_LIMITS
+  value: 8Gi
 - name: PROXY_IMAGE
   value: quay.io/openshift/origin-oauth-proxy
 - name: PROXY_IMAGE_TAG
