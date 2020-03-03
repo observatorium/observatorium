@@ -202,8 +202,14 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           },
         replicas: 1,
         externalPrefix: '/ui/v1/metrics',
-        stores: [],
-        replicaLabels: [],
+        stores: [
+          'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
+          for service in
+            [obs.rule.service] +
+            [obs.store[shard].service for shard in std.objectFields(obs.store)] +
+            [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
+        ],
+        replicaLabels: ['prometheus_replica', 'rule_replica', 'ruler_replica', 'replica'],
       },
     },
 } + {
