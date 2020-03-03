@@ -46,10 +46,11 @@ spec:
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:9090
         - --query.replica-label=prometheus_replica
+        - --query.replica-label=rule_replica
         - --query.replica-label=ruler_replica
         - --query.replica-label=replica
         - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-rule.observatorium.svc.cluster.local
-        - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-store.observatorium.svc.cluster.local
+        - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-store-shard-0.observatorium.svc.cluster.local
         - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-receive-default.observatorium.svc.cluster.local
         - --web.external-prefix=/ui/v1/metrics
         image: quay.io/thanos/thanos:master-2020-02-13-adfef4b5
@@ -73,4 +74,5 @@ spec:
             port: 9090
             scheme: HTTP
           periodSeconds: 5
+        terminationMessagePolicy: FallbackToLogsOnError
       terminationGracePeriodSeconds: 120

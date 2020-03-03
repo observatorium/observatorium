@@ -200,10 +200,13 @@ objects:
           - --grpc-address=0.0.0.0:10901
           - --http-address=0.0.0.0:9090
           - --query.replica-label=prometheus_replica
+          - --query.replica-label=rule_replica
           - --query.replica-label=ruler_replica
           - --query.replica-label=replica
           - --store=dnssrv+_grpc._tcp.observatorium-thanos-rule.${NAMESPACE}.svc.cluster.local
-          - --store=dnssrv+_grpc._tcp.observatorium-thanos-store.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-0.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-1.${NAMESPACE}.svc.cluster.local
+          - --store=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-2.${NAMESPACE}.svc.cluster.local
           - --store=dnssrv+_grpc._tcp.observatorium-thanos-receive-default.${NAMESPACE}.svc.cluster.local
           - --web.external-prefix=/ui/v1/metrics
           image: ${THANOS_IMAGE}:${THANOS_IMAGE_TAG}
@@ -234,6 +237,7 @@ objects:
             requests:
               cpu: ${THANOS_QUERIER_CPU_REQUEST}
               memory: ${THANOS_QUERIER_MEMORY_REQUEST}
+          terminationMessagePolicy: FallbackToLogsOnError
         - args:
           - -provider=openshift
           - -https-address=:9091

@@ -8,7 +8,7 @@
           "subdir": "grafana-builder"
         }
       },
-      "version": "7ac7da1a0fe165b68cdb718b2521b560d51bd1f4",
+      "version": "c19a92e586a6752f11745b47f309b13f02ef7147",
       "sum": "slxrtftVDiTlQK22ertdfrg4Epnq97gdrLI63ftUfaE="
     },
     {
@@ -30,7 +30,7 @@
           "subdir": "monitoring/jaeger-mixin"
         }
       },
-      "version": "d5036f44cc9c2b29b4ae608b45208f2b8d74bc89",
+      "version": "bf48066125f33c9fcc5ad3a3f423a1527b22b6e4",
       "sum": "U/RwaRP/ps+5dVyeVxeFEb2psfZHQgEjHU2Jeb454Kg="
     },
     {
@@ -63,19 +63,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "f12953a09d50d1806d7e2c82b75b30ad9a958f0f",
+      "version": "bc8a0f2b0efcb72069287996592658ee55b46e4d",
       "sum": "kchcIxpNhfWjhdZ3hCFD92P7V65dO0dPnzfrAkK782g="
-    },
-    {
-      "name": "prometheus-operator",
-      "source": {
-        "git": {
-          "remote": "https://github.com/coreos/prometheus-operator",
-          "subdir": "jsonnet/prometheus-operator"
-        }
-      },
-      "version": "1aa773ddbbbd9b05405e9785e0190b975b1faadc",
-      "sum": "PlruMWn3QMjgLQVzn0DqlD1G8ijkew9icNNW4cpwRVA="
     },
     {
       "name": "slo-libsonnet",
@@ -96,8 +85,8 @@
           "subdir": "jsonnet/telemeter"
         }
       },
-      "version": "7853182efa4a42f44e929f54860a3c84e99e2079",
-      "sum": "1/pVyXnhpBPaeyqlRVWI7I8nngGNiSgcv7xMWjHizC4="
+      "version": "5d35babadf734c4ae6d16b6b4f9c4ef582a8a695",
+      "sum": "4lnWwMNjrA7Rl7wYRkEm21xj+UvWRj8JgG9ScKtRWDM="
     },
     {
       "name": "thanos-mixin",
