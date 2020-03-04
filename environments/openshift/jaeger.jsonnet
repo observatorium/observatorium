@@ -32,7 +32,20 @@ local app =
         spec+: {
           template+: {
             spec+: {
-              containers+: [
+              containers: [
+                super.containers[0] {
+                  resources: {
+                    requests: {
+                      cpu: '${JAEGER_CPU_REQUEST}',
+                      memory: '${JAEGER_MEMORY_REQUEST}',
+                    },
+                    limits: {
+                      cpu: '${JAEGER_CPU_LIMITS}',
+                      memory: '${JAEGER_MEMORY_LIMITS}',
+                    },
+                  },
+                },
+              ] + [
                 container.new('proxy', '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}') +
                 container.withArgs([
                   '-provider=openshift',
@@ -97,6 +110,10 @@ local app =
     { name: 'IMAGE', value: 'jaegertracing/all-in-one' },
     { name: 'IMAGE_TAG', value: '1.14.0' },
     { name: 'REPLICAS', value: '1' },
+    { name: 'JAEGER_CPU_REQUEST', value: '1' },
+    { name: 'JAEGER_MEMORY_REQUEST', value: '4Gi' },
+    { name: 'JAEGER_CPU_LIMITS', value: '4' },
+    { name: 'JAEGER_MEMORY_LIMITS', value: '8Gi' },
     { name: 'PROXY_IMAGE', value: 'quay.io/openshift/origin-oauth-proxy' },
     { name: 'PROXY_IMAGE_TAG', value: '4.4.0' },
     { name: 'JAEGER_PROXY_CPU_REQUEST', value: '100m' },
