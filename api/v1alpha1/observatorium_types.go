@@ -36,14 +36,14 @@ type ObservatoriumSpec struct {
 	ReceiveController ReceiveControllerSpec `json:"thanosReceiveController"`
 	// Thanos ThanosPersistentSpec
 	Receivers ReceiversSpec `json:"receivers"`
-	// Thanos QuerierCache
-	QueryCache QuerierCacheSpec `json:"queryCache"`
+	// Thanos QueryCache
+	QueryCache QueryCacheSpec `json:"queryCache"`
 	// Thanos StoreSpec
 	Store StoreSpec `json:"store"`
 	// Thanos RulerSpec
 	Rule RuleSpec `json:"rule"`
 	// API Gateway
-	ApiGateway ApiGatewaySpec `json:"apiGateway"`
+	APIGateway APIGatewaySpec `json:"apiGateway"`
 }
 
 type ObjectStorageConfig struct {
@@ -54,8 +54,9 @@ type ObjectStorageConfig struct {
 }
 
 type ReceiveControllerSpec struct {
+	// Receive Controller image
 	Image string `json:"image"`
-	// Tag describes the tag of Thanos receive controller to use.
+	// Version describes the version of Thanos receive controller to use.
 	Version string `json:"version,omitempty"`
 }
 
@@ -70,9 +71,10 @@ type StoreSpec struct {
 	Shards              *int32              `json:"shards,omitempty"`
 }
 
-type ApiGatewaySpec struct {
+type APIGatewaySpec struct {
+	// API Gateway image
 	Image string `json:"image"`
-	// Tag describes the tag of Thanos receive controller to use.
+	// Version describes the version of API Gateway to use.
 	Version string `json:"version,omitempty"`
 }
 
@@ -93,15 +95,15 @@ type CompactSpec struct {
 }
 
 type VolumeClaimTemplate struct {
-	VolumeClaimTemplateSpec v1.PersistentVolumeClaimSpec `json:"spec"`
+	Spec v1.PersistentVolumeClaimSpec `json:"spec"`
 }
 
-type QuerierCacheSpec struct {
-	// Thanos Querier Cache  name
+type QueryCacheSpec struct {
+	// Thanos Query Cache image
 	Image string `json:"image"`
-	// Number of Querier Cache replicas.
+	// Number of Query Cache replicas.
 	Replicas *int32 `json:"replicas,omitempty"`
-	// Version of  Querier Cache image to be deployed.
+	// Version of  Query Cache image to be deployed.
 	Version string `json:"version,omitempty"`
 }
 

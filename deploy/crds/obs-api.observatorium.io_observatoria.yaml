@@ -40,10 +40,10 @@ spec:
               description: API Gateway
               properties:
                 image:
+                  description: API Gateway image
                   type: string
                 version:
-                  description: Tag describes the tag of Thanos receive controller
-                    to use.
+                  description: Version describes the version of API Gateway to use.
                   type: string
               required:
               - image
@@ -221,17 +221,17 @@ spec:
               - name
               type: object
             queryCache:
-              description: Thanos QuerierCache
+              description: Thanos QueryCache
               properties:
                 image:
-                  description: Thanos Querier Cache  name
+                  description: Thanos Query Cache image
                   type: string
                 replicas:
-                  description: Number of Querier Cache replicas.
+                  description: Number of Query Cache replicas.
                   format: int32
                   type: integer
                 version:
-                  description: Version of  Querier Cache image to be deployed.
+                  description: Version of  Query Cache image to be deployed.
                   type: string
               required:
               - image
@@ -639,9 +639,10 @@ spec:
               description: Thanos Receive Controller Spec
               properties:
                 image:
+                  description: Receive Controller image
                   type: string
                 version:
-                  description: Tag describes the tag of Thanos receive controller
+                  description: Version describes the version of Thanos receive controller
                     to use.
                   type: string
               required:
