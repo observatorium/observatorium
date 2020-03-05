@@ -105,7 +105,7 @@
   queryCache: {
     local qcConfig = self,
     replicas: 1,
-    version: 'master-8533a216',
+    version: 'master-fdcd992f',
     image: 'quay.io/cortexproject/cortex:' + qcConfig.version,
   },
 
