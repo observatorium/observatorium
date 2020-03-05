@@ -353,7 +353,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-8533a216
+      app.kubernetes.io/version: master-fdcd992f
     name: observatorium-cortex-query-frontend
     namespace: ${NAMESPACE}
 - apiVersion: apps/v1
@@ -364,7 +364,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-8533a216
+      app.kubernetes.io/version: master-fdcd992f
     name: observatorium-cortex-query-frontend
     namespace: ${NAMESPACE}
   spec:
@@ -382,13 +382,14 @@ objects:
           app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: cortex-query-frontend
           app.kubernetes.io/part-of: observatorium
-          app.kubernetes.io/version: master-8533a216
+          app.kubernetes.io/version: master-fdcd992f
       spec:
         containers:
         - args:
           - -config.file=/etc/cache-config/config.yaml
+          - -querier.max-retries-per-request=0
           - -frontend.downstream-url=http://observatorium-thanos-query.${NAMESPACE}.svc.cluster.local.:9090
-          image: quay.io/cortexproject/cortex:master-8533a216
+          image: quay.io/cortexproject/cortex:master-fdcd992f
           name: cortex-query-frontend
           ports:
           - containerPort: 9090
@@ -461,7 +462,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-8533a216
+      app.kubernetes.io/version: master-fdcd992f
     name: query-cache-proxy
     namespace: ${NAMESPACE}
   type: Opaque
@@ -475,7 +476,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-8533a216
+      app.kubernetes.io/version: master-fdcd992f
     name: observatorium-cortex-query-frontend
     namespace: ${NAMESPACE}
   spec:
