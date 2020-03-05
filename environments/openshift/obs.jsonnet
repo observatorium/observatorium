@@ -340,7 +340,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
 
     queryCache+: {
       local qcConfig = self,
-      version: 'master-8533a216',
+      version: 'master-fdcd992f',
       image: 'quay.io/cortexproject/cortex:' + qcConfig.version,
       replicas: '${{THANOS_QUERIER_CACHE_REPLICAS}}',
       resources: {
