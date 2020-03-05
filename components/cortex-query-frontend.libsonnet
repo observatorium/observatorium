@@ -37,21 +37,24 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         {
           auth_enabled: false,
           target: 'query-frontend',
-          http_prefix: null,
+          http_prefix: '',
           server: {
             http_listen_port: 9090,
           },
           frontend: {
-            split_queries_by_day: true,
+            log_queries_longer_than: '5s',
+            compress_responses: true,
+          },
+          query_range: {
+            split_queries_by_interval: '24h',
             align_queries_with_step: true,
             cache_results: true,
-            compress_responses: true,
             results_cache: {
               max_freshness: '1m',
               cache: {
                 enable_fifocache: true,
                 fifocache: {
-                  size: 1024,
+                  size: 2048,
                   validity: '6h',
                 },
               },
