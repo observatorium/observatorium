@@ -29,6 +29,7 @@ spec:
       containers:
       - args:
         - -config.file=/etc/cache-config/config.yaml
+        - -querier.max-retries-per-request=0
         - -frontend.downstream-url=http://observatorium-xyz-thanos-query.observatorium.svc.cluster.local.:9090
         image: quay.io/cortexproject/cortex:master-8533a216
         name: cortex-query-frontend
