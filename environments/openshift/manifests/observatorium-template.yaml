@@ -2026,9 +2026,6 @@ objects:
     - name: internal
       port: 8081
       targetPort: internal
-    - name: cluster
-      port: 8082
-      targetPort: cluster
     selector:
       k8s-app: telemeter-server
 - apiVersion: v1
@@ -2103,11 +2100,8 @@ objects:
         containers:
         - command:
           - /usr/bin/telemeter-server
-          - --join=telemeter-server
-          - --name=$(NAME)
           - --listen=0.0.0.0:8443
           - --listen-internal=0.0.0.0:8081
-          - --listen-cluster=0.0.0.0:8082
           - --shared-key=/etc/pki/service/tls.key
           - --tls-key=/etc/pki/service/tls.key
           - --tls-crt=/etc/pki/service/tls.crt
@@ -2173,10 +2167,6 @@ objects:
           - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}
           env:
-          - name: NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
           - name: OIDC_ISSUER
             valueFrom:
               secretKeyRef:
@@ -2204,8 +2194,6 @@ objects:
             name: external
           - containerPort: 8081
             name: internal
-          - containerPort: 8082
-            name: cluster
           readinessProbe:
             httpGet:
               path: /healthz/ready

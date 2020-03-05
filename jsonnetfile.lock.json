@@ -30,7 +30,7 @@
           "subdir": "monitoring/jaeger-mixin"
         }
       },
-      "version": "bf48066125f33c9fcc5ad3a3f423a1527b22b6e4",
+      "version": "cc283fbd6b01e687f54a1ee9412c5ae1130da667",
       "sum": "U/RwaRP/ps+5dVyeVxeFEb2psfZHQgEjHU2Jeb454Kg="
     },
     {
@@ -85,8 +85,8 @@
           "subdir": "jsonnet/telemeter"
         }
       },
-      "version": "5d35babadf734c4ae6d16b6b4f9c4ef582a8a695",
-      "sum": "4lnWwMNjrA7Rl7wYRkEm21xj+UvWRj8JgG9ScKtRWDM="
+      "version": "fa41a6ae349cf5a54dd975703676bfad351992fb",
+      "sum": "7N1rtI+xIs5b2itzPk/rvHlHkQ+94w1P9REcjlhbaDQ="
     },
     {
       "name": "thanos-mixin",
