@@ -88,6 +88,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     local c =
       container.new('cortex-query-frontend', cq.config.image) +
       container.withArgs([
+        '-log.level=debug',
         '-config.file=/etc/cache-config/config.yaml',
         '-querier.max-retries-per-request=0',
         '-frontend.downstream-url=' + cq.config.downstreamURL,

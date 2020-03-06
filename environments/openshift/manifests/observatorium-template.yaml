@@ -388,6 +388,7 @@ objects:
       spec:
         containers:
         - args:
+          - -log.level=debug
           - -config.file=/etc/cache-config/config.yaml
           - -querier.max-retries-per-request=0
           - -frontend.downstream-url=http://observatorium-thanos-query.${NAMESPACE}.svc.cluster.local.:9090
