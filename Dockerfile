@@ -1,5 +1,7 @@
 # Build the manager binary
-FROM golang:1.13 as builder
+FROM golang:1.13.3-alpine3.10 as builder
+
+RUN apk add --update --no-cache git bash
 WORKDIR /workspace
 # Copy the jsonnet source
 COPY environments/operator/ environments/operator/
@@ -10,9 +12,9 @@ RUN GO111MODULE="on" go get github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb
 RUN jb install
 RUN GO111MODULE="on" go get github.com/brancz/locutus
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal
+FROM alpine:3.10 as runner
 WORKDIR /
-COPY --from=builder /go/bin/locutus .
+COPY --from=builder /go/bin/locutus /
 COPY --from=builder /workspace/environments/operator /environments/operator
 COPY --from=builder /workspace/components/ /components/
 COPY --from=builder /workspace/vendor/ /vendor/

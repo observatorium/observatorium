@@ -14,7 +14,7 @@ rules:
   verbs:
   - '*'
 - apiGroups:
-  - obs-api.observatorium.io
+  - core.observatorium.io
   resources:
   - observatoria
   verbs:
@@ -26,7 +26,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - obs-api.observatorium.io
+  - core.observatorium.io
   resources:
   - observatoria/status
   verbs:

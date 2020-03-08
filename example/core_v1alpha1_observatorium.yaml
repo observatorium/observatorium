@@ -1,4 +1,4 @@
-apiVersion: obs-api.observatorium.io/v1alpha1
+apiVersion: core.observatorium.io/v1alpha1
 kind: Observatorium
 metadata:
   name: observatorium-xyz

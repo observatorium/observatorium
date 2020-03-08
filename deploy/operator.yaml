@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: observatorium-operator
-        image: quay.io/nmagnezi/observatorium-operator:latest
+        image: quay.io/observatorium/observatorium-operator:latest
         args:
           - "--log-level=debug"
         resources:
