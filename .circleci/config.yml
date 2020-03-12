@@ -28,6 +28,15 @@ jobs:
           ./tests/e2e.sh kind
           ./tests/e2e.sh deploy-operator
           ./tests/e2e.sh test
+  
+  container-push:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - run: |
+          echo "$DOCKER_PASS" | docker login quay.io --username $DOCKER_USER --password-stdin
+          make container-push
 
 workflows:
   version: 2
@@ -36,3 +45,24 @@ workflows:
       - build
       - tests
       - test-operator
+  tagged-master:
+    jobs:
+      - container-push:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - master
+  commit-master:
+    jobs:
+      - build
+      - tests
+      - test-operator
+      - container-push:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
