@@ -29,22 +29,22 @@ ARG DOCKERFILE_PATH
 ARG VCS_BRANCH
 
 LABEL vendor="Observatorium" \
-    name="observatorium/configuration" \
+    name="observatorium/observatorium-operator" \
     description="Observatorium Operator" \
-    io.k8s.display-name="observatorium/configuration" \
+    io.k8s.display-name="observatorium/observatorium-operator" \
     io.k8s.description="Observatorium Operator" \
     maintainer="Observatorium <team-monitoring@redhat.com>" \
     version="$VERSION" \
     org.label-schema.build-date=$BUILD_DATE \
     org.label-schema.description="Observatorium Operator" \
-    org.label-schema.docker.cmd="docker run --rm observatorium/configuration" \
+    org.label-schema.docker.cmd="docker run --rm observatorium/observatorium-operator" \
     org.label-schema.docker.dockerfile=$DOCKERFILE_PATH \
-    org.label-schema.name="observatorium/configuration" \
+    org.label-schema.name="observatorium/observatorium-operator" \
     org.label-schema.schema-version="1.0" \
     org.label-schema.vcs-branch=$VCS_BRANCH \
     org.label-schema.vcs-ref=$VCS_REF \
     org.label-schema.vcs-url="https://github.com/observatorium/configuration" \
-    org.label-schema.vendor="observatorium/configuration" \
+    org.label-schema.vendor="observatorium/observatorium-operator" \
     org.label-schema.version=$VERSION
 
 ENTRYPOINT ["/locutus", "--renderer=jsonnet", "--renderer.jsonnet.entrypoint=environments/operator/main.jsonnet", "--trigger=resource", "--trigger.resource.config=environments/operator/config.yaml"]
