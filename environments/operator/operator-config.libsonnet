@@ -1,5 +1,5 @@
 local cr = import 'generic-operator/config';
-local thanosImage = cr.spec.thanosImage + cr.spec.thanosVersion;
+local thanosImage = cr.spec.thanosImage;
 local thanosVersion = cr.spec.thanosVersion;
 local objectStorageConfig = cr.spec.objectStorageConfig;
 local hashrings = cr.spec.hashrings;
@@ -12,7 +12,7 @@ cr.spec {
     objectStorageConfig: objectStorageConfig,
   },
   thanosReceiveController+:: {
-    image: cr.spec.thanosReceiveController.image + cr.spec.thanosReceiveController.version,
+    image: cr.spec.thanosReceiveController.image,
     hashrings: hashrings,
   },
   receivers+:: {
@@ -36,13 +36,13 @@ cr.spec {
     version: thanosVersion,
   },
   queryCache+:: {
-    image: cr.spec.queryCache.image + cr.spec.queryCache.version,
+    image: cr.spec.queryCache.image,
   },
   apiGatewayQuery: {
     image: thanosImage,
     version: thanosVersion,
   },
   apiGateway+:: {
-    image: cr.spec.apiGateway.image + cr.spec.apiGateway.version,
+    image: cr.spec.apiGateway.image,
   },
 }

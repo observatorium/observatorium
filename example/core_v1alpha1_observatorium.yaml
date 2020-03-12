@@ -7,7 +7,7 @@ metadata:
   app.kubernetes.io/name: observatorium-cr
   app.kubernetes.io/part-of: observatorium
 spec:
-  thanosImage: "quay.io/thanos/thanos:"
+  thanosImage: "quay.io/thanos/thanos:master-2020-02-13-adfef4b5"
   thanosVersion: master-2020-02-13-adfef4b5
   objectStorageConfig:
     key: thanos.yaml
@@ -20,7 +20,7 @@ spec:
     - hashring: default
       tenants: []
   queryCache:
-    image: "quay.io/cortexproject/cortex:"
+    image: "quay.io/cortexproject/cortex:master-8533a216"
     version: master-8533a216
     replicas: 1
   store:
@@ -56,8 +56,8 @@ spec:
           requests:
             storage: 50Gi
   thanosReceiveController:
-    image: "quay.io/observatorium/thanos-receive-controller:"
+    image: "quay.io/observatorium/thanos-receive-controller:master-2020-02-06-b66e0c8"
     version: master-2020-02-06-b66e0c8
   apiGateway:
-    image: "quay.io/observatorium/observatorium:"
+    image: "quay.io/observatorium/observatorium:master-2020-01-28-e009b4a"
     version: "master-2020-01-28-e009b4a"
