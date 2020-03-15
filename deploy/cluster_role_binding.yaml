@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: observatorium-operator
+    app.kubernetes.io/version: v0.1
+  name: observatorium-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: observatorium-operator
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+
