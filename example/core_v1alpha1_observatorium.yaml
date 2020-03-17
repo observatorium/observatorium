@@ -20,8 +20,8 @@ spec:
     - hashring: default
       tenants: []
   queryCache:
-    image: "quay.io/cortexproject/cortex:master-8533a216"
-    version: master-8533a216
+    image: "quay.io/cortexproject/cortex:master-fdcd992f"
+    version: master-fdcd992f
     replicas: 1
   store:
     shards: 1
