@@ -391,6 +391,9 @@ objects:
           - -log.level=debug
           - -config.file=/etc/cache-config/config.yaml
           - -querier.max-retries-per-request=0
+          - -server.http-read-timeout=900s
+          - -server.http-write-timeout=900s
+          - -querier.timeout=900s
           - -frontend.downstream-url=http://observatorium-thanos-query.${NAMESPACE}.svc.cluster.local.:9090
           image: quay.io/cortexproject/cortex:master-fdcd992f
           name: cortex-query-frontend

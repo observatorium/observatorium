@@ -91,6 +91,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         '-log.level=debug',
         '-config.file=/etc/cache-config/config.yaml',
         '-querier.max-retries-per-request=0',
+        '-server.http-read-timeout=900s',
+        '-server.http-write-timeout=900s',
+        '-querier.timeout=900s',
         '-frontend.downstream-url=' + cq.config.downstreamURL,
       ]) + container.withPorts([
         containerPort.newNamed(9090, 'http'),
