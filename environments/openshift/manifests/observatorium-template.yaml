@@ -11,7 +11,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: observatorium-api-gateway
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-2020-01-28-e009b4a
+      app.kubernetes.io/version: master-2020-03-19-62d4b8e
     name: observatorium-observatorium-api-gateway
     namespace: ${NAMESPACE}
   spec:
@@ -33,7 +33,7 @@ objects:
           app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: observatorium-api-gateway
           app.kubernetes.io/part-of: observatorium
-          app.kubernetes.io/version: master-2020-01-28-e009b4a
+          app.kubernetes.io/version: master-2020-03-19-62d4b8e
       spec:
         containers:
         - args:
@@ -42,7 +42,7 @@ objects:
           - --metrics.read.endpoint=http://observatorium-cortex-query-frontend.${NAMESPACE}.svc.cluster.local:9090/api/v1
           - --metrics.write.endpoint=http://observatorium-thanos-receive.${NAMESPACE}.svc.cluster.local:19291/api/v1/receive
           - --log.level=warn
-          image: quay.io/observatorium/observatorium:master-2020-01-28-e009b4a
+          image: quay.io/observatorium/observatorium:master-2020-03-19-62d4b8e
           livenessProbe:
             failureThreshold: 8
             httpGet:
@@ -122,7 +122,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: observatorium-api-gateway
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-2020-01-28-e009b4a
+      app.kubernetes.io/version: master-2020-03-19-62d4b8e
     name: observatorium-api-proxy
     namespace: ${NAMESPACE}
   type: Opaque
@@ -136,7 +136,7 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: observatorium-api-gateway
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: master-2020-01-28-e009b4a
+      app.kubernetes.io/version: master-2020-03-19-62d4b8e
     name: observatorium-observatorium-api-gateway
     namespace: ${NAMESPACE}
   spec:

@@ -59,5 +59,5 @@ spec:
     image: "quay.io/observatorium/thanos-receive-controller:master-2020-02-06-b66e0c8"
     version: master-2020-02-06-b66e0c8
   apiGateway:
-    image: "quay.io/observatorium/observatorium:master-2020-01-28-e009b4a"
-    version: "master-2020-01-28-e009b4a"
+    image: "quay.io/observatorium/observatorium:master-2020-03-19-62d4b8e"
+    version: "master-2020-03-19-62d4b8e"
