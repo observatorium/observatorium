@@ -111,7 +111,7 @@
 
   apiGateway: {
     local gwConfig = self,
-    version: 'master-2020-01-28-e009b4a',
+    version: 'master-2020-03-19-62d4b8e',
     image: 'quay.io/observatorium/observatorium:' + gwConfig.version,
   },
 

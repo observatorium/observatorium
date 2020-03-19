@@ -16,12 +16,12 @@ local up = (import '../components/up.libsonnet') +
         cpu: '500m',
       },
     },
-    writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1/metrics/write' % [
+    writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/write' % [
       obs.apiGateway.service.metadata.name,
       obs.apiGateway.service.metadata.namespace,
       obs.apiGateway.service.spec.ports[0].port,
     ],
-    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1/metrics/query' % [
+    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/query' % [
       obs.apiGateway.service.metadata.name,
       obs.apiGateway.service.metadata.namespace,
       obs.apiGateway.service.spec.ports[0].port,
