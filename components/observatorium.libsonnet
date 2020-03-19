@@ -174,7 +174,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         obs.apiGatewayQuery.service.metadata.namespace,
         obs.apiGatewayQuery.service.spec.ports[1].port,
       ],
-      queryEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1/query' % [
+      readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1' % [
         obs.queryCache.service.metadata.name,
         obs.queryCache.service.metadata.namespace,
         obs.queryCache.service.spec.ports[0].port,

@@ -63,8 +63,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "bc8a0f2b0efcb72069287996592658ee55b46e4d",
-      "sum": "kchcIxpNhfWjhdZ3hCFD92P7V65dO0dPnzfrAkK782g="
+      "version": "62d4b8e2392ea84bc49fca5582ebfdb08eb1ae47",
+      "sum": "RDdo7RnvtQafX+C9UVkviTpOGf0HnRGWTssFqANN+bs="
     },
     {
       "name": "slo-libsonnet",
