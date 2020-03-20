@@ -6,7 +6,7 @@ jobs:
     steps:
       - checkout
       - run: find . -type f -not -path './vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \) | xargs -L1 jsonnetfmt --test
-      - run: curl -o ./jb -L "https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.2.0/jb-$(go env GOOS)-$(go env GOARCH)" && chmod +x ./jb
+      - run: curl -o ./jb -L "https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.3.1/jb-$(go env GOOS)-$(go env GOARCH)" && chmod +x ./jb
       - run: ./jb install
       - run: ./build.sh
       - run: git diff --exit-code
@@ -28,7 +28,7 @@ jobs:
           ./tests/e2e.sh kind
           ./tests/e2e.sh deploy-operator
           ./tests/e2e.sh test
-  
+
   container-push:
     machine:
       image: ubuntu-1604:201903-01
