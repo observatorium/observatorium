@@ -57,7 +57,7 @@ deploy_operator() {
     $KUBECTL apply -f environments/dev/manifests/minio-service.yaml
     $KUBECTL apply -f deploy/crds
     $KUBECTL apply -f deploy/
-    $KUBECTL apply -n observatorium -f example/
+    $KUBECTL apply -n observatorium -f example/manifests
     wait_for_cr observatorium-xyz
 }
 
