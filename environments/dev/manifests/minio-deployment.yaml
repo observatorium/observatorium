@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: minio
-  namespace: observatorium
+  namespace: minio
 spec:
   selector:
     matchLabels:

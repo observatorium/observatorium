@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: minio
-  namespace: observatorium
+  namespace: minio
 spec:
   ports:
   - port: 9000
