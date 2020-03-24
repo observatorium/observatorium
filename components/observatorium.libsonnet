@@ -16,6 +16,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     t.compact +
     t.compact.withRetention +
     t.compact.withDownsamplingDisabled +
+    t.compact.withDeleteDelay +
     t.compact.withDeduplication + {
       config+:: {
         local cfg = self,
@@ -24,6 +25,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         replicas: 1,
         commonLabels+:: obs.config.commonLabels,
         deduplicationReplicaLabels: obs.config.replicaLabels,
+        deleteDelay: '4h',
       },
     },
 
@@ -78,7 +80,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   store:: {
     ['shard' + i]:
-      t.store {
+      t.store +
+      t.store.withIgnoreDeletionMarksDelay {
         config+:: {
           local cfg = self,
           name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'] + '-shard-' + i,
@@ -87,6 +90,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
             'store.observatorium.io/shard': 'shard-' + i,
           },
           replicas: 1,
+          ignoreDeletionMarksDelay: '1h',
         },
       } + {
         statefulSet+: {
