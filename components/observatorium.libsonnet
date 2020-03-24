@@ -9,18 +9,22 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       'app.kubernetes.io/part-of': 'observatorium',
       'app.kubernetes.io/instance': obs.config.name,
     },
+    replicaLabels:: ['prometheus_replica', 'rule_replica', 'replica'],
+    deduplicationReplicaLabels:: ['replica'],
   },
 
   compact::
     t.compact +
     t.compact.withRetention +
-    t.compact.withDownsamplingDisabled + {
+    t.compact.withDownsamplingDisabled +
+    t.compact.withDeduplication + {
       config+:: {
         local cfg = self,
         name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
         namespace: obs.config.namespace,
         replicas: 1,
         commonLabels+:: obs.config.commonLabels,
+        deduplicationReplicaLabels: obs.config.deduplicationReplicaLabels,
       },
     },
 
@@ -129,7 +133,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           [obs.store[shard].service for shard in std.objectFields(obs.store)] +
           [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
       ],
-      replicaLabels: ['prometheus_replica', 'rule_replica', 'replica'],
+      replicaLabels: obs.config.replicaLabels,
     },
   },
 

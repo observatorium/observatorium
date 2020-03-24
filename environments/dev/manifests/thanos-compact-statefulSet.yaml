@@ -38,6 +38,7 @@ spec:
         - --retention.resolution-5m=1s
         - --retention.resolution-1h=1s
         - --downsampling.disable
+        - --deduplication.replica-label=replica
         env:
         - name: OBJSTORE_CONFIG
           valueFrom:
