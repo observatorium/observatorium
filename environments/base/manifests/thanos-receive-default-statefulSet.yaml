@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: thanos-receive
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: master-2020-02-13-adfef4b5
+    app.kubernetes.io/version: master-2020-03-24-4bd19b16
     controller.receive.thanos.io: thanos-receive-controller
     controller.receive.thanos.io/hashring: default
   name: observatorium-xyz-thanos-receive-default
@@ -28,7 +28,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-receive
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: master-2020-02-13-adfef4b5
+        app.kubernetes.io/version: master-2020-03-24-4bd19b16
         controller.receive.thanos.io/hashring: default
     spec:
       affinity:
@@ -73,7 +73,7 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
-        image: quay.io/thanos/thanos:master-2020-02-13-adfef4b5
+        image: quay.io/thanos/thanos:master-2020-03-24-4bd19b16
         livenessProbe:
           failureThreshold: 8
           httpGet:
