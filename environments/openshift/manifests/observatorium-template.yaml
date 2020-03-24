@@ -560,6 +560,9 @@ objects:
           - --retention.resolution-5m=1s
           - --retention.resolution-1h=1s
           - --downsampling.disable
+          - --deduplication.replica-label=prometheus_replica
+          - --deduplication.replica-label=rule_replica
+          - --deduplication.replica-label=replica
           - |
             --tracing.config=
               type: JAEGER

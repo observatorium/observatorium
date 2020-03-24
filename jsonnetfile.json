@@ -78,11 +78,11 @@
     {
       "source": {
         "git": {
-          "remote": "https://github.com/thanos-io/kube-thanos",
+          "remote": "https://github.com/kakkoyun/kube-thanos",
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "master"
+      "version": "dedup"
     },
     {
       "source": {

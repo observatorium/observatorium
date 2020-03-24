@@ -34,6 +34,16 @@
     {
       "source": {
         "git": {
+          "remote": "https://github.com/kakkoyun/kube-thanos",
+          "subdir": "jsonnet/kube-thanos"
+        }
+      },
+      "version": "9aa36762f50fae8e47d2477cb51cb651a1d80c29",
+      "sum": "4c0Wj23A4gCjKB0LEQBlNmL1cNcntDvOg7b4fO4od8A="
+    },
+    {
+      "source": {
+        "git": {
           "remote": "https://github.com/ksonnet/ksonnet-lib",
           "subdir": ""
         }
@@ -93,16 +103,6 @@
       },
       "version": "fa41a6ae349cf5a54dd975703676bfad351992fb",
       "sum": "7N1rtI+xIs5b2itzPk/rvHlHkQ+94w1P9REcjlhbaDQ="
-    },
-    {
-      "source": {
-        "git": {
-          "remote": "https://github.com/thanos-io/kube-thanos",
-          "subdir": "jsonnet/kube-thanos"
-        }
-      },
-      "version": "5e7af669ee35af6c8beaa37e7a30d865368d75d8",
-      "sum": "kyza6itqcvQHoKeJqsFjFQuMpj8RZsudC5/2vVxw5R0="
     },
     {
       "source": {
