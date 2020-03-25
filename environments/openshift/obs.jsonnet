@@ -2,6 +2,7 @@ local t = (import 'kube-thanos/thanos.libsonnet');
 local trc = (import 'thanos-receive-controller/thanos-receive-controller.libsonnet');
 local gw = (import 'observatorium/observatorium-api.libsonnet');
 local cqf = (import '../../components/cortex-query-frontend.libsonnet');
+local up = (import '../../components/up.libsonnet');
 
 (import '../../components/observatorium.libsonnet') {
   local obs = self,
@@ -486,6 +487,30 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     },
   },
 
+  local upComponent = up + up.withResources {
+    config+:: {
+      local cfg = self,
+      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+      namespace: obs.config.namespace,
+      readEndpoint: 'http://%s.%s.svc/api/v1/query' % [obs.queryCache.service.metadata.name, obs.queryCache.service.metadata.namespace],
+      version: 'master-2020-03-25-6d4f944',
+      image: 'quay.io/observatorium/up:' + cfg.version,
+      queryConfig: (import 'queries.libsonnet'),
+      resources: {
+        requests: {
+          cpu: '5m',
+          memory: '10Mi',
+        },
+        limits: {
+          cpu: '20m',
+          memory: '50Mi',
+        },
+      },
+
+      commonLabels+:: obs.config.commonLabels,
+    },
+  },
+
   local prometheusAMS = (import 'telemeter-prometheus-ams.jsonnet') {
     _config+:: {
       namespace: obs.config.namespace,
@@ -501,6 +526,9 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
     objects: [
       obs.manifests[name]
       for name in std.objectFields(obs.manifests)
+    ] + [
+      upComponent[name]
+      for name in std.objectFields(upComponent)
     ] + telemeter.objects + prometheusAMS.objects,
     parameters: [
       {
