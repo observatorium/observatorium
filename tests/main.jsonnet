@@ -21,7 +21,7 @@ local up = (import '../components/up.libsonnet') +
       obs.apiGateway.service.metadata.namespace,
       obs.apiGateway.service.spec.ports[0].port,
     ],
-    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/query' % [
+    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/api/v1/query' % [
       obs.apiGateway.service.metadata.name,
       obs.apiGateway.service.metadata.namespace,
       obs.apiGateway.service.spec.ports[0].port,
