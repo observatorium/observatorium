@@ -29,6 +29,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
 
   compact+::
     t.compact.withResources +
+    (import '../../components/oauth-proxy.libsonnet') +
     (import '../../components/jaeger-agent.libsonnet').statefulSetMixin {
       statefulSet+: {
         spec+: {
@@ -184,6 +185,25 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
         limits: {
           cpu: '${THANOS_COMPACTOR_CPU_LIMIT}',
           memory: '${THANOS_COMPACTOR_MEMORY_LIMIT}',
+        },
+      },
+      oauthProxy: {
+        image: obs.config.oauthProxyImage,
+        httpsPort: 8443,
+        upstream: 'http://localhost:' + obs.compact.service.spec.ports[0].port,
+        tlsSecretName: 'compact-tls',
+        sessionSecretName: 'compact-proxy',
+        sessionSecret: '',
+        serviceAccountName: 'prometheus-telemeter',
+        resources: {
+          requests: {
+            cpu: '${JAEGER_PROXY_CPU_REQUEST}',
+            memory: '${JAEGER_PROXY_MEMORY_REQUEST}',
+          },
+          limits: {
+            cpu: '${JAEGER_PROXY_CPU_LIMITS}',
+            memory: '${JAEGER_PROXY_MEMORY_LIMITS}',
+          },
         },
       },
       jaegerAgent: {
