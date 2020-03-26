@@ -27,7 +27,6 @@ local list = import 'telemeter/lib/list.libsonnet';
   local ts = super.telemeterServer,
   local m = super.memcached,
   local tsList = list.asList('telemeter', ts, [])
-                 + list.withAuthorizeURL($._config)
                  + list.withNamespace($._config)
                  + list.withServerImage($._config)
                  + list.withResourceRequestsAndLimits('telemeter-server', $._config.telemeterServer.resourceRequests, $._config.telemeterServer.resourceLimits),

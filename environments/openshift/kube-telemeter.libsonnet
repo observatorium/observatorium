@@ -1,5 +1,4 @@
 (import 'telemeter/server/kubernetes.libsonnet') +
-(import 'telemeter/prometheus/kubernetes.libsonnet') +
 {
   _config+:: {
     namespace: 'observatorium',

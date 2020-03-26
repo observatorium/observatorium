@@ -8,8 +8,8 @@
           "subdir": "grafonnet"
         }
       },
-      "version": "db36a706bd1c87056759eacb686102133eb4740c",
-      "sum": "g1aMw5iYEP/Dkw1wo1pcfe7q4LIpXc4wqDZsjaCpsRc="
+      "version": "815b848ade47c2f4ee866fe5efc435acd9ad799c",
+      "sum": "J3Vp0EVbxTObr6KydLXsi4Rc0ssNVAEuwLc0NQ+4wqU="
     },
     {
       "source": {
@@ -18,7 +18,7 @@
           "subdir": "grafana-builder"
         }
       },
-      "version": "c19a92e586a6752f11745b47f309b13f02ef7147",
+      "version": "8418192e618c85af93d8aee53c99865faa870bbd",
       "sum": "slxrtftVDiTlQK22ertdfrg4Epnq97gdrLI63ftUfaE="
     },
     {
@@ -28,7 +28,7 @@
           "subdir": "monitoring/jaeger-mixin"
         }
       },
-      "version": "cc283fbd6b01e687f54a1ee9412c5ae1130da667",
+      "version": "e1248014988b7cde207d45f73f4e402c21dd6eae",
       "sum": "U/RwaRP/ps+5dVyeVxeFEb2psfZHQgEjHU2Jeb454Kg="
     },
     {
@@ -91,8 +91,8 @@
           "subdir": "jsonnet/telemeter"
         }
       },
-      "version": "fa41a6ae349cf5a54dd975703676bfad351992fb",
-      "sum": "7N1rtI+xIs5b2itzPk/rvHlHkQ+94w1P9REcjlhbaDQ="
+      "version": "7246a9504c9871c18fa622ac57763b562438e7be",
+      "sum": "fuHm4rY1VFxcPshHk99q8OL6mgdiJ4ghQBZbqkOwmLU="
     },
     {
       "source": {
@@ -101,8 +101,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "5e7af669ee35af6c8beaa37e7a30d865368d75d8",
-      "sum": "kyza6itqcvQHoKeJqsFjFQuMpj8RZsudC5/2vVxw5R0="
+      "version": "00fe1af48041e136b81b20f179dbb63b1fffc57e",
+      "sum": "4c0Wj23A4gCjKB0LEQBlNmL1cNcntDvOg7b4fO4od8A="
     },
     {
       "source": {
@@ -111,7 +111,7 @@
           "subdir": "jsonnet/thanos-mixin"
         }
       },
-      "version": "5e7af669ee35af6c8beaa37e7a30d865368d75d8",
+      "version": "00fe1af48041e136b81b20f179dbb63b1fffc57e",
       "sum": "oZH4t/rW4Va1IF47pvbtdakgDLKrXGD1SmrqU55N4xU="
     }
   ],

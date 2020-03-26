@@ -2248,32 +2248,6 @@ objects:
     selector:
       matchLabels:
         k8s-app: telemeter-server
-- apiVersion: monitoring.coreos.com/v1
-  kind: ServiceMonitor
-  metadata:
-    labels:
-      endpoint: federate
-      k8s-app: telemeter-server
-    name: telemeter-server-federate
-    namespace: ${NAMESPACE}
-  spec:
-    endpoints:
-    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-      honorLabels: true
-      interval: 15s
-      params:
-        match[]:
-        - '{__name__=~".*"}'
-      path: /federate
-      port: internal
-      scheme: https
-      tlsConfig:
-        caFile: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
-        serverName: telemeter-server.${NAMESPACE}.svc
-    jobLabel: k8s-app
-    selector:
-      matchLabels:
-        k8s-app: telemeter-server
 - apiVersion: apps/v1beta2
   kind: StatefulSet
   metadata:
@@ -2361,15 +2335,6 @@ objects:
           - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}
           env:
-          - name: NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: AUTHORIZE_URL
-            valueFrom:
-              secretKeyRef:
-                key: authorize_url
-                name: telemeter-server
           - name: OIDC_ISSUER
             valueFrom:
               secretKeyRef:
