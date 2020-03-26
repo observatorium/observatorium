@@ -2144,7 +2144,7 @@ objects:
       spec:
         containers:
         - args:
-          - --endpoint-read=http://observatorium-cortex-query-frontend.${NAMESPACE}.svc/api/v1/query
+          - --endpoint-read=http://observatorium-cortex-query-frontend.${NAMESPACE}.svc:9090/api/v1/query
           - --duration=0
           - --queries-file=/etc/up/queries.yaml
           - --log.level=debug
