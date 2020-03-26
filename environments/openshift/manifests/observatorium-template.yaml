@@ -498,54 +498,6 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: cortex-query-frontend
       app.kubernetes.io/part-of: observatorium
-- spec:
-    template:
-      spec:
-        containers:
-        - args:
-          - -provider=openshift
-          - -https-address=:8443
-          - -http-address=
-          - -email-domain=*
-          - -upstream=http://localhost:10902
-          - -openshift-service-account=prometheus-telemeter
-          - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
-            "namespace": "${NAMESPACE}"}'
-          - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",
-            "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}'
-          - -tls-cert=/etc/tls/private/tls.crt
-          - -tls-key=/etc/tls/private/tls.key
-          - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
-          - -cookie-secret-file=/etc/proxy/secrets/session_secret
-          - -openshift-ca=/etc/pki/tls/cert.pem
-          - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-          image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
-          name: oauth-proxy
-          ports:
-          - containerPort: 8443
-            name: https
-          resources:
-            limits:
-              cpu: ${JAEGER_PROXY_CPU_LIMITS}
-              memory: ${JAEGER_PROXY_MEMORY_LIMITS}
-            requests:
-              cpu: ${JAEGER_PROXY_CPU_REQUEST}
-              memory: ${JAEGER_PROXY_MEMORY_REQUEST}
-          volumeMounts:
-          - mountPath: /etc/tls/private
-            name: compact-tls
-            readOnly: false
-          - mountPath: /etc/proxy/secrets
-            name: compact-proxy
-            readOnly: false
-        serviceAccountName: prometheus-telemeter
-        volumes:
-        - name: compact-tls
-          secret:
-            secretName: compact-tls
-        - name: compact-proxy
-          secret:
-            secretName: compact-proxy
 - apiVersion: v1
   data:
     session_secret: ""
@@ -682,6 +634,42 @@ objects:
             name: data
             readOnly: false
         - args:
+          - -provider=openshift
+          - -https-address=:8443
+          - -http-address=
+          - -email-domain=*
+          - -upstream=http://localhost:10902
+          - -openshift-service-account=prometheus-telemeter
+          - '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}",
+            "namespace": "${NAMESPACE}"}'
+          - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get",
+            "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}'
+          - -tls-cert=/etc/tls/private/tls.crt
+          - -tls-key=/etc/tls/private/tls.key
+          - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
+          - -cookie-secret-file=/etc/proxy/secrets/session_secret
+          - -openshift-ca=/etc/pki/tls/cert.pem
+          - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          image: ${PROXY_IMAGE}:${PROXY_IMAGE_TAG}
+          name: oauth-proxy
+          ports:
+          - containerPort: 8443
+            name: https
+          resources:
+            limits:
+              cpu: ${JAEGER_PROXY_CPU_LIMITS}
+              memory: ${JAEGER_PROXY_MEMORY_LIMITS}
+            requests:
+              cpu: ${JAEGER_PROXY_CPU_REQUEST}
+              memory: ${JAEGER_PROXY_MEMORY_REQUEST}
+          volumeMounts:
+          - mountPath: /etc/tls/private
+            name: compact-tls
+            readOnly: false
+          - mountPath: /etc/proxy/secrets
+            name: compact-proxy
+            readOnly: false
+        - args:
           - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
           - --reporter.type=grpc
           - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
@@ -716,10 +704,17 @@ objects:
             requests:
               cpu: 32m
               memory: 64Mi
+        serviceAccountName: prometheus-telemeter
         terminationGracePeriodSeconds: 120
         volumes:
         - emptyDir: {}
           name: data
+        - name: compact-tls
+          secret:
+            secretName: compact-tls
+        - name: compact-proxy
+          secret:
+            secretName: compact-proxy
     volumeClaimTemplates: null
 - apiVersion: apps/v1
   kind: Deployment
