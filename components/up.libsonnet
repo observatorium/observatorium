@@ -113,7 +113,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       },
       spec: {
         selector: {
-          matchLabels: u.config.commonLabels,
+          matchLabels: u.config.podLabelSelector,
         },
         endpoints: [
           { port: 'http' },
