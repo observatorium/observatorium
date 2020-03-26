@@ -120,7 +120,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       },
       spec: {
         selector: {
-          matchLabels: cq.config.commonLabels,
+          matchLabels: cq.config.podLabelSelector,
         },
         endpoints: [
           { port: 'http' },
