@@ -119,4 +119,10 @@
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
   },
+
+  up: {
+    local upConfig = self,
+    version: 'master-2020-03-25-6d4f944',
+    image: 'quay.io/observatorium/up:' + upConfig.version,
+  },
 }

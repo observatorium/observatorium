@@ -5,51 +5,80 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   config:: {
     name: error 'must provide name',
+    namespace: error 'must provide namespace',
     version: error 'must provide version',
     image: error 'must provide image',
-    backoffLimit: error 'must provide backoffLimit',
-    writeEndpoint: error 'must provide writeEndpoint',
     readEndpoint: error 'must provide readEndpoint',
+    queryConfig: error 'must provide queryConfig',
 
     commonLabels:: {
       'app.kubernetes.io/name': 'observatorium-up',
       'app.kubernetes.io/instance': up.config.name,
       'app.kubernetes.io/version': up.config.version,
-      'app.kubernetes.io/component': 'test',
+      'app.kubernetes.io/component': 'blackbox-prober',
+    },
+
+    podLabelSelector:: {
+      [labelName]: up.config.commonLabels[labelName]
+      for labelName in std.objectFields(up.config.commonLabels)
+      if !std.setMember(labelName, ['app.kubernetes.io/version'])
     },
   },
 
-  job:
-    local job = k.batch.v1.job;
-    local container = job.mixin.spec.template.spec.containersType;
+  configmap:
+    local configmap = k.core.v1.configMap;
+
+    configmap.new() +
+    configmap.mixin.metadata.withName(up.config.name) +
+    configmap.mixin.metadata.withNamespace(up.config.namespace) +
+    configmap.mixin.metadata.withLabels(up.config.commonLabels) +
+    configmap.withData({
+      'queries.yaml': std.manifestYamlDoc(up.config.queryConfig),
+    }),
+
+  service:
+    local service = k.core.v1.service;
+    local ports = service.mixin.spec.portsType;
+
+    service.new(
+      up.config.name,
+      up.config.podLabelSelector,
+      [
+        ports.newNamed('http', 8080, 8080),
+      ],
+    ) +
+    service.mixin.metadata.withNamespace(up.config.namespace) +
+    service.mixin.metadata.withLabels(up.config.commonLabels),
+
+  deployment:
+    local d = k.apps.v1.deployment;
+    local container = d.mixin.spec.template.spec.containersType;
+    local containerPort = container.portsType;
+    local env = container.envType;
+    local containerVolumeMount = container.volumeMountsType;
 
     local c =
       container.new('observatorium-up', up.config.image) +
       container.withArgs([
-        '--endpoint-write=' + up.config.writeEndpoint,
         '--endpoint-read=' + up.config.readEndpoint,
-        '--period=1s',
-        '--duration=2m',
-        '--name=foo',
-        '--labels=bar="baz"',
-        '--latency=10s',
-        '--initial-query-delay=5s',
-        '--threshold=0.90',
+        '--duration=0',
+        '--queries-file=/etc/up/queries.yaml',
+        '--log.level=debug',
+      ]) + container.withPorts([
+        containerPort.newNamed(8080, 'http'),
+      ]) + container.withVolumeMounts([
+        containerVolumeMount.new('query-config', '/etc/up/'),
       ]);
 
-    job.new() +
-    job.mixin.metadata.withName('observatorium-up') +
-    job.mixin.spec.withBackoffLimit(up.config.backoffLimit) +
-    job.mixin.spec.template.metadata.withLabels(up.config.commonLabels) +
-    job.mixin.spec.template.spec.withContainers([c]) {
-      spec+: {
-        template+: {
-          spec+: {
-            restartPolicy: 'OnFailure',
-          },
-        },
-      },
-    },
+    d.new() +
+    d.mixin.metadata.withName(up.config.name) +
+    d.mixin.metadata.withNamespace(up.config.namespace) +
+    d.mixin.spec.selector.withMatchLabels(up.config.podLabelSelector) +
+    d.mixin.spec.template.metadata.withLabels(up.config.commonLabels) +
+    d.mixin.spec.template.spec.withContainers([c]) +
+    d.mixin.spec.template.spec.withVolumes([
+      { name: 'query-config', configMap: { name: up.configmap.metadata.name } },
+    ]),
 
   withResources:: {
     local u = self,
@@ -57,7 +86,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       resources: error 'must provide resources',
     },
 
-    job+: {
+    deployment+: {
       spec+: {
         template+: {
           spec+: {
@@ -73,7 +102,23 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  manifests+:: {
-    'observatorium-up': up.job,
+  withServiceMonitor:: {
+    local u = self,
+    serviceMonitor: {
+      apiVersion: 'monitoring.coreos.com/v1',
+      kind: 'ServiceMonitor',
+      metadata+: {
+        name: u.config.name,
+        namespace: u.config.namespace,
+      },
+      spec: {
+        selector: {
+          matchLabels: u.config.commonLabels,
+        },
+        endpoints: [
+          { port: 'http' },
+        ],
+      },
+    },
   },
 }
