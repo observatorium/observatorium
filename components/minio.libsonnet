@@ -100,18 +100,18 @@
     kind: 'Secret',
     metadata: {
       name: 'thanos-objectstorage',
-      namespace: minio.config.namespace,
+      namespace: minio.config.bucketSecretNamespace,
     },
     stringData: {
       'thanos.yaml': |||
         type: s3
         config:
           bucket: thanos
-          endpoint: minio:9000
+          endpoint: %s.%s.svc.cluster.local:9000
           insecure: true
           access_key: minio
           secret_key: minio123
-      |||,
+      ||| % [minio.service.metadata.name, minio.config.namespace],
     },
     type: 'Opaque',
   },

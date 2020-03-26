@@ -62,7 +62,7 @@ deploy_operator() {
 }
 
 run_test() {
-    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/minio || ($KUBECTL get pods --all-namespaces && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=10m -n minio deploy/minio || ($KUBECTL get pods --all-namespaces && exit 1)
     $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query || ($KUBECTL get pods --all-namespaces && exit 1)
 
     $KUBECTL apply -f tests/manifests/observatorium-up.yaml
