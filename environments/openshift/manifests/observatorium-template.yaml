@@ -2335,6 +2335,11 @@ objects:
           - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}
           env:
+          - name: AUTHORIZE_URL
+            valueFrom:
+              secretKeyRef:
+                key: authorize_url
+                name: telemeter-server
           - name: OIDC_ISSUER
             valueFrom:
               secretKeyRef:
