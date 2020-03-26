@@ -30,6 +30,7 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
   compact+::
     t.compact.withResources +
     (import '../../components/oauth-proxy.libsonnet') +
+    (import '../../components/oauth-proxy.libsonnet').statefulSetMixin +
     (import '../../components/jaeger-agent.libsonnet').statefulSetMixin {
       statefulSet+: {
         spec+: {
@@ -129,19 +130,23 @@ local cqf = (import '../../components/cortex-query-frontend.libsonnet');
   query+::
     t.query.withResources +
     (import '../../components/oauth-proxy.libsonnet') +
+    (import '../../components/oauth-proxy.libsonnet').deploymentMixin +
     (import '../../components/jaeger-agent.libsonnet').deploymentMixin,
 
   queryCache+::
     cqf.withResources +
-    (import '../../components/oauth-proxy.libsonnet'),
+    (import '../../components/oauth-proxy.libsonnet') +
+    (import '../../components/oauth-proxy.libsonnet').deploymentMixin,
 
   apiGateway+::
     gw.withResources +
-    (import '../../components/oauth-proxy.libsonnet'),
+    (import '../../components/oauth-proxy.libsonnet') +
+    (import '../../components/oauth-proxy.libsonnet').deploymentMixin,
 
   apiGatewayQuery+::
     t.query.withResources +
-    (import '../../components/oauth-proxy.libsonnet'),
+    (import '../../components/oauth-proxy.libsonnet') +
+    (import '../../components/oauth-proxy.libsonnet').deploymentMixin,
 } + {
   local obs = self,
 

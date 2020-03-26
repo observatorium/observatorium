@@ -39,19 +39,31 @@ local service = k.core.v1.service;
       },
     },
 
-  deployment+: {
+  specMixin:: {
+    local sm = self,
+    config+:: {
+      oauthProxy: {
+        image: error 'must provide image',
+        httpsPort: error 'must provide httpsPort',
+        upstream: error 'must provide upstream',
+        tlsSecretName: error 'must provide tlsSecretName',
+        sessionSecretName: error 'must provide sessionSecretName',
+        serviceAccountName: error 'must provide serviceAccountName',
+        resources: error 'must provide resources',
+      },
+    },
     spec+: {
       template+: {
         spec+: {
           containers+: [
-            container.new('oauth-proxy', op.config.oauthProxy.image) +
+            container.new('oauth-proxy', sm.config.oauthProxy.image) +
             container.withArgs([
               '-provider=openshift',
-              '-https-address=:' + op.config.oauthProxy.httpsPort,
+              '-https-address=:' + sm.config.oauthProxy.httpsPort,
               '-http-address=',
               '-email-domain=*',
-              '-upstream=' + op.config.oauthProxy.upstream,
-              '-openshift-service-account=' + op.config.oauthProxy.serviceAccountName,
+              '-upstream=' + sm.config.oauthProxy.upstream,
+              '-openshift-service-account=' + sm.config.oauthProxy.serviceAccountName,
               '-openshift-sar={"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}',
               '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get", "name": "${NAMESPACE}", "namespace": "${NAMESPACE}"}}',
               '-tls-cert=/etc/tls/private/tls.crt',
@@ -62,22 +74,83 @@ local service = k.core.v1.service;
               '-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
             ]) +
             container.withPorts([
-              { name: 'https', containerPort: op.config.oauthProxy.httpsPort },
+              { name: 'https', containerPort: sm.config.oauthProxy.httpsPort },
             ]) +
             container.withVolumeMounts(
               [
-                volumeMount.new(op.config.oauthProxy.tlsSecretName, '/etc/tls/private'),
-                volumeMount.new(op.config.oauthProxy.sessionSecretName, '/etc/proxy/secrets'),
+                volumeMount.new(sm.config.oauthProxy.tlsSecretName, '/etc/tls/private'),
+                volumeMount.new(sm.config.oauthProxy.sessionSecretName, '/etc/proxy/secrets'),
               ]
             ) + {
-              resources: op.config.oauthProxy.resources,
+              resources: sm.config.oauthProxy.resources,
             },
           ],
-          serviceAccountName: op.config.oauthProxy.serviceAccountName,
+          serviceAccountName: sm.config.oauthProxy.serviceAccountName,
           volumes+: [
-            volume.fromSecret(op.config.oauthProxy.tlsSecretName, op.config.oauthProxy.tlsSecretName),
-            volume.fromSecret(op.config.oauthProxy.sessionSecretName, op.config.oauthProxy.sessionSecretName),
+            volume.fromSecret(sm.config.oauthProxy.tlsSecretName, sm.config.oauthProxy.tlsSecretName),
+            volume.fromSecret(sm.config.oauthProxy.sessionSecretName, sm.config.oauthProxy.sessionSecretName),
           ],
+        },
+      },
+    },
+  },
+
+  deploymentMixin:: {
+    local dm = self,
+    config+:: {
+      oauthProxy: {
+        image: error 'must provide image',
+        httpsPort: error 'must provide httpsPort',
+        upstream: error 'must provide upstream',
+        tlsSecretName: error 'must provide tlsSecretName',
+        sessionSecretName: error 'must provide sessionSecretName',
+        sessionSecret: error 'must provide proxySessionSecret',
+        serviceAccountName: error 'must provide serviceAccountName',
+        resources: error 'must provide resources',
+      },
+    },
+
+    deployment+: op.specMixin {
+      config+:: {
+        oauthProxy+: {
+          image: dm.config.oauthProxy.image,
+          httpsPort: dm.config.oauthProxy.httpsPort,
+          upstream: dm.config.oauthProxy.upstream,
+          tlsSecretName: dm.config.oauthProxy.tlsSecretName,
+          sessionSecretName: dm.config.oauthProxy.sessionSecretName,
+          sessionSecret: dm.config.oauthProxy.sessionSecret,
+          serviceAccountName: dm.config.oauthProxy.serviceAccountName,
+          resources: dm.config.oauthProxy.resources,
+        },
+      },
+    },
+  },
+
+  statefulSetMixin:: {
+    local sm = self,
+    config+:: {
+      oauthProxy: {
+        image: error 'must provide image',
+        httpsPort: error 'must provide httpsPort',
+        upstream: error 'must provide upstream',
+        tlsSecretName: error 'must provide tlsSecretName',
+        sessionSecretName: error 'must provide sessionSecretName',
+        sessionSecret: error 'must provide proxySessionSecret',
+        serviceAccountName: error 'must provide serviceAccountName',
+        resources: error 'must provide resources',
+      },
+    },
+
+    statefulSet+: op.specMixin {
+      config+:: {
+        oauthProxy+: {
+          image: sm.config.oauthProxy.image,
+          httpsPort: sm.config.oauthProxy.httpsPort,
+          upstream: sm.config.oauthProxy.upstream,
+          tlsSecretName: sm.config.oauthProxy.tlsSecretName,
+          sessionSecretName: sm.config.oauthProxy.sessionSecretName,
+          serviceAccountName: sm.config.oauthProxy.serviceAccountName,
+          resources: sm.config.oauthProxy.resources,
         },
       },
     },
