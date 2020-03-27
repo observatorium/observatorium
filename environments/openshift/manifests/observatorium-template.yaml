@@ -706,6 +706,8 @@ objects:
           - --retention.resolution-5m=1s
           - --retention.resolution-1h=1s
           - --downsampling.disable
+          - --delete-delay=48h
+          - --deduplication.replica-label=replica
           - |
             --tracing.config=
               type: JAEGER
@@ -1699,6 +1701,7 @@ objects:
           - --http-address=0.0.0.0:10902
           - --objstore.config=$(OBJSTORE_CONFIG)
           - --experimental.enable-index-header
+          - --ignore-deletion-marks-delay=24h
           - |
             --selector.relabel-config=
               - action: hashmod
@@ -1885,6 +1888,7 @@ objects:
           - --http-address=0.0.0.0:10902
           - --objstore.config=$(OBJSTORE_CONFIG)
           - --experimental.enable-index-header
+          - --ignore-deletion-marks-delay=24h
           - |
             --selector.relabel-config=
               - action: hashmod
@@ -2071,6 +2075,7 @@ objects:
           - --http-address=0.0.0.0:10902
           - --objstore.config=$(OBJSTORE_CONFIG)
           - --experimental.enable-index-header
+          - --ignore-deletion-marks-delay=24h
           - |
             --selector.relabel-config=
               - action: hashmod
