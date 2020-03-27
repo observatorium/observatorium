@@ -148,6 +148,14 @@ local up = (import '../../components/up.libsonnet');
     t.query.withResources +
     (import '../../components/oauth-proxy.libsonnet') +
     (import '../../components/oauth-proxy.libsonnet').deploymentMixin,
+
+  up+::
+    up + up.withResources,
+
+  manifests+:: {
+    ['observatorium-up-' + name]: obs.up[name]
+    for name in std.objectFields(obs.up)
+  },
 } + {
   local obs = self,
 
@@ -477,18 +485,8 @@ local up = (import '../../components/up.libsonnet');
         collectorAddress: obs.config.jaegerAgentCollectorAddress,
       },
     },
-  },
-} + (import '../../components/observatorium-configure.libsonnet') + {
-  local obs = self,
 
-  local telemeter = (import 'telemeter.jsonnet') {
-    _config+:: {
-      namespace: obs.config.namespace,
-    },
-  },
-
-  local upComponent = up + up.withResources {
-    config+:: {
+    up: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
@@ -510,6 +508,19 @@ local up = (import '../../components/up.libsonnet');
       commonLabels+:: obs.config.commonLabels,
     },
   },
+} + (import '../../components/observatorium-configure.libsonnet') + {
+  local obs = self,
+  up+:: {
+    config+:: obs.config.up,
+  },
+} + {
+  local obs = self,
+
+  local telemeter = (import 'telemeter.jsonnet') {
+    _config+:: {
+      namespace: obs.config.namespace,
+    },
+  },
 
   local prometheusAMS = (import 'telemeter-prometheus-ams.jsonnet') {
     _config+:: {
@@ -526,9 +537,6 @@ local up = (import '../../components/up.libsonnet');
     objects: [
       obs.manifests[name]
       for name in std.objectFields(obs.manifests)
-    ] + [
-      upComponent[name]
-      for name in std.objectFields(upComponent)
     ] + telemeter.objects + prometheusAMS.objects,
     parameters: [
       {
