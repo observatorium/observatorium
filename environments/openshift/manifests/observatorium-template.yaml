@@ -692,7 +692,6 @@ objects:
           app.kubernetes.io/instance: observatorium
           app.kubernetes.io/name: thanos-compact
           app.kubernetes.io/part-of: observatorium
-          app.kubernetes.io/tracing: jaeger-agent
           app.kubernetes.io/version: ${THANOS_IMAGE_TAG}
       spec:
         containers:
@@ -708,13 +707,6 @@ objects:
           - --downsampling.disable
           - --delete-delay=48h
           - --deduplication.replica-label=replica
-          - |
-            --tracing.config=
-              type: JAEGER
-              config:
-                service_name: thanos-compact
-                sampler_type: ratelimiting
-                sampler_param: 2
           env:
           - name: OBJSTORE_CONFIG
             valueFrom:
@@ -798,53 +790,30 @@ objects:
           - mountPath: /etc/proxy/secrets
             name: compact-proxy
             readOnly: false
-        - args:
-          - --reporter.grpc.host-port=dns:///jaeger-collector-headless.$(NAMESPACE).svc:14250
-          - --reporter.type=grpc
-          - --jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)
-          env:
-          - name: NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: POD
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          image: ${JAEGER_AGENT_IMAGE}:${JAEGER_AGENT_IMAGE_TAG}
-          livenessProbe:
-            failureThreshold: 5
-            httpGet:
-              path: /
-              port: 14271
-              scheme: HTTP
-          name: jaeger-agent
-          ports:
-          - containerPort: 6831
-            name: jaeger-thrift
-          - containerPort: 5778
-            name: configs
-          - containerPort: 14271
-            name: metrics
-          resources:
-            limits:
-              cpu: 128m
-              memory: 128Mi
-            requests:
-              cpu: 32m
-              memory: 64Mi
         serviceAccountName: prometheus-telemeter
         terminationGracePeriodSeconds: 120
         volumes:
-        - emptyDir: {}
-          name: data
         - name: compact-tls
           secret:
             secretName: compact-tls
         - name: compact-proxy
           secret:
             secretName: compact-proxy
-    volumeClaimTemplates: null
+    volumeClaimTemplates:
+    - metadata:
+        labels:
+          app.kubernetes.io/component: database-compactor
+          app.kubernetes.io/instance: observatorium
+          app.kubernetes.io/name: thanos-compact
+          app.kubernetes.io/part-of: observatorium
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: ${THANOS_COMPACTOR_PVC_REQUEST}
+        storageClassName: ${STORAGE_CLASS}
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -2751,6 +2720,8 @@ parameters:
   value: 1Gi
 - name: THANOS_COMPACTOR_MEMORY_LIMIT
   value: 5Gi
+- name: THANOS_COMPACTOR_PVC_REQUEST
+  value: 50Gi
 - name: THANOS_RULER_REPLICAS
   value: "2"
 - name: THANOS_RULER_CPU_REQUEST
