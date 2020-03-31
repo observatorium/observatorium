@@ -2253,32 +2253,6 @@ objects:
     selector:
       matchLabels:
         k8s-app: telemeter-server
-- apiVersion: monitoring.coreos.com/v1
-  kind: ServiceMonitor
-  metadata:
-    labels:
-      endpoint: federate
-      k8s-app: telemeter-server
-    name: telemeter-server-federate
-    namespace: ${NAMESPACE}
-  spec:
-    endpoints:
-    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-      honorLabels: true
-      interval: 15s
-      params:
-        match[]:
-        - '{__name__=~".*"}'
-      path: /federate
-      port: internal
-      scheme: https
-      tlsConfig:
-        caFile: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
-        serverName: telemeter-server.${NAMESPACE}.svc
-    jobLabel: k8s-app
-    selector:
-      matchLabels:
-        k8s-app: telemeter-server
 - apiVersion: apps/v1beta2
   kind: StatefulSet
   metadata:
@@ -2306,7 +2280,7 @@ objects:
           - --tls-crt=/etc/pki/service/tls.crt
           - --internal-tls-key=/etc/pki/service/tls.key
           - --internal-tls-crt=/etc/pki/service/tls.crt
-          - --authorize=${AUTHORIZE_URL}
+          - --authorize=$(AUTHORIZE_URL)
           - --oidc-issuer=$(OIDC_ISSUER)
           - --client-id=$(CLIENT_ID)
           - --client-secret=$(CLIENT_SECRET)
@@ -2366,6 +2340,11 @@ objects:
           - --token-expire-seconds=3600
           - --forward-url=${TELEMETER_FORWARD_URL}
           env:
+          - name: AUTHORIZE_URL
+            valueFrom:
+              secretKeyRef:
+                key: authorize_url
+                name: telemeter-server
           - name: OIDC_ISSUER
             valueFrom:
               secretKeyRef:
@@ -2781,8 +2760,6 @@ parameters:
   value: 200m
 - name: JAEGER_PROXY_MEMORY_LIMITS
   value: 200Mi
-- name: AUTHORIZE_URL
-  value: https://api.openshift.com/api/accounts_mgmt/v1/cluster_registrations
 - name: IMAGE
   value: quay.io/openshift/origin-telemeter
 - name: IMAGE_TAG
