@@ -29,10 +29,10 @@ local up = (import '../../components/up.libsonnet');
   ],
 
   compact+::
+    t.compact.withVolumeClaimTemplate +
     t.compact.withResources +
     (import '../../components/oauth-proxy.libsonnet') +
-    (import '../../components/oauth-proxy.libsonnet').statefulSetMixin +
-    (import '../../components/jaeger-agent.libsonnet').statefulSetMixin {
+    (import '../../components/oauth-proxy.libsonnet').statefulSetMixin {
       statefulSet+: {
         spec+: {
           template+: {
@@ -220,9 +220,16 @@ local up = (import '../../components/up.libsonnet');
           },
         },
       },
-      jaegerAgent: {
-        image: obs.config.jaegerAgentImage,
-        collectorAddress: obs.config.jaegerAgentCollectorAddress,
+      volumeClaimTemplate: {
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: {
+            requests: {
+              storage: '${THANOS_COMPACTOR_PVC_REQUEST}',
+            },
+          },
+          storageClassName: '${STORAGE_CLASS}',
+        },
       },
     },
 
@@ -686,6 +693,10 @@ local up = (import '../../components/up.libsonnet');
       {
         name: 'THANOS_COMPACTOR_MEMORY_LIMIT',
         value: '5Gi',
+      },
+      {
+        name: 'THANOS_COMPACTOR_PVC_REQUEST',
+        value: '50Gi',
       },
       {
         name: 'THANOS_RULER_REPLICAS',
