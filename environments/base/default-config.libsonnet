@@ -122,7 +122,7 @@
 
   up: {
     local upConfig = self,
-    version: 'master-2020-03-25-6d4f944',
+    version: 'master-2020-03-31-6e67351',
     image: 'quay.io/observatorium/up:' + upConfig.version,
   },
 }
