@@ -10,7 +10,7 @@ spec:
         app.kubernetes.io/component: test
         app.kubernetes.io/instance: e2e-test
         app.kubernetes.io/name: observatorium-up
-        app.kubernetes.io/version: master-2020-01-09-89757a5
+        app.kubernetes.io/version: master-2020-03-31-6e67351
     spec:
       containers:
       - args:
@@ -23,7 +23,7 @@ spec:
         - --latency=10s
         - --initial-query-delay=5s
         - --threshold=0.90
-        image: quay.io/observatorium/up:master-2020-01-09-89757a5
+        image: quay.io/observatorium/up:master-2020-03-31-6e67351
         name: observatorium-up
         resources:
           limits:
