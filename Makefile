@@ -11,6 +11,10 @@ BIN_DIR ?= $(shell pwd)/tmp/bin
 
 CONTROLLER_GEN ?= $(BIN_DIR)/controller-gen
 
+vendor: go.mod go.sum
+	go mod tidy
+	go mod vendor
+
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: $(CONTROLLER_GEN)
 	$(CONTROLLER_GEN) crd paths="./..." output:crd:artifacts:config=deploy/crds
