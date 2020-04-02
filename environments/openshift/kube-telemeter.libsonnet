@@ -17,6 +17,7 @@
                 image: image,
                 command+: [
                   '--token-expire-seconds=3600',
+                  '--limit-bytes=5242880',
                   '--forward-url=http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
                     'thanos-receive',
                     $._config.namespace,
