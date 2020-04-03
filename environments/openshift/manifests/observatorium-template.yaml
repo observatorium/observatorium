@@ -2307,6 +2307,7 @@ objects:
           - --whitelist={__name__=~"cluster:usage:.*"}
           - --elide-label=prometheus_replica
           - --token-expire-seconds=3600
+          - --limit-bytes=5242880
           - --forward-url=${TELEMETER_FORWARD_URL}
           env:
           - name: AUTHORIZE_URL
