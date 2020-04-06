@@ -1504,6 +1504,7 @@ objects:
                 sampler_type: ratelimiting
                 sampler_param: 2
           - --rule-file=/var/thanos/config/rules/telemeter-rules.yaml
+          - --log-level=debug
           env:
           - name: NAME
             valueFrom:

@@ -62,7 +62,11 @@ local up = (import '../../components/up.libsonnet');
               containers: [
                 if c.name == 'thanos-rule' then c {
                   env+: s3EnvVars,
-                  args+: ['--rule-file=/var/thanos/config/rules/telemeter-rules.yaml'],
+                  args+: [
+                    '--rule-file=/var/thanos/config/rules/telemeter-rules.yaml',
+                    // TODO(bwplotka): Remove when OBS-210 is fixed.
+                    '--log-level=debug',
+                    ],
                   volumeMounts+: [{
                     name: 'rules',
                     mountPath: '/var/thanos/config/rules',
