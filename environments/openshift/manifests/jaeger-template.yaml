@@ -54,14 +54,11 @@ objects:
       spec:
         containers:
         - args:
-          - --badger.directory-key=/var/jaeger/store/keys
-          - --badger.directory-value=/var/jaeger/store/values
-          - --badger.ephemeral=false
-          - --badger.span-store-ttl=3h
           - --collector.queue-size=4000
+          - --memory.max-trace=${JAEGER_MAX_TRACE}
           env:
           - name: SPAN_STORAGE_TYPE
-            value: badger
+            value: memory
           image: ${IMAGE}:${IMAGE_TAG}
           livenessProbe:
             failureThreshold: 4
@@ -313,3 +310,5 @@ parameters:
   value: 200m
 - name: JAEGER_PROXY_MEMORY_LIMITS
   value: 200Mi
+- name: JAEGER_MAX_TRACE
+  value: "100000"
