@@ -45,7 +45,7 @@ local app =
                     },
                   },
                   args+: [
-                    '--memory.max-trace=${JAEGER_MAX_TRACE}',
+                    '--memory.max-traces=${JAEGER_MAX_TRACES}',
                   ],
                 },
               ] + [
@@ -123,6 +123,6 @@ local app =
     { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100Mi' },
     { name: 'JAEGER_PROXY_CPU_LIMITS', value: '200m' },
     { name: 'JAEGER_PROXY_MEMORY_LIMITS', value: '200Mi' },
-    { name: 'JAEGER_MAX_TRACE', value: '100000' },
+    { name: 'JAEGER_MAX_TRACES', value: '100000' },
   ],
 }
