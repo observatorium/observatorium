@@ -44,6 +44,9 @@ local app =
                       memory: '${JAEGER_MEMORY_LIMITS}',
                     },
                   },
+                  args+: [
+                    '--memory.max-trace=${JAEGER_MAX_TRACE}',
+                  ],
                 },
               ] + [
                 container.new('proxy', '${PROXY_IMAGE}:${PROXY_IMAGE_TAG}') +
@@ -120,5 +123,6 @@ local app =
     { name: 'JAEGER_PROXY_MEMORY_REQUEST', value: '100Mi' },
     { name: 'JAEGER_PROXY_CPU_LIMITS', value: '200m' },
     { name: 'JAEGER_PROXY_MEMORY_LIMITS', value: '200Mi' },
+    { name: 'JAEGER_MAX_TRACE', value: '100000' },
   ],
 }

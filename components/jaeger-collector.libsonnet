@@ -76,20 +76,13 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
       local mount = container.volumeMountsType;
       local volume = k.apps.v1.statefulSet.mixin.spec.template.spec.volumesType;
 
-      // the assumption based on past perf tests is that this collector should be able to comfortably
-      // ingest at least 2k spans/sec with badger and 256Mi of memory on 1 cpu.
-      // this depends on the span size, but these default values should provide a good base line
       local c =
         container.new($.jaeger.deployment.metadata.name, j.image) +
         container.withArgs([
-          '--badger.directory-key=/var/jaeger/store/keys',
-          '--badger.directory-value=/var/jaeger/store/values',
-          '--badger.ephemeral=false',
-          '--badger.span-store-ttl=3h',
           '--collector.queue-size=4000',
         ],) +
         container.withEnv([
-          env.new('SPAN_STORAGE_TYPE', 'badger'),
+          env.new('SPAN_STORAGE_TYPE', 'memory'),
         ]) + container.withPorts(
           [
             containerPort.newNamed(14250, 'grpc'),
