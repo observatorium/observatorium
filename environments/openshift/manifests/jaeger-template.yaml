@@ -55,7 +55,7 @@ objects:
         containers:
         - args:
           - --collector.queue-size=4000
-          - --memory.max-trace=${JAEGER_MAX_TRACE}
+          - --memory.max-traces=${JAEGER_MAX_TRACES}
           env:
           - name: SPAN_STORAGE_TYPE
             value: memory
@@ -310,5 +310,5 @@ parameters:
   value: 200m
 - name: JAEGER_PROXY_MEMORY_LIMITS
   value: 200Mi
-- name: JAEGER_MAX_TRACE
+- name: JAEGER_MAX_TRACES
   value: "100000"
