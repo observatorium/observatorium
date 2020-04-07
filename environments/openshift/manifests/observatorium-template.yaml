@@ -677,7 +677,7 @@ objects:
     name: observatorium-thanos-compact
     namespace: ${NAMESPACE}
   spec:
-    replicas: ${THANOS_COMPACTOR_REPLICAS}
+    replicas: ${{THANOS_COMPACTOR_REPLICAS}}
     selector:
       matchLabels:
         app.kubernetes.io/component: database-compactor
