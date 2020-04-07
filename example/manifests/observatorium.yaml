@@ -56,8 +56,8 @@ spec:
         resources:
           requests:
             storage: 50Gi
-  thanosImage: quay.io/thanos/thanos:master-2020-03-24-4bd19b16
+  thanosImage: quay.io/thanos/thanos:v0.12.0-rc.1
   thanosReceiveController:
     image: quay.io/observatorium/thanos-receive-controller:master-2020-02-06-b66e0c8
     version: master-2020-02-06-b66e0c8
-  thanosVersion: master-2020-03-24-4bd19b16
+  thanosVersion: v0.12.0-rc.1

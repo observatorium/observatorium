@@ -3,7 +3,7 @@
 
   name: 'observatorium-xyz',
   namespace: 'observatorium',
-  thanosVersion: 'master-2020-03-24-4bd19b16',
+  thanosVersion: 'v0.12.0-rc.1',
   thanosImage: 'quay.io/thanos/thanos:' + defaultConfig.thanosVersion,
   objectStorageConfig: {
     name: 'thanos-objectstorage',
