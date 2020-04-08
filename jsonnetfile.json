@@ -87,8 +87,8 @@
     {
       "source": {
         "git": {
-          "remote": "https://github.com/thanos-io/kube-thanos",
-          "subdir": "jsonnet/thanos-mixin"
+          "remote": "https://github.com/thanos-io/thanos",
+          "subdir": "mixin/thanos"
         }
       },
       "version": "master"

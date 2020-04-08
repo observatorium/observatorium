@@ -107,12 +107,12 @@
     {
       "source": {
         "git": {
-          "remote": "https://github.com/thanos-io/kube-thanos",
-          "subdir": "jsonnet/thanos-mixin"
+          "remote": "https://github.com/thanos-io/thanos",
+          "subdir": "mixin/thanos"
         }
       },
-      "version": "00fe1af48041e136b81b20f179dbb63b1fffc57e",
-      "sum": "oZH4t/rW4Va1IF47pvbtdakgDLKrXGD1SmrqU55N4xU="
+      "version": "1a2edf19475b854181e5abaa4b6f1c9caf2a1547",
+      "sum": "JyGD4v7VQ4ZMM0GgkM55jFtBHCeUGGxcL64gzxukp44="
     }
   ],
   "legacyImports": false
