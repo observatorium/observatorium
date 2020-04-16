@@ -556,7 +556,7 @@ local up = (import '../../components/up.libsonnet');
       },
       {
         name: 'THANOS_IMAGE_TAG',
-        value: 'v0.12.0-rc.1',
+        value: 'v0.12.0',
       },
       {
         name: 'STORAGE_CLASS',
