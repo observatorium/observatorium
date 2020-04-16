@@ -69,15 +69,6 @@
     {
       "source": {
         "git": {
-          "remote": "https://github.com/openshift/telemeter",
-          "subdir": "jsonnet/telemeter"
-        }
-      },
-      "version": "master"
-    },
-    {
-      "source": {
-        "git": {
           "remote": "https://github.com/thanos-io/kube-thanos",
           "subdir": "jsonnet/kube-thanos"
         }
