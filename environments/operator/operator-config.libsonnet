@@ -31,14 +31,22 @@ cr.spec {
     version: thanosVersion,
     objectStorageConfig: objectStorageConfig,
   },
-  query: {
+  storeCache+:: {
+    image: cr.spec.store.cache.image,
+    version: cr.spec.store.cache.version,
+    exporterImage: cr.spec.store.cache.exporterImage,
+    exporterVersion: cr.spec.store.cache.exporterVersion,
+    replicas: cr.spec.store.cache.replicas,
+    memoryLimitMb: cr.spec.store.cache.memoryLimitMb,
+  },
+  query+:: {
     image: thanosImage,
     version: thanosVersion,
   },
   queryCache+:: {
     image: cr.spec.queryCache.image,
   },
-  apiGatewayQuery: {
+  apiGatewayQuery+:: {
     image: thanosImage,
     version: thanosVersion,
   },

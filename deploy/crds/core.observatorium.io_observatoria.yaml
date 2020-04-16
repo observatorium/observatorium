@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.5
+    controller-gen.kubebuilder.io/version: v0.2.8
   creationTimestamp: null
   name: observatoria.core.observatorium.io
 spec:
@@ -239,7 +239,7 @@ spec:
                   format: int32
                   type: integer
                 version:
-                  description: Version of  Query Cache image to be deployed.
+                  description: Version of Query Cache image to be deployed.
                   type: string
               required:
               - image
@@ -525,6 +525,34 @@ spec:
             store:
               description: Thanos StoreSpec
               properties:
+                cache:
+                  description: Memcached spec for Store
+                  properties:
+                    exporterImage:
+                      description: Memcached Prometheus Exporter image
+                      type: string
+                    exporterVersion:
+                      description: Version of Memcached Prometheus Exporter image
+                        to be deployed.
+                      type: string
+                    image:
+                      description: Memcached image
+                      type: string
+                    memoryLimitMb:
+                      description: Memory limit of Memcached in megabytes.
+                      format: int32
+                      type: integer
+                    replicas:
+                      description: Number of Memcached replicas.
+                      format: int32
+                      type: integer
+                    version:
+                      description: Version of Memcached image to be deployed.
+                      type: string
+                  required:
+                  - exporterImage
+                  - image
+                  type: object
                 shards:
                   format: int32
                   type: integer
@@ -662,6 +690,7 @@ spec:
                   - spec
                   type: object
               required:
+              - cache
               - volumeClaimTemplate
               type: object
             thanosImage:

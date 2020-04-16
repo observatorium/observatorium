@@ -69,6 +69,24 @@ type StoreSpec struct {
 	// VolumeClaimTemplate
 	VolumeClaimTemplate VolumeClaimTemplate `json:"volumeClaimTemplate"`
 	Shards              *int32              `json:"shards,omitempty"`
+	// Memcached spec for Store
+	Cache StoreCacheSpec `json:"cache"`
+}
+
+// StoreCacheSpec describes configuration for Store Memcached
+type StoreCacheSpec struct {
+	// Memcached image
+	Image string `json:"image"`
+	// Version of Memcached image to be deployed.
+	Version string `json:"version,omitempty"`
+	// Memcached Prometheus Exporter image
+	ExporterImage string `json:"exporterImage"`
+	// Version of Memcached Prometheus Exporter image to be deployed.
+	ExporterVersion string `json:"exporterVersion,omitempty"`
+	// Number of Memcached replicas.
+	Replicas *int32 `json:"replicas,omitempty"`
+	// Memory limit of Memcached in megabytes.
+	MemoryLimitMB *int32 `json:"memoryLimitMb,omitempty"`
 }
 
 type APIGatewaySpec struct {
@@ -103,7 +121,7 @@ type QueryCacheSpec struct {
 	Image string `json:"image"`
 	// Number of Query Cache replicas.
 	Replicas *int32 `json:"replicas,omitempty"`
-	// Version of  Query Cache image to be deployed.
+	// Version of Query Cache image to be deployed.
 	Version string `json:"version,omitempty"`
 }
 

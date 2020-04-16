@@ -27,6 +27,10 @@
     for i in std.range(0, obs.config.store.shards - 1)
   },
 
+  storeCache+:: {
+    config+:: obs.config.storeCache,
+  },
+
   query+:: {
     config+:: obs.config.query,
   },
