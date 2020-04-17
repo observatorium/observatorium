@@ -59,7 +59,7 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "62d4b8e2392ea84bc49fca5582ebfdb08eb1ae47",
+      "version": "f2c6ec7ed30e77ae20b19ae28f28578a57ae4807",
       "sum": "RDdo7RnvtQafX+C9UVkviTpOGf0HnRGWTssFqANN+bs=",
       "name": "observatorium"
     },

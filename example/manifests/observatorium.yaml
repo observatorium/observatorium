@@ -8,8 +8,8 @@ metadata:
   name: observatorium-xyz
 spec:
   apiGateway:
-    image: quay.io/observatorium/observatorium:master-2020-03-19-62d4b8e
-    version: master-2020-03-19-62d4b8e
+    image: quay.io/observatorium/observatorium:HEAD-2020-04-16-v0.1.0
+    version: HEAD-2020-04-16-v0.1.0
   compact:
     retentionResolution1h: 1s
     retentionResolution5m: 1s
