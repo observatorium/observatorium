@@ -60,11 +60,14 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     local c =
       container.new('observatorium-up', up.config.image) +
       container.withArgs([
-        '--endpoint-read=' + up.config.readEndpoint,
         '--duration=0',
         '--queries-file=/etc/up/queries.yaml',
         '--log.level=debug',
-      ] + if std.objectHas(up.config, 'writeEndpoint') then [
+      ] +
+      if std.objectHas(up.config, 'readEndpoint') then [
+        '--endpoint-read=' + up.config.readEndpoint,
+      ] else [] +
+      if std.objectHas(up.config, 'writeEndpoint') then [
         '--endpoint-write=' + up.config.writeEndpoint,
       ] else []) +
       container.withPorts([
