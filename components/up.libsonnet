@@ -64,9 +64,13 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         '--duration=0',
         '--queries-file=/etc/up/queries.yaml',
         '--log.level=debug',
-      ]) + container.withPorts([
+      ] + if std.objectHas(up.config, 'writeEndpoint') then [
+        '--endpoint-write=' + up.config.writeEndpoint,
+      ] else []) +
+      container.withPorts([
         containerPort.newNamed(8080, 'http'),
-      ]) + container.withVolumeMounts([
+      ]) +
+      container.withVolumeMounts([
         containerVolumeMount.new('query-config', '/etc/up/'),
       ]);
 
