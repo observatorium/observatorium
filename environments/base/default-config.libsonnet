@@ -97,6 +97,16 @@
     },
   },
 
+  storeCache: {
+    local scConfig = self,
+    replicas: 1,
+    version: '1.6.3-alpine',
+    image: 'docker.io/memcached:' + scConfig.version,
+    exporterVersion: 'v0.6.0',
+    exporterImage: 'prom/memcached-exporter:' + scConfig.exporterVersion,
+    memoryLimitMb: 1024,
+  },
+
   query: {
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,

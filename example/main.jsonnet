@@ -25,6 +25,14 @@ local obs = (import '../environments/base/observatorium.jsonnet');
     store: {
       volumeClaimTemplate: obs.config.store.volumeClaimTemplate,
       shards: obs.config.store.shards,
+      cache: {
+        image: obs.config.storeCache.image,
+        version: obs.config.storeCache.version,
+        exporterImage: obs.config.storeCache.exporterImage,
+        exporterVersion: obs.config.storeCache.exporterVersion,
+        replicas: obs.config.storeCache.replicas,
+        memoryLimitMb: obs.config.storeCache.memoryLimitMb,
+      },
     },
     compact: {
       volumeClaimTemplate: obs.config.compact.volumeClaimTemplate,

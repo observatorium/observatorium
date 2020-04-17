@@ -48,6 +48,13 @@ spec:
           requests:
             storage: 50Gi
   store:
+    cache:
+      exporterImage: prom/memcached-exporter:v0.6.0
+      exporterVersion: v0.6.0
+      image: docker.io/memcached:1.6.3-alpine
+      memoryLimitMb: 1024
+      replicas: 1
+      version: 1.6.3-alpine
     shards: 1
     volumeClaimTemplate:
       spec:
