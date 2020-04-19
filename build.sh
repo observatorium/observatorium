@@ -10,8 +10,8 @@ set -o pipefail
 ./build_dev.sh
 
 # Make sure to start with a clean 'manifests' dir
-rm -rf environments/base/manifests
-mkdir environments/base/manifests
+rm -rf jsonnet/environments/base/manifests
+mkdir jsonnet/environments/base/manifests
 
-jsonnet -J vendor -m environments/base/manifests environments/base/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
-find environments/base/manifests -type f ! -name '*.yaml' -delete
+jsonnet -J jsonnet/vendor -m jsonnet/environments/base/manifests jsonnet/environments/base/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
+find jsonnet/environments/base/manifests -type f ! -name '*.yaml' -delete

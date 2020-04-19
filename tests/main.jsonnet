@@ -1,7 +1,7 @@
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
-local obs = (import '../environments/base/observatorium.jsonnet');
-local up = (import '../components/up-job.libsonnet') +
-           (import '../components/up-job.libsonnet').withResources + {
+local obs = (import '../jsonnet/environments/base/observatorium.jsonnet');
+local up = (import '../jsonnet/components/up-job.libsonnet') +
+           (import '../jsonnet/components/up-job.libsonnet').withResources + {
   config+:: {
     local cfg = self,
     name: 'observatorium-up',

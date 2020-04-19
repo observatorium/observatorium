@@ -17,7 +17,7 @@ deploy() {
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
     $KUBECTL create ns minio || true
     $KUBECTL create ns observatorium || true
-    $KUBECTL apply -f environments/dev/manifests/
+    $KUBECTL apply -f jsonnet/environments/dev/manifests/
 }
 
 wait_for_cr() {
@@ -51,10 +51,10 @@ deploy_operator() {
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
     $KUBECTL create ns minio || true
     $KUBECTL create ns observatorium || true
-    $KUBECTL apply -f environments/dev/manifests/minio-secret.yaml
-    $KUBECTL apply -f environments/dev/manifests/minio-pvc.yaml
-    $KUBECTL apply -f environments/dev/manifests/minio-deployment.yaml
-    $KUBECTL apply -f environments/dev/manifests/minio-service.yaml
+    $KUBECTL apply -f jsonnet/environments/dev/manifests/minio-secret.yaml
+    $KUBECTL apply -f jsonnet/environments/dev/manifests/minio-pvc.yaml
+    $KUBECTL apply -f jsonnet/environments/dev/manifests/minio-deployment.yaml
+    $KUBECTL apply -f jsonnet/environments/dev/manifests/minio-service.yaml
     $KUBECTL apply -f deploy/crds
     $KUBECTL apply -f deploy/
     $KUBECTL apply -n observatorium -f example/manifests

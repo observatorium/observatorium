@@ -1,4 +1,4 @@
 /kind
 /kubectl
-vendor/
+/vendor
 tmp/

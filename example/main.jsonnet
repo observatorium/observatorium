@@ -1,4 +1,4 @@
-local obs = (import '../environments/base/observatorium.jsonnet');
+local obs = (import '../jsonnet/environments/base/observatorium.jsonnet');
 
 {
   local cr = self,

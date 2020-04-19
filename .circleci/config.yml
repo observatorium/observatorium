@@ -5,9 +5,9 @@ jobs:
       - image: quay.io/coreos/jsonnet-ci
     steps:
       - checkout
-      - run: find . -type f -not -path './vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \) | xargs -L1 jsonnetfmt --test
-      - run: curl -o ./jb -L "https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.3.1/jb-$(go env GOOS)-$(go env GOARCH)" && chmod +x ./jb
-      - run: ./jb install
+      - run: find . -type f -not -path './jsonnet/vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \) | xargs -L1 jsonnetfmt --test
+      - run: cd jsonnet && curl -o ./jb -L "https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.3.1/jb-$(go env GOOS)-$(go env GOARCH)" && chmod +x ./jb
+      - run: cd jsonnet && ./jb install
       - run: ./build.sh
       - run: git diff --exit-code
 
