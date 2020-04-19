@@ -4,4 +4,5 @@ package main
 
 import (
 	_ "sigs.k8s.io/controller-tools/cmd/controller-gen"
+	_ "github.com/brancz/locutus"
 )
