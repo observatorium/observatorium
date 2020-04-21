@@ -33,7 +33,7 @@ spec:
       containers:
       - args:
         - --web.listen=0.0.0.0:8080
-        - --metrics.ui.endpoint=http://observatorium-xyz-observatorium-api-gateway-thanos-query.observatorium.svc.cluster.local:9090
+        - --metrics.ui.endpoint=http://observatorium-xyz-thanos-query.observatorium.svc.cluster.local:9090
         - --metrics.read.endpoint=http://observatorium-xyz-cortex-query-frontend.observatorium.svc.cluster.local:9090/api/v1
         - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
         - --log.level=warn

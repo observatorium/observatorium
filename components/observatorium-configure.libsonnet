@@ -42,8 +42,4 @@
   apiGateway+:: {
     config+:: obs.config.apiGateway,
   },
-
-  apiGatewayQuery+:: {
-    config+:: obs.config.apiGatewayQuery,
-  },
 }

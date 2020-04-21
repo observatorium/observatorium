@@ -125,11 +125,6 @@
     image: 'quay.io/observatorium/observatorium:' + gwConfig.version,
   },
 
-  apiGatewayQuery: {
-    image: defaultConfig.thanosImage,
-    version: defaultConfig.thanosVersion,
-  },
-
   up: {
     local upConfig = self,
     version: 'master-2020-03-31-6e67351',
