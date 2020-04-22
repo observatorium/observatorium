@@ -54,4 +54,3 @@ spec:
         ports:
         - containerPort: 9150
           name: metrics
-  volumeClaimTemplates: []
