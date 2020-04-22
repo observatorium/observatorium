@@ -92,7 +92,12 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     sts.mixin.metadata.withNamespace(mc.config.namespace) +
     sts.mixin.metadata.withLabels(mc.config.commonLabels) +
     sts.mixin.spec.withServiceName(mc.service.metadata.name) +
-    sts.mixin.spec.selector.withMatchLabels(mc.config.podLabelSelector),
+    sts.mixin.spec.selector.withMatchLabels(mc.config.podLabelSelector)
+    {
+      spec+: {
+        volumeClaimTemplates:: null,
+      },
+    },
 
   withServiceMonitor:: {
     local mc = self,
