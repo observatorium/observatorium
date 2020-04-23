@@ -10,11 +10,11 @@ COPY jsonnetfile.json jsonnetfile.json
 # Build
 RUN GO111MODULE="on" go get github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb
 RUN jb install
-RUN GO111MODULE="on" go get github.com/brancz/locutus
+RUN GO111MODULE="on" go build github.com/brancz/locutus
 
 FROM alpine:3.10 as runner
 WORKDIR /
-COPY --from=builder /go/bin/locutus /
+COPY --from=builder /workspace/locutus /
 COPY --from=builder /workspace/environments/operator /environments/operator
 COPY --from=builder /workspace/components/ /components/
 COPY --from=builder /workspace/vendor/ /vendor/
