@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "dependencies": [
+    {
+      "source": {
+        "local": {
+          "directory": "../.."
+        }
+      },
+      "version": "",
+"      name": "configuration"
+    }
+  ],
+  "legacyImports": true
+}
