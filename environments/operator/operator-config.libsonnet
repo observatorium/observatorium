@@ -46,11 +46,11 @@ cr.spec {
   queryCache+:: {
     image: cr.spec.queryCache.image,
   },
-  apiGatewayQuery+:: {
+  apiQuery+:: {
     image: thanosImage,
     version: thanosVersion,
   },
-  apiGateway+:: {
-    image: cr.spec.apiGateway.image,
+  api+:: {
+    image: cr.spec.api.image,
   },
 }
