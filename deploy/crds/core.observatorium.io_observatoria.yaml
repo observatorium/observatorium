@@ -36,14 +36,14 @@ spec:
         spec:
           description: ObservatoriumSpec defines the desired state of Observatorium
           properties:
-            apiGateway:
-              description: API Gateway
+            api:
+              description: API
               properties:
                 image:
-                  description: API Gateway image
+                  description: API image
                   type: string
                 version:
-                  description: Version describes the version of API Gateway to use.
+                  description: Version describes the version of API to use.
                   type: string
               required:
               - image
@@ -713,7 +713,7 @@ spec:
               description: Thanos Image version
               type: string
           required:
-          - apiGateway
+          - api
           - compact
           - hashrings
           - objectStorageConfig

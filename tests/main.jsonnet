@@ -18,14 +18,14 @@ local up = (import '../components/up-job.libsonnet') +
       },
     },
     writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/write' % [
-      obs.apiGateway.service.metadata.name,
-      obs.apiGateway.service.metadata.namespace,
-      obs.apiGateway.service.spec.ports[0].port,
+      obs.api.service.metadata.name,
+      obs.api.service.metadata.namespace,
+      obs.api.service.spec.ports[0].port,
     ],
     readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/api/v1/query' % [
-      obs.apiGateway.service.metadata.name,
-      obs.apiGateway.service.metadata.namespace,
-      obs.apiGateway.service.spec.ports[0].port,
+      obs.api.service.metadata.name,
+      obs.api.service.metadata.namespace,
+      obs.api.service.spec.ports[0].port,
     ],
   },
 };

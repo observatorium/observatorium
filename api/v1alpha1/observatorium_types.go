@@ -42,8 +42,8 @@ type ObservatoriumSpec struct {
 	Store StoreSpec `json:"store"`
 	// Thanos RulerSpec
 	Rule RuleSpec `json:"rule"`
-	// API Gateway
-	APIGateway APIGatewaySpec `json:"apiGateway"`
+	// API
+	API APISpec `json:"api"`
 }
 
 type ObjectStorageConfig struct {
@@ -89,10 +89,10 @@ type StoreCacheSpec struct {
 	MemoryLimitMB *int32 `json:"memoryLimitMb,omitempty"`
 }
 
-type APIGatewaySpec struct {
-	// API Gateway image
+type APISpec struct {
+	// API image
 	Image string `json:"image"`
-	// Version describes the version of API Gateway to use.
+	// Version describes the version of API to use.
 	Version string `json:"version,omitempty"`
 }
 

@@ -50,9 +50,9 @@ local obs = (import '../environments/base/observatorium.jsonnet');
       image: obs.config.thanosReceiveController.image,
       version: obs.config.thanosReceiveController.version,
     },
-    apiGateway: {
-      image: obs.config.apiGateway.image,
-      version: obs.config.apiGateway.version,
+    api: {
+      image: obs.config.api.image,
+      version: obs.config.api.version,
     },
   },
 }

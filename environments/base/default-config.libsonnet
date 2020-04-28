@@ -119,13 +119,13 @@
     image: 'quay.io/cortexproject/cortex:' + qcConfig.version,
   },
 
-  apiGateway: {
+  api: {
     local gwConfig = self,
     version: 'HEAD-2020-04-16-v0.1.0',
     image: 'quay.io/observatorium/observatorium:' + gwConfig.version,
   },
 
-  apiGatewayQuery: {
+  apiQuery: {
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
   },

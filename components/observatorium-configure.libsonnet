@@ -39,11 +39,11 @@
     config+:: obs.config.queryCache,
   },
 
-  apiGateway+:: {
-    config+:: obs.config.apiGateway,
+  api+:: {
+    config+:: obs.config.api,
   },
 
-  apiGatewayQuery+:: {
-    config+:: obs.config.apiGatewayQuery,
+  apiQuery+:: {
+    config+:: obs.config.apiQuery,
   },
 }

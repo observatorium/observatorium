@@ -189,7 +189,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ) +
     service.mixin.metadata.withNamespace(obs.config.namespace),
 
-  apiGateway:: (import 'observatorium/observatorium-api.libsonnet') + {
+  api:: (import 'observatorium/observatorium-api.libsonnet') + {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
@@ -197,9 +197,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
       uiEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.apiGatewayQuery.service.metadata.name,
-        obs.apiGatewayQuery.service.metadata.namespace,
-        obs.apiGatewayQuery.service.spec.ports[1].port,
+        obs.apiQuery.service.metadata.name,
+        obs.apiQuery.service.metadata.namespace,
+        obs.apiQuery.service.spec.ports[1].port,
       ],
       readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1' % [
         obs.queryCache.service.metadata.name,
@@ -215,17 +215,17 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   },
 
   // NOTICE: There is an additional Thanos Querier with an additional argument to configure externalPrefix for Thanos Query UI.
-  // This dedicated component only used by api gateway UI.
-  apiGatewayQuery::
+  // This dedicated component only used by the API UI.
+  apiQuery::
     t.query +
     t.query.withExternalPrefix + {
       config+:: {
         local cfg = self,
-        name: obs.apiGateway.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+        name: obs.api.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
         namespace: obs.config.namespace,
         commonLabels+::
           obs.config.commonLabels {
-            'app.kubernetes.io/instance': obs.config.commonLabels['app.kubernetes.io/instance'] + '-api-gateway',
+            'app.kubernetes.io/instance': obs.config.commonLabels['app.kubernetes.io/instance'] + '-api',
           },
         replicas: 1,
         externalPrefix: '/ui/v1/metrics',
@@ -277,10 +277,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ['thanos-receive-controller-' + name]: obs.thanosReceiveController[name]
     for name in std.objectFields(obs.thanosReceiveController)
   } + {
-    ['api-gateway-' + name]: obs.apiGateway[name]
-    for name in std.objectFields(obs.apiGateway)
+    ['api-' + name]: obs.api[name]
+    for name in std.objectFields(obs.api)
   } + {
-    ['api-gateway-thanos-query-' + name]: obs.apiGatewayQuery[name]
-    for name in std.objectFields(obs.apiGatewayQuery)
+    ['api-thanos-query-' + name]: obs.apiQuery[name]
+    for name in std.objectFields(obs.apiQuery)
   },
 }

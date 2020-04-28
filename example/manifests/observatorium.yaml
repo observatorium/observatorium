@@ -7,7 +7,7 @@ metadata:
   app.kubernetes.io/part-of: observatorium
   name: observatorium-xyz
 spec:
-  apiGateway:
+  api:
     image: quay.io/observatorium/observatorium:HEAD-2020-04-16-v0.1.0
     version: HEAD-2020-04-16-v0.1.0
   compact:
