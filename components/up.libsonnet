@@ -8,7 +8,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     namespace: error 'must provide namespace',
     version: error 'must provide version',
     image: error 'must provide image',
-    readEndpoint: error 'must provide readEndpoint',
     queryConfig: error 'must provide queryConfig',
 
     commonLabels:: {
@@ -64,9 +63,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           '--duration=0',
           '--queries-file=/etc/up/queries.yaml',
           '--log.level=debug',
-        ],
+        ]
         +if std.objectHas(up.config, 'readEndpoint') then
-          ['--endpoint-read=' + up.config.readEndpoint] else [],
+          ['--endpoint-read=' + up.config.readEndpoint] else []
         +if std.objectHas(up.config, 'writeEndpoint') then
           ['--endpoint-write=' + up.config.writeEndpoint] else []
       ) +

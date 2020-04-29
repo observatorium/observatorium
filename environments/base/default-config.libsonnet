@@ -120,9 +120,9 @@
   },
 
   api: {
-    local gwConfig = self,
-    version: 'master-2020-05-11-v0.1.1-35-g3c24d9b',
-    image: 'quay.io/observatorium/observatorium:' + gwConfig.version,
+    local apiConfig = self,
+    version: 'HEAD-2020-04-16-v0.1.0',
+    image: 'quay.io/observatorium/observatorium:' + apiConfig.version,
   },
 
   apiQuery: {
