@@ -1,14 +1,12 @@
 local cr = import 'generic-operator/config';
-local thanosImage = cr.spec.thanosImage;
-local thanosVersion = cr.spec.thanosVersion;
 local objectStorageConfig = cr.spec.objectStorageConfig;
 local hashrings = cr.spec.hashrings;
 cr.spec {
   name: cr.metadata.name,
   namespace: cr.metadata.namespace,
   compact+:: {
-    image: thanosImage,
-    version: thanosVersion,
+    image: cr.spec.compact.image,
+    version: cr.spec.compact.version,
     objectStorageConfig: objectStorageConfig,
   },
   thanosReceiveController+:: {
@@ -16,19 +14,19 @@ cr.spec {
     hashrings: hashrings,
   },
   receivers+:: {
-    image: thanosImage,
-    version: thanosVersion,
+    image: cr.spec.receivers.image,
+    version: cr.spec.receivers.version,
     hashrings: hashrings,
     objectStorageConfig: objectStorageConfig,
   },
   rule+:: {
-    image: thanosImage,
-    version: thanosVersion,
+    image: cr.spec.rule.image,
+    version: cr.spec.rule.version,
     objectStorageConfig: objectStorageConfig,
   },
   store+:: {
-    image: thanosImage,
-    version: thanosVersion,
+    image: cr.spec.store.image,
+    version: cr.spec.store.version,
     objectStorageConfig: objectStorageConfig,
   },
   storeCache+:: {
@@ -40,15 +38,15 @@ cr.spec {
     memoryLimitMb: cr.spec.store.cache.memoryLimitMb,
   },
   query+:: {
-    image: thanosImage,
-    version: thanosVersion,
+    image: cr.spec.query.image,
+    version: cr.spec.query.version,
   },
   queryCache+:: {
     image: cr.spec.queryCache.image,
   },
   apiQuery+:: {
-    image: thanosImage,
-    version: thanosVersion,
+    image: cr.spec.apiQuery.image,
+    version: cr.spec.apiQuery.version,
   },
   api+:: {
     image: cr.spec.api.image,

@@ -12,8 +12,6 @@ local obs = (import '../environments/base/observatorium.jsonnet');
     'app.kubernetes.io/component': cr.name,
   },
   spec: {
-    thanosImage: obs.config.thanosImage,
-    thanosVersion: obs.config.thanosVersion,
     objectStorageConfig: obs.config.objectStorageConfig,
     hashrings: obs.config.hashrings,
 
@@ -23,6 +21,8 @@ local obs = (import '../environments/base/observatorium.jsonnet');
       version: obs.config.queryCache.version,
     },
     store: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
       volumeClaimTemplate: obs.config.store.volumeClaimTemplate,
       shards: obs.config.store.shards,
       cache: {
@@ -35,15 +35,21 @@ local obs = (import '../environments/base/observatorium.jsonnet');
       },
     },
     compact: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
       volumeClaimTemplate: obs.config.compact.volumeClaimTemplate,
       retentionResolutionRaw: obs.config.compact.retentionResolutionRaw,
       retentionResolution5m: obs.config.compact.retentionResolution5m,
       retentionResolution1h: obs.config.compact.retentionResolution1h,
     },
     rule: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
       volumeClaimTemplate: obs.config.rule.volumeClaimTemplate,
     },
     receivers: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
       volumeClaimTemplate: obs.config.receivers.volumeClaimTemplate,
     },
     thanosReceiveController: {
@@ -53,6 +59,14 @@ local obs = (import '../environments/base/observatorium.jsonnet');
     api: {
       image: obs.config.api.image,
       version: obs.config.api.version,
+    },
+    apiQuery: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
+    },
+    query: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
     },
   },
 }

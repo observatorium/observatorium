@@ -22,10 +22,6 @@ import (
 
 // ObservatoriumSpec defines the desired state of Observatorium
 type ObservatoriumSpec struct {
-	// Thanos Image name
-	Image string `json:"thanosImage"`
-	// Thanos Image version
-	Version string `json:"thanosVersion"`
 	// Objest Storage Configuration
 	ObjectStorageConfig ObjectStorageConfig `json:"objectStorageConfig"`
 	// Hashrings describes a list of Hashrings
@@ -33,7 +29,7 @@ type ObservatoriumSpec struct {
 	// Thanos CompactSpec
 	Compact CompactSpec `json:"compact"`
 	// Thanos Receive Controller Spec
-	ReceiveController ReceiveControllerSpec `json:"thanosReceiveController"`
+	ThanosReceiveController ThanosReceiveControllerSpec `json:"thanosReceiveController"`
 	// Thanos ThanosPersistentSpec
 	Receivers ReceiversSpec `json:"receivers"`
 	// Thanos QueryCache
@@ -44,6 +40,10 @@ type ObservatoriumSpec struct {
 	Rule RuleSpec `json:"rule"`
 	// API
 	API APISpec `json:"api"`
+	// API Query
+	APIQuery APIQuerySpec `json:"apiQuery"`
+	// Query
+	Query QuerySpec `json:"query"`
 }
 
 type ObjectStorageConfig struct {
@@ -53,7 +53,7 @@ type ObjectStorageConfig struct {
 	Key string `json:"key"`
 }
 
-type ReceiveControllerSpec struct {
+type ThanosReceiveControllerSpec struct {
 	// Receive Controller image
 	Image string `json:"image"`
 	// Version describes the version of Thanos receive controller to use.
@@ -61,11 +61,19 @@ type ReceiveControllerSpec struct {
 }
 
 type ReceiversSpec struct {
+	// Thanos image
+	Image string `json:"image"`
+	// Version of Thanos image to be deployed.
+	Version string `json:"version,omitempty"`
 	// VolumeClaimTemplate
 	VolumeClaimTemplate VolumeClaimTemplate `json:"volumeClaimTemplate"`
 }
 
 type StoreSpec struct {
+	// Thanos image
+	Image string `json:"image"`
+	// Version of Thanos image to be deployed.
+	Version string `json:"version,omitempty"`
 	// VolumeClaimTemplate
 	VolumeClaimTemplate VolumeClaimTemplate `json:"volumeClaimTemplate"`
 	Shards              *int32              `json:"shards,omitempty"`
@@ -96,12 +104,34 @@ type APISpec struct {
 	Version string `json:"version,omitempty"`
 }
 
+type APIQuerySpec struct {
+	// Thanos image
+	Image string `json:"image"`
+	// Version of Thanos image to be deployed.
+	Version string `json:"version,omitempty"`
+}
+
+type QuerySpec struct {
+	// Thanos image
+	Image string `json:"image"`
+	// Version of Thanos image to be deployed.
+	Version string `json:"version,omitempty"`
+}
+
 type RuleSpec struct {
+	// Thanos image
+	Image string `json:"image"`
+	// Version of Thanos image to be deployed.
+	Version string `json:"version,omitempty"`
 	// VolumeClaimTemplate
 	VolumeClaimTemplate VolumeClaimTemplate `json:"volumeClaimTemplate"`
 }
 
 type CompactSpec struct {
+	// Thanos image
+	Image string `json:"image"`
+	// Version of Thanos image to be deployed.
+	Version string `json:"version,omitempty"`
 	// VolumeClaimTemplate
 	VolumeClaimTemplate VolumeClaimTemplate `json:"volumeClaimTemplate"`
 	// RetentionResolutionRaw
