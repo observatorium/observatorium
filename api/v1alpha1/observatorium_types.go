@@ -23,9 +23,9 @@ import (
 // ObservatoriumSpec defines the desired state of Observatorium
 type ObservatoriumSpec struct {
 	// Thanos Image name
-	Image string `json:"thanosImage"`
+	ThanosImage string `json:"thanosImage"`
 	// Thanos Image version
-	Version string `json:"thanosVersion"`
+	ThanosVersion string `json:"thanosVersion"`
 	// Objest Storage Configuration
 	ObjectStorageConfig ObjectStorageConfig `json:"objectStorageConfig"`
 	// Hashrings describes a list of Hashrings
@@ -33,7 +33,7 @@ type ObservatoriumSpec struct {
 	// Thanos CompactSpec
 	Compact CompactSpec `json:"compact"`
 	// Thanos Receive Controller Spec
-	ReceiveController ReceiveControllerSpec `json:"thanosReceiveController"`
+	ThanosReceiveController ReceiveControllerSpec `json:"thanosReceiveController"`
 	// Thanos ThanosPersistentSpec
 	Receivers ReceiversSpec `json:"receivers"`
 	// Thanos QueryCache

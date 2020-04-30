@@ -164,7 +164,7 @@ func (in *ObservatoriumSpec) DeepCopyInto(out *ObservatoriumSpec) {
 		}
 	}
 	in.Compact.DeepCopyInto(&out.Compact)
-	out.ReceiveController = in.ReceiveController
+	out.ThanosReceiveController = in.ThanosReceiveController
 	in.Receivers.DeepCopyInto(&out.Receivers)
 	in.QueryCache.DeepCopyInto(&out.QueryCache)
 	in.Store.DeepCopyInto(&out.Store)
