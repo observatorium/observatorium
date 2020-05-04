@@ -64,10 +64,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           '--queries-file=/etc/up/queries.yaml',
           '--log.level=debug',
         ]
-        +if std.objectHas(up.config, 'readEndpoint') then
+        + if std.objectHas(up.config, 'readEndpoint') then
           ['--endpoint-read=' + up.config.readEndpoint] else []
-        +if std.objectHas(up.config, 'writeEndpoint') then
-          ['--endpoint-write=' + up.config.writeEndpoint] else []
+                                                             + if std.objectHas(up.config, 'writeEndpoint') then
+                                                               ['--endpoint-write=' + up.config.writeEndpoint] else []
       ) +
       container.withPorts([
         containerPort.newNamed(8080, 'http'),
