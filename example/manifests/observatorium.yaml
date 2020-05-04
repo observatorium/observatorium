@@ -10,10 +10,15 @@ spec:
   api:
     image: quay.io/observatorium/observatorium:HEAD-2020-04-16-v0.1.0
     version: HEAD-2020-04-16-v0.1.0
+  apiQuery:
+    image: quay.io/thanos/thanos:v0.12.0-rc.1
+    version: v0.12.0-rc.1
   compact:
+    image: quay.io/thanos/thanos:v0.12.0-rc.1
     retentionResolution1h: 1s
     retentionResolution5m: 1s
     retentionResolutionRaw: 14d
+    version: v0.12.0-rc.1
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -27,11 +32,16 @@ spec:
   objectStorageConfig:
     key: thanos.yaml
     name: thanos-objectstorage
+  query:
+    image: quay.io/thanos/thanos:v0.12.0-rc.1
+    version: v0.12.0-rc.1
   queryCache:
     image: quay.io/cortexproject/cortex:master-fdcd992f
     replicas: 1
     version: master-fdcd992f
   receivers:
+    image: quay.io/thanos/thanos:v0.12.0-rc.1
+    version: v0.12.0-rc.1
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -40,6 +50,8 @@ spec:
           requests:
             storage: 50Gi
   rule:
+    image: quay.io/thanos/thanos:v0.12.0-rc.1
+    version: v0.12.0-rc.1
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -55,7 +67,9 @@ spec:
       memoryLimitMb: 1024
       replicas: 1
       version: 1.6.3-alpine
+    image: quay.io/thanos/thanos:v0.12.0-rc.1
     shards: 1
+    version: v0.12.0-rc.1
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -63,8 +77,6 @@ spec:
         resources:
           requests:
             storage: 50Gi
-  thanosImage: quay.io/thanos/thanos:v0.12.0-rc.1
   thanosReceiveController:
     image: quay.io/observatorium/thanos-receive-controller:master-2020-02-06-b66e0c8
     version: master-2020-02-06-b66e0c8
-  thanosVersion: v0.12.0-rc.1

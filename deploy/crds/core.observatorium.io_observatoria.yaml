@@ -48,9 +48,24 @@ spec:
               required:
               - image
               type: object
+            apiQuery:
+              description: API Query
+              properties:
+                image:
+                  description: Thanos image
+                  type: string
+                version:
+                  description: Version of Thanos image to be deployed.
+                  type: string
+              required:
+              - image
+              type: object
             compact:
               description: Thanos CompactSpec
               properties:
+                image:
+                  description: Thanos image
+                  type: string
                 retentionResolution1h:
                   description: RetentionResolutionRaw
                   type: string
@@ -59,6 +74,9 @@ spec:
                   type: string
                 retentionResolutionRaw:
                   description: RetentionResolutionRaw
+                  type: string
+                version:
+                  description: Version of Thanos image to be deployed.
                   type: string
                 volumeClaimTemplate:
                   description: VolumeClaimTemplate
@@ -194,6 +212,7 @@ spec:
                   - spec
                   type: object
               required:
+              - image
               - retentionResolution1h
               - retentionResolution5m
               - retentionResolutionRaw
@@ -228,6 +247,18 @@ spec:
               - key
               - name
               type: object
+            query:
+              description: Query
+              properties:
+                image:
+                  description: Thanos image
+                  type: string
+                version:
+                  description: Version of Thanos image to be deployed.
+                  type: string
+              required:
+              - image
+              type: object
             queryCache:
               description: Thanos QueryCache
               properties:
@@ -247,6 +278,12 @@ spec:
             receivers:
               description: Thanos ThanosPersistentSpec
               properties:
+                image:
+                  description: Thanos image
+                  type: string
+                version:
+                  description: Version of Thanos image to be deployed.
+                  type: string
                 volumeClaimTemplate:
                   description: VolumeClaimTemplate
                   properties:
@@ -381,11 +418,18 @@ spec:
                   - spec
                   type: object
               required:
+              - image
               - volumeClaimTemplate
               type: object
             rule:
               description: Thanos RulerSpec
               properties:
+                image:
+                  description: Thanos image
+                  type: string
+                version:
+                  description: Version of Thanos image to be deployed.
+                  type: string
                 volumeClaimTemplate:
                   description: VolumeClaimTemplate
                   properties:
@@ -520,6 +564,7 @@ spec:
                   - spec
                   type: object
               required:
+              - image
               - volumeClaimTemplate
               type: object
             store:
@@ -553,9 +598,15 @@ spec:
                   - exporterImage
                   - image
                   type: object
+                image:
+                  description: Thanos image
+                  type: string
                 shards:
                   format: int32
                   type: integer
+                version:
+                  description: Version of Thanos image to be deployed.
+                  type: string
                 volumeClaimTemplate:
                   description: VolumeClaimTemplate
                   properties:
@@ -691,11 +742,9 @@ spec:
                   type: object
               required:
               - cache
+              - image
               - volumeClaimTemplate
               type: object
-            thanosImage:
-              description: Thanos Image name
-              type: string
             thanosReceiveController:
               description: Thanos Receive Controller Spec
               properties:
@@ -709,21 +758,18 @@ spec:
               required:
               - image
               type: object
-            thanosVersion:
-              description: Thanos Image version
-              type: string
           required:
           - api
+          - apiQuery
           - compact
           - hashrings
           - objectStorageConfig
+          - query
           - queryCache
           - receivers
           - rule
           - store
-          - thanosImage
           - thanosReceiveController
-          - thanosVersion
           type: object
         status:
           description: ObservatoriumStatus defines the observed state of Observatorium
