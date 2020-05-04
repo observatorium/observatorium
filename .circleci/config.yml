@@ -28,6 +28,7 @@ jobs:
           ./tests/e2e.sh kind
           ./tests/e2e.sh deploy-operator
           ./tests/e2e.sh test
+          ./tests/e2e.sh delete-cr
 
   container-push:
     machine:

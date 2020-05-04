@@ -4,6 +4,9 @@ local hashrings = cr.spec.hashrings;
 cr.spec {
   name: cr.metadata.name,
   namespace: cr.metadata.namespace,
+  uid: cr.metadata.uid,
+  kind: cr.kind,
+  apiVersion: cr.apiVersion,
   compact+:: {
     image: cr.spec.compact.image,
     version: cr.spec.compact.version,
