@@ -6,7 +6,6 @@ local minio = (import '../../components/minio.libsonnet') + {
   },
 };
 
-
 local up = (import '../../components/up.libsonnet') + {
   config+:: {
     local cfg = self,
@@ -23,14 +22,8 @@ local up = (import '../../components/up.libsonnet') + {
     version: obs.config.up.version,
     image: obs.config.up.image,
   },
-} + {
-  manifests+:: {
-    ['up-' + name]: up[name]
-    for name in std.objectFields(up)
-  },
 };
 
-
-up.manifests +
 obs.manifests +
-minio.manifests
+minio.manifests +
+(up + up.withRead + up.withWrite).manifests

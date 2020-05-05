@@ -64,10 +64,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           '--queries-file=/etc/up/queries.yaml',
           '--log.level=debug',
         ]
-        + if std.objectHas(up.config, 'readEndpoint') then
-          ['--endpoint-read=' + up.config.readEndpoint] else []
-                                                             + if std.objectHas(up.config, 'writeEndpoint') then
-                                                               ['--endpoint-write=' + up.config.writeEndpoint] else []
       ) +
       container.withPorts([
         containerPort.newNamed(8080, 'http'),
@@ -108,6 +104,48 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
+  withRead:: {
+    local u = self,
+    config+:: {
+      readEndpoint: error 'must provide read endpoint',
+    },
+    deployment+: {
+      spec+: {
+        template+: {
+          spec+: {
+            containers: [
+              if c.name == 'observatorium-up' then c {
+                args+: ['--endpoint-read=' + up.config.readEndpoint],
+              } else c
+              for c in super.containers
+            ],
+          },
+        },
+      },
+    },
+  },
+
+  withWrite:: {
+    local u = self,
+    config+:: {
+      writeEndpoint: error 'must provide write endpoint',
+    },
+    deployment+: {
+      spec+: {
+        template+: {
+          spec+: {
+            containers: [
+              if c.name == 'observatorium-up' then c {
+                args+: ['--endpoint-write=' + up.config.writeEndpoint],
+              } else c
+              for c in super.containers
+            ],
+          },
+        },
+      },
+    },
+  },
+
   withServiceMonitor:: {
     local u = self,
     serviceMonitor: {
@@ -126,5 +164,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         ],
       },
     },
+  },
+
+  manifests+:: {
+    ['up-' + name]: up[name]
+    for name in std.objectFields(up)
   },
 }
