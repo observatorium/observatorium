@@ -104,7 +104,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  withRead:: {
+  withReadEndpoint:: {
     local u = self,
     config+:: {
       readEndpoint: error 'must provide read endpoint',
@@ -125,7 +125,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  withWrite:: {
+  withWriteEndpoint:: {
     local u = self,
     config+:: {
       writeEndpoint: error 'must provide write endpoint',
