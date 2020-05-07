@@ -6,10 +6,12 @@ local obs = (import '../environments/base/observatorium.jsonnet');
 
   apiVersion: 'core.observatorium.io/v1alpha1',
   kind: 'Observatorium',
-  metadata: obs.config.commonLabels {
+  metadata: {
     name: obs.config.name,
-    'app.kubernetes.io/name': cr.name,
-    'app.kubernetes.io/component': cr.name,
+    labels: obs.config.commonLabels {
+      'app.kubernetes.io/name': cr.name,
+      'app.kubernetes.io/component': cr.name,
+    },
   },
   spec: {
     objectStorageConfig: obs.config.objectStorageConfig,
