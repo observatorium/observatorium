@@ -61,6 +61,30 @@ deploy_operator() {
     wait_for_cr observatorium-xyz
 }
 
+delete_cr() {
+    $KUBECTL delete -n observatorium -f example/manifests
+    target_count="0"
+    timeout=$true
+    interval=0
+    intervals=600
+    while [ $interval -ne $intervals ]; do
+      echo "Waiting for cleaning"
+      count=$($KUBECTL -n observatorium get all | wc -l)
+      if [ "$count" = "$target_count" ]; then
+        echo NS count is now: $count
+	    timeout=$false
+	    break
+	  fi
+	  sleep 5
+	  interval=$((interval+5))
+    done
+
+    if [ $timeout ]; then
+      echo "Timeout waiting for namespace to be empty"
+      exit 1
+    fi
+}
+
 run_test() {
     $KUBECTL wait --for=condition=available --timeout=10m -n minio deploy/minio || ($KUBECTL get pods --all-namespaces && exit 1)
     $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query || ($KUBECTL get pods --all-namespaces && exit 1)
@@ -90,7 +114,11 @@ deploy-operator)
     deploy_operator
     ;;
 
+delete-cr)
+    delete_cr
+    ;;
+
 *)
-    echo "usage: $(basename "$0") { kind | deploy | test | deploy-operator}"
+    echo "usage: $(basename "$0") { kind | deploy | test | deploy-operator | delete-cr}"
     ;;
 esac
