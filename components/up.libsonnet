@@ -9,12 +9,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     version: error 'must provide version',
     image: error 'must provide image',
 
-    validated:: if
-      !std.objectHas(self, 'queryConfig') &&
-      !std.objectHas(self, 'writeEndpoint') &&
-      !std.objectHas(self, 'readEndpoint')
-    then error 'should set one of queryConfig, writeEndpoint or readEndpoint',
-
     commonLabels:: {
       'app.kubernetes.io/name': 'observatorium-up',
       'app.kubernetes.io/instance': up.config.name,
@@ -94,16 +88,15 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   withReadEndpoint:: {
     local u = self,
-    config+:: {
-      readEndpoint: error 'must provide read endpoint',
-    },
+    readEndpoint:: error 'must provide read endpoint',
+
     deployment+: {
       spec+: {
         template+: {
           spec+: {
             containers: [
               if c.name == 'observatorium-up' then c {
-                args+: ['--endpoint-read=' + up.config.readEndpoint],
+                args+: ['--endpoint-read=' + u.readEndpoint],
               } else c
               for c in super.containers
             ],
@@ -115,16 +108,15 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   withWriteEndpoint:: {
     local u = self,
-    config+:: {
-      writeEndpoint: error 'must provide write endpoint',
-    },
+    writeEndpoint:: error 'must provide write endpoint',
+
     deployment+: {
       spec+: {
         template+: {
           spec+: {
             containers: [
               if c.name == 'observatorium-up' then c {
-                args+: ['--endpoint-write=' + up.config.writeEndpoint],
+                args+: ['--endpoint-write=' + u.writeEndpoint],
               } else c
               for c in super.containers
             ],
@@ -136,9 +128,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   withQuery:: {
     local u = self,
-    config+:: {
-      queryConfig: error 'must provide query config endpoint',
-    },
+    queryConfig:: error 'must provide query config endpoint',
 
     deployment+: {
       spec+: {
@@ -155,7 +145,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                 ],
               }
               for c in super.containers
-
             ],
             volumes+: [
               {
@@ -173,7 +162,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     configmap+: {
       apiVersion: 'v1',
       data: {
-        'queries.yaml': std.manifestYamlDoc(up.config.queryConfig),
+        'queries.yaml': std.manifestYamlDoc(u.queryConfig),
       },
       kind: 'ConfigMap',
       metadata: {

@@ -32,11 +32,3 @@ spec:
         ports:
         - containerPort: 8080
           name: http
-        volumeMounts:
-        - mountPath: /etc/up/
-          name: query-config
-          readOnly: false
-      volumes:
-      - configMap:
-          name: observatorium-xyz-observatorium-up
-        name: query-config
