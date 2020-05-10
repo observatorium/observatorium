@@ -1,0 +1,114 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    capabilities: Basic Install
+  name: observatorium-operator.v0.0.1
+  namespace: observatorium
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Observatorium is the Schema for the observatoria API
+      kind: Observatorium
+      name: observatoria.core.observatorium.io
+      version: v1alpha1
+  description: |2-
+
+    Observatorium Operator provides the ability to install the components that comprise the Observatorium project
+  displayName: Observatorium Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      clusterPermissions:
+      - serviceAccountName: observatorium-operator
+        rules:
+        - apiGroups:
+          - core.observatorium.io
+          resources:
+          - observatoria
+          - observatoria/status
+          verbs:
+          - "*"
+      deployments:
+      - name: observatorium-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: observatorium-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                control-plane: observatorium-operator
+            spec:
+              containers:
+              - name: observatorium-operator
+                image: quay.io/observatorium/observatorium-operator:latest
+                imagePullPolicy: IfNotPresent
+                args: ["--log-level=debug"]
+                resources:
+                  limits:
+                    cpu: 100m
+                    memory: 600Mi
+                  requests:
+                    cpu: 100m
+                    memory: 600Mi
+              terminationGracePeriodSeconds: 10
+              serviceAccountName: observatorium-operator
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          - services/finalizers
+          - configmaps
+          verbs:
+          - "*"
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - "*"
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - "*"
+        - apiGroups:
+          - apps
+          resourceNames:
+          - observatorium-operator
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
+        serviceAccountName: observatorium-operator
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - observatorium
+  - prometheus
+  - thanos
+  maturity: alpha
+  provider:
+    name: Red Hat
+  version: 0.0.1

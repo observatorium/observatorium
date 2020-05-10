@@ -1,0 +1,10 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: observatorium-operator-subscription
+  namespace: observatorium
+spec:
+  channel: "0.0.1"
+  name: observatorium-operator
+  source: observatorium-operator-catalogsource
+  sourceNamespace: openshift-marketplace

@@ -48,10 +48,18 @@ kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/mas
 ```
 
 #### Deploy Observatorium CRD and Operator
-* In case you need to force a new image download (e.g. development environment), please refer to the [development section](#Development).
+In case you need to force a new image download (e.g. development environment), please refer to the [development section](#Development).
 ```shell script
 kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/operator/manifests/crds/core.observatorium.io_observatoria.yaml
 kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/operator/manifests/operator.yaml
+```
+
+#### Deploy via Operator Lifecycle Manager (OLM) - OpenShift Only
+Alternatively, the operator can be deployed and managed by OLM.
+```shell script
+oc apply -f https://raw.githubusercontent.com/observatorium/configuration/master/deploy/olm/operator_operatorgroup.yaml
+oc apply -f https://raw.githubusercontent.com/observatorium/configuration/master/deploy/olm/operator_catalogsource.yaml
+oc apply -f https://raw.githubusercontent.com/observatorium/configuration/master/deploy/olm/operator_subscription.yaml
 ```
 
 ## Deploy an example CR
