@@ -1,10 +1,11 @@
 apiVersion: core.observatorium.io/v1alpha1
 kind: Observatorium
 metadata:
-  app.kubernetes.io/component: observatorium-cr
-  app.kubernetes.io/instance: observatorium-xyz
-  app.kubernetes.io/name: observatorium-cr
-  app.kubernetes.io/part-of: observatorium
+  labels:
+    app.kubernetes.io/component: observatorium-cr
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: observatorium-cr
+    app.kubernetes.io/part-of: observatorium
   name: observatorium-xyz
 spec:
   api:
