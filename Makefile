@@ -6,6 +6,14 @@ BUILD_TIMESTAMP := $(shell date -u +"%Y-%m-%dT%H:%M:%S%Z")
 VCS_BRANCH := $(strip $(shell git rev-parse --abbrev-ref HEAD))
 VCS_REF := $(strip $(shell [ -d .git ] && git rev-parse --short HEAD))
 DOCKER_REPO ?= quay.io/observatorium/observatorium-operator
+CACHE_DIR="_cache"
+FULL_OPERATOR_IMAGE="quay.io/observatorium/observatorium-operator:latest"
+REGISTRY_NAMESPACE ?= "observatorium"
+TOOLS_DIR="$(CACHE_DIR)/tools"
+OPERATOR_SDK_VERSION="v0.17.0"
+OPERATOR_SDK_PLATFORM ?= "x86_64-linux-gnu"
+OPERATOR_SDK_BIN="operator-sdk-$(OPERATOR_SDK_VERSION)-$(OPERATOR_SDK_PLATFORM)"
+OPERATOR_SDK="$(TOOLS_DIR)/$(OPERATOR_SDK_BIN)"
 
 BIN_DIR ?= $(shell pwd)/tmp/bin
 
@@ -89,3 +97,29 @@ tests/manifests: tests/main.jsonnet $(JSONNET_SRC) vendor-jsonnet
 	-mkdir tests/manifests
 	jsonnet -J operator/jsonnet/vendor -m tests/manifests tests/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
 	find tests/manifests -type f ! -name '*.yaml' -delete
+
+operator-sdk:
+	@if [ ! -x "$(OPERATOR_SDK)" ]; then\
+		echo "Downloading operator-sdk $(OPERATOR_SDK_VERSION)";\
+		mkdir -p $(TOOLS_DIR);\
+		curl -JL https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/$(OPERATOR_SDK_BIN) -o $(OPERATOR_SDK);\
+		chmod +x $(OPERATOR_SDK);\
+	else\
+		echo "Using operator-sdk cached at $(OPERATOR_SDK)";\
+	fi
+
+generate-csv: operator-sdk dist-csv-generator
+	@if [ -z "$(REGISTRY_NAMESPACE)" ]; then\
+		echo "REGISTRY_NAMESPACE env-var must be set to your $(IMAGE_REGISTRY) namespace";\
+		exit 1;\
+	fi
+	OPERATOR_SDK=$(OPERATOR_SDK) FULL_OPERATOR_IMAGE=$(FULL_OPERATOR_IMAGE) operator/hack/csv-generate.sh
+
+dist-csv-generator:
+	@if [ ! -x build/_output/bin/csv-generator ]; then\
+		echo "Building csv-generator tool";\
+		mkdir -p build/_output/bin;\
+		go build -i -ldflags="-s -w" -mod=vendor -o build/_output/bin/csv-generator ./tools/csv-generator;\
+	else \
+		echo "Using pre-built csv-generator tool";\
+	fi
