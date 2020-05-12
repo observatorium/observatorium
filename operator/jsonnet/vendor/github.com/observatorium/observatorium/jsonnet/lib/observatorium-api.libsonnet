@@ -13,6 +13,11 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     readEnpoint: error 'must provide readEnpoint',
     writeEndpoint: error 'must provide writeEndpoint',
 
+    ports: {
+      public: 8080,
+      internal: 8081,
+    },
+
     commonLabels:: {
       'app.kubernetes.io/name': 'observatorium-api',
       'app.kubernetes.io/instance': api.config.name,
@@ -35,7 +40,12 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       api.config.name,
       api.config.podLabelSelector,
       [
-        ports.newNamed('http', 8080, 8080),
+        {
+          name: name,
+          port: api.config.ports[name],
+          targetPort: api.config.ports[name],
+        }
+        for name in std.objectFields(api.config.ports)
       ],
     ) +
     service.mixin.metadata.withNamespace(api.config.namespace) +
@@ -49,27 +59,28 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     local c =
       container.new('observatorium-api', api.config.image) +
       container.withArgs([
-        '--web.listen=0.0.0.0:8080',
-        '--metrics.ui.endpoint=' + api.config.uiEndpoint,
+        '--web.listen=0.0.0.0:%s' % api.config.ports.public,
+        '--web.internal.listen=0.0.0.0:%s' % api.config.ports.internal,
         '--metrics.read.endpoint=' + api.config.readEndpoint,
         '--metrics.write.endpoint=' + api.config.writeEndpoint,
         '--log.level=warn',
       ]) +
-      container.withPorts(
-        containerPort.newNamed(8080, 'http')
-      ) +
+      container.withPorts([
+        containerPort.newNamed(api.config.ports[name], name)
+        for name in std.objectFields(api.config.ports)
+      ]) +
       container.mixin.livenessProbe +
       container.mixin.livenessProbe.withPeriodSeconds(30) +
-      container.mixin.livenessProbe.withFailureThreshold(8) +
-      container.mixin.livenessProbe.httpGet.withPort(api.service.spec.ports[0].port) +
+      container.mixin.livenessProbe.withFailureThreshold(10) +
+      container.mixin.livenessProbe.httpGet.withPort(api.config.ports.internal) +
       container.mixin.livenessProbe.httpGet.withScheme('HTTP') +
-      container.mixin.livenessProbe.httpGet.withPath('/-/healthy') +
+      container.mixin.livenessProbe.httpGet.withPath('/live') +
       container.mixin.readinessProbe +
       container.mixin.readinessProbe.withPeriodSeconds(5) +
-      container.mixin.readinessProbe.withFailureThreshold(20) +
-      container.mixin.readinessProbe.httpGet.withPort(api.service.spec.ports[0].port) +
+      container.mixin.readinessProbe.withFailureThreshold(12) +
+      container.mixin.readinessProbe.httpGet.withPort(api.config.ports.internal) +
       container.mixin.readinessProbe.httpGet.withScheme('HTTP') +
-      container.mixin.readinessProbe.httpGet.withPath('/-/ready');
+      container.mixin.readinessProbe.httpGet.withPath('/ready');
 
     deployment.new(api.config.name, api.config.replicas, c, api.config.commonLabels) +
     deployment.mixin.metadata.withNamespace(api.config.namespace) +
@@ -93,7 +104,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           matchLabels: api.config.commonLabels,
         },
         endpoints: [
-          { port: 'http' },
+          { port: 'internal' },
         ],
       },
     },
