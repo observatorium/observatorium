@@ -13,5 +13,5 @@ set -o pipefail
 rm -rf environments/base/manifests
 mkdir environments/base/manifests
 
-jsonnet -J vendor -m environments/base/manifests environments/base/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
+jsonnet -J operator/jsonnet/vendor -m environments/base/manifests environments/base/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
 find environments/base/manifests -type f ! -name '*.yaml' -delete

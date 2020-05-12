@@ -10,26 +10,24 @@ DOCKER_REPO ?= quay.io/observatorium/observatorium-operator
 BIN_DIR ?= $(shell pwd)/tmp/bin
 
 CONTROLLER_GEN ?= $(BIN_DIR)/controller-gen
+JB ?= $(BIN_DIR)/jb
 
-vendor: go.mod go.sum
-	go mod tidy
-	go mod vendor
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: $(CONTROLLER_GEN)
-	$(CONTROLLER_GEN) crd paths="./..." output:crd:artifacts:config=deploy/crds
+	cd operator; $(CONTROLLER_GEN) crd paths="./..." output:crd:artifacts:config=../deploy/crds
 
 # Run go fmt against code
 fmt:
-	go fmt ./...
+	cd operator; go fmt ./...
 
 # Run go vet against code
 vet:
-	go vet ./...
+	cd operator; go vet ./...
 
 # Generate code
 generate: $(CONTROLLER_GEN)
-	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths="./..."
+	cd operator; $(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths="./..."
 
 # Build the docker image
 container-build:
@@ -46,9 +44,14 @@ container-push: container-build
 	docker push $(DOCKER_REPO):$(VCS_BRANCH)-$(BUILD_DATE)-$(VERSION)
 	docker push $(DOCKER_REPO):latest
 
+vendor-jsonnet: $(JB)
+	cd operator/jsonnet; $(JB) install
+
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-$(CONTROLLER_GEN): vendor $(BIN_DIR)
-	go build -mod=vendor -o $@ sigs.k8s.io/controller-tools/cmd/controller-gen
+$(CONTROLLER_GEN): $(BIN_DIR)
+	cd operator; GO111MODULE="on" go build -o $@ sigs.k8s.io/controller-tools/cmd/controller-gen
 
+$(JB): $(BIN_DIR)
+	cd operator; GO111MODULE="on" go build -o $@ github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb
