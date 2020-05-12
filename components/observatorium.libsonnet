@@ -196,49 +196,18 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       namespace: obs.config.namespace,
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
-      uiEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.apiQuery.service.metadata.name,
-        obs.apiQuery.service.metadata.namespace,
-        obs.apiQuery.service.spec.ports[1].port,
-      ],
-      readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1' % [
+      readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
         obs.queryCache.service.metadata.name,
         obs.queryCache.service.metadata.namespace,
         obs.queryCache.service.spec.ports[0].port,
       ],
-      writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/v1/receive' % [
+      writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
         obs.receiveService.metadata.name,
         obs.receiveService.metadata.namespace,
         obs.receiveService.spec.ports[2].port,
       ],
     },
   },
-
-  // NOTICE: There is an additional Thanos Querier with an additional argument to configure externalPrefix for Thanos Query UI.
-  // This dedicated component only used by the API UI.
-  apiQuery::
-    t.query +
-    t.query.withExternalPrefix + {
-      config+:: {
-        local cfg = self,
-        name: obs.api.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-        namespace: obs.config.namespace,
-        commonLabels+::
-          obs.config.commonLabels {
-            'app.kubernetes.io/instance': obs.config.commonLabels['app.kubernetes.io/instance'] + '-api',
-          },
-        replicas: 1,
-        externalPrefix: '/ui/v1/metrics',
-        stores: [
-          'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
-          for service in
-            [obs.rule.service] +
-            [obs.store[shard].service for shard in std.objectFields(obs.store)] +
-            [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
-        ],
-        replicaLabels: ['prometheus_replica', 'rule_replica', 'ruler_replica', 'replica'],
-      },
-    },
 } + {
   local obs = self,
 

@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: observatorium-api
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: HEAD-2020-04-16-v0.1.0
+    app.kubernetes.io/version: master-2020-05-11-v0.1.1-35-g3c24d9b
   name: observatorium-xyz-observatorium-api
   namespace: observatorium
 spec:
@@ -28,31 +28,33 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: observatorium-api
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: HEAD-2020-04-16-v0.1.0
+        app.kubernetes.io/version: master-2020-05-11-v0.1.1-35-g3c24d9b
     spec:
       containers:
       - args:
         - --web.listen=0.0.0.0:8080
-        - --metrics.ui.endpoint=http://observatorium-xyz-observatorium-api-thanos-query.observatorium.svc.cluster.local:9090
-        - --metrics.read.endpoint=http://observatorium-xyz-cortex-query-frontend.observatorium.svc.cluster.local:9090/api/v1
-        - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291/api/v1/receive
+        - --web.internal.listen=0.0.0.0:8081
+        - --metrics.read.endpoint=http://observatorium-xyz-cortex-query-frontend.observatorium.svc.cluster.local:9090
+        - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291
         - --log.level=warn
-        image: quay.io/observatorium/observatorium:HEAD-2020-04-16-v0.1.0
+        image: quay.io/observatorium/observatorium:master-2020-05-11-v0.1.1-35-g3c24d9b
         livenessProbe:
-          failureThreshold: 8
+          failureThreshold: 10
           httpGet:
-            path: /-/healthy
-            port: 8080
+            path: /live
+            port: 8081
             scheme: HTTP
           periodSeconds: 30
         name: observatorium-api
         ports:
+        - containerPort: 8081
+          name: internal
         - containerPort: 8080
-          name: http
+          name: public
         readinessProbe:
-          failureThreshold: 20
+          failureThreshold: 12
           httpGet:
-            path: /-/ready
-            port: 8080
+            path: /ready
+            port: 8081
             scheme: HTTP
           periodSeconds: 5
