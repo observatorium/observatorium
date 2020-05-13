@@ -13,8 +13,8 @@ import (
 
 	"github.com/blang/semver"
 
-	csvv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version"
+	csvv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/api/pkg/lib/version"
 )
 
 var (
@@ -37,7 +37,7 @@ var (
 )
 
 func finalizedCsvFilename() string {
-	return "observatoium-operator.v" + *csvVersion + ".clusterserviceversion.yaml"
+	return "observatorium-operator.v" + *csvVersion + ".clusterserviceversion.yaml"
 }
 
 func copyFile(src string, dst string) {
@@ -68,15 +68,15 @@ type csvUserData struct {
 func generateUnifiedCSV(userData csvUserData) {
 
 	operatorCSV := UnmarshalCSV(*operatorCSVTemplate)
-
-	strategySpec := UnmarshalStrategySpec(operatorCSV)
+	strategySpec := operatorCSV.Spec.InstallStrategy.StrategySpec
 
 	// this forces us to update this logic if another deployment is introduced.
-	if len(strategySpec.Deployments) != 1 {
-		panic(fmt.Errorf("expected 1 deployment, found %d", len(strategySpec.Deployments)))
+	if len(strategySpec.DeploymentSpecs) != 1 {
+		panic(fmt.Errorf("expected 1 deployment, found %d", len(strategySpec.DeploymentSpecs)))
 	}
 
-	strategySpec.Deployments[0].Spec.Template.Spec.Containers[0].Image = *operatorImage
+	strategySpec.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image = *operatorImage
+	strategySpec.DeploymentSpecs[0].Spec.Template.Spec.ServiceAccountName = "observatorium-operator"
 
 	// Inject display names and descriptions for our crds
 	for i, definition := range operatorCSV.Spec.CustomResourceDefinitions.Owned {
@@ -88,11 +88,7 @@ func generateUnifiedCSV(userData csvUserData) {
 	}
 
 	// Re-serialize deployments and permissions into csv strategy.
-	updatedStrat, err := json.Marshal(strategySpec)
-	if err != nil {
-		panic(err)
-	}
-	operatorCSV.Spec.InstallStrategy.StrategySpecRaw = updatedStrat
+	operatorCSV.Spec.InstallStrategy.StrategySpec = strategySpec
 
 	operatorCSV.Annotations["containerImage"] = *operatorImage
 	for key, value := range userData.ExtraAnnotations {
@@ -161,7 +157,7 @@ Observatorium Operator provides the ability to install the components that compr
 	writer := strings.Builder{}
 	MarshallObject(operatorCSV, &writer)
 	outputFilename := filepath.Join(*outputDir, finalizedCsvFilename())
-	err = ioutil.WriteFile(outputFilename, []byte(writer.String()), 0644)
+	err := ioutil.WriteFile(outputFilename, []byte(writer.String()), 0644)
 	if err != nil {
 		panic(err)
 	}

@@ -4,23 +4,21 @@ set -e
 
 export GOROOT=$(go env GOROOT)
 
+#PREV="0.0.1"
 LATEST="0.0.1"
 
-IS_DEV=$( [[ $1 = "-dev" ]] && echo true || echo false )
-
-if [[ $IS_DEV = true ]] || [[ -z "$CSV_VERSION" ]]; then
+if [[ -z "$CSV_VERSION" ]]; then
   CSV_VERSION=$LATEST
   REPLACES_CSV_VERSION=$PREV
 fi
 
-
 PACKAGE_NAME="observatorium-operator"
 
-PACKAGE_DIR="deploy/olm-catalog/${PACKAGE_NAME}"
+PACKAGE_DIR="${CATALOG_DIR}/${PACKAGE_NAME}"
 CSV_DIR="${PACKAGE_DIR}/${CSV_VERSION}"
 CSV_FILE="$CSV_DIR/${PACKAGE_NAME}.v${CSV_VERSION}.clusterserviceversion.yaml"
 
-OUT_DIR="build/_output/olm-catalog"
+OUT_DIR="_output/olm-catalog"
 OUT_CSV_DIR="${OUT_DIR}/${PACKAGE_NAME}/${CSV_VERSION}"
 OUT_CSV_FILE="${OUT_CSV_DIR}/${PACKAGE_NAME}.v${CSV_VERSION}.clusterserviceversion.yaml"
 
@@ -65,7 +63,7 @@ if [[ "$CSV_VERSION" != "$PREV" ]]; then
     --update-crds
 
   # using the generated CSV, create the real CSV by injecting all the right data into it
-  build/_output/bin/csv-generator \
+  $GENERATOR \
     --csv-version "${CSV_VERSION}" \
     --operator-csv-template-file "${CSV_FILE}" \
     --operator-image "${FULL_OPERATOR_IMAGE}" \
@@ -77,11 +75,6 @@ if [[ "$CSV_VERSION" != "$PREV" ]]; then
 fi
 
 # copy remaining manifests to final location
-cp -a --no-clobber $PACKAGE_DIR/ $OUT_DIR/
+cp -a $OUT_DIR/ $CATALOG_DIR/../
 
-# copy dev CSV back to repository dir
-if [[ "$IS_DEV" = true ]]; then
-  cp "$OUT_CSV_FILE" "$CSV_FILE"
-fi
-
-echo "New OLM manifests created at $OUT_DIR"
+echo "New OLM manifests created at $CATALOG_DIR"

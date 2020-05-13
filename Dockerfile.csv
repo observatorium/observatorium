@@ -1,0 +1,32 @@
+FROM golang:1.13.3-alpine3.10 as builder
+
+RUN apk add --no-cache curl
+RUN apk add --no-cache bash
+WORKDIR /workspace
+
+# Copy resources
+ENV TOOLS_DIR tools/
+ENV DEPLOY_DIR deploy
+ENV GENERATOR_SCRIPT ${TOOLS_DIR}/csv-generate.sh
+COPY tools/ ${TOOLS_DIR}
+COPY deploy/ ${DEPLOY_DIR}
+COPY operator/hack/csv-generate.sh ${GENERATOR_SCRIPT}
+
+# Download operator-sdk
+ENV OPERATOR_SDK_VERSION v0.17.0
+ENV OPERATOR_SDK_PLATFORM x86_64-linux-gnu
+ENV OPERATOR_SDK_BIN operator-sdk-${OPERATOR_SDK_VERSION}-${OPERATOR_SDK_PLATFORM}
+ENV OPERATOR_SDK ${TOOLS_DIR}/${OPERATOR_SDK_BIN}
+RUN curl -JL https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/${OPERATOR_SDK_BIN} -o ${OPERATOR_SDK}
+RUN chmod +x ${OPERATOR_SDK}
+
+# Build
+ENV GENERATOR_BIN generator
+ENV GENERATOR ${TOOLS_DIR}/${GENERATOR_BIN}
+RUN GO111MODULE="on" go build -i -ldflags="-s -w" -o ${GENERATOR} ./tools/csv-generator/csv-generator.go ./tools/csv-generator/csvtools.go
+
+# Generate csv
+ENV FULL_OPERATOR_IMAGE quay.io/observatorium/observatorium-operator:latest
+ENV CATALOG_DIR ${DEPLOY_DIR}/olm-catalog
+RUN OPERATOR_SDK=${OPERATOR_SDK} FULL_OPERATOR_IMAGE=${FULL_OPERATOR_IMAGE} GENERATOR=${GENERATOR} CATALOG_DIR=${CATALOG_DIR} ${GENERATOR_SCRIPT}
+

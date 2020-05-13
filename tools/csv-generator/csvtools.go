@@ -7,36 +7,9 @@ import (
 	"strings"
 
 	yaml "github.com/ghodss/yaml"
-	csvv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
+	csvv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
-
-// CSVClusterPermissions is the cluster permissions part of a CSV
-type CSVClusterPermissions struct {
-	ServiceAccountName string              `json:"serviceAccountName"`
-	Rules              []rbacv1.PolicyRule `json:"rules"`
-}
-
-// CSVPermissions is the permissions part of a CSV
-type CSVPermissions struct {
-	ServiceAccountName string              `json:"serviceAccountName"`
-	Rules              []rbacv1.PolicyRule `json:"rules"`
-}
-
-// CSVDeployments describes the deployments for a CSV
-type CSVDeployments struct {
-	Name string                `json:"name"`
-	Spec appsv1.DeploymentSpec `json:"spec,omitempty"`
-}
-
-// CSVStrategySpec describes the installation strategy of a CSV
-type CSVStrategySpec struct {
-	ClusterPermissions []CSVClusterPermissions `json:"clusterPermissions"`
-	Permissions        []CSVPermissions        `json:"permissions"`
-	Deployments        []CSVDeployments        `json:"deployments"`
-}
 
 // UnmarshalCSV decodes a YAML file, by path, and returns a CSV
 func UnmarshalCSV(filePath string) *csvv1.ClusterServiceVersion {
@@ -52,17 +25,6 @@ func UnmarshalCSV(filePath string) *csvv1.ClusterServiceVersion {
 	}
 
 	return csvStruct
-}
-
-// UnmarshalStrategySpec decodes the StrategySpec object inside a CSV and returns it
-func UnmarshalStrategySpec(csv *csvv1.ClusterServiceVersion) *CSVStrategySpec {
-	templateStrategySpec := &CSVStrategySpec{}
-	err := json.Unmarshal(csv.Spec.InstallStrategy.StrategySpecRaw, templateStrategySpec)
-	if err != nil {
-		panic(err)
-	}
-
-	return templateStrategySpec
 }
 
 // MarshallObject mashals an object, usually a CSV into YAML

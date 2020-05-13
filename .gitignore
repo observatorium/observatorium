@@ -4,4 +4,3 @@
 /vendor
 tmp/
 /jsonnetfile.lock.json
-_cache/
