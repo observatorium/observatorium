@@ -15,15 +15,11 @@ local up = (import '../../components/up.libsonnet') + {
     commonLabels+:: obs.config.commonLabels,
     version: obs.config.up.version,
     image: obs.config.up.image,
+    readEndpoint: 'http://%s.%s.svc:9090/api/v1/query' % [obs.queryCache.service.metadata.name, obs.queryCache.service.metadata.namespace],
+    writeEndpoint: 'http://%s.%s.svc:9090/api/v1/query' % [obs.queryCache.service.metadata.name, obs.queryCache.service.metadata.namespace],
   },
 };
 
 obs.manifests +
 minio.manifests +
-(up +
- up.withReadEndpoint {
-   readEndpoint: 'http://%s.%s.svc:9090/api/v1/query' % [obs.queryCache.service.metadata.name, obs.queryCache.service.metadata.namespace],
- } +
- up.withWriteEndpoint {
-   writeEndpoint: 'http://%s.%s.svc:9090/api/v1/query' % [obs.queryCache.service.metadata.name, obs.queryCache.service.metadata.namespace],
- }).manifests
+(up + up.withReadEndpoint + up.withWriteEndpoint).manifests

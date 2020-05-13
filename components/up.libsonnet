@@ -88,7 +88,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   withReadEndpoint:: {
     local u = self,
-    readEndpoint:: error 'must provide read endpoint',
+    config+:: {
+      readEndpoint:: error 'must provide read endpoint',
+    },
 
     deployment+: {
       spec+: {
@@ -96,7 +98,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           spec+: {
             containers: [
               if c.name == 'observatorium-up' then c {
-                args+: ['--endpoint-read=' + u.readEndpoint],
+                args+: ['--endpoint-read=' + u.config.readEndpoint],
               } else c
               for c in super.containers
             ],
@@ -108,7 +110,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   withWriteEndpoint:: {
     local u = self,
-    writeEndpoint:: error 'must provide write endpoint',
+    config+:: {
+      writeEndpoint:: error 'must provide write endpoint',
+    },
 
     deployment+: {
       spec+: {
@@ -116,7 +120,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           spec+: {
             containers: [
               if c.name == 'observatorium-up' then c {
-                args+: ['--endpoint-write=' + u.writeEndpoint],
+                args+: ['--endpoint-write=' + u.config.writeEndpoint],
               } else c
               for c in super.containers
             ],
@@ -128,7 +132,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   withQuery:: {
     local u = self,
-    queryConfig:: error 'must provide query config endpoint',
+    config+:: {
+      queryConfig:: error 'must provide query config endpoint',
+    },
 
     deployment+: {
       spec+: {
@@ -162,7 +168,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     configmap+: {
       apiVersion: 'v1',
       data: {
-        'queries.yaml': std.manifestYamlDoc(u.queryConfig),
+        'queries.yaml': std.manifestYamlDoc(u.config.queryConfig),
       },
       kind: 'ConfigMap',
       metadata: {
