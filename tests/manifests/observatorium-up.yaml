@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - args:
-        - --endpoint-write=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/write
+        - --endpoint-write=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/api/v1/receive
         - --endpoint-read=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/api/v1/query
         - --period=1s
         - --duration=2m

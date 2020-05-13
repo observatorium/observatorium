@@ -9,8 +9,8 @@ metadata:
   name: observatorium-xyz
 spec:
   api:
-    image: quay.io/observatorium/observatorium:HEAD-2020-04-16-v0.1.0
-    version: HEAD-2020-04-16-v0.1.0
+    image: quay.io/observatorium/observatorium:master-2020-05-11-v0.1.1-35-g3c24d9b
+    version: master-2020-05-11-v0.1.1-35-g3c24d9b
   apiQuery:
     image: quay.io/thanos/thanos:v0.12.0-rc.1
     version: v0.12.0-rc.1

@@ -26,7 +26,7 @@ vet:
 	cd operator; go vet ./...
 
 # Generate code
-generate: $(CONTROLLER_GEN)
+generate: $(CONTROLLER_GEN) environments/base/manifests environments/dev/manifests example/manifests tests/manifests
 	cd operator; $(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths="./..."
 
 # Build the docker image
@@ -55,3 +55,37 @@ $(CONTROLLER_GEN): $(BIN_DIR)
 
 $(JB): $(BIN_DIR)
 	cd operator; GO111MODULE="on" go build -o $@ github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb
+
+JSONNET_SRC = $(shell find . -type f -not -path './*vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \))
+
+.PHONY: jsonnetfmt
+jsonnetfmt: $(JSONNET_SRC)
+	jsonnetfmt -n 2 --max-blank-lines 2 --string-style s --comment-style s -i $(JSONNET_SRC)
+
+environments/base/manifests: environments/base/main.jsonnet $(JSONNET_SRC)
+	-make jsonnetfmt
+	-rm -rf environments/base/manifests
+	-mkdir environments/base/manifests
+	jsonnet -J operator/jsonnet/vendor -m environments/base/manifests environments/base/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
+	find environments/base/manifests -type f ! -name '*.yaml' -delete
+
+environments/dev/manifests: environments/dev/main.jsonnet $(JSONNET_SRC)
+	-make jsonnetfmt
+	-rm -rf environments/dev/manifests
+	-mkdir environments/dev/manifests
+	jsonnet -J operator/jsonnet/vendor -m environments/dev/manifests environments/dev/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
+	find environments/dev/manifests -type f ! -name '*.yaml' -delete
+
+example/manifests: example/main.jsonnet $(JSONNET_SRC)
+	-make jsonnetfmt
+	-rm -rf example/manifests
+	-mkdir example/manifests
+	jsonnet -J operator/jsonnet/vendor example/main.jsonnet | gojsontoyaml > example/manifests/observatorium.yaml
+	find example/manifests -type f ! -name '*.yaml' -delete
+
+tests/manifests: tests/main.jsonnet $(JSONNET_SRC)
+	-make jsonnetfmt
+	-rm -rf tests/manifests
+	-mkdir tests/manifests
+	jsonnet -J operator/jsonnet/vendor -m tests/manifests tests/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
+	find tests/manifests -type f ! -name '*.yaml' -delete

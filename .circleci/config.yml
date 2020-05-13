@@ -7,7 +7,7 @@ jobs:
       - checkout
       - run: find . -type f -not -path './*vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \) | xargs -L1 jsonnetfmt --test
       - run: make vendor-jsonnet
-      - run: ./build.sh
+      - run: make environments/base/manifests environments/dev/manifests example/manifests tests/manifests
       - run: git diff --exit-code
 
   tests:

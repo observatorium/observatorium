@@ -51,6 +51,7 @@ spec:
         - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-rule.observatorium.svc.cluster.local
         - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-store-shard-0.observatorium.svc.cluster.local
         - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-receive-default.observatorium.svc.cluster.local
+        - --web.external-prefix=.
         image: quay.io/thanos/thanos:v0.12.0-rc.1
         livenessProbe:
           failureThreshold: 4
