@@ -51,7 +51,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           namespace: obs.config.namespace,
           replicas: 3,
           replicationFactor: 3,
-          retention: '6h',
+          retention: '15d',
           hashringConfigMapName: '%s-generated' % obs.thanosReceiveController.configmap.metadata.name,
           commonLabels+::
             obs.config.commonLabels {
