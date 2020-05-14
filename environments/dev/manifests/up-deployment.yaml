@@ -32,3 +32,8 @@ spec:
         ports:
         - containerPort: 8080
           name: http
+        resources:
+          limits: {}
+          requests: {}
+        volumeMounts: []
+      volumes: []
