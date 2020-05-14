@@ -121,7 +121,7 @@
 
   api: {
     local apiConfig = self,
-    version: 'HEAD-2020-04-16-v0.1.0',
+    version: 'master-2020-05-11-v0.1.1-35-g3c24d9b',
     image: 'quay.io/observatorium/observatorium:' + apiConfig.version,
   },
 
