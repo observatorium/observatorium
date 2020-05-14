@@ -8,7 +8,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     namespace: error 'must provide namespace',
     version: error 'must provide version',
     image: error 'must provide image',
-    // queryConfig: {},
+    queryConfig: {},
     readEndpoint: '',
     writeEndpoint: '',
     resources: {
@@ -73,7 +73,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         containerPort.newNamed(8080, 'http'),
       ]) +
       container.withVolumeMounts(
-        if std.objectHas(up.config, 'queryConfig') then
+        if up.config.queryConfig != {} then
           [
             {
               mountPath: '/etc/up/',
@@ -91,7 +91,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     d.mixin.spec.selector.withMatchLabels(up.config.podLabelSelector) +
     d.mixin.spec.template.metadata.withLabels(up.config.commonLabels) +
     d.mixin.spec.template.spec.withVolumes(
-      if std.objectHas(up.config, 'queryConfig') then
+      if up.config.queryConfig != {} then
         [
           {
             configMap: {
@@ -104,7 +104,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     d.mixin.spec.template.spec.withContainers([c]),
 
   configmap:
-    if std.objectHas(up.config, 'queryConfig') then {
+    if up.config.queryConfig != {} then {
       apiVersion: 'v1',
       data: {
         'queries.yaml': std.manifestYamlDoc(up.config.queryConfig),
