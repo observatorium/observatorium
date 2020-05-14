@@ -6,5 +6,20 @@ local minio = (import '../../components/minio.libsonnet') + {
   },
 };
 
+local up = (import '../../components/up.libsonnet') + {
+  config+:: {
+    local cfg = self,
+    name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+    namespace: obs.config.namespace,
+    replicas: 1,
+    commonLabels+:: obs.config.commonLabels,
+    version: obs.config.up.version,
+    image: obs.config.up.image,
+    readEndpoint: 'http://%s.%s.svc:9090/api/v1/query' % [obs.queryCache.service.metadata.name, obs.queryCache.service.metadata.namespace],
+    writeEndpoint: 'http://%s.%s.svc:9090/api/v1/query' % [obs.queryCache.service.metadata.name, obs.queryCache.service.metadata.namespace],
+  },
+};
+
 obs.manifests +
-minio.manifests
+minio.manifests +
+(up + up.withReadEndpoint + up.withWriteEndpoint).manifests

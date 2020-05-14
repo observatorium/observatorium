@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: observatorium-xyz-observatorium-up
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: blackbox-prober
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: observatorium-up
+      app.kubernetes.io/part-of: observatorium
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: blackbox-prober
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: observatorium-up
+        app.kubernetes.io/part-of: observatorium
+        app.kubernetes.io/version: master-2020-03-31-6e67351
+    spec:
+      containers:
+      - args:
+        - --duration=0
+        - --queries-file=/etc/up/queries.yaml
+        - --log.level=debug
+        - --endpoint-read=http://observatorium-xyz-cortex-query-frontend.observatorium.svc:9090/api/v1/query
+        - --endpoint-write=http://observatorium-xyz-cortex-query-frontend.observatorium.svc:9090/api/v1/query
+        image: quay.io/observatorium/up:master-2020-03-31-6e67351
+        name: observatorium-up
+        ports:
+        - containerPort: 8080
+          name: http

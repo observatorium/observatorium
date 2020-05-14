@@ -8,8 +8,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     namespace: error 'must provide namespace',
     version: error 'must provide version',
     image: error 'must provide image',
-    readEndpoint: error 'must provide readEndpoint',
-    queryConfig: error 'must provide queryConfig',
 
     commonLabels:: {
       'app.kubernetes.io/name': 'observatorium-up',
@@ -24,17 +22,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       if !std.setMember(labelName, ['app.kubernetes.io/version'])
     },
   },
-
-  configmap:
-    local configmap = k.core.v1.configMap;
-
-    configmap.new() +
-    configmap.mixin.metadata.withName(up.config.name) +
-    configmap.mixin.metadata.withNamespace(up.config.namespace) +
-    configmap.mixin.metadata.withLabels(up.config.commonLabels) +
-    configmap.withData({
-      'queries.yaml': std.manifestYamlDoc(up.config.queryConfig),
-    }),
 
   service:
     local service = k.core.v1.service;
@@ -64,17 +51,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           '--duration=0',
           '--queries-file=/etc/up/queries.yaml',
           '--log.level=debug',
-        ],
-        +if std.objectHas(up.config, 'readEndpoint') then
-          ['--endpoint-read=' + up.config.readEndpoint] else [],
-        +if std.objectHas(up.config, 'writeEndpoint') then
-          ['--endpoint-write=' + up.config.writeEndpoint] else []
+        ]
       ) +
       container.withPorts([
         containerPort.newNamed(8080, 'http'),
-      ]) +
-      container.withVolumeMounts([
-        containerVolumeMount.new('query-config', '/etc/up/'),
       ]);
 
     d.new() +
@@ -82,10 +62,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     d.mixin.metadata.withNamespace(up.config.namespace) +
     d.mixin.spec.selector.withMatchLabels(up.config.podLabelSelector) +
     d.mixin.spec.template.metadata.withLabels(up.config.commonLabels) +
-    d.mixin.spec.template.spec.withContainers([c]) +
-    d.mixin.spec.template.spec.withVolumes([
-      { name: 'query-config', configMap: { name: up.configmap.metadata.name } },
-    ]),
+    d.mixin.spec.template.spec.withContainers([c]),
 
   withResources:: {
     local u = self,
@@ -109,6 +86,99 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
+  withReadEndpoint:: {
+    local u = self,
+    config+:: {
+      readEndpoint: error 'must provide read endpoint',
+    },
+
+    deployment+: {
+      spec+: {
+        template+: {
+          spec+: {
+            containers: [
+              if c.name == 'observatorium-up' then c {
+                args+: ['--endpoint-read=' + up.config.readEndpoint],
+              } else c
+              for c in super.containers
+            ],
+          },
+        },
+      },
+    },
+  },
+
+  withWriteEndpoint:: {
+    local u = self,
+    config+:: {
+      writeEndpoint: error 'must provide write endpoint',
+    },
+
+    deployment+: {
+      spec+: {
+        template+: {
+          spec+: {
+            containers: [
+              if c.name == 'observatorium-up' then c {
+                args+: ['--endpoint-write=' + up.config.writeEndpoint],
+              } else c
+              for c in super.containers
+            ],
+          },
+        },
+      },
+    },
+  },
+
+  withQuery:: {
+    local u = self,
+    config+:: {
+      queryConfig: error 'must provide query config endpoint',
+    },
+
+    deployment+: {
+      spec+: {
+        template+: {
+          spec+: {
+            containers: [
+              c {
+                volumeMounts+: [
+                  {
+                    mountPath: '/etc/up/',
+                    name: 'query-config',
+                    readOnly: false,
+                  },
+                ],
+              }
+              for c in super.containers
+            ],
+            volumes+: [
+              {
+                configMap: {
+                  name: up.config.name,
+                },
+                name: 'query-config',
+              },
+            ],
+          },
+        },
+      },
+    },
+
+    configmap+: {
+      apiVersion: 'v1',
+      data: {
+        'queries.yaml': std.manifestYamlDoc(up.config.queryConfig),
+      },
+      kind: 'ConfigMap',
+      metadata: {
+        labels: up.config.commonLabels,
+        name: up.config.name,
+        namespace: up.config.namespace,
+      },
+    },
+  },
+
   withServiceMonitor:: {
     local u = self,
     serviceMonitor: {
@@ -127,5 +197,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         ],
       },
     },
+  },
+
+  manifests+:: {
+    ['up-' + name]: up[name]
+    for name in std.objectFields(up)
   },
 }
