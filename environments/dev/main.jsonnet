@@ -22,4 +22,4 @@ local up = (import '../../components/up.libsonnet') + {
 
 obs.manifests +
 minio.manifests +
-(up + up.withReadEndpoint + up.withWriteEndpoint).manifests
+up.manifests
