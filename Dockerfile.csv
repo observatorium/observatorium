@@ -8,7 +8,7 @@ WORKDIR /workspace
 ENV TOOLS_DIR tools/
 ENV DEPLOY_DIR deploy
 ENV GENERATOR_SCRIPT ${TOOLS_DIR}/csv-generate.sh
-COPY tools/ ${TOOLS_DIR}
+COPY operator/csv-generator ${TOOLS_DIR}/csv-generator
 COPY deploy/ ${DEPLOY_DIR}
 COPY operator/hack/csv-generate.sh ${GENERATOR_SCRIPT}
 
