@@ -83,6 +83,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ['shard' + i]:
       t.store +
       t.store.withIndexCacheMemcached +
+      t.store.withCachingBucketMemcached +
       t.store.withIgnoreDeletionMarksDelay {
         config+:: {
           local cfg = self,
