@@ -104,7 +104,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     sts.mixin.metadata.withNamespace(tr.config.namespace) +
     sts.mixin.metadata.withLabels(tr.config.commonLabels) +
     sts.mixin.spec.withServiceName(tr.service.metadata.name) +
-    sts.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120) +
+    sts.mixin.spec.template.spec.withTerminationGracePeriodSeconds(900) +
     sts.mixin.spec.template.spec.withVolumes([
       volume.fromEmptyDir('data'),
     ]) +
@@ -113,6 +113,16 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       affinity.withWeight(100) +
       affinity.mixin.podAffinityTerm.withNamespaces(tr.config.namespace) +
       affinity.mixin.podAffinityTerm.withTopologyKey('kubernetes.io/hostname') +
+      affinity.mixin.podAffinityTerm.labelSelector.withMatchExpressions([
+        matchExpression.new() +
+        matchExpression.withKey('app.kubernetes.io/instance') +
+        matchExpression.withOperator('In') +
+        matchExpression.withValues([tr.statefulSet.metadata.labels['app.kubernetes.io/instance']]),
+      ]),
+      affinity.new() +
+      affinity.withWeight(100) +
+      affinity.mixin.podAffinityTerm.withNamespaces(tr.config.namespace) +
+      affinity.mixin.podAffinityTerm.withTopologyKey('topology.kubernetes.io/zone') +
       affinity.mixin.podAffinityTerm.labelSelector.withMatchExpressions([
         matchExpression.new() +
         matchExpression.withKey('app.kubernetes.io/instance') +

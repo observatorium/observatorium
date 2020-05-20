@@ -45,6 +45,17 @@ spec:
               - observatorium
               topologyKey: kubernetes.io/hostname
             weight: 100
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - observatorium-xyz
+              namespaces:
+              - observatorium
+              topologyKey: topology.kubernetes.io/zone
+            weight: 100
       containers:
       - args:
         - receive
@@ -103,7 +114,7 @@ spec:
           readOnly: false
         - mountPath: /var/lib/thanos-receive
           name: hashring-config
-      terminationGracePeriodSeconds: 120
+      terminationGracePeriodSeconds: 900
       volumes:
       - emptyDir: {}
         name: data

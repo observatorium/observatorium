@@ -3,7 +3,6 @@
   receive+:: {
     selector: error 'must provide selector for Thanos Receive alerts',
     httpErrorThreshold: 5,
-    forwardErrorThreshold: 5,
     refreshErrorThreshold: 0,
     p99LatencyThreshold: 10,
   },
@@ -56,10 +55,14 @@
                 sum by (job) (rate(thanos_receive_forward_requests_total{result="error", %(selector)s}[5m]))
               /
                 sum by (job) (rate(thanos_receive_forward_requests_total{%(selector)s}[5m]))
-              * 100 > %(forwardErrorThreshold)s
+              )
+              >
+              (
+                max by (job) (floor((thanos_receive_replication_factor{%(selector)s}+1) / 2))
+              /
+                max by (job) (thanos_receive_hashring_nodes{%(selector)s})
               )
             ||| % thanos.receive,
-            'for': '5m',
             labels: {
               severity: 'warning',
             },
@@ -89,6 +92,17 @@
             },
             expr: 'avg(thanos_receive_config_last_reload_successful{%(selector)s}) by (job) != 1' % thanos.receive,
             'for': '5m',
+            labels: {
+              severity: 'warning',
+            },
+          },
+          {
+            alert: 'ThanosReceiveNoUpload',
+            annotations: {
+              message: 'Thanos Receive {{$labels.job}} has not uploaded latest data to object storage.',
+            },
+            expr: 'increase(thanos_shipper_uploads_total{%(selector)s}[2h]) == 0' % thanos.receive,
+            'for': '30m',
             labels: {
               severity: 'warning',
             },
