@@ -79,7 +79,7 @@
       "source": {
         "git": {
           "remote": "https://github.com/thanos-io/thanos",
-          "subdir": "mixin/thanos"
+          "subdir": "mixin"
         }
       },
       "version": "master"

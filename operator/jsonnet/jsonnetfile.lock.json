@@ -16,8 +16,8 @@
           "subdir": "grafonnet"
         }
       },
-      "version": "815b848ade47c2f4ee866fe5efc435acd9ad799c",
-      "sum": "J3Vp0EVbxTObr6KydLXsi4Rc0ssNVAEuwLc0NQ+4wqU="
+      "version": "3cbf732f223d8e963180b62676bd314945a1e272",
+      "sum": "/7/gQuDrIcbpbpFCMWhe63RtZ66iT5ECTlJdhVTtUTM="
     },
     {
       "source": {
@@ -26,7 +26,7 @@
           "subdir": "grafana-builder"
         }
       },
-      "version": "8418192e618c85af93d8aee53c99865faa870bbd",
+      "version": "811ccb022bc2bdcd0b8281ed0a0c858c63e20542",
       "sum": "slxrtftVDiTlQK22ertdfrg4Epnq97gdrLI63ftUfaE="
     },
     {
@@ -36,7 +36,7 @@
           "subdir": "monitoring/jaeger-mixin"
         }
       },
-      "version": "e1248014988b7cde207d45f73f4e402c21dd6eae",
+      "version": "e46f87376bdd2a28864864eb385ff49a6aa76330",
       "sum": "U/RwaRP/ps+5dVyeVxeFEb2psfZHQgEjHU2Jeb454Kg="
     },
     {
@@ -67,7 +67,7 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "3c24d9b889db8ca18a0fb3edc80cd394bbf99d82",
+      "version": "69991bacd33b4fc33546f1cbb2f630389f7661f3",
       "sum": "IZ//jf+XChTDqXSmVA5triydUDHLlBgS84skIRScqaY=",
       "name": "observatorium"
     },
@@ -78,7 +78,7 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "11e63ca1d3b9834e66ee85107df002bde29a4a59",
+      "version": "44c6beac8534a340011c137594d6c2e8f545dd1e",
       "sum": "iUbwzPZ/0QrozWTfoXlmRhd1CMAnkcCaWtATTlSnoMk=",
       "name": "thanos-receive-controller"
     },
@@ -89,7 +89,7 @@
           "subdir": "jsonnet/thanos-receive-controller-mixin"
         }
       },
-      "version": "11e63ca1d3b9834e66ee85107df002bde29a4a59",
+      "version": "44c6beac8534a340011c137594d6c2e8f545dd1e",
       "sum": "p1LX/Ox2dK0hGpa+B1xUO1s3aAS2d9zjjwHKuDKAWus="
     },
     {
@@ -99,18 +99,18 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "5bbb4506d182396c2bc7774336ed3f027441fd3c",
-      "sum": "tR6wJJhQZgP9s/ZUgGVAWp+b0jsdZVtycB2zCh9IPug="
+      "version": "ad6e086915df1f57409c53bbe4b9611298ae5a7f",
+      "sum": "MVAMMddItYxaCGUotpetJJcCs3jheHo/n/jdTVJPQYM="
     },
     {
       "source": {
         "git": {
           "remote": "https://github.com/thanos-io/thanos.git",
-          "subdir": "mixin/thanos"
+          "subdir": "mixin"
         }
       },
-      "version": "1a2edf19475b854181e5abaa4b6f1c9caf2a1547",
-      "sum": "JyGD4v7VQ4ZMM0GgkM55jFtBHCeUGGxcL64gzxukp44="
+      "version": "8bdd15e032c24fb98ed9ec69fa42f16376a9101e",
+      "sum": "wq3CdvpwGatRRG5cCUb8DG4DSK6hfVl5MK9OGm9+y0w="
     }
   ],
   "legacyImports": false
