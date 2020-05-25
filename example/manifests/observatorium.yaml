@@ -12,14 +12,14 @@ spec:
     image: quay.io/observatorium/observatorium:master-2020-05-11-v0.1.1-35-g3c24d9b
     version: master-2020-05-11-v0.1.1-35-g3c24d9b
   apiQuery:
-    image: quay.io/thanos/thanos:v0.13.0-rc.0
-    version: v0.13.0-rc.0
+    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
+    version: master-2020-05-24-079ad427
   compact:
-    image: quay.io/thanos/thanos:v0.13.0-rc.0
+    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
     retentionResolution1h: 1s
     retentionResolution5m: 1s
     retentionResolutionRaw: 14d
-    version: v0.13.0-rc.0
+    version: master-2020-05-24-079ad427
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -34,15 +34,15 @@ spec:
     key: thanos.yaml
     name: thanos-objectstorage
   query:
-    image: quay.io/thanos/thanos:v0.13.0-rc.0
-    version: v0.13.0-rc.0
+    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
+    version: master-2020-05-24-079ad427
   queryCache:
     image: quay.io/cortexproject/cortex:master-fdcd992f
     replicas: 1
     version: master-fdcd992f
   receivers:
-    image: quay.io/thanos/thanos:v0.13.0-rc.0
-    version: v0.13.0-rc.0
+    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
+    version: master-2020-05-24-079ad427
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -51,8 +51,8 @@ spec:
           requests:
             storage: 50Gi
   rule:
-    image: quay.io/thanos/thanos:v0.13.0-rc.0
-    version: v0.13.0-rc.0
+    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
+    version: master-2020-05-24-079ad427
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -68,9 +68,9 @@ spec:
       memoryLimitMb: 1024
       replicas: 1
       version: 1.6.3-alpine
-    image: quay.io/thanos/thanos:v0.13.0-rc.0
+    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
     shards: 1
-    version: v0.13.0-rc.0
+    version: master-2020-05-24-079ad427
     volumeClaimTemplate:
       spec:
         accessModes:

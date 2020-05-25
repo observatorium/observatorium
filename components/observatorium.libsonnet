@@ -95,7 +95,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           replicas: 1,
           ignoreDeletionMarksDelay: '24h',
           memcached+: {
-            addresses: ['dnssrv+_client._tcp.%s.%s.svc.cluster.local' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
+            addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
             timeout: '2s',
             maxIdleConnections: 1000,
             maxAsyncConcurrency: 100,
