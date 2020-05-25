@@ -22,6 +22,9 @@ OUT_DIR="_output/olm-catalog"
 OUT_CSV_DIR="${OUT_DIR}/${PACKAGE_NAME}/${CSV_VERSION}"
 OUT_CSV_FILE="${OUT_CSV_DIR}/${PACKAGE_NAME}.v${CSV_VERSION}.clusterserviceversion.yaml"
 
+ANNOTATIONS_FILE="${DEPLOY_DIR}/csv/annotations.json"
+MAINTAINERS_FILE="${DEPLOY_DIR}/csv/maintainers.json"
+
 EXTRA_ANNOTATIONS=""
 MAINTAINERS=""
 
@@ -35,19 +38,15 @@ if [ -n "$ANNOTATIONS_FILE" ]; then
 	EXTRA_ANNOTATIONS="-annotations-from=$ANNOTATIONS_FILE"
 fi
 
-clean_package() {
-#	mkdir -p "$CSV_DIR"
-	rm -rf "$OUT_DIR"
-	mkdir -p "$OUT_CSV_DIR"
-}
-
-if ! [[ "$CSV_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+SEMVER_REGEX="^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(\\-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"
+if ! [[ "$CSV_VERSION" =~ $SEMVER_REGEX ]]; then
 	echo "CSV_VERSION not provided or does not match semver format"
 	exit 1
 fi
 
 # clean up all old data first
-clean_package
+rm -rf "$OUT_DIR"
+mkdir -p "$OUT_CSV_DIR"
 
 # do not generate new CRD/CSV for old versions
 if [[ "$CSV_VERSION" != "$PREV" ]]; then
@@ -60,6 +59,7 @@ if [[ "$CSV_VERSION" != "$PREV" ]]; then
     --csv-channel="${CSV_VERSION}" \
     --default-channel=true \
     --make-manifests=false \
+    --crd-dir=deploy/csv/crds \
     --update-crds
 
   # using the generated CSV, create the real CSV by injecting all the right data into it

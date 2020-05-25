@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,51 +11,31 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
-
-	csvv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/lib/version"
+	csvv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 var (
-	csvVersion          = flag.String("csv-version", "", "the unified CSV version")
-	replacesCsvVersion  = flag.String("replaces-csv-version", "", "the unified CSV version this new CSV will replace")
-	skipRange           = flag.String("skip-range", "", "the CSV version skip range")
-	operatorCSVTemplate = flag.String("operator-csv-template-file", "", "path to csv template example")
+	csvVersion          = flag.String("csv-version", "", "The unified CSV version")
+	replacesCsvVersion  = flag.String("replaces-csv-version", "", "The unified CSV version this new CSV will replace")
+	skipRange           = flag.String("skip-range", "", "The CSV version skip range")
+	operatorCSVTemplate = flag.String("operator-csv-template-file", "", "Path to csv template example")
 
-	operatorImage = flag.String("operator-image", "", "operator container image")
+	operatorImage = flag.String("operator-image", "", "Operator container image")
 
 	inputManifestsDir = flag.String("manifests-directory", "", "The directory containing the extra manifests to be included in the registry bundle")
 
 	outputDir = flag.String("olm-bundle-directory", "", "The directory to output the unified CSV and CRDs to")
 
-	annotationsFile = flag.String("annotations-from", "", "add metadata annotations from given file")
-	maintainersFile = flag.String("maintainers-from", "", "add maintainers list from given file")
-	descriptionFile = flag.String("description-from", "", "replace the description with the content of the given file")
+	annotationsFile = flag.String("annotations-from", "", "Add metadata annotations from the given file")
+	maintainersFile = flag.String("maintainers-from", "", "Add maintainers list from the given file")
+	descriptionFile = flag.String("description-from", "", "Replace the description with the content of the given file")
 
 	semverVersion *semver.Version
 )
 
-func finalizedCsvFilename() string {
+func finalizedCSVFilename() string {
 	return "observatorium-operator.v" + *csvVersion + ".clusterserviceversion.yaml"
-}
-
-func copyFile(src string, dst string) {
-	srcFile, err := os.Open(src)
-	if err != nil {
-		panic(err)
-	}
-	defer srcFile.Close()
-
-	outFile, err := os.Create(dst)
-	if err != nil {
-		panic(err)
-	}
-	defer outFile.Close()
-
-	_, err = io.Copy(outFile, srcFile)
-	if err != nil {
-		panic(err)
-	}
 }
 
 type csvUserData struct {
@@ -65,14 +44,16 @@ type csvUserData struct {
 	Maintainers      map[string]string
 }
 
-func generateUnifiedCSV(userData csvUserData) {
-
-	operatorCSV := UnmarshalCSV(*operatorCSVTemplate)
+func generateUnifiedCSV(userData csvUserData) error {
+	operatorCSV, err := UnmarshalCSV(*operatorCSVTemplate)
+	if err != nil {
+		return err
+	}
 	strategySpec := operatorCSV.Spec.InstallStrategy.StrategySpec
 
 	// this forces us to update this logic if another deployment is introduced.
 	if len(strategySpec.DeploymentSpecs) != 1 {
-		panic(fmt.Errorf("expected 1 deployment, found %d", len(strategySpec.DeploymentSpecs)))
+		fmt.Errorf("expected 1 deployment, found %d", len(strategySpec.DeploymentSpecs))
 	}
 
 	strategySpec.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image = *operatorImage
@@ -129,15 +110,11 @@ func generateUnifiedCSV(userData csvUserData) {
 	}
 
 	// Set Description
-	operatorCSV.Spec.Description = `
-Observatorium Operator provides the ability to install the components that comprise the Observatorium project.`
-	if userData.Description != "" {
-		operatorCSV.Spec.Description = userData.Description
-	}
-
+	operatorCSV.Spec.Description = userData.Description
 	operatorCSV.Spec.DisplayName = "Observatorium Operator"
 
 	if userData.Maintainers != nil {
+		operatorCSV.Spec.Maintainers = []csvv1.Maintainer{}
 		for name, email := range userData.Maintainers {
 			operatorCSV.Spec.Maintainers = append(operatorCSV.Spec.Maintainers, csvv1.Maintainer{
 				Name:  name,
@@ -145,8 +122,6 @@ Observatorium Operator provides the ability to install the components that compr
 			})
 		}
 	}
-	operatorCSV.Spec.Maintainers = nil
-	operatorCSV.Spec.Icon = nil
 
 	// Set Annotations
 	if *skipRange != "" {
@@ -156,29 +131,34 @@ Observatorium Operator provides the ability to install the components that compr
 	// write CSV to out dir
 	writer := strings.Builder{}
 	MarshallObject(operatorCSV, &writer)
-	outputFilename := filepath.Join(*outputDir, finalizedCsvFilename())
-	err := ioutil.WriteFile(outputFilename, []byte(writer.String()), 0644)
-	if err != nil {
-		panic(err)
+	outputFilename := filepath.Join(*outputDir, finalizedCSVFilename())
+	if err := ioutil.WriteFile(outputFilename, []byte(writer.String()), 0644); err != nil {
+		return err
 	}
 
 	fmt.Printf("CSV written to %s\n", outputFilename)
+
+	return nil
 }
 
-func readFileOrPanic(filename string) []byte {
+func readFile(filename string) ([]byte, error) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return data
+	return data, nil
 }
 
-func readKeyValueMapFromFileOrPanic(filename string) map[string]string {
+func readKeyValueMapFromFile(filename string) (map[string]string, error) {
 	kvMap := make(map[string]string)
-	if err := json.Unmarshal(readFileOrPanic(filename), &kvMap); err != nil {
-		panic(err)
+	data, err := readFile(filename)
+	if err != nil {
+		return nil, err
 	}
-	return kvMap
+	if err := json.Unmarshal(data, &kvMap); err != nil {
+		return nil, err
+	}
+	return kvMap, nil
 }
 
 func main() {
@@ -198,7 +178,7 @@ func main() {
 	// Set correct csv versions and name
 	semverVersion, err = semver.New(*csvVersion)
 	if err != nil {
-		panic(err)
+		log.Fatal("Couldn't parse CSV version:\n%v", err)
 	}
 
 	userData := csvUserData{
@@ -209,21 +189,38 @@ Observatorium Operator provides the ability to install the components that compr
 	}
 
 	if *annotationsFile != "" {
-		userData.ExtraAnnotations = readKeyValueMapFromFileOrPanic(*annotationsFile)
+		value, err := readKeyValueMapFromFile(*annotationsFile)
+		if err != nil {
+			log.Fatal("Couldn't read annotations file:\n%v", err)
+		}
+		userData.ExtraAnnotations = value
 	}
 	if *maintainersFile != "" {
-		userData.Maintainers = readKeyValueMapFromFileOrPanic(*maintainersFile)
+		value, err := readKeyValueMapFromFile(*maintainersFile)
+		if err != nil {
+			log.Fatal("Couldn't read maintainers file:\n%v", err)
+		}
+		userData.Maintainers = value
 	}
 	if *descriptionFile != "" {
-		userData.Description = string(readFileOrPanic(*descriptionFile))
+		data, err := readFile(*descriptionFile)
+		if err != nil {
+			log.Fatal("Couldn't read description file:\n%v", err)
+		}
+		userData.Description = string(data)
 	}
 
 	// start with a fresh output directory if it already exists
-	os.RemoveAll(*outputDir)
+	if err := os.RemoveAll(*outputDir); err != nil {
+		log.Fatal("Couldn't remove existing output directory:\n%v", err)
+	}
 
 	// create output directory
-	os.MkdirAll(*outputDir, os.FileMode(0775))
+	if err := os.MkdirAll(*outputDir, os.FileMode(0775)); err != nil {
+		log.Fatal("Couldn't create output directory:\n%v", err)
+	}
 
-	generateUnifiedCSV(userData)
+	if err := generateUnifiedCSV(userData); err != nil {
+		log.Fatal("Couldn't generate CSV:\n%v", err)
+	}
 }
-

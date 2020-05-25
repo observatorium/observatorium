@@ -12,19 +12,19 @@ import (
 )
 
 // UnmarshalCSV decodes a YAML file, by path, and returns a CSV
-func UnmarshalCSV(filePath string) *csvv1.ClusterServiceVersion {
+func UnmarshalCSV(filePath string) (*csvv1.ClusterServiceVersion, error) {
 	bytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	csvStruct := &csvv1.ClusterServiceVersion{}
 	err = yaml.Unmarshal(bytes, csvStruct)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return csvStruct
+	return csvStruct, nil
 }
 
 // MarshallObject mashals an object, usually a CSV into YAML
