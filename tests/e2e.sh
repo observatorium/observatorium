@@ -98,6 +98,7 @@ run_test() {
     $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up || ($KUBECTL get pods --all-namespaces && exit 1)
 }
 
+
 case $1 in
 kind)
     kind
