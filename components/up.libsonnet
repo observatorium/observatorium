@@ -57,9 +57,12 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       container.withArgs(
         [
           '--duration=0',
-          '--queries-file=/etc/up/queries.yaml',
           '--log.level=debug',
         ] + (
+          if up.config.queryConfig != {} then
+            ['--queries-file=/etc/up/queries.yaml']
+          else []
+        ) + (
           if up.config.readEndpoint != '' then
             ['--endpoint-read=' + up.config.readEndpoint]
           else []

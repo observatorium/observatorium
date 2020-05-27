@@ -23,7 +23,6 @@ spec:
       containers:
       - args:
         - --duration=0
-        - --queries-file=/etc/up/queries.yaml
         - --log.level=debug
         - --endpoint-read=http://observatorium-xyz-cortex-query-frontend.observatorium.svc:9090/api/v1/query
         - --endpoint-write=http://observatorium-xyz-cortex-query-frontend.observatorium.svc:9090/api/v1/query
