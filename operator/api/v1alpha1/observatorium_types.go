@@ -29,21 +29,21 @@ type ObservatoriumSpec struct {
 	// Thanos CompactSpec
 	Compact CompactSpec `json:"compact"`
 	// Thanos Receive Controller Spec
-	ThanosReceiveController ThanosReceiveControllerSpec `json:"thanosReceiveController"`
+	ThanosReceiveController ThanosReceiveControllerSpec `json:"thanosReceiveController,omitempty"`
 	// Thanos ThanosPersistentSpec
 	Receivers ReceiversSpec `json:"receivers"`
 	// Thanos QueryCache
-	QueryCache QueryCacheSpec `json:"queryCache"`
+	QueryCache QueryCacheSpec `json:"queryCache,omitempty"`
 	// Thanos StoreSpec
 	Store StoreSpec `json:"store"`
 	// Thanos RulerSpec
 	Rule RuleSpec `json:"rule"`
 	// API
-	API APISpec `json:"api"`
+	API APISpec `json:"api,omitempty"`
 	// API Query
-	APIQuery APIQuerySpec `json:"apiQuery"`
+	APIQuery APIQuerySpec `json:"apiQuery,omitempty"`
 	// Query
-	Query QuerySpec `json:"query"`
+	Query QuerySpec `json:"query,omitempty"`
 }
 
 type ObjectStorageConfig struct {
@@ -55,14 +55,14 @@ type ObjectStorageConfig struct {
 
 type ThanosReceiveControllerSpec struct {
 	// Receive Controller image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Version describes the version of Thanos receive controller to use.
 	Version string `json:"version,omitempty"`
 }
 
 type ReceiversSpec struct {
 	// Thanos image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Version of Thanos image to be deployed.
 	Version string `json:"version,omitempty"`
 	// VolumeClaimTemplate
@@ -71,24 +71,24 @@ type ReceiversSpec struct {
 
 type StoreSpec struct {
 	// Thanos image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Version of Thanos image to be deployed.
 	Version string `json:"version,omitempty"`
 	// VolumeClaimTemplate
 	VolumeClaimTemplate VolumeClaimTemplate `json:"volumeClaimTemplate"`
 	Shards              *int32              `json:"shards,omitempty"`
 	// Memcached spec for Store
-	Cache StoreCacheSpec `json:"cache"`
+	Cache StoreCacheSpec `json:"cache,omitempty"`
 }
 
 // StoreCacheSpec describes configuration for Store Memcached
 type StoreCacheSpec struct {
 	// Memcached image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Version of Memcached image to be deployed.
 	Version string `json:"version,omitempty"`
 	// Memcached Prometheus Exporter image
-	ExporterImage string `json:"exporterImage"`
+	ExporterImage string `json:"exporterImage,omitempty"`
 	// Version of Memcached Prometheus Exporter image to be deployed.
 	ExporterVersion string `json:"exporterVersion,omitempty"`
 	// Number of Memcached replicas.
@@ -99,28 +99,28 @@ type StoreCacheSpec struct {
 
 type APISpec struct {
 	// API image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Version describes the version of API to use.
 	Version string `json:"version,omitempty"`
 }
 
 type APIQuerySpec struct {
 	// Thanos image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Version of Thanos image to be deployed.
 	Version string `json:"version,omitempty"`
 }
 
 type QuerySpec struct {
 	// Thanos image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Version of Thanos image to be deployed.
 	Version string `json:"version,omitempty"`
 }
 
 type RuleSpec struct {
 	// Thanos image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Version of Thanos image to be deployed.
 	Version string `json:"version,omitempty"`
 	// VolumeClaimTemplate
@@ -129,7 +129,7 @@ type RuleSpec struct {
 
 type CompactSpec struct {
 	// Thanos image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Version of Thanos image to be deployed.
 	Version string `json:"version,omitempty"`
 	// VolumeClaimTemplate
@@ -148,7 +148,7 @@ type VolumeClaimTemplate struct {
 
 type QueryCacheSpec struct {
 	// Thanos Query Cache image
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 	// Number of Query Cache replicas.
 	Replicas *int32 `json:"replicas,omitempty"`
 	// Version of Query Cache image to be deployed.

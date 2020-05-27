@@ -1,3 +1,4 @@
+local default = import 'default-config.libsonnet';
 local cr = import 'generic-operator/config';
 local objectStorageConfig = cr.spec.objectStorageConfig;
 local hashrings = cr.spec.hashrings;
@@ -8,50 +9,53 @@ cr.spec {
   kind: cr.kind,
   apiVersion: cr.apiVersion,
   compact+:: {
-    image: cr.spec.compact.image,
-    version: cr.spec.compact.version,
+    image: if std.objectHas(cr.spec.compact, 'image') then cr.spec.compact.image else default.compact.image,
+    version: if std.objectHas(cr.spec.compact, 'version') then cr.spec.compact.version else default.compact.version,
     objectStorageConfig: objectStorageConfig,
   },
   thanosReceiveController+:: {
-    image: cr.spec.thanosReceiveController.image,
+    image: if std.objectHas(cr.spec, 'thanosReceiveController') && std.objectHas(cr.spec.thanosReceiveController, 'image') then cr.spec.thanosReceiveController.image else default.thanosReceiveController.image,
+    version: if std.objectHas(cr.spec, 'thanosReceiveController') && std.objectHas(cr.spec.thanosReceiveController, 'version') then cr.spec.thanosReceiveController.version else default.thanosReceiveController.version,
     hashrings: hashrings,
   },
   receivers+:: {
-    image: cr.spec.receivers.image,
-    version: cr.spec.receivers.version,
+    image: if std.objectHas(cr.spec.receivers, 'image') then cr.spec.receivers.image else default.receivers.image,
+    version: if std.objectHas(cr.spec.receivers, 'version') then cr.spec.receivers.version else default.receivers.version,
     hashrings: hashrings,
     objectStorageConfig: objectStorageConfig,
   },
   rule+:: {
-    image: cr.spec.rule.image,
-    version: cr.spec.rule.version,
+    image: if std.objectHas(cr.spec.rule, 'image') then cr.spec.rule.image else default.rule.image,
+    version: if std.objectHas(cr.spec.rule, 'version') then cr.spec.rule.version else default.rule.version,
     objectStorageConfig: objectStorageConfig,
   },
   store+:: {
-    image: cr.spec.store.image,
-    version: cr.spec.store.version,
+    image: if std.objectHas(cr.spec.store, 'image') then cr.spec.store.image else default.store.image,
+    version: if std.objectHas(cr.spec.store, 'version') then cr.spec.store.version else default.store.version,
     objectStorageConfig: objectStorageConfig,
   },
   storeCache+:: {
-    image: cr.spec.store.cache.image,
-    version: cr.spec.store.cache.version,
-    exporterImage: cr.spec.store.cache.exporterImage,
-    exporterVersion: cr.spec.store.cache.exporterVersion,
-    replicas: cr.spec.store.cache.replicas,
-    memoryLimitMb: cr.spec.store.cache.memoryLimitMb,
+    image: if std.objectHas(cr.spec.store, 'cache') && std.objectHas(cr.spec.store.cache, 'image') then cr.spec.store.cache.image else default.storeCache.image,
+    version: if std.objectHas(cr.spec.store, 'cache') && std.objectHas(cr.spec.store.cache, 'version') then cr.spec.store.cache.version else default.storeCache.version,
+    exporterImage: if std.objectHas(cr.spec.store, 'cache') && std.objectHas(cr.spec.store.cache, 'exporterImage') then cr.spec.store.cache.exporterImage else default.storeCache.exporterImage,
+    exporterVersion: if std.objectHas(cr.spec.store, 'cache') && std.objectHas(cr.spec.store.cache, 'exporterVersion') then cr.spec.store.cache.exporterVersion else default.storeCache.exporterVersion,
+    replicas: if std.objectHas(cr.spec.store, 'cache') && std.objectHas(cr.spec.store.cache, 'replicas') then cr.spec.store.cache.replicas else default.storeCache.replicas,
+    memoryLimitMb: if std.objectHas(cr.spec.store, 'cache') && std.objectHas(cr.spec.store.cache, 'memoryLimitMb') then cr.spec.store.cache.memoryLimitMb else default.storeCache.memoryLimitMb,
   },
   query+:: {
-    image: cr.spec.query.image,
-    version: cr.spec.query.version,
+    image: if std.objectHas(cr.spec, 'query') && std.objectHas(cr.spec.query, 'image') then cr.spec.query.image else default.query.image,
+    version: if std.objectHas(cr.spec, 'query') && std.objectHas(cr.spec.query, 'version') then cr.spec.query.version else default.query.version,
   },
   queryCache+:: {
-    image: cr.spec.queryCache.image,
+    image: if std.objectHas(cr.spec, 'queryCache') && std.objectHas(cr.spec.queryCache, 'image') then cr.spec.queryCache.image else default.queryCache.image,
+    version: if std.objectHas(cr.spec, 'queryCache') && std.objectHas(cr.spec.queryCache, 'version') then cr.spec.queryCache.version else default.queryCache.version,
   },
   apiQuery+:: {
-    image: cr.spec.apiQuery.image,
-    version: cr.spec.apiQuery.version,
+    image: if std.objectHas(cr.spec, 'apiQuery') && std.objectHas(cr.spec.apiQuery, 'image') then cr.spec.apiQuery.image else default.apiQuery.image,
+    version: if std.objectHas(cr.spec, 'apiQuery') && std.objectHas(cr.spec.apiQuery, 'version') then cr.spec.apiQuery.version else default.apiQuery.version,
   },
   api+:: {
-    image: cr.spec.api.image,
+    image: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'image') then cr.spec.api.image else default.api.image,
+    version: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'version') then cr.spec.api.version else default.api.version,
   },
 }

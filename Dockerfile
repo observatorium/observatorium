@@ -6,6 +6,7 @@ WORKDIR /workspace
 # Copy the jsonnet source
 COPY operator/ operator/
 COPY components/ components/
+COPY environments/base/default-config.libsonnet operator/jsonnet/
 # Build
 RUN GO111MODULE="on" go build github.com/brancz/locutus
 
@@ -16,7 +17,6 @@ COPY --from=builder /workspace/operator/jsonnet /environments/operator
 COPY --from=builder /workspace/components/ /components/
 COPY --from=builder /workspace/operator/jsonnet/vendor/ /vendor/
 RUN chgrp -R 0 /vendor && chmod -R g=u /vendor
-RUN chgrp -R 0 /environments && chmod -R g=u /environments
 RUN chgrp -R 0 /components && chmod -R g=u /components
 
 ARG BUILD_DATE
