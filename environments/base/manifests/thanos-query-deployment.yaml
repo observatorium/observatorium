@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: thanos-query
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: v0.12.0-rc.1
+    app.kubernetes.io/version: master-2020-05-24-079ad427
   name: observatorium-xyz-thanos-query
   namespace: observatorium
 spec:
@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-query
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: v0.12.0-rc.1
+        app.kubernetes.io/version: master-2020-05-24-079ad427
     spec:
       affinity:
         podAntiAffinity:
@@ -52,7 +52,7 @@ spec:
         - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-store-shard-0.observatorium.svc.cluster.local
         - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-receive-default.observatorium.svc.cluster.local
         - --web.external-prefix=.
-        image: quay.io/thanos/thanos:v0.12.0-rc.1
+        image: quay.io/thanos/thanos:master-2020-05-24-079ad427
         livenessProbe:
           failureThreshold: 4
           httpGet:
