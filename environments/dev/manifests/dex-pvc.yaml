@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/component: identity-provider
+    app.kubernetes.io/instance: e2e-test
+    app.kubernetes.io/name: dex
+    app.kubernetes.io/version: v2.24.0
+  name: dex
+  namespace: dex
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
