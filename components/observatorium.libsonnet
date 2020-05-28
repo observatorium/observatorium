@@ -213,16 +213,23 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       namespace: obs.config.namespace,
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
-      readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.queryCache.service.metadata.name,
-        obs.queryCache.service.metadata.namespace,
-        obs.queryCache.service.spec.ports[0].port,
-      ],
-      writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.receiveService.metadata.name,
-        obs.receiveService.metadata.namespace,
-        obs.receiveService.spec.ports[2].port,
-      ],
+      logs: {
+        // Fake logs endpoints to satisfy Observatorium flag parsing.
+        readEndpoint: 'http://127.0.0.1',
+        writeEndpoint: 'http://127.0.0.1',
+      },
+      metrics: {
+        readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.queryCache.service.metadata.name,
+          obs.queryCache.service.metadata.namespace,
+          obs.queryCache.service.spec.ports[0].port,
+        ],
+        writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.receiveService.metadata.name,
+          obs.receiveService.metadata.namespace,
+          obs.receiveService.spec.ports[2].port,
+        ],
+      },
     },
   },
 } + {
@@ -265,6 +272,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   } + {
     ['api-' + name]: obs.api[name]
     for name in std.objectFields(obs.api)
+    if obs.api[name] != null
   } + {
     ['api-thanos-query-' + name]: obs.apiQuery[name]
     for name in std.objectFields(obs.apiQuery)
