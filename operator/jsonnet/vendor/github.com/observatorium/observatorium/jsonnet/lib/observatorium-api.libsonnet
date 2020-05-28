@@ -9,14 +9,24 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     version: error 'must provide version',
     image: error 'must provide image',
     replicas: error 'must provide replicas',
-    uiEndpoint: error 'must provide uiEndpoint',
-    readEnpoint: error 'must provide readEnpoint',
-    writeEndpoint: error 'must provide writeEndpoint',
+
+    metrics: {
+      readEnpoint: error 'must provide metrics readEnpoint',
+      writeEndpoint: error 'must provide metrics writeEndpoint',
+    },
+
+    logs: {
+      readEnpoint: error 'must provide logs readEnpoint',
+      writeEndpoint: error 'must provide logs writeEndpoint',
+    },
 
     ports: {
       public: 8080,
       internal: 8081,
     },
+
+    rbac: {},
+    tenants: {},
 
     commonLabels:: {
       'app.kubernetes.io/name': 'observatorium-api',
@@ -61,10 +71,20 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       container.withArgs([
         '--web.listen=0.0.0.0:%s' % api.config.ports.public,
         '--web.internal.listen=0.0.0.0:%s' % api.config.ports.internal,
-        '--metrics.read.endpoint=' + api.config.readEndpoint,
-        '--metrics.write.endpoint=' + api.config.writeEndpoint,
+        '--logs.read.endpoint=' + api.config.logs.readEndpoint,
+        '--logs.write.endpoint=' + api.config.logs.writeEndpoint,
+        '--metrics.read.endpoint=' + api.config.metrics.readEndpoint,
+        '--metrics.write.endpoint=' + api.config.metrics.writeEndpoint,
         '--log.level=warn',
-      ]) +
+      ] + (
+        if api.config.rbac != {} then
+          ['--rbac.config=/etc/observatorium/rbac.yaml']
+        else []
+      ) + (
+        if api.config.tenants != {} then
+          ['--tenants.config=/etc/observatorium/tenants.yaml']
+        else []
+      )) +
       container.withPorts([
         containerPort.newNamed(api.config.ports[name], name)
         for name in std.objectFields(api.config.ports)
@@ -80,14 +100,80 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       container.mixin.readinessProbe.withFailureThreshold(12) +
       container.mixin.readinessProbe.httpGet.withPort(api.config.ports.internal) +
       container.mixin.readinessProbe.httpGet.withScheme('HTTP') +
-      container.mixin.readinessProbe.httpGet.withPath('/ready');
+      container.mixin.readinessProbe.httpGet.withPath('/ready') +
+      if api.config.rbac != {} || api.config.tenants != {} then
+        container.withVolumeMounts(
+          (if api.config.rbac != {} then [
+             {
+               name: 'rbac',
+               mountPath: '/etc/observatorium/rbac.yaml',
+               subPath: 'rbac.yaml',
+               readOnly: true,
+             },
+           ] else []) +
+          (if api.config.tenants != {} then [
+             {
+               name: 'tenants',
+               mountPath: '/etc/observatorium/tenants.yaml',
+               subPath: 'tenants.yaml',
+               readOnly: true,
+             },
+           ] else [])
+        ) else {};
 
     deployment.new(api.config.name, api.config.replicas, c, api.config.commonLabels) +
     deployment.mixin.metadata.withNamespace(api.config.namespace) +
     deployment.mixin.metadata.withLabels(api.config.commonLabels) +
     deployment.mixin.spec.selector.withMatchLabels(api.config.podLabelSelector) +
     deployment.mixin.spec.strategy.rollingUpdate.withMaxSurge(0) +
-    deployment.mixin.spec.strategy.rollingUpdate.withMaxUnavailable(1),
+    deployment.mixin.spec.strategy.rollingUpdate.withMaxUnavailable(1) +
+    if api.config.rbac != {} || api.config.tenants != {} then
+      deployment.mixin.spec.template.spec.withVolumes(
+        (if api.config.rbac != {} then [
+           {
+             configMap: {
+               name: api.config.name,
+             },
+             name: 'rbac',
+           },
+         ] else []) +
+        (if api.config.tenants != {} then [
+           {
+             secret: {
+               secretName: api.config.name,
+             },
+             name: 'tenants',
+           },
+         ] else [])
+      ) else {},
+
+  configmap:
+    if api.config.rbac != {} then {
+      apiVersion: 'v1',
+      data: {
+        'rbac.yaml': std.manifestYamlDoc(api.config.rbac),
+      },
+      kind: 'ConfigMap',
+      metadata: {
+        labels: api.config.commonLabels,
+        name: api.config.name,
+        namespace: api.config.namespace,
+      },
+    } else null,
+
+  secret:
+    if api.config.tenants != {} then {
+      apiVersion: 'v1',
+      stringData: {
+        'tenants.yaml': std.manifestYamlDoc(api.config.tenants),
+      },
+      kind: 'Secret',
+      metadata: {
+        labels: api.config.commonLabels,
+        name: api.config.name,
+        namespace: api.config.namespace,
+      },
+    } else null,
 
   withServiceMonitor:: {
     local api = self,
