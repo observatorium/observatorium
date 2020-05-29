@@ -18,7 +18,7 @@ In order to ease the installation of Observatorium, an operator is available.
 
 #### Create Namespaces
 ```shell script
-kubectl create namespace minio
+kubectl create namespace observatorium-minio
 kubectl create namespace observatorium
 ```
 

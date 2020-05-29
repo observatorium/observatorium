@@ -89,7 +89,7 @@ local obs = (import '../base/observatorium.jsonnet') + {
 
 local minio = (import '../../components/minio.libsonnet') + {
   config:: {
-    namespace: 'minio',
+    namespace: 'observatorium-minio',
     bucketSecretNamespace: obs.config.namespace,
   },
 };
