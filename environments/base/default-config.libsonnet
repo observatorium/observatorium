@@ -121,7 +121,7 @@
 
   api: {
     local apiConfig = self,
-    version: 'master-2020-05-11-v0.1.1-35-g3c24d9b',
+    version: 'master-2020-05-27-v0.1.1-67-gb2eb292',
     image: 'quay.io/observatorium/observatorium:' + apiConfig.version,
   },
 
@@ -132,7 +132,7 @@
 
   up: {
     local upConfig = self,
-    version: 'master-2020-03-31-6e67351',
+    version: 'master-2020-05-15-716e0b4',
     image: 'quay.io/observatorium/up:' + upConfig.version,
   },
 }

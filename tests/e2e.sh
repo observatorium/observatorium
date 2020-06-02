@@ -17,6 +17,7 @@ deploy() {
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0servicemonitorCustomResourceDefinition.yaml
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
     $KUBECTL create ns minio || true
+    $KUBECTL create ns dex || true
     $KUBECTL create ns observatorium || true
     $KUBECTL apply -f environments/dev/manifests/
 }
@@ -51,11 +52,16 @@ deploy_operator() {
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0servicemonitorCustomResourceDefinition.yaml
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
     $KUBECTL create ns minio || true
+    $KUBECTL create ns dex || true
     $KUBECTL create ns observatorium || true
     $KUBECTL apply -f environments/dev/manifests/minio-secret.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-pvc.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-deployment.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-service.yaml
+    $KUBECTL apply -f environments/dev/manifests/dex-secret.yaml
+    $KUBECTL apply -f environments/dev/manifests/dex-pvc.yaml
+    $KUBECTL apply -f environments/dev/manifests/dex-deployment.yaml
+    $KUBECTL apply -f environments/dev/manifests/dex-service.yaml
     $KUBECTL apply -f deploy/crds
     $KUBECTL apply -f deploy/
     $KUBECTL apply -n observatorium -f example/manifests
