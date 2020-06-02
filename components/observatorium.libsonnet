@@ -143,13 +143,14 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  query:: t.query {
+  query:: t.query + t.query.withQueryTimeout {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
       commonLabels+:: obs.config.commonLabels,
       replicas: 1,
+      queryTimeout: '15m',
       stores: [
         'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
         for service in
