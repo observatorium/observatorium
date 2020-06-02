@@ -50,7 +50,7 @@ spec:
             "max_idle_connections": 1000
             "max_item_size": "1MiB"
             "timeout": "2s"
-          "type": "MEMCACHED"
+          "type": "memcached"
         - |-
           --store.caching-bucket.config="blocks_iter_ttl": "5m"
           "chunk_object_attrs_ttl": "24h"
@@ -72,7 +72,7 @@ spec:
           "metafile_doesnt_exist_ttl": "15m"
           "metafile_exists_ttl": "2h"
           "metafile_max_size": "1MiB"
-          "type": "MEMCACHED"
+          "type": "memcached"
         - --ignore-deletion-marks-delay=24h
         - |
           --selector.relabel-config=
