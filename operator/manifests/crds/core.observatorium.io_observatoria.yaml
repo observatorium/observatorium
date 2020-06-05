@@ -341,18 +341,56 @@ spec:
                 - hashring
                 type: object
               type: array
+            loki:
+              description: Loki
+              properties:
+                image:
+                  description: Loki image
+                  type: string
+                replicas:
+                  additionalProperties:
+                    format: int32
+                    type: integer
+                  description: Loki replicas per component
+                  type: object
+                version:
+                  description: Version of Loki image to be deployed
+                  type: string
+              required:
+              - image
+              type: object
             objectStorageConfig:
               description: Objest Storage Configuration
               properties:
-                key:
-                  description: Object Store Config key for Thanos
-                  type: string
-                name:
-                  description: Object Store Config Secret Name for Thanos
-                  type: string
+                loki:
+                  description: Object Store Config Secret for Loki
+                  properties:
+                    key:
+                      description: Object Store Config key
+                      type: string
+                    name:
+                      description: Object Store Config Secret Name
+                      type: string
+                  required:
+                  - key
+                  - name
+                  type: object
+                thanos:
+                  description: Object Store Config Secret for Thanos
+                  properties:
+                    key:
+                      description: Object Store Config key
+                      type: string
+                    name:
+                      description: Object Store Config Secret Name
+                      type: string
+                  required:
+                  - key
+                  - name
+                  type: object
               required:
-              - key
-              - name
+              - loki
+              - thanos
               type: object
             query:
               description: Query

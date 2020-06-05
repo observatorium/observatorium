@@ -103,6 +103,7 @@ local up = (import '../../components/up.libsonnet') + {
     commonLabels+:: obs.config.commonLabels,
     version: obs.config.up.version,
     image: obs.config.up.image,
+    endpointType: 'metrics',
     writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
       obs.api.service.metadata.name,
       obs.api.service.metadata.namespace,

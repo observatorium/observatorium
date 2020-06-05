@@ -1,4 +1,5 @@
 local t = (import 'kube-thanos/thanos.libsonnet');
+local l = (import './loki.libsonnet');
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
 {
@@ -203,9 +204,21 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
       logs: {
-        // Fake logs endpoints to satisfy Observatorium flag parsing.
-        readEndpoint: 'http://127.0.0.1',
-        writeEndpoint: 'http://127.0.0.1',
+        readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.loki.manifests['query-frontend-http-service'].metadata.name,
+          obs.loki.manifests['query-frontend-http-service'].metadata.namespace,
+          obs.loki.manifests['query-frontend-http-service'].spec.ports[0].port,
+        ],
+        tailEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.loki.manifests['querier-http-service'].metadata.name,
+          obs.loki.manifests['querier-http-service'].metadata.namespace,
+          obs.loki.manifests['querier-http-service'].spec.ports[0].port,
+        ],
+        writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.loki.manifests['distributor-http-service'].metadata.name,
+          obs.loki.manifests['distributor-http-service'].metadata.namespace,
+          obs.loki.manifests['distributor-http-service'].spec.ports[0].port,
+        ],
       },
       metrics: {
         readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
@@ -221,6 +234,18 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       },
     },
   },
+
+  loki::
+    l +
+    l.withMemberList {
+      config+:: {
+        local cfg = self,
+        name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+        namespace: obs.config.namespace,
+        commonLabels+:: obs.config.commonLabels,
+        replicas: obs.config.replicas,
+      },
+    },
 } + {
   local obs = self,
 
@@ -265,5 +290,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   } + {
     ['api-thanos-query-' + name]: obs.apiQuery[name]
     for name in std.objectFields(obs.apiQuery)
+  } + {
+    ['loki-' + name]: obs.loki.manifests[name]
+    for name in std.objectFields(obs.loki.manifests)
   },
 }

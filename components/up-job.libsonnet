@@ -8,6 +8,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     version: error 'must provide version',
     image: error 'must provide image',
     backoffLimit: error 'must provide backoffLimit',
+    endpointType: error 'must provide endpoint type',
     writeEndpoint: error 'must provide writeEndpoint',
     readEndpoint: error 'must provide readEndpoint',
 
@@ -25,20 +26,23 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
     local c =
       container.new('observatorium-up', up.config.image) +
-      container.withArgs([
-        '--endpoint-write=' + up.config.writeEndpoint,
-        '--endpoint-read=' + up.config.readEndpoint,
-        '--period=1s',
-        '--duration=2m',
-        '--name=foo',
-        '--labels=bar="baz"',
-        '--latency=10s',
-        '--initial-query-delay=5s',
-        '--threshold=0.90',
-      ]);
+      container.withArgs(
+        [
+          '--endpoint-type=' + up.config.endpointType,
+          '--endpoint-write=' + up.config.writeEndpoint,
+          '--endpoint-read=' + up.config.readEndpoint,
+          '--period=1s',
+          '--duration=2m',
+          '--name=foo',
+          '--labels=bar="baz"',
+          '--latency=10s',
+          '--initial-query-delay=5s',
+          '--threshold=0.90',
+        ]
+      );
 
     job.new() +
-    job.mixin.metadata.withName('observatorium-up') +
+    job.mixin.metadata.withName(up.config.name) +
     job.mixin.spec.withBackoffLimit(up.config.backoffLimit) +
     job.mixin.spec.template.metadata.withLabels(up.config.commonLabels) +
     job.mixin.spec.template.spec.withContainers([c]) {
@@ -146,7 +150,63 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ),
   },
 
+  withLogsFile:: {
+    local job = k.batch.v1.job,
+    local container = job.mixin.spec.template.spec.containersType,
+    local u = self,
+    config+:: {
+      bashImage: error 'must provide image for bash',
+    },
+
+    job+: {
+      spec+: {
+        template+: {
+          spec+: {
+            local c =
+              container.new('logs-file', u.config.bashImage) +
+              container.withCommand([
+                '/bin/sh',
+                '-c',
+                |||
+                  cat > /var/shared/logs.yaml << EOF
+                  spec:
+                    logs: [ [ "$(date '+%s%N')", "log line"] ]
+                  EOF
+                |||,
+              ]) +
+              container.withVolumeMounts({
+                name: 'shared',
+                mountPath: '/var/shared',
+                readOnly: false,
+              }),
+
+            initContainers+: [c],
+
+            containers: [
+              if c.name == 'observatorium-up' then c {
+                resources: u.config.resources,
+                args+: [
+                  '--logs-file=/var/shared/logs.yaml',
+                ],
+              } + container.withVolumeMounts({
+                name: 'shared',
+                mountPath: '/var/shared',
+                readOnly: true,
+              }) else c
+              for c in super.containers
+            ],
+          },
+        },
+      },
+    } + job.mixin.spec.template.spec.withVolumes(
+      {
+        emptyDir: {},
+        name: 'shared',
+      }
+    ),
+  },
+
   manifests+:: {
-    'observatorium-up': up.job,
+    [up.config.name]: up.job,
   },
 }

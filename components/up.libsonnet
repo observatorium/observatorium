@@ -8,9 +8,11 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     namespace: error 'must provide namespace',
     version: error 'must provide version',
     image: error 'must provide image',
+    endpointType: error 'must provide endpoint type',
     queryConfig: {},
     readEndpoint: '',
     writeEndpoint: '',
+    logs: '',
     resources: {
       requests: {},
       limits: {},
@@ -58,6 +60,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         [
           '--duration=0',
           '--log.level=debug',
+          '--endpoint-type=' + up.config.endpointType,
         ] + (
           if up.config.queryConfig != {} then
             ['--queries-file=/etc/up/queries.yaml']
@@ -69,6 +72,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         ) + (
           if up.config.writeEndpoint != '' then
             ['--endpoint-write=' + up.config.writeEndpoint]
+          else []
+        ) + (
+          if up.config.logs != '' then
+            ['--logs=' + up.config.logs]
           else []
         )
       ) +

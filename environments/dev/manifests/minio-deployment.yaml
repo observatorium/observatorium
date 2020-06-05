@@ -18,7 +18,10 @@ spec:
       - command:
         - /bin/sh
         - -c
-        - mkdir -p /storage/thanos && /usr/bin/minio server /storage
+        - |
+          mkdir -p /storage/thanos && \
+          mkdir -p /storage/loki && \
+          /usr/bin/minio server /storage
         env:
         - name: MINIO_ACCESS_KEY
           value: minio

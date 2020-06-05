@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: observatorium-up
+  name: observatorium-up-logs
 spec:
   backoffLimit: 5
   template:
@@ -10,12 +10,13 @@ spec:
         app.kubernetes.io/component: test
         app.kubernetes.io/instance: e2e-test
         app.kubernetes.io/name: observatorium-up
-        app.kubernetes.io/version: master-2020-05-15-716e0b4
+        app.kubernetes.io/version: master-2020-06-15-d763595
     spec:
       containers:
       - args:
-        - --endpoint-write=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/receive
-        - --endpoint-read=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/query
+        - --endpoint-type=logs
+        - --endpoint-write=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/api/v1/push
+        - --endpoint-read=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/api/v1/query
         - --period=1s
         - --duration=2m
         - --name=foo
@@ -24,7 +25,8 @@ spec:
         - --initial-query-delay=5s
         - --threshold=0.90
         - --token-file=/var/shared/token
-        image: quay.io/observatorium/up:master-2020-05-15-716e0b4
+        - --logs-file=/var/shared/logs.yaml
+        image: quay.io/observatorium/up:master-2020-06-15-d763595
         name: observatorium-up
         resources:
           limits:
@@ -33,7 +35,7 @@ spec:
         volumeMounts:
         - mountPath: /var/shared
           name: shared
-          readOnly: false
+          readOnly: true
       initContainers:
       - command:
         - /bin/sh
@@ -51,6 +53,20 @@ spec:
               --data scope="openid email" | sed 's/^{.*"id_token":[^"]*"\([^"]*\)".*}/\1/' > /var/shared/token
         image: docker.io/curlimages/curl
         name: curl
+        volumeMounts:
+        - mountPath: /var/shared
+          name: shared
+          readOnly: false
+      - command:
+        - /bin/sh
+        - -c
+        - |
+          cat > /var/shared/logs.yaml << EOF
+          spec:
+            logs: [ [ "$(date '+%s%N')", "log line"] ]
+          EOF
+        image: docker.io/debian
+        name: logs-file
         volumeMounts:
         - mountPath: /var/shared
           name: shared
