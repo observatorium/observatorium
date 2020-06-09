@@ -42,9 +42,117 @@ spec:
                 image:
                   description: API image
                   type: string
+                rbac:
+                  description: RBAC is an RBAC configuration for the Observatorium
+                    API.
+                  properties:
+                    roleBindings:
+                      description: RoleBindings is a slice of Observatorium API role
+                        bindings.
+                      items:
+                        description: RBACRoleBinding binds a set of roles to a set
+                          of subjects.
+                        properties:
+                          name:
+                            description: Name is the name of the role binding.
+                            type: string
+                          roles:
+                            description: Roles is a list of roles that will be bound.
+                            items:
+                              type: string
+                            type: array
+                          subjects:
+                            description: Subjects is a list of subjects who will be
+                              given access to the specified roles.
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - name
+                        - roles
+                        - subjects
+                        type: object
+                      type: array
+                    roles:
+                      description: Roles is a slice of Observatorium API roles.
+                      items:
+                        description: RBACRole describes a set of permissions to interact
+                          with a tenant.
+                        properties:
+                          name:
+                            description: Name is the name of the role.
+                            type: string
+                          permissions:
+                            description: Permissions is a list of permissions that
+                              will be granted.
+                            items:
+                              description: Permission is an Observatorium RBAC permission.
+                              type: string
+                            type: array
+                          resources:
+                            description: Resources is a list of resources to which
+                              access will be granted.
+                            items:
+                              type: string
+                            type: array
+                          tenants:
+                            description: Tenants is a list of tenants whose resources
+                              will be considered.
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - name
+                        - permissions
+                        - resources
+                        - tenants
+                        type: object
+                      type: array
+                  required:
+                  - roleBindings
+                  - roles
+                  type: object
+                tenants:
+                  description: Tenants is a slice of tenants for the Observatorium
+                    API.
+                  items:
+                    description: APITenant represents a tenant in the Observatorium
+                      API.
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      oidc:
+                        description: TenantOIDC represents the OIDC configuration
+                          for an Observatorium API tenant.
+                        properties:
+                          clientID:
+                            type: string
+                          clientSecret:
+                            type: string
+                          issuerURL:
+                            type: string
+                          redirectURL:
+                            type: string
+                          usernameClaim:
+                            type: string
+                        required:
+                        - clientID
+                        - issuerURL
+                        type: object
+                    required:
+                    - id
+                    - name
+                    - oidc
+                    type: object
+                  type: array
                 version:
                   description: Version describes the version of API to use.
                   type: string
+              required:
+              - rbac
+              - tenants
               type: object
             apiQuery:
               description: API Query
@@ -743,7 +851,6 @@ spec:
                   - spec
                   type: object
               required:
-              - cache
               - volumeClaimTemplate
               type: object
             thanosReceiveController:
@@ -761,7 +868,6 @@ spec:
           - compact
           - hashrings
           - objectStorageConfig
-          - queryCache
           - receivers
           - rule
           - store

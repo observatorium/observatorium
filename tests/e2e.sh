@@ -62,8 +62,8 @@ deploy_operator() {
     $KUBECTL apply -f environments/dev/manifests/dex-pvc.yaml
     $KUBECTL apply -f environments/dev/manifests/dex-deployment.yaml
     $KUBECTL apply -f environments/dev/manifests/dex-service.yaml
-    $KUBECTL apply -f deploy/crds
-    $KUBECTL apply -f deploy/
+    $KUBECTL apply -f operator/manifests/crds
+    $KUBECTL apply -f operator/manifests/
     $KUBECTL apply -n observatorium -f example/manifests
     wait_for_cr observatorium-xyz
 }
