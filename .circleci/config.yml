@@ -1,6 +1,6 @@
 jobs:
   build:
-    working_directory: /go/src/github.com/observatorium/configuration
+    working_directory: /go/src/github.com/observatorium/deployments
     docker:
       - image: quay.io/coreos/jsonnet-ci
     steps:

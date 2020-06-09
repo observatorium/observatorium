@@ -15,7 +15,7 @@ JB ?= $(BIN_DIR)/jb
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: $(CONTROLLER_GEN)
-	cd operator; $(CONTROLLER_GEN) crd paths="./..." output:crd:artifacts:config=../deploy/crds
+	cd operator; $(CONTROLLER_GEN) crd paths="./..." output:crd:artifacts:config=manifests/crds
 
 # Run go fmt against code
 fmt:
