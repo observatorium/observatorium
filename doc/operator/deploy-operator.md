@@ -6,7 +6,7 @@
 Check the following resources for more information about Observatorium:
 * [Documentation repository](https://github.com/observatorium/docs/)
 * [Observatorium API](https://github.com/observatorium/observatorium/)
-* [Observatorium configuration repository](https://github.com/observatorium/configuration)
+* [Observatorium deployments repository](https://github.com/observatorium/deployments)
 * [Locutus - The framework which the operator is based on](https://github.com/brancz/locutus)
 
 
@@ -26,10 +26,10 @@ kubectl create namespace observatorium
 #### S3 storage endpoint and secret
 For **testing purposes** you may use [minio](https://github.com/minio/minio) as describe below.
 ```shell script
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/environments/dev/manifests/minio-secret.yaml
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/environments/dev/manifests/minio-pvc.yaml
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/environments/dev/manifests/minio-deployment.yaml
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/environments/dev/manifests/minio-service.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/environments/dev/manifests/minio-secret.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/environments/dev/manifests/minio-pvc.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/environments/dev/manifests/minio-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/environments/dev/manifests/minio-service.yaml
 ```
 
 ### Deployment
@@ -43,20 +43,20 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master
 
 #### RBAC Configuration
 ```shell script
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/deploy/cluster_role.yaml
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/deploy/cluster_role_binding.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/deploy/cluster_role.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/deploy/cluster_role_binding.yaml
 ```
 
 #### Deploy Observatorium CRD and Operator
 * In case you need to force a new image download (e.g. development environment), please refer to the [development section](#Development).
 ```shell script
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/deploy/crds/core.observatorium.io_observatoria.yaml
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/deploy/crds/core.observatorium.io_observatoria.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/deploy/operator.yaml
 ```
 
 ## Deploy an example CR
 ```shell script
-kubectl apply -n observatorium -f https://raw.githubusercontent.com/observatorium/configuration/master/example/manifests/observatorium.yaml
+kubectl apply -n observatorium -f https://raw.githubusercontent.com/observatorium/deployments/master/example/manifests/observatorium.yaml
 ```
 Monitor the CR status and wait for status --> Finished
 ```shell script
@@ -129,7 +129,7 @@ oc -n observatorium expose svc observatorium-xyz-observatorium-api --port=public
 
 ### (Option A) Transmit Metrics via Remote Write Client
 ```shell script
-kubectl -n default apply -f https://raw.githubusercontent.com/observatorium/configuration/master/tests/manifests/observatorium-up.yaml
+kubectl -n default apply -f https://raw.githubusercontent.com/observatorium/deployments/master/tests/manifests/observatorium-up.yaml
 kubectl wait --for=condition=complete --timeout=5m -n default job/observatorium-up
 ````
 Result
@@ -163,9 +163,9 @@ Thus, the data source URL: `http://observatorium-xyz-observatorium-api.observato
 
 #### Deploy Grafana
 ```shell script
-kubectl -n observatorium apply -f https://raw.githubusercontent.com/observatorium/configuration/master/doc/operator/grafana/grafana.yaml
-kubectl -n observatorium apply -f https://raw.githubusercontent.com/observatorium/configuration/master/doc/operator/grafana/grafana-cm.yaml
-kubectl -n observatorium apply -f https://raw.githubusercontent.com/observatorium/configuration/master/doc/operator/grafana/grafana-svc.yaml
+kubectl -n observatorium apply -f https://raw.githubusercontent.com/observatorium/deployments/master/doc/operator/grafana/grafana.yaml
+kubectl -n observatorium apply -f https://raw.githubusercontent.com/observatorium/deployments/master/doc/operator/grafana/grafana-cm.yaml
+kubectl -n observatorium apply -f https://raw.githubusercontent.com/observatorium/deployments/master/doc/operator/grafana/grafana-svc.yaml
 ```
 
 #### Expose Grafana for external traffic
@@ -185,7 +185,7 @@ You should now be able to see the 'foo' metric generated by the up client you in
 ## Development
 * Create the operator while forcing Kubernetes / OpenShift to download the image.  
 ```shell script
-curl https://raw.githubusercontent.com/observatorium/configuration/master/deploy/operator.yaml | \
+curl https://raw.githubusercontent.com/observatorium/deployments/master/deploy/operator.yaml | \
 sed 's/imagePullPolicy\: IfNotPresent/imagePullPolicy\: Always/g' > observatorium-operator.yaml && \
 kubectl -n default create -f observatorium-operator.yaml && rm -f observatorium-operator.yaml
 ```
