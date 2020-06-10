@@ -1,4 +1,4 @@
-module github.com/observatorium/configuration/operator
+module github.com/observatorium/deployments/operator
 
 go 1.14
 
