@@ -93,7 +93,7 @@ func generateUnifiedCSV(userData csvUserData) error {
 	operatorCSV.Spec.Links = []csvv1.AppLink{
 		{
 			Name: "Source Code",
-			URL:  "https://github.com/observatorium/configuration",
+			URL:  "https://github.com/observatorium/deployments",
 		},
 	}
 

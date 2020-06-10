@@ -1,5 +1,5 @@
 {
     "categories": "OpenShift Optional",
     "description": "Observatorium Operator provides the ability to install the components that comprise the Observatorium project.",
-    "repository": "https://github.com/observatorium/configuration"
+    "repository": "https://github.com/observatorium/deployments"
 }

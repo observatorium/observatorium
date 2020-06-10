@@ -134,7 +134,7 @@ metadata:
     containerImage: quay.io/observatorium/observatorium-operator:latest
     description: Observatorium Operator provides the ability to install the components
       that comprise the Observatorium project.
-    repository: https://github.com/observatorium/configuration
+    repository: https://github.com/observatorium/deployments
   name: observatorium-operator.v0.0.1
   namespace: placeholder
 spec:
@@ -322,7 +322,7 @@ spec:
   - thanos
   links:
   - name: Source Code
-    url: https://github.com/observatorium/configuration
+    url: https://github.com/observatorium/deployments
   maintainers:
   - email: team-observability-platform@redhat.com
     name: Observatorium Project
