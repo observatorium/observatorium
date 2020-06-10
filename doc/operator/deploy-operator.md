@@ -57,9 +57,9 @@ kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/mas
 #### Deploy via Operator Lifecycle Manager (OLM) - OpenShift Only
 Alternatively, the operator can be deployed and managed by OLM.
 ```shell script
-oc apply -f https://raw.githubusercontent.com/observatorium/deployments/master/deploy/olm/operator_operatorgroup.yaml
-oc apply -f https://raw.githubusercontent.com/observatorium/deployments/master/deploy/olm/operator_catalogsource.yaml
-oc apply -f https://raw.githubusercontent.com/observatorium/deployments/master/deploy/olm/operator_subscription.yaml
+oc apply -f https://raw.githubusercontent.com/observatorium/deployments/master/operator/manifests/olm/operator_operatorgroup.yaml
+oc apply -f https://raw.githubusercontent.com/observatorium/deployments/master/operator/manifests/olm/operator_catalogsource.yaml
+oc apply -f https://raw.githubusercontent.com/observatorium/deployments/master/operator/manifests/olm/operator_subscription.yaml
 ```
 
 ## Deploy an example CR

@@ -23,13 +23,13 @@ spec:
     volumeClaimTemplate:
       spec:
         accessModes:
-        - ReadWriteOnce
+          - ReadWriteOnce
         resources:
           requests:
             storage: 50Gi
   hashrings:
-  - hashring: default
-    tenants: []
+    - hashring: default
+      tenants: []
   objectStorageConfig:
     key: thanos.yaml
     name: thanos-objectstorage
@@ -46,7 +46,7 @@ spec:
     volumeClaimTemplate:
       spec:
         accessModes:
-        - ReadWriteOnce
+          - ReadWriteOnce
         resources:
           requests:
             storage: 50Gi
@@ -56,7 +56,7 @@ spec:
     volumeClaimTemplate:
       spec:
         accessModes:
-        - ReadWriteOnce
+          - ReadWriteOnce
         resources:
           requests:
             storage: 50Gi
@@ -74,7 +74,7 @@ spec:
     volumeClaimTemplate:
       spec:
         accessModes:
-        - ReadWriteOnce
+          - ReadWriteOnce
         resources:
           requests:
             storage: 50Gi

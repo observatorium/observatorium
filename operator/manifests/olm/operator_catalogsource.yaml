@@ -4,10 +4,7 @@ metadata:
   name: observatorium-operator-catalogsource
   namespace: openshift-marketplace
 spec:
-  displayName: Observatorium Operator
-  icon:
-    base64data: ""
-    mediatype: ""
+  displayName: Observatorium Operator 
   image: quay.io/observatorium/observatorium-operator-registry:latest
   publisher: Red Hat
   sourceType: grpc

@@ -100,5 +100,5 @@ tests/manifests: tests/main.jsonnet $(JSONNET_SRC) vendor-jsonnet
 
 generate-csv:
 	CONTAINER=$(shell docker create $(shell docker build . -f Dockerfile.csv -q)); \
-	docker cp $$CONTAINER:/workspace/deploy/olm-catalog deploy/; \
+	docker cp $$CONTAINER:/workspace/deploy/olm-catalog operator/manifests/; \
 	docker rm $$CONTAINER

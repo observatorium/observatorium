@@ -5,11 +5,11 @@ RUN apk add --no-cache bash
 WORKDIR /workspace
 
 # Copy resources
-ENV TOOLS_DIR tools/
+ENV TOOLS_DIR tools
 ENV DEPLOY_DIR deploy
 ENV GENERATOR_SCRIPT ${TOOLS_DIR}/csv-generate.sh
 COPY operator/csv-generator ${TOOLS_DIR}/csv-generator
-COPY deploy/ ${DEPLOY_DIR}
+COPY operator/manifests/ ${DEPLOY_DIR}
 COPY operator/hack/csv-generate.sh ${GENERATOR_SCRIPT}
 
 # Download operator-sdk

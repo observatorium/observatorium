@@ -53,7 +53,8 @@ func generateUnifiedCSV(userData csvUserData) error {
 
 	// this forces us to update this logic if another deployment is introduced.
 	if len(strategySpec.DeploymentSpecs) != 1 {
-		fmt.Errorf("expected 1 deployment, found %d", len(strategySpec.DeploymentSpecs))
+		log.Fatal("expected 1 deployment %v", operatorCSV)
+		log.Fatal("expected 1 deployment, found: ", len(strategySpec.DeploymentSpecs))
 	}
 
 	strategySpec.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image = *operatorImage
