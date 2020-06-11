@@ -16,8 +16,8 @@ kind() {
 deploy() {
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0servicemonitorCustomResourceDefinition.yaml
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
-    $KUBECTL create ns minio || true
     $KUBECTL create ns dex || true
+    $KUBECTL create ns observatorium-minio || true
     $KUBECTL create ns observatorium || true
     $KUBECTL apply -f environments/dev/manifests/
 }
@@ -51,8 +51,8 @@ deploy_operator() {
     ./kind load docker-image quay.io/observatorium/observatorium-operator:latest
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0servicemonitorCustomResourceDefinition.yaml
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
-    $KUBECTL create ns minio || true
     $KUBECTL create ns dex || true
+    $KUBECTL create ns observatorium-minio || true
     $KUBECTL create ns observatorium || true
     $KUBECTL apply -f environments/dev/manifests/minio-secret.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-pvc.yaml
@@ -93,7 +93,7 @@ delete_cr() {
 }
 
 run_test() {
-    $KUBECTL wait --for=condition=available --timeout=10m -n minio deploy/minio || ($KUBECTL get pods --all-namespaces && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium-minio deploy/minio || ($KUBECTL get pods --all-namespaces && exit 1)
     $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query || ($KUBECTL get pods --all-namespaces && exit 1)
 
     $KUBECTL apply -f tests/manifests/observatorium-up.yaml
