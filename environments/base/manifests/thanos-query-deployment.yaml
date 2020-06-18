@@ -52,7 +52,6 @@ spec:
         - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-store-shard-0.observatorium.svc.cluster.local
         - --store=dnssrv+_grpc._tcp.observatorium-xyz-thanos-receive-default.observatorium.svc.cluster.local
         - --query.timeout=15m
-        - --web.external-prefix=.
         image: quay.io/thanos/thanos:master-2020-05-24-079ad427
         livenessProbe:
           failureThreshold: 4
