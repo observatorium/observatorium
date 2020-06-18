@@ -160,22 +160,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       ],
       replicaLabels: obs.config.replicaLabels,
     },
-    deployment+: {
-      spec+: {
-        template+: {
-          spec+: {
-            containers: [
-              if c.name == 'thanos-query' then c {
-                args+: [
-                  '--web.external-prefix=.',
-                ],
-              } else c
-              for c in super.containers
-            ],
-          },
-        },
-      },
-    },
   },
 
   queryCache:: (import 'cortex-query-frontend.libsonnet') + {
