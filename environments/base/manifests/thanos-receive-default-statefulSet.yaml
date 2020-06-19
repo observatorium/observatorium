@@ -12,7 +12,7 @@ metadata:
   name: observatorium-xyz-thanos-receive-default
   namespace: observatorium
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: database-write-hashring
@@ -62,7 +62,7 @@ spec:
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:10902
         - --remote-write.address=0.0.0.0:19291
-        - --receive.replication-factor=3
+        - --receive.replication-factor=1
         - --objstore.config=$(OBJSTORE_CONFIG)
         - --tsdb.path=/var/thanos/receive
         - --label=replica="$(NAME)"

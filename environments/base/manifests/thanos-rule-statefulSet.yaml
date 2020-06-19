@@ -10,7 +10,7 @@ metadata:
   name: observatorium-xyz-thanos-rule
   namespace: observatorium
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: rule-evaluation-engine

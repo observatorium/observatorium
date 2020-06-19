@@ -14,20 +14,30 @@ jobs:
     machine: true
     steps:
       - checkout
-      - run: |
-          ./tests/e2e.sh kind
-          ./tests/e2e.sh deploy
-          ./tests/e2e.sh test
+      - run:
+          name: e2e tests
+          no_output_timeout: 30m
+          command : |
+            ./tests/e2e.sh kind
+            ./tests/e2e.sh deploy
+            ./tests/e2e.sh test
+      - store_artifacts:
+          path: /tmp/artifacts
 
   test-operator:
     machine: true
     steps:
       - checkout
-      - run: |
-          ./tests/e2e.sh kind
-          ./tests/e2e.sh deploy-operator
-          ./tests/e2e.sh test
-          ./tests/e2e.sh delete-cr
+      - run:
+          name: e2e tests with operator
+          no_output_timeout: 30m
+          command: |
+            ./tests/e2e.sh kind
+            ./tests/e2e.sh deploy-operator
+            ./tests/e2e.sh test
+            ./tests/e2e.sh delete-cr
+      - store_artifacts:
+          path: /tmp/artifacts
 
   container-push:
     machine:
