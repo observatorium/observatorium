@@ -3,6 +3,7 @@
 set -e
 set -o pipefail
 
+ARTIFACT_DIR="${ARTIFACT_DIR:-/tmp/artifacts}"
 KUBECTL="${KUBECTL:-./kubectl}"
 OS_TYPE=$(echo `uname -s` | tr '[:upper:]' '[:lower:]')
 
@@ -93,15 +94,44 @@ delete_cr() {
 }
 
 run_test() {
-    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium-minio deploy/minio || ($KUBECTL get pods --all-namespaces && exit 1)
-    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query || ($KUBECTL get pods --all-namespaces && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium-minio deploy/minio || (must_gather "$ARTIFACT_DIR" && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query || (must_gather "$ARTIFACT_DIR" && exit 1)
+
 
     $KUBECTL apply -f tests/manifests/observatorium-up.yaml
 
     sleep 5
 
     # This should wait for ~2min for the job to finish.
-    $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up || ($KUBECTL get pods --all-namespaces && exit 1)
+    $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up || (must_gather "$ARTIFACT_DIR" && exit 1)
+}
+
+must_gather() {
+    local artifact_dir="$1"
+
+    for namespace in default dex observatorium observatorium-minio; do
+        mkdir -p "$artifact_dir/$namespace"
+
+        for name in $($KUBECTL get pods -n "$namespace" -o jsonpath='{.items[*].metadata.name}') ; do
+            $KUBECTL -n "$namespace" describe pod "$name" > "$artifact_dir/$namespace/$name.describe"
+            $KUBECTL -n "$namespace" get pod "$name" -o yaml > "$artifact_dir/$namespace/$name.yaml"
+
+            for initContainer in $($KUBECTL -n "$namespace" get po "$name" -o jsonpath='{.spec.initContainers[*].name}') ; do
+                $KUBECTL -n "$namespace" logs "$name" -c "$container" > "$artifact_dir/$namespace/$name-$initContainer.logs"
+            done
+
+            for container in $($KUBECTL -n "$namespace" get po "$name" -o jsonpath='{.spec.containers[*].name}') ; do
+                $KUBECTL -n "$namespace" logs "$name" -c "$container" > "$artifact_dir/$namespace/$name-$container.logs"
+            done
+        done
+    done
+
+    $KUBECTL describe nodes > "$artifact_dir/nodes"
+    $KUBECTL get pods --all-namespaces > "$artifact_dir/pods"
+    $KUBECTL get deploy --all-namespaces > "$artifact_dir/deployments"
+    $KUBECTL get statefulset --all-namespaces > "$artifact_dir/statefulsets"
+    $KUBECTL get services --all-namespaces > "$artifact_dir/services"
+    $KUBECTL get endpoints --all-namespaces > "$artifact_dir/endpoints"
 }
 
 case $1 in
@@ -126,6 +156,6 @@ delete-cr)
     ;;
 
 *)
-    echo "usage: $(basename "$0") { kind | deploy | test | deploy-operator | delete-cr}"
+    echo "usage: $(basename "$0") { kind | deploy | test | deploy-operator | delete-cr }"
     ;;
 esac

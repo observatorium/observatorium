@@ -40,11 +40,11 @@ spec:
           name: client
         resources:
           limits:
-            cpu: "3"
-            memory: 1536Mi
+            cpu: 200m
+            memory: 256Mi
           requests:
-            cpu: 500m
-            memory: 1329Mi
+            cpu: 100m
+            memory: 128Mi
         terminationMessagePolicy: FallbackToLogsOnError
       - args:
         - --memcached.address=localhost:11211
