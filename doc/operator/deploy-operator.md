@@ -26,10 +26,10 @@ kubectl create namespace observatorium
 For **testing purposes** you may use [minio](https://github.com/minio/minio) as describe below.
 ```shell script
 kubectl create namespace observatorium-minio
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/environments/dev/manifests/minio-secret.yaml
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/environments/dev/manifests/minio-pvc.yaml
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/environments/dev/manifests/minio-deployment.yaml
-kubectl apply -f https://raw.githubusercontent.com/observatorium/configuration/master/environments/dev/manifests/minio-service.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/environments/dev/manifests/minio-secret.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/environments/dev/manifests/minio-pvc.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/environments/dev/manifests/minio-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/observatorium/deployments/master/environments/dev/manifests/minio-service.yaml
 ```
 
 ### Deployment
