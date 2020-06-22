@@ -9,7 +9,7 @@ OS_TYPE=$(echo `uname -s` | tr '[:upper:]' '[:lower:]')
 
 kind() {
     curl -LO https://storage.googleapis.com/kubernetes-release/release/"$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"/bin/$OS_TYPE/amd64/kubectl
-    curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-$OS_TYPE-amd64
+    curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/v0.8.1/kind-$OS_TYPE-amd64
     chmod +x kind kubectl
     ./kind create cluster
 }
@@ -55,7 +55,8 @@ deploy_operator() {
     $KUBECTL create ns dex || true
     $KUBECTL create ns observatorium-minio || true
     $KUBECTL create ns observatorium || true
-    $KUBECTL apply -f environments/dev/manifests/minio-secret.yaml
+    $KUBECTL apply -f environments/dev/manifests/minio-secret-thanos.yaml
+    $KUBECTL apply -f environments/dev/manifests/minio-secret-loki.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-pvc.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-deployment.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-service.yaml
@@ -94,16 +95,24 @@ delete_cr() {
 }
 
 run_test() {
+
     $KUBECTL wait --for=condition=available --timeout=10m -n observatorium-minio deploy/minio || (must_gather "$ARTIFACT_DIR" && exit 1)
     $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query || (must_gather "$ARTIFACT_DIR" && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-loki-query-frontend || (must_gather "$ARTIFACT_DIR" && exit 1)
 
-
-    $KUBECTL apply -f tests/manifests/observatorium-up.yaml
+    $KUBECTL apply -f tests/manifests/observatorium-up-metrics.yaml
 
     sleep 5
 
     # This should wait for ~2min for the job to finish.
-    $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up || (must_gather "$ARTIFACT_DIR" && exit 1)
+    $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up-metrics || (must_gather "$ARTIFACT_DIR" && exit 1)
+
+    $KUBECTL apply -f tests/manifests/observatorium-up-logs.yaml
+
+    sleep 5
+
+    # This should wait for ~2min for the job to finish.
+    $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up-logs || (must_gather "$ARTIFACT_DIR" && exit 1)
 }
 
 must_gather() {

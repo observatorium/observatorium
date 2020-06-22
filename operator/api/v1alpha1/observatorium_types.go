@@ -44,12 +44,21 @@ type ObservatoriumSpec struct {
 	APIQuery APIQuerySpec `json:"apiQuery,omitempty"`
 	// Query
 	Query QuerySpec `json:"query,omitempty"`
+	// Loki
+	Loki LokiSpec `json:"loki,omitempty"`
 }
 
 type ObjectStorageConfig struct {
-	// Object Store Config Secret Name for Thanos
+	// Object Store Config Secret for Thanos
+	Thanos ObjectStorageConfigSpec `json:"thanos"`
+	// Object Store Config Secret for Loki
+	Loki ObjectStorageConfigSpec `json:"loki"`
+}
+
+type ObjectStorageConfigSpec struct {
+	// Object Store Config Secret Name
 	Name string `json:"name"`
-	// Object Store Config key for Thanos
+	// Object Store Config key
 	Key string `json:"key"`
 }
 
@@ -220,6 +229,15 @@ type Hashring struct {
 	Hashring string `json:"hashring"`
 	// Tenants describes a lists of tenants.
 	Tenants []string `json:"tenants,omitempty"`
+}
+
+type LokiSpec struct {
+	// Loki image
+	Image string `json:"image"`
+	// Loki replicas per component
+	Replicas map[string]int32 `json:"replicas,omitempty"`
+	// Version of Loki image to be deployed
+	Version string `json:"version,omitempty"`
 }
 
 // ObservatoriumStatus defines the observed state of Observatorium

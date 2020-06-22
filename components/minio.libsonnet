@@ -33,7 +33,11 @@
               command: [
                 '/bin/sh',
                 '-c',
-                'mkdir -p /storage/thanos && /usr/bin/minio server /storage',
+                |||
+                  mkdir -p /storage/thanos && \
+                  mkdir -p /storage/loki && \
+                  /usr/bin/minio server /storage
+                |||,
               ],
               env: [
                 {
@@ -95,7 +99,7 @@
     },
   },
 
-  secret: {
+  secretThanos: {
     apiVersion: 'v1',
     kind: 'Secret',
     metadata: {
@@ -112,6 +116,19 @@
           access_key: minio
           secret_key: minio123
       ||| % [minio.service.metadata.name, minio.config.namespace],
+    },
+    type: 'Opaque',
+  },
+
+  secretLoki: {
+    apiVersion: 'v1',
+    kind: 'Secret',
+    metadata: {
+      name: 'loki-objectstorage',
+      namespace: minio.config.bucketSecretNamespace,
+    },
+    stringData: {
+      endpoint: 'http://minio:minio123@%s.%s.svc.cluster.local.:9000/loki' % [minio.service.metadata.name, minio.config.namespace],
     },
     type: 'Opaque',
   },
@@ -141,7 +158,8 @@
   manifests+:: {
     'minio-deployment': minio.deployment,
     'minio-pvc': minio.pvc,
-    'minio-secret': minio.secret,
+    'minio-secret-thanos': minio.secretThanos,
+    'minio-secret-loki': minio.secretLoki,
     'minio-service': minio.service,
   },
 }

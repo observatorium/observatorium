@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: distributor
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/part-of: observatorium
+    app.kubernetes.io/version: master-815c475
+  name: observatorium-xyz-loki-distributor
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: distributor
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: loki
+      app.kubernetes.io/part-of: observatorium
+      loki.grafana.com/gossip: "true"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: distributor
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: loki
+        app.kubernetes.io/part-of: observatorium
+        loki.grafana.com/gossip: "true"
+    spec:
+      containers:
+      - args:
+        - -target=distributor
+        - -config.file=/etc/loki/config/config.yaml
+        - -limits.per-user-override-config=/etc/loki/config/overrides.yaml
+        - -s3.url=$(S3_URL)
+        - -s3.force-path-style=true
+        - -log.level=error
+        env:
+        - name: S3_URL
+          valueFrom:
+            secretKeyRef:
+              key: endpoint
+              name: loki-objectstorage
+        image: docker.io/grafana/loki:master-815c475
+        name: observatorium-xyz-loki-distributor
+        ports:
+        - containerPort: 3100
+          name: metrics
+        - containerPort: 9095
+          name: grpc
+        - containerPort: 7946
+          name: gossip-ring
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3100
+            scheme: HTTP
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        volumeMounts:
+        - mountPath: /etc/loki/config/
+          name: config
+          readOnly: false
+        - mountPath: /data
+          name: storage
+          readOnly: false
+      volumes:
+      - configMap:
+          name: observatorium-xyz-loki
+        name: config
+      - emptyDir: {}
+        name: storage

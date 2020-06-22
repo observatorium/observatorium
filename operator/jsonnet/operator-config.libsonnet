@@ -1,6 +1,8 @@
 local default = import 'default-config.libsonnet';
 local cr = import 'generic-operator/config';
 local objectStorageConfig = cr.spec.objectStorageConfig;
+local thanosObjectStorageConfig = objectStorageConfig.thanos;
+local lokiObjectStorageConfig = objectStorageConfig.loki;
 local hashrings = cr.spec.hashrings;
 cr.spec {
   name: cr.metadata.name,
@@ -11,7 +13,7 @@ cr.spec {
   compact+:: {
     image: if std.objectHas(cr.spec.compact, 'image') then cr.spec.compact.image else default.compact.image,
     version: if std.objectHas(cr.spec.compact, 'version') then cr.spec.compact.version else default.compact.version,
-    objectStorageConfig: objectStorageConfig,
+    objectStorageConfig: thanosObjectStorageConfig,
   },
   thanosReceiveController+:: {
     image: if std.objectHas(cr.spec, 'thanosReceiveController') && std.objectHas(cr.spec.thanosReceiveController, 'image') then cr.spec.thanosReceiveController.image else default.thanosReceiveController.image,
@@ -22,17 +24,17 @@ cr.spec {
     image: if std.objectHas(cr.spec.receivers, 'image') then cr.spec.receivers.image else default.receivers.image,
     version: if std.objectHas(cr.spec.receivers, 'version') then cr.spec.receivers.version else default.receivers.version,
     hashrings: hashrings,
-    objectStorageConfig: objectStorageConfig,
+    objectStorageConfig: thanosObjectStorageConfig,
   },
   rule+:: {
     image: if std.objectHas(cr.spec.rule, 'image') then cr.spec.rule.image else default.rule.image,
     version: if std.objectHas(cr.spec.rule, 'version') then cr.spec.rule.version else default.rule.version,
-    objectStorageConfig: objectStorageConfig,
+    objectStorageConfig: thanosObjectStorageConfig,
   },
   store+:: {
     image: if std.objectHas(cr.spec.store, 'image') then cr.spec.store.image else default.store.image,
     version: if std.objectHas(cr.spec.store, 'version') then cr.spec.store.version else default.store.version,
-    objectStorageConfig: objectStorageConfig,
+    objectStorageConfig: thanosObjectStorageConfig,
   },
   storeCache+:: {
     image: if std.objectHas(cr.spec.store, 'cache') && std.objectHas(cr.spec.store.cache, 'image') then cr.spec.store.cache.image else default.storeCache.image,
@@ -59,5 +61,11 @@ cr.spec {
     version: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'version') then cr.spec.api.version else default.api.version,
     rbac: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'rbac') then cr.spec.api.rbac else default.api.rbac,
     tenants: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'tenants') then { tenants: cr.spec.api.tenants } else default.api.tenants,
+  },
+  loki+:: {
+    image: cr.spec.loki.image,
+    replicas: cr.spec.loki.replicas,
+    version: cr.spec.loki.version,
+    objectStorageConfig: lokiObjectStorageConfig,
   },
 }
