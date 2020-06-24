@@ -1,4 +1,5 @@
 local t = (import 'kube-thanos/thanos.libsonnet');
+local l = (import './loki.libsonnet');
 local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
 {
@@ -49,9 +50,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           local cfg = self,
           name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'] + '-' + hashring.hashring,
           namespace: obs.config.namespace,
-          replicas: 3,
-          replicationFactor: 3,
-          retention: '15d',
+          replicas: 1,
+          replicationFactor: 1,
+          retention: '4d',
           hashringConfigMapName: '%s-generated' % obs.thanosReceiveController.configmap.metadata.name,
           commonLabels+::
             obs.config.commonLabels {
@@ -89,7 +90,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
-      replicas: 2,
+      replicas: 1,
       commonLabels+:: obs.config.commonLabels,
     },
   },
@@ -98,6 +99,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ['shard' + i]:
       t.store +
       t.store.withIndexCacheMemcached +
+      t.store.withCachingBucketMemcached +
       t.store.withIgnoreDeletionMarksDelay {
         config+:: {
           local cfg = self,
@@ -109,7 +111,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           replicas: 1,
           ignoreDeletionMarksDelay: '24h',
           memcached+: {
-            addresses: ['dnssrv+_client._tcp.%s.%s.svc.cluster.local' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
+            addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
             timeout: '2s',
             maxIdleConnections: 1000,
             maxAsyncConcurrency: 100,
@@ -154,16 +156,21 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       name: obs.config.name + '-thanos-store-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
       commonLabels+:: obs.config.commonLabels,
+      cpuRequest:: '100m',
+      cpuLimit:: '200m',
+      memoryRequestBytes: 128 * 1024 * 1024,
+      memoryLimitBytes: 256 * 1024 * 1024,
     },
   },
 
-  query:: t.query {
+  query:: t.query + t.query.withQueryTimeout {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
       commonLabels+:: obs.config.commonLabels,
       replicas: 1,
+      queryTimeout: '15m',
       stores: [
         'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
         for service in
@@ -172,22 +179,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
       ],
       replicaLabels: obs.config.replicaLabels,
-    },
-    deployment+: {
-      spec+: {
-        template+: {
-          spec+: {
-            containers: [
-              if c.name == 'thanos-query' then c {
-                args+: [
-                  '--web.external-prefix=.',
-                ],
-              } else c
-              for c in super.containers
-            ],
-          },
-        },
-      },
     },
   },
 
@@ -227,18 +218,49 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       namespace: obs.config.namespace,
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
-      readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.queryCache.service.metadata.name,
-        obs.queryCache.service.metadata.namespace,
-        obs.queryCache.service.spec.ports[0].port,
-      ],
-      writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.receiveService.metadata.name,
-        obs.receiveService.metadata.namespace,
-        obs.receiveService.spec.ports[2].port,
-      ],
+      logs: {
+        readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.loki.manifests['query-frontend-http-service'].metadata.name,
+          obs.loki.manifests['query-frontend-http-service'].metadata.namespace,
+          obs.loki.manifests['query-frontend-http-service'].spec.ports[0].port,
+        ],
+        tailEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.loki.manifests['querier-http-service'].metadata.name,
+          obs.loki.manifests['querier-http-service'].metadata.namespace,
+          obs.loki.manifests['querier-http-service'].spec.ports[0].port,
+        ],
+        writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.loki.manifests['distributor-http-service'].metadata.name,
+          obs.loki.manifests['distributor-http-service'].metadata.namespace,
+          obs.loki.manifests['distributor-http-service'].spec.ports[0].port,
+        ],
+      },
+      metrics: {
+        readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.queryCache.service.metadata.name,
+          obs.queryCache.service.metadata.namespace,
+          obs.queryCache.service.spec.ports[0].port,
+        ],
+        writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.receiveService.metadata.name,
+          obs.receiveService.metadata.namespace,
+          obs.receiveService.spec.ports[2].port,
+        ],
+      },
     },
   },
+
+  loki::
+    l +
+    l.withMemberList {
+      config+:: {
+        local cfg = self,
+        name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+        namespace: obs.config.namespace,
+        commonLabels+:: obs.config.commonLabels,
+        replicas: obs.config.replicas,
+      },
+    },
 } + {
   local obs = self,
 
@@ -279,8 +301,12 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   } + {
     ['api-' + name]: obs.api[name]
     for name in std.objectFields(obs.api)
+    if obs.api[name] != null
   } + {
     ['api-thanos-query-' + name]: obs.apiQuery[name]
     for name in std.objectFields(obs.apiQuery)
+  } + {
+    ['loki-' + name]: obs.loki.manifests[name]
+    for name in std.objectFields(obs.loki.manifests)
   },
 }

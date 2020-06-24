@@ -40,7 +40,7 @@ LABEL vendor="Observatorium" \
     org.label-schema.schema-version="1.0" \
     org.label-schema.vcs-branch=$VCS_BRANCH \
     org.label-schema.vcs-ref=$VCS_REF \
-    org.label-schema.vcs-url="https://github.com/observatorium/configuration" \
+    org.label-schema.vcs-url="https://github.com/observatorium/deployments" \
     org.label-schema.vendor="observatorium/observatorium-operator" \
     org.label-schema.version=$VERSION
 

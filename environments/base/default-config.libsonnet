@@ -3,13 +3,20 @@
 
   name: 'observatorium-xyz',
   namespace: 'observatorium',
-  logLevel: 'info',
-  thanosVersion: 'v0.12.0-rc.1',
+  thanosVersion: 'master-2020-05-24-079ad427',  // Fixes a blocker issue in v0.13.0-rc.0
   thanosImage: 'quay.io/thanos/thanos:' + defaultConfig.thanosVersion,
   objectStorageConfig: {
-    name: 'thanos-objectstorage',
-    key: 'thanos.yaml',
+    thanos: {
+      name: 'thanos-objectstorage',
+      key: 'thanos.yaml',
+    },
+    loki: {
+      name: 'loki-objectstorage',
+      key: 'endpoint',
+    },
   },
+  logLevel: 'info',
+
 
   hashrings: [
     {
@@ -25,7 +32,7 @@
   compact: {
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
-    objectStorageConfig: defaultConfig.objectStorageConfig,
+    objectStorageConfig: defaultConfig.objectStorageConfig.thanos,
     retentionResolutionRaw: '14d',
     retentionResolution5m: '1s',
     retentionResolution1h: '1s',
@@ -52,8 +59,7 @@
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
     hashrings: defaultConfig.hashrings,
-    objectStorageConfig: defaultConfig.objectStorageConfig,
-    logLevel: defaultConfig.logLevel,
+    objectStorageConfig: defaultConfig.objectStorageConfig.thanos,
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],
@@ -64,12 +70,13 @@
         },
       },
     },
+    logLevel: defaultConfig.logLevel,
   },
 
   rule: {
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
-    objectStorageConfig: defaultConfig.objectStorageConfig,
+    objectStorageConfig: defaultConfig.objectStorageConfig.thanos,
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],
@@ -85,7 +92,7 @@
   store: {
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
-    objectStorageConfig: defaultConfig.objectStorageConfig,
+    objectStorageConfig: defaultConfig.objectStorageConfig.thanos,
     shards: 1,
     volumeClaimTemplate: {
       spec: {
@@ -123,7 +130,7 @@
 
   api: {
     local apiConfig = self,
-    version: 'master-2020-05-11-v0.1.1-35-g3c24d9b',
+    version: 'master-2020-06-19-v0.1.1-98-g4420ccc',
     image: 'quay.io/observatorium/observatorium:' + apiConfig.version,
   },
 
@@ -134,7 +141,42 @@
 
   up: {
     local upConfig = self,
-    version: 'master-2020-03-31-6e67351',
+    version: 'master-2020-06-03-8a20b4e',
     image: 'quay.io/observatorium/up:' + upConfig.version,
+  },
+
+  lokiRingStore: {
+    local lokiRingStoreConfig = self,
+    version: 'v3.4.9',
+    image: 'quay.io/coreos/etcd:' + lokiRingStoreConfig.version,
+    replicas: 1,
+  },
+
+  lokiCaches: {
+    local scConfig = self,
+    version: '1.6.3-alpine',
+    image: 'docker.io/memcached:' + scConfig.version,
+    exporterVersion: 'v0.6.0',
+    exporterImage: 'prom/memcached-exporter:' + scConfig.exporterVersion,
+    replicas: {
+      chunk_cache: 1,
+      index_query_cache: 1,
+      index_write_cache: 1,
+      results_cache: 1,
+    },
+  },
+
+  loki: {
+    local lokiConfig = self,
+    version: 'master-815c475',
+    image: 'docker.io/grafana/loki:' + lokiConfig.version,
+    objectStorageConfig: defaultConfig.objectStorageConfig.loki,
+    replicas: {
+      distributor: 1,
+      ingester: 1,
+      querier: 1,
+      query_frontend: 1,
+      table_manager: 1,
+    },
   },
 }

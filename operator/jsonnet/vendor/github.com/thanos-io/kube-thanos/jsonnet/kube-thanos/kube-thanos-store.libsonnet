@@ -146,7 +146,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       ts.config.memcached,
     local cfg =
       {
-        type: 'MEMCACHED',
+        type: 'memcached',
         config: {
           addresses: m.addresses,
           timeout: m.timeout,
@@ -185,7 +185,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       bucketCacheConfig+: {
         chunkSubrangeSize: 16000,
         maxChunksGetRangeRequests: 3,
-        chunkObjectSizeTTL: '24h',
+        chunkObjectAttrsTTL: '24h',
         chunkSubrangeTTL: '24h',
         blocksIterTTL: '5m',
         metafileExistsTTL: '2h',
@@ -201,7 +201,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     local c = ts.config.bucketCacheConfig,
     local cfg =
       {
-        type: 'MEMCACHED',
+        type: 'memcached',
         config: {
           addresses: m.addresses,
           timeout: m.timeout,
@@ -216,7 +216,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
         chunk_subrange_size: c.chunkSubrangeSize,
         max_chunks_get_range_requests: c.maxChunksGetRangeRequests,
-        chunk_object_size_ttl: c.chunkObjectSizeTTL,
+        chunk_object_attrs_ttl: c.chunkObjectAttrsTTL,
         chunk_subrange_ttl: c.chunkSubrangeTTL,
         blocks_iter_ttl: c.blocksIterTTL,
         metafile_exists_ttl: c.metafileExistsTTL,

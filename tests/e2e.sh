@@ -3,12 +3,13 @@
 set -e
 set -o pipefail
 
+ARTIFACT_DIR="${ARTIFACT_DIR:-/tmp/artifacts}"
 KUBECTL="${KUBECTL:-./kubectl}"
 OS_TYPE=$(echo `uname -s` | tr '[:upper:]' '[:lower:]')
 
 kind() {
     curl -LO https://storage.googleapis.com/kubernetes-release/release/"$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"/bin/$OS_TYPE/amd64/kubectl
-    curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-$OS_TYPE-amd64
+    curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/v0.8.1/kind-$OS_TYPE-amd64
     chmod +x kind kubectl
     ./kind create cluster
 }
@@ -16,7 +17,8 @@ kind() {
 deploy() {
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0servicemonitorCustomResourceDefinition.yaml
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
-    $KUBECTL create ns minio || true
+    $KUBECTL create ns dex || true
+    $KUBECTL create ns observatorium-minio || true
     $KUBECTL create ns observatorium || true
     $KUBECTL apply -f environments/dev/manifests/
 }
@@ -50,14 +52,20 @@ deploy_operator() {
     ./kind load docker-image quay.io/observatorium/observatorium-operator:latest
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0servicemonitorCustomResourceDefinition.yaml
     $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
-    $KUBECTL create ns minio || true
+    $KUBECTL create ns dex || true
+    $KUBECTL create ns observatorium-minio || true
     $KUBECTL create ns observatorium || true
-    $KUBECTL apply -f environments/dev/manifests/minio-secret.yaml
+    $KUBECTL apply -f environments/dev/manifests/minio-secret-thanos.yaml
+    $KUBECTL apply -f environments/dev/manifests/minio-secret-loki.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-pvc.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-deployment.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-service.yaml
-    $KUBECTL apply -f deploy/crds
-    $KUBECTL apply -f deploy/
+    $KUBECTL apply -f environments/dev/manifests/dex-secret.yaml
+    $KUBECTL apply -f environments/dev/manifests/dex-pvc.yaml
+    $KUBECTL apply -f environments/dev/manifests/dex-deployment.yaml
+    $KUBECTL apply -f environments/dev/manifests/dex-service.yaml
+    $KUBECTL apply -f operator/manifests/crds
+    $KUBECTL apply -f operator/manifests/
     $KUBECTL apply -n observatorium -f example/manifests
     wait_for_cr observatorium-xyz
 }
@@ -87,15 +95,52 @@ delete_cr() {
 }
 
 run_test() {
-    $KUBECTL wait --for=condition=available --timeout=10m -n minio deploy/minio || ($KUBECTL get pods --all-namespaces && exit 1)
-    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query || ($KUBECTL get pods --all-namespaces && exit 1)
 
-    $KUBECTL apply -f tests/manifests/observatorium-up.yaml
+    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium-minio deploy/minio || (must_gather "$ARTIFACT_DIR" && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query || (must_gather "$ARTIFACT_DIR" && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-loki-query-frontend || (must_gather "$ARTIFACT_DIR" && exit 1)
+
+    $KUBECTL apply -f tests/manifests/observatorium-up-metrics.yaml
 
     sleep 5
 
     # This should wait for ~2min for the job to finish.
-    $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up || ($KUBECTL get pods --all-namespaces && exit 1)
+    $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up-metrics || (must_gather "$ARTIFACT_DIR" && exit 1)
+
+    $KUBECTL apply -f tests/manifests/observatorium-up-logs.yaml
+
+    sleep 5
+
+    # This should wait for ~2min for the job to finish.
+    $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up-logs || (must_gather "$ARTIFACT_DIR" && exit 1)
+}
+
+must_gather() {
+    local artifact_dir="$1"
+
+    for namespace in default dex observatorium observatorium-minio; do
+        mkdir -p "$artifact_dir/$namespace"
+
+        for name in $($KUBECTL get pods -n "$namespace" -o jsonpath='{.items[*].metadata.name}') ; do
+            $KUBECTL -n "$namespace" describe pod "$name" > "$artifact_dir/$namespace/$name.describe"
+            $KUBECTL -n "$namespace" get pod "$name" -o yaml > "$artifact_dir/$namespace/$name.yaml"
+
+            for initContainer in $($KUBECTL -n "$namespace" get po "$name" -o jsonpath='{.spec.initContainers[*].name}') ; do
+                $KUBECTL -n "$namespace" logs "$name" -c "$container" > "$artifact_dir/$namespace/$name-$initContainer.logs"
+            done
+
+            for container in $($KUBECTL -n "$namespace" get po "$name" -o jsonpath='{.spec.containers[*].name}') ; do
+                $KUBECTL -n "$namespace" logs "$name" -c "$container" > "$artifact_dir/$namespace/$name-$container.logs"
+            done
+        done
+    done
+
+    $KUBECTL describe nodes > "$artifact_dir/nodes"
+    $KUBECTL get pods --all-namespaces > "$artifact_dir/pods"
+    $KUBECTL get deploy --all-namespaces > "$artifact_dir/deployments"
+    $KUBECTL get statefulset --all-namespaces > "$artifact_dir/statefulsets"
+    $KUBECTL get services --all-namespaces > "$artifact_dir/services"
+    $KUBECTL get endpoints --all-namespaces > "$artifact_dir/endpoints"
 }
 
 case $1 in
@@ -120,6 +165,6 @@ delete-cr)
     ;;
 
 *)
-    echo "usage: $(basename "$0") { kind | deploy | test | deploy-operator | delete-cr}"
+    echo "usage: $(basename "$0") { kind | deploy | test | deploy-operator | delete-cr }"
     ;;
 esac

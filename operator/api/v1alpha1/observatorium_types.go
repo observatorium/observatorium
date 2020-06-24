@@ -44,12 +44,21 @@ type ObservatoriumSpec struct {
 	APIQuery APIQuerySpec `json:"apiQuery,omitempty"`
 	// Query
 	Query QuerySpec `json:"query,omitempty"`
+	// Loki
+	Loki LokiSpec `json:"loki,omitempty"`
 }
 
 type ObjectStorageConfig struct {
-	// Object Store Config Secret Name for Thanos
+	// Object Store Config Secret for Thanos
+	Thanos ObjectStorageConfigSpec `json:"thanos"`
+	// Object Store Config Secret for Loki
+	Loki ObjectStorageConfigSpec `json:"loki"`
+}
+
+type ObjectStorageConfigSpec struct {
+	// Object Store Config Secret Name
 	Name string `json:"name"`
-	// Object Store Config key for Thanos
+	// Object Store Config key
 	Key string `json:"key"`
 }
 
@@ -97,11 +106,71 @@ type StoreCacheSpec struct {
 	MemoryLimitMB *int32 `json:"memoryLimitMb,omitempty"`
 }
 
+// Permission is an Observatorium RBAC permission.
+type Permission string
+
+const (
+	// Write gives access to write data to a tenant.
+	Write Permission = "write"
+	// Read gives access to read data from a tenant.
+	Read Permission = "read"
+)
+
+// RBACRole describes a set of permissions to interact with a tenant.
+type RBACRole struct {
+	// Name is the name of the role.
+	Name string `json:"name"`
+	// Resources is a list of resources to which access will be granted.
+	Resources []string `json:"resources"`
+	// Tenants is a list of tenants whose resources will be considered.
+	Tenants []string `json:"tenants"`
+	// Permissions is a list of permissions that will be granted.
+	Permissions []Permission `json:"permissions"`
+}
+
+// RBACRoleBinding binds a set of roles to a set of subjects.
+type RBACRoleBinding struct {
+	// Name is the name of the role binding.
+	Name string `json:"name"`
+	// Subjects is a list of subjects who will be given access to the specified roles.
+	Subjects []string `json:"subjects"`
+	// Roles is a list of roles that will be bound.
+	Roles []string `json:"roles"`
+}
+
+// APIRBAC represents a set of Observatorium API RBAC roles and role bindings.
+type APIRBAC struct {
+	// Roles is a slice of Observatorium API roles.
+	Roles []RBACRole `json:"roles"`
+	// RoleBindings is a slice of Observatorium API role bindings.
+	RoleBindings []RBACRoleBinding `json:"roleBindings"`
+}
+
+// TenantOIDC represents the OIDC configuration for an Observatorium API tenant.
+type TenantOIDC struct {
+	ClientID      string `json:"clientID"`
+	ClientSecret  string `json:"clientSecret,omitempty"`
+	IssuerURL     string `json:"issuerURL"`
+	RedirectURL   string `json:"redirectURL,omitempty"`
+	UsernameClaim string `json:"usernameClaim,omitempty"`
+}
+
+// APITenant represents a tenant in the Observatorium API.
+type APITenant struct {
+	Name string     `json:"name"`
+	ID   string     `json:"id"`
+	OIDC TenantOIDC `json:"oidc"`
+}
+
 type APISpec struct {
 	// API image
 	Image string `json:"image,omitempty"`
 	// Version describes the version of API to use.
 	Version string `json:"version,omitempty"`
+	// RBAC is an RBAC configuration for the Observatorium API.
+	RBAC APIRBAC `json:"rbac"`
+	// Tenants is a slice of tenants for the Observatorium API.
+	Tenants []APITenant `json:"tenants"`
 }
 
 type APIQuerySpec struct {
@@ -160,6 +229,15 @@ type Hashring struct {
 	Hashring string `json:"hashring"`
 	// Tenants describes a lists of tenants.
 	Tenants []string `json:"tenants,omitempty"`
+}
+
+type LokiSpec struct {
+	// Loki image
+	Image string `json:"image"`
+	// Loki replicas per component
+	Replicas map[string]int32 `json:"replicas,omitempty"`
+	// Version of Loki image to be deployed
+	Version string `json:"version,omitempty"`
 }
 
 // ObservatoriumStatus defines the observed state of Observatorium

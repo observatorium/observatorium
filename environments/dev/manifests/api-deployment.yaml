@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: observatorium-api
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: master-2020-05-11-v0.1.1-35-g3c24d9b
+    app.kubernetes.io/version: master-2020-06-19-v0.1.1-98-g4420ccc
   name: observatorium-xyz-observatorium-api
   namespace: observatorium
 spec:
@@ -28,16 +28,21 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: observatorium-api
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: master-2020-05-11-v0.1.1-35-g3c24d9b
+        app.kubernetes.io/version: master-2020-06-19-v0.1.1-98-g4420ccc
     spec:
       containers:
       - args:
         - --web.listen=0.0.0.0:8080
         - --web.internal.listen=0.0.0.0:8081
+        - --logs.read.endpoint=http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100
+        - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
+        - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
         - --metrics.read.endpoint=http://observatorium-xyz-cortex-query-frontend.observatorium.svc.cluster.local:9090
         - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291
         - --log.level=warn
-        image: quay.io/observatorium/observatorium:master-2020-05-11-v0.1.1-35-g3c24d9b
+        - --rbac.config=/etc/observatorium/rbac.yaml
+        - --tenants.config=/etc/observatorium/tenants.yaml
+        image: quay.io/observatorium/observatorium:master-2020-06-19-v0.1.1-98-g4420ccc
         livenessProbe:
           failureThreshold: 10
           httpGet:
@@ -58,3 +63,19 @@ spec:
             port: 8081
             scheme: HTTP
           periodSeconds: 5
+        volumeMounts:
+        - mountPath: /etc/observatorium/rbac.yaml
+          name: rbac
+          readOnly: true
+          subPath: rbac.yaml
+        - mountPath: /etc/observatorium/tenants.yaml
+          name: tenants
+          readOnly: true
+          subPath: tenants.yaml
+      volumes:
+      - configMap:
+          name: observatorium-xyz-observatorium-api
+        name: rbac
+      - name: tenants
+        secret:
+          secretName: observatorium-xyz-observatorium-api
