@@ -85,6 +85,8 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
+        - name: DEBUG
+          value: ""
         image: quay.io/thanos/thanos:master-2020-05-24-079ad427
         livenessProbe:
           failureThreshold: 8

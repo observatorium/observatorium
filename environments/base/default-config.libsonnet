@@ -16,7 +16,7 @@
     },
   },
   logLevel: 'info',
-
+  extendedPprof: '',
 
   hashrings: [
     {
@@ -71,7 +71,7 @@
       },
     },
     logLevel: defaultConfig.logLevel,
-    extendedPprof: '',
+    extendedPprof: defaultConfig.extendedPprof,
   },
 
   rule: {
