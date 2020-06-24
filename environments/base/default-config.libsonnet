@@ -68,6 +68,8 @@
         },
       },
     },
+    logLevel: 'info',
+    debug: '',
   },
 
   rule: {

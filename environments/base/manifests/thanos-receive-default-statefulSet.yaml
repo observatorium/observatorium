@@ -70,6 +70,7 @@ spec:
         - --receive.local-endpoint=$(NAME).observatorium-xyz-thanos-receive-default.$(NAMESPACE).svc.cluster.local:10901
         - --tsdb.retention=4d
         - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
+        - --log.level=info
         env:
         - name: NAME
           valueFrom:
@@ -84,6 +85,8 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
+        - name: DEBUG
+          value: ""
         image: quay.io/thanos/thanos:master-2020-05-24-079ad427
         livenessProbe:
           failureThreshold: 8
