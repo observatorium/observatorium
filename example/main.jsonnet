@@ -38,14 +38,12 @@ local obs = (import '../environments/base/observatorium.jsonnet');
 {
   local cr = self,
   name:: 'observatorium-cr',
-
   apiVersion: 'core.observatorium.io/v1alpha1',
   kind: 'Observatorium',
   metadata: {
     name: obs.config.name,
     labels: obs.config.commonLabels {
       'app.kubernetes.io/name': cr.name,
-      'app.kubernetes.io/component': cr.name,
     },
   },
   spec: {
@@ -144,6 +142,17 @@ local obs = (import '../environments/base/observatorium.jsonnet');
           },
         },
       ],
+      tls: {
+        secretName: obs.config.name + '-tls',
+        certKey: 'cert.pem',
+        keyKey: 'key.pem',
+        configMapName: obs.config.name + '-tls',
+        caKey: 'ca.pem',
+        serverName: '%s.%s.svc.cluster.local' % [
+          obs.api.service.metadata.name,
+          obs.api.service.metadata.namespace,
+        ],
+      },
     },
     apiQuery: {
       image: obs.config.thanosImage,
