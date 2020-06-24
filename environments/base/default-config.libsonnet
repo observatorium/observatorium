@@ -3,6 +3,7 @@
 
   name: 'observatorium-xyz',
   namespace: 'observatorium',
+  logLevel: 'info',
   thanosVersion: 'v0.12.0-rc.1',
   thanosImage: 'quay.io/thanos/thanos:' + defaultConfig.thanosVersion,
   objectStorageConfig: {
@@ -52,6 +53,7 @@
     version: defaultConfig.thanosVersion,
     hashrings: defaultConfig.hashrings,
     objectStorageConfig: defaultConfig.objectStorageConfig,
+    logLevel: defaultConfig.logLevel,
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],

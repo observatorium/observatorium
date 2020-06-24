@@ -70,6 +70,7 @@ spec:
         - --receive.local-endpoint=$(NAME).observatorium-xyz-thanos-receive-default.$(NAMESPACE).svc.cluster.local:10901
         - --tsdb.retention=15d
         - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
+        - --log.level=info
         env:
         - name: NAME
           valueFrom:

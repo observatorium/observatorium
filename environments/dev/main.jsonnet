@@ -1,4 +1,8 @@
-local obs = (import '../base/observatorium.jsonnet');
+local obs = (import '../base/observatorium.jsonnet') + {
+  config+:: {
+    logLevel: 'debug',
+  },
+};
 local minio = (import '../../components/minio.libsonnet') + {
   config:: {
     namespace: 'minio',

@@ -64,6 +64,21 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
               'controller.receive.thanos.io': 'thanos-receive-controller',
             },
           },
+          spec+: {
+            template+: {
+              spec+: {
+                containers: [
+                  if c.name == 'thanos-receive' then c {
+                    args+: [
+                      '--log.level=' + obs.config.receivers.logLevel,
+                    ],
+                  }
+                  else c
+                  for c in super.containers
+                ],
+              },
+            },
+          },
         },
       }
     for hashring in obs.config.hashrings
