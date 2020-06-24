@@ -21,6 +21,8 @@ cr.spec {
     hashrings: hashrings,
   },
   receivers+:: {
+    logLevel: 'info',
+    debug: '',
     image: if std.objectHas(cr.spec.receivers, 'image') then cr.spec.receivers.image else default.receivers.image,
     version: if std.objectHas(cr.spec.receivers, 'version') then cr.spec.receivers.version else default.receivers.version,
     hashrings: hashrings,
