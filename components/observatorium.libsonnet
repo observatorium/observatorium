@@ -73,6 +73,12 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                     args+: [
                       '--log.level=' + obs.config.receivers.logLevel,
                     ],
+                    env+: [
+                      {
+                        name: 'DEBUG',
+                        value: obs.config.receivers.extendedPprof,
+                      },
+                    ],
                   }
                   else c
                   for c in super.containers

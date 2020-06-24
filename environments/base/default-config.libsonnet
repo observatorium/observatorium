@@ -71,6 +71,7 @@
       },
     },
     logLevel: defaultConfig.logLevel,
+    extendedPprof: '',
   },
 
   rule: {
