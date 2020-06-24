@@ -76,7 +76,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                     env+: [
                       {
                         name: 'DEBUG',
-                        value: obs.config.receivers.extendedPprof,
+                        value: obs.config.receivers.debug,
                       },
                     ],
                   }

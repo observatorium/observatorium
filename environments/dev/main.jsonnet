@@ -35,9 +35,13 @@ local dex = (import '../../components/dex.libsonnet') + {
 
 local obs = (import '../base/observatorium.jsonnet') + {
   config+:: {
-    logLevel: 'debug',
-    extendedPprof: '1',
+    receivers+:: {
+      logLevel: 'debug',
+      debug: '1',
+    },
   },
+
+
   api+: {
     config+: {
       rbac: {

@@ -15,8 +15,6 @@
       key: 'endpoint',
     },
   },
-  logLevel: 'info',
-  extendedPprof: '',
 
   hashrings: [
     {
@@ -70,8 +68,8 @@
         },
       },
     },
-    logLevel: defaultConfig.logLevel,
-    extendedPprof: defaultConfig.extendedPprof,
+    logLevel: 'info',
+    debug: '',
   },
 
   rule: {
