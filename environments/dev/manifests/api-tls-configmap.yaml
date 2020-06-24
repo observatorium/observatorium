@@ -1,0 +1,17 @@
+apiVersion: v1
+data:
+  ca.pem: |
+    -----BEGIN CERTIFICATE-----
+    MIIBdDCCARqgAwIBAgIUIb906qptvmJfq4fCNMeqQq9w0hgwCgYIKoZIzj0EAwIw
+    GDEWMBQGA1UEAxMNb2JzZXJ2YXRvcml1bTAeFw0yMDA2MjgwNjQ5MDBaFw0yNTA2
+    MjcwNjQ5MDBaMBgxFjAUBgNVBAMTDW9ic2VydmF0b3JpdW0wWTATBgcqhkjOPQIB
+    BggqhkjOPQMBBwNCAAQK2UcXl2t/YwRmg7Ye8iX/q2Xqs/Dd/UQ5aBVZt5P8y6sN
+    K1F9yo3L+K+e/+dqjn88eTfRgB0lhPLloBL9TXNyo0IwQDAOBgNVHQ8BAf8EBAMC
+    AQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUAGYaIWYZcnaGVxfcv2g8p4dw
+    MgcwCgYIKoZIzj0EAwIDSAAwRQIgdf70iJC/USwlpNESmlStr4+5HVkNjz9+ZJs+
+    bQTVPH8CIQClJB9i00Jjxmqv3tOnDz5G1qlK0lRLEL8Nn8XHIhVY0g==
+    -----END CERTIFICATE-----
+kind: ConfigMap
+metadata:
+  name: observatorium-api-tls-client-ca
+  namespace: observatorium

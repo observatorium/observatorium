@@ -178,11 +178,35 @@ type APITenant struct {
 	OIDC TenantOIDC `json:"oidc"`
 }
 
+type TLSSecret struct {
+	CertFile       string `json:"certFile"`
+	Name           string `json:"name"`
+	PrivateKeyFile string `json:"privateKeyFile"`
+	ReloadInterval string `json:"reloadInterval"`
+}
+
+type TLS struct {
+	TLSSecret TLSSecret `json:"secret"`
+}
+
+type MTLSConfigMap struct {
+	ClientCAFile string `json:"clientCAFile"`
+	Name         string `json:"name"`
+}
+
+type MTLS struct {
+	MTLSConfigMap MTLSConfigMap `json:"configMap"`
+}
+
 type APISpec struct {
 	// API image
 	Image string `json:"image,omitempty"`
 	// Version describes the version of API to use.
 	Version string `json:"version,omitempty"`
+	// TLS Certs Configuration
+	TLS TLS `json:"tls,omitempty"`
+	// MTLS Client-CA Configuration
+	MTLS MTLS `json:"mtls,omitempty"`
 	// RBAC is an RBAC configuration for the Observatorium API.
 	RBAC APIRBAC `json:"rbac"`
 	// Tenants is a slice of tenants for the Observatorium API.

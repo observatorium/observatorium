@@ -38,6 +38,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           '--latency=10s',
           '--initial-query-delay=5s',
           '--threshold=0.90',
+          '--tls-ca-file=' + up.config.withTLS.clientCAFile,
+          '--tls-client-cert-file=' + up.config.withTLS.certFile,
+          '--tls-client-private-key-file=' + up.config.withTLS.privateKeyFile,
         ]
       );
 
@@ -132,21 +135,38 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                 args+: [
                   '--token-file=/var/shared/token',
                 ],
-              } + container.withVolumeMounts({
-                name: 'shared',
-                mountPath: '/var/shared',
-                readOnly: false,
-              }) else c
+              } + container.withVolumeMounts(
+                [
+                  {
+                    name: 'shared',
+                    mountPath: '/var/shared',
+                    readOnly: false,
+                  },
+                  {
+                    name: u.config.withTLS.volumeMounts.name,
+                    mountPath: u.config.withTLS.volumeMounts.mountPath,
+                    readOnly: u.config.withTLS.volumeMounts.readOnly,
+                  },
+                ]
+              ) else c
               for c in super.containers
             ],
           },
         },
       },
     } + job.mixin.spec.template.spec.withVolumes(
-      {
-        emptyDir: {},
-        name: 'shared',
-      }
+      [
+        {
+          emptyDir: {},
+          name: 'shared',
+        },
+        {
+          name: u.config.withTLS.volumeMounts.name,
+          secret: {
+            secretName: u.config.withTLS.volumeMounts.secretName,
+          },
+        },
+      ],
     ),
   },
 
@@ -174,11 +194,22 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                   EOF
                 |||,
               ]) +
-              container.withVolumeMounts({
-                name: 'shared',
-                mountPath: '/var/shared',
-                readOnly: false,
-              }),
+              container.withVolumeMounts(
+                [
+                  {
+                    name: 'shared',
+                    mountPath: '/var/shared',
+                    readOnly: false,
+                  },
+                  {
+                    name: u.config.withTLS.volumeMounts.name,
+                    mountPath: u.config.withTLS.volumeMounts.mountPath,
+                    readOnly: u.config.withTLS.volumeMounts.readOnly,
+                  },
+
+
+                ],
+              ),
 
             initContainers+: [c],
 
@@ -188,25 +219,57 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                 args+: [
                   '--logs-file=/var/shared/logs.yaml',
                 ],
-              } + container.withVolumeMounts({
-                name: 'shared',
-                mountPath: '/var/shared',
-                readOnly: true,
-              }) else c
+              } + container.withVolumeMounts(
+                [
+                  {
+                    name: 'shared',
+                    mountPath: '/var/shared',
+                    readOnly: true,
+                  },
+                  {
+                    name: u.config.withTLS.volumeMounts.name,
+                    mountPath: u.config.withTLS.volumeMounts.mountPath,
+                    readOnly: u.config.withTLS.volumeMounts.readOnly,
+                  },
+                ],
+              ) else c
               for c in super.containers
             ],
           },
         },
       },
     } + job.mixin.spec.template.spec.withVolumes(
-      {
-        emptyDir: {},
-        name: 'shared',
-      }
+      [
+        {
+          emptyDir: {},
+          name: 'shared',
+        },
+        {
+          name: u.config.withTLS.volumeMounts.name,
+          secret: {
+            secretName: u.config.withTLS.volumeMounts.secretName,
+          },
+        },
+      ],
     ),
   },
 
+  secret: {
+    apiVersion: 'v1',
+    kind: 'Secret',
+    metadata: {
+      name: 'up-tls-secret',
+    },
+    data: {
+      'ca.pem': up.config.tls.clientCAFile,
+      'client.key': up.config.tls.privateKeyFile,
+      'client.pem': up.config.tls.certFile,
+    },
+    type: 'Opaque',
+  },
+
   manifests+:: {
+    'up-tls-secret': up.secret,
     [up.config.name]: up.job,
   },
 }

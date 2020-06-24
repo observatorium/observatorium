@@ -133,6 +133,32 @@
     image: 'quay.io/observatorium/observatorium:' + apiConfig.version,
   },
 
+  withTLS: {
+    local apiWithTLS = self,
+    serverPem: 'server.pem',
+    serverKey: 'server.key',
+    volumeMounts: {
+      name: 'observatorium-api-tls-certs',
+      secretName: 'observatorium-api-tls-certs',
+      mountPath: '/mnt/certs',
+      readOnly: true,
+    },
+    certFile: apiWithTLS.volumeMounts.mountPath + apiWithTLS.serverPem,
+    privateKeyFile: apiWithTLS.volumeMounts.mountPath + apiWithTLS.serverKey,
+    reloadInterval: '1m',
+  },
+
+  withMTLS: {
+    local apiWithMTLS = self,
+    caPem: 'ca.pem',
+    volumeMounts: {
+      name: 'observatorium-api-tls-client-ca',
+      mountPath: '/mnt/clientca',
+      readOnly: true,
+    },
+    clientCAFile: apiWithMTLS.volumeMounts.mountPath + apiWithMTLS.caPem,
+  },
+
   apiQuery: {
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,

@@ -7,11 +7,27 @@ VCS_BRANCH := $(strip $(shell git rev-parse --abbrev-ref HEAD))
 VCS_REF := $(strip $(shell [ -d .git ] && git rev-parse --short HEAD))
 DOCKER_REPO ?= quay.io/observatorium/observatorium-operator
 
-BIN_DIR ?= $(shell pwd)/tmp/bin
+TMP_DIR := $(shell pwd)/tmp
+BIN_DIR ?= $(TMP_DIR)/bin
+CERT_DIR ?= $(TMP_DIR)/certs
 
 CONTROLLER_GEN ?= $(BIN_DIR)/controller-gen
 JB ?= $(BIN_DIR)/jb
+ GENERATE_TLS_CERT ?= $(BIN_DIR)/generate-tls-cert
 
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+$(CERT_DIR):
+	mkdir -p $(CERT_DIR)
+
+# Generate TLS certificates for local development.
+generate-cert: $(GENERATE_TLS_CERT) $(CERT_DIR)
+	cd $(CERT_DIR) && $(GENERATE_TLS_CERT) -server-common-name=observatorium-xyz-observatorium-api.observatorium.svc.cluster.local -server-hosts=observatorium-xyz-observatorium-api.observatorium.svc.cluster.local
+
+$(GENERATE_TLS_CERT): | $(BIN_DIR)
+	# A thin wrapper around github.com/cloudflare/cfssl
+	cd operator;  GO111MODULE="on" go build -tags tools -o $@ github.com/observatorium/observatorium/test/tls
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: $(CONTROLLER_GEN)
@@ -80,7 +96,7 @@ example/manifests: example/main.jsonnet $(JSONNET_SRC) vendor-jsonnet
 	-make jsonnetfmt
 	-rm -rf example/manifests
 	-mkdir example/manifests
-	jsonnet -J operator/jsonnet/vendor example/main.jsonnet | gojsontoyaml > example/manifests/observatorium.yaml
+	jsonnet -J operator/jsonnet/vendor -m example/manifests example/main.jsonnet | xargs -I{} sh -c 'cat {} | gojsontoyaml > {}.yaml' -- {}
 	find example/manifests -type f ! -name '*.yaml' -delete
 
 tests/manifests: tests/main.jsonnet $(JSONNET_SRC) vendor-jsonnet

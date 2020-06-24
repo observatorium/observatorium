@@ -15,8 +15,8 @@ spec:
       containers:
       - args:
         - --endpoint-type=metrics
-        - --endpoint-write=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/receive
-        - --endpoint-read=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/query
+        - --endpoint-write=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/receive
+        - --endpoint-read=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/query
         - --period=1s
         - --duration=2m
         - --name=foo
@@ -24,6 +24,9 @@ spec:
         - --latency=10s
         - --initial-query-delay=5s
         - --threshold=0.90
+        - --tls-ca-file=/mnt/certs/ca.pem
+        - --tls-client-cert-file=/mnt/certs/client.pem
+        - --tls-client-private-key-file=/mnt/certs/client.key
         - --token-file=/var/shared/token
         image: quay.io/observatorium/up:master-2020-06-15-d763595
         name: observatorium-up
@@ -35,6 +38,9 @@ spec:
         - mountPath: /var/shared
           name: shared
           readOnly: false
+        - mountPath: /mnt/certs
+          name: up-tls-secret
+          readOnly: true
       initContainers:
       - command:
         - /bin/sh
@@ -60,3 +66,6 @@ spec:
       volumes:
       - emptyDir: {}
         name: shared
+      - name: up-tls-secret
+        secret:
+          secretName: up-tls-secret

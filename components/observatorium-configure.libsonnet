@@ -43,6 +43,14 @@
     config+:: obs.config.api,
   },
 
+  withTLS+:: {
+    config+:: obs.config.withTLS,
+  },
+
+  withMTLS+:: {
+    config+:: obs.config.withMTLS,
+  },
+
   apiQuery+:: {
     config+:: obs.config.apiQuery,
   },

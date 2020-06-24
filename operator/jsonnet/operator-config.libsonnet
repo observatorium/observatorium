@@ -63,6 +63,8 @@ cr.spec {
     version: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'version') then cr.spec.api.version else default.api.version,
     rbac: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'rbac') then cr.spec.api.rbac else default.api.rbac,
     tenants: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'tenants') then { tenants: cr.spec.api.tenants } else default.api.tenants,
+    tls: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'tls') then cr.spec.api.tls else {},
+    mls: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'mtls') then cr.spec.api.mtls else {},
   },
   loki+:: {
     image: cr.spec.loki.image,

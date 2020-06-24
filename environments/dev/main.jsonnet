@@ -34,14 +34,41 @@ local dex = (import '../../components/dex.libsonnet') + {
 };
 
 local obs = (import '../base/observatorium.jsonnet') + {
+  tls_secret: {
+    apiVersion: 'v1',
+    kind: 'Secret',
+    metadata: {
+      name: 'observatorium-api-tls-certs',
+      namespace: obs.config.namespace,
+    },
+    data: {
+      'server.key': std.base64(importstr '../../tmp/certs/server.key'),
+      'server.pem': std.base64(importstr '../../tmp/certs/server.pem'),
+      'client.pem': std.base64(importstr '../../tmp/certs/client.pem'),
+      'client.key': std.base64(importstr '../../tmp/certs/client.key'),
+    },
+    stringData: {
+      'ca.pem': importstr '../../tmp/certs/ca.pem',
+    },
+    type: 'Opaque',
+  },
+  tls_configmap: {
+    apiVersion: 'v1',
+    kind: 'ConfigMap',
+    metadata: {
+      name: 'observatorium-api-tls-client-ca',
+      namespace: obs.config.namespace,
+    },
+    data: {
+      'ca.pem': importstr '../../tmp/certs/ca.pem',
+    },
+  },
   config+:: {
     receivers+:: {
       logLevel: 'debug',
       debug: '1',
     },
   },
-
-
   api+: {
     config+: {
       rbac: {
@@ -94,7 +121,26 @@ local obs = (import '../base/observatorium.jsonnet') + {
           },
         ],
       },
+      tls+: {
+        secret: {
+          serverCertFile: '/mnt/certs/server.pem',
+          serverPrivateKeyFile: '/mnt/certs/server.key',
+          clientCertFile: '/mnt/certs/client.pem',
+          clientPrivateKeyFile: '/mnt/certs/client.key',
+          serverCAFile: '/mnt/certs/ca.pem',
+          reloadInterval: '1m',
+        },
+      },
+      mtls+: {
+        configMap: {
+          clientCAFile: '/mnt/clientca/ca.pem',
+        },
+      },
     },
+  },
+  manifests+:: {
+    'api-tls-secret': obs.tls_secret,
+    'api-tls-configmap': obs.tls_configmap,
   },
 };
 

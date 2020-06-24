@@ -8,6 +8,7 @@ require (
 	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/google/go-jsonnet v0.15.1-0.20200310221949-724650d358b6 // indirect
 	github.com/jsonnet-bundler/jsonnet-bundler v0.4.0
+	github.com/observatorium/observatorium v0.1.2-0.20200531100739-85e81bbf17de
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/prometheus/procfs v0.0.11 // indirect

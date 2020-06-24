@@ -1,5 +1,25 @@
 local obs = (import '../environments/base/observatorium.jsonnet');
-local upJob = (import '../components/up-job.libsonnet');
+local upJob = (import '../components/up-job.libsonnet') + {
+  config+:: {
+    tls: {
+      privateKeyFile: std.base64(importstr '../tmp/certs/client.key'),
+      clientCAFile: std.base64(importstr '../tmp/certs/ca.pem'),
+      certFile: std.base64(importstr '../tmp/certs/client.pem'),
+    },
+    withTLS: {
+      certFile: '/mnt/certs/client.pem',
+      privateKeyFile: '/mnt/certs/client.key',
+      clientCAFile: '/mnt/certs/ca.pem',
+      reloadInterval: '1m',
+      volumeMounts: {
+        name: 'up-tls-secret',
+        secretName: 'up-tls-secret',
+        mountPath: '/mnt/certs',
+        readOnly: true,
+      },
+    },
+  },
+};
 
 local dex = (import '../components/dex.libsonnet') + {
   config+:: {
@@ -24,16 +44,28 @@ local upMetrics = upJob + upJob.withResources + {
       },
     },
     endpointType: 'metrics',
-    writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
+    writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
       obs.api.service.metadata.name,
       obs.api.service.metadata.namespace,
       obs.api.service.spec.ports[1].port,
     ],
-    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
+    readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
       obs.api.service.metadata.name,
       obs.api.service.metadata.namespace,
       obs.api.service.spec.ports[1].port,
     ],
+    withTLS: {
+      certFile: '/mnt/certs/client.pem',
+      privateKeyFile: '/mnt/certs/client.key',
+      clientCAFile: '/mnt/certs/ca.pem',
+      reloadInterval: '1m',
+      volumeMounts: {
+        name: 'up-tls-secret',
+        secretName: 'up-tls-secret',
+        mountPath: '/mnt/certs',
+        readOnly: true,
+      },
+    },
   },
 } + upJob.withGetToken {
   config+:: {
@@ -66,7 +98,7 @@ local upLogs = upJob + upJob.withResources + {
       },
     },
     endpointType: 'logs',
-    writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/push' % [
+    writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/push' % [
       obs.api.service.metadata.name,
       obs.api.service.metadata.namespace,
       obs.api.service.spec.ports[1].port,

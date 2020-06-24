@@ -60,18 +60,20 @@ deploy_operator() {
     $KUBECTL apply -f environments/dev/manifests/minio-pvc.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-deployment.yaml
     $KUBECTL apply -f environments/dev/manifests/minio-service.yaml
+    $KUBECTL apply -f environments/dev/manifests/api-tls-secret.yaml
+    $KUBECTL apply -f environments/dev/manifests/api-tls-configmap.yaml
     $KUBECTL apply -f environments/dev/manifests/dex-secret.yaml
     $KUBECTL apply -f environments/dev/manifests/dex-pvc.yaml
     $KUBECTL apply -f environments/dev/manifests/dex-deployment.yaml
     $KUBECTL apply -f environments/dev/manifests/dex-service.yaml
     $KUBECTL apply -f operator/manifests/crds
     $KUBECTL apply -f operator/manifests/
-    $KUBECTL apply -n observatorium -f example/manifests
+    $KUBECTL apply -n observatorium -f example/manifests/observatorium_mtls.yaml
     wait_for_cr observatorium-xyz
 }
 
 delete_cr() {
-    $KUBECTL delete -n observatorium -f example/manifests
+    $KUBECTL delete -n observatorium -f example/manifests/observatorium_mtls.yaml
     target_count="0"
     timeout=$true
     interval=0
@@ -99,14 +101,14 @@ run_test() {
     $KUBECTL wait --for=condition=available --timeout=10m -n observatorium-minio deploy/minio || (must_gather "$ARTIFACT_DIR" && exit 1)
     $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query || (must_gather "$ARTIFACT_DIR" && exit 1)
     $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-loki-query-frontend || (must_gather "$ARTIFACT_DIR" && exit 1)
-
+    $KUBECTL apply -f tests/manifests/up-tls-secret.yaml
     $KUBECTL apply -f tests/manifests/observatorium-up-metrics.yaml
 
     sleep 5
 
     # This should wait for ~2min for the job to finish.
     $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up-metrics || (must_gather "$ARTIFACT_DIR" && exit 1)
-
+    $KUBECTL apply -f tests/manifests/up-tls-secret.yaml
     $KUBECTL apply -f tests/manifests/observatorium-up-logs.yaml
 
     sleep 5
