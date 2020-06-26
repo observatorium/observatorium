@@ -9,14 +9,15 @@ metadata:
   name: observatorium-xyz
 spec:
   api:
-    image: quay.io/observatorium/observatorium:master-2020-06-19-v0.1.1-98-g4420ccc
+    image: quay.io/observatorium/observatorium:master-2020-06-26-v0.1.1-105-gc784d77
     rbac:
       roleBindings:
       - name: test
         roles:
         - read-write
         subjects:
-        - admin@example.com
+        - kind: user
+          name: admin@example.com
       roles:
       - name: read-write
         permissions:
@@ -35,7 +36,7 @@ spec:
         clientSecret: ZXhhbXBsZS1hcHAtc2VjcmV0
         issuerURL: http://dex.dex.svc.cluster.local:5556/dex
         usernameClaim: email
-    version: master-2020-06-19-v0.1.1-98-g4420ccc
+    version: master-2020-06-26-v0.1.1-105-gc784d77
   apiQuery:
     image: quay.io/thanos/thanos:master-2020-05-24-079ad427
     version: master-2020-05-24-079ad427
