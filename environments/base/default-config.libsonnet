@@ -129,7 +129,7 @@
 
   api: {
     local apiConfig = self,
-    version: 'master-2020-06-19-v0.1.1-98-g4420ccc',
+    version: 'master-2020-06-26-v0.1.1-105-gc784d77',
     image: 'quay.io/observatorium/observatorium:' + apiConfig.version,
   },
 
