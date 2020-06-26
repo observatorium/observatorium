@@ -128,12 +128,28 @@ type RBACRole struct {
 	Permissions []Permission `json:"permissions"`
 }
 
+// SubjectKind is a kind of Observatorium subject.
+type SubjectKind string
+
+const (
+	// User represents a subject that is a user.
+	User SubjectKind = "user"
+	// Group represents a subject that is a group.
+	Group SubjectKind = "group"
+)
+
+// Subject represents a subject to which an RBAC role can be bound.
+type Subject struct {
+	Kind SubjectKind `json:"kind"`
+	Name string      `json:"name"`
+}
+
 // RBACRoleBinding binds a set of roles to a set of subjects.
 type RBACRoleBinding struct {
 	// Name is the name of the role binding.
 	Name string `json:"name"`
 	// Subjects is a list of subjects who will be given access to the specified roles.
-	Subjects []string `json:"subjects"`
+	Subjects []Subject `json:"subjects"`
 	// Roles is a list of roles that will be bound.
 	Roles []string `json:"roles"`
 }
