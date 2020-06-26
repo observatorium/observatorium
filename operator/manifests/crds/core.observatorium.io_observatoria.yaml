@@ -65,7 +65,19 @@ spec:
                             description: Subjects is a list of subjects who will be
                               given access to the specified roles.
                             items:
-                              type: string
+                              description: Subject represents a subject to which an
+                                RBAC role can be bound.
+                              properties:
+                                kind:
+                                  description: SubjectKind is a kind of Observatorium
+                                    subject.
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                              - kind
+                              - name
+                              type: object
                             type: array
                         required:
                         - name

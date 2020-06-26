@@ -120,7 +120,10 @@ local obs = (import '../environments/base/observatorium.jsonnet');
               'read-write',
             ],
             subjects: [
-              dex.config.config.staticPasswords[0].email,
+              {
+                name: dex.config.config.staticPasswords[0].email,
+                kind: 'user',
+              },
             ],
           },
         ],
