@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: tracing
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/part-of: observatorium
+  name: observatorium-xyz-jaeger-admin
+  namespace: observatorium
+spec:
+  ports:
+  - name: admin-http
+    port: 14269
+    targetPort: 14269
+  selector:
+    app.kubernetes.io/component: tracing
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/part-of: observatorium

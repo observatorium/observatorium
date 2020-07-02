@@ -178,4 +178,8 @@
       table_manager: 1,
     },
   },
+
+  jeager: {
+    image: 'jaegertracing/all-in-one:1.14.0',
+  },
 }

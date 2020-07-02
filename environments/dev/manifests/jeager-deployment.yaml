@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: tracing
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/part-of: observatorium
+  name: observatorium-xyz-jaeger
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: tracing
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: jaeger
+      app.kubernetes.io/part-of: observatorium
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: tracing
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: jaeger
+        app.kubernetes.io/part-of: observatorium
+    spec:
+      containers:
+      - args:
+        - --collector.queue-size=4000
+        env:
+        - name: SPAN_STORAGE_TYPE
+          value: memory
+        image: jaegertracing/all-in-one:1.14.0
+        livenessProbe:
+          failureThreshold: 4
+          httpGet:
+            path: /
+            port: 14269
+            scheme: HTTP
+          periodSeconds: 30
+        name: observatorium-xyz-jaeger
+        ports:
+        - containerPort: 14250
+          name: grpc
+        - containerPort: 14269
+          name: admin-http
+        - containerPort: 16686
+          name: query
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 14269
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        resources:
+          limits:
+            cpu: "4"
+            memory: 4Gi
+          requests:
+            cpu: "1"
+            memory: 1Gi
+        volumeMounts:
+        - mountPath: /var/jaeger/store
+          name: jaeger-store-data
+          readOnly: false
+      volumes:
+      - name: jaeger-store-data
+        persistentVolumeClaim:
+          claimName: jaeger-store-data

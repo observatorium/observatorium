@@ -125,7 +125,19 @@ local up = (import '../../components/up.libsonnet') + {
   },
 };
 
+local jeager = (import '../../components/jaeger-collector.libsonnet') + {
+  config+:: {
+    local _self = self,
+    name: obs.config.name + '-' + _self.commonLabels['app.kubernetes.io/name'],
+    namespace: obs.config.namespace,
+    replicas: 1,
+    commonLabels+:: obs.config.commonLabels,
+    image: obs.config.jeager.image,
+  },
+};
+
 obs.manifests +
 minio.manifests +
 up.manifests +
+jeager.manifests +
 dex.manifests

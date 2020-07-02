@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/component: tracing
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: jaeger
+    app.kubernetes.io/part-of: observatorium
+  name: jaeger-store-data
+  namespace: observatorium
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
