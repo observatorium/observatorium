@@ -117,6 +117,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       metadata+: {
         name: cq.config.name,
         namespace: cq.config.namespace,
+        labels: cq.config.commonLabels,
       },
       spec: {
         selector: {
