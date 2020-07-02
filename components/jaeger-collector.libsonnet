@@ -7,10 +7,15 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
     local j = self,
     namespace:: error 'must set namespace for jaeger',
     image:: error 'must set image for jaeger',
+    name:: error 'must set name for jaeger',
     replicas:: 1,
     pvc:: {
       class: 'standard',
       size: '50Gi',
+    },
+    commonLabels:: {
+      'app.kubernetes.io/name': 'jaeger',
+      'app.kubernetes.io/instance': j.name,
     },
 
     headlessService:
@@ -108,5 +113,27 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
       deployment.mixin.spec.strategy.rollingUpdate.withMaxSurge(0) +
       deployment.mixin.spec.strategy.rollingUpdate.withMaxUnavailable(1) +
       deployment.mixin.spec.template.spec.withVolumes(volume.fromPersistentVolumeClaim($.jaeger.volumeClaim.metadata.name, $.jaeger.volumeClaim.metadata.name)),
+  
+    withServiceMonitor:: {
+      serviceMonitor: {
+        apiVersion: 'monitoring.coreos.com/v1',
+        kind: 'ServiceMonitor',
+        metadata+: {
+          name: j.name,
+          namespace: j.namespace,
+        },
+        spec: {
+          namespaceSelector: {
+            matchNames: j.namespace
+          },
+          selector: {
+            matchLabels: j.commonLabels,
+          },
+          endpoints: [
+            { port: 'admin-http' },
+          ],
+        },
+      },
+    },
   },
 }
