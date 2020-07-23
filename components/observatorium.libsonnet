@@ -224,7 +224,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       namespace: obs.config.namespace,
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
-      logs: {
+      [if std.length(obs.config.loki) != 0 then 'logs']: {
         readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
           obs.loki.manifests['query-frontend-http-service'].metadata.name,
           obs.loki.manifests['query-frontend-http-service'].metadata.namespace,
@@ -314,5 +314,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   } + {
     ['loki-' + name]: obs.loki.manifests[name]
     for name in std.objectFields(obs.loki.manifests)
+    if std.length(obs.config.loki) != 0
   },
 }

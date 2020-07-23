@@ -45,6 +45,7 @@ type ObservatoriumSpec struct {
 	// Query
 	Query QuerySpec `json:"query,omitempty"`
 	// Loki
+	// +optional
 	Loki LokiSpec `json:"loki,omitempty"`
 }
 
@@ -52,6 +53,7 @@ type ObjectStorageConfig struct {
 	// Object Store Config Secret for Thanos
 	Thanos ObjectStorageConfigSpec `json:"thanos"`
 	// Object Store Config Secret for Loki
+	// +optional
 	Loki ObjectStorageConfigSpec `json:"loki"`
 }
 
