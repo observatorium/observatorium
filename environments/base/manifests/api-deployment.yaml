@@ -34,12 +34,12 @@ spec:
       - args:
         - --web.listen=0.0.0.0:8080
         - --web.internal.listen=0.0.0.0:8081
-        - --metrics.read.endpoint=http://observatorium-xyz-cortex-query-frontend.observatorium.svc.cluster.local:9090
-        - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291
-        - --log.level=warn
         - --logs.read.endpoint=http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100
         - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
         - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
+        - --metrics.read.endpoint=http://observatorium-xyz-cortex-query-frontend.observatorium.svc.cluster.local:9090
+        - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291
+        - --log.level=warn
         image: quay.io/observatorium/observatorium:master-2020-06-26-v0.1.1-105-gc784d77
         livenessProbe:
           failureThreshold: 10
