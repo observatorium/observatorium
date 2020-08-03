@@ -19,6 +19,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     t.compact.withRetention +
     t.compact.withDownsamplingDisabled +
     t.compact.withDeleteDelay +
+    t.compact.withVolumeClaimTemplate +
     t.compact.withDeduplication + {
       config+:: {
         local cfg = self,
@@ -45,6 +46,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     [hashring.hashring]:
       t.receive +
       t.receive.withRetention +
+      t.receive.withVolumeClaimTemplate +
       t.receive.withHashringConfigMap + {
         config+:: {
           local cfg = self,
@@ -91,21 +93,24 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     for hashring in obs.config.hashrings
   },
 
-  rule:: t.rule {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-      namespace: obs.config.namespace,
-      replicas: 1,
-      commonLabels+:: obs.config.commonLabels,
+  rule:: 
+    t.rule +
+    t.rule.withVolumeClaimTemplate + {
+      config+:: {
+        local cfg = self,
+        name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+        namespace: obs.config.namespace,
+        replicas: 1,
+        commonLabels+:: obs.config.commonLabels,
+      },
     },
-  },
 
   store:: {
     ['shard' + i]:
       t.store +
       t.store.withIndexCacheMemcached +
       t.store.withCachingBucketMemcached +
+      t.store.withVolumeClaimTemplate +
       t.store.withIgnoreDeletionMarksDelay {
         config+:: {
           local cfg = self,
