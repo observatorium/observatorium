@@ -401,7 +401,6 @@ spec:
                   - name
                   type: object
               required:
-              - loki
               - thanos
               type: object
             query:

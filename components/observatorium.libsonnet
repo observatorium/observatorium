@@ -224,6 +224,19 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       namespace: obs.config.namespace,
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
+      metrics: {
+        readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.queryCache.service.metadata.name,
+          obs.queryCache.service.metadata.namespace,
+          obs.queryCache.service.spec.ports[0].port,
+        ],
+        writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.receiveService.metadata.name,
+          obs.receiveService.metadata.namespace,
+          obs.receiveService.spec.ports[2].port,
+        ],
+      },
+    } + if std.length(obs.config.loki) != 0 then {
       logs: {
         readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
           obs.loki.manifests['query-frontend-http-service'].metadata.name,
@@ -239,18 +252,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           obs.loki.manifests['distributor-http-service'].metadata.name,
           obs.loki.manifests['distributor-http-service'].metadata.namespace,
           obs.loki.manifests['distributor-http-service'].spec.ports[0].port,
-        ],
-      },
-      metrics: {
-        readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-          obs.queryCache.service.metadata.name,
-          obs.queryCache.service.metadata.namespace,
-          obs.queryCache.service.spec.ports[0].port,
-        ],
-        writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-          obs.receiveService.metadata.name,
-          obs.receiveService.metadata.namespace,
-          obs.receiveService.spec.ports[2].port,
         ],
       },
     },
@@ -314,5 +315,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   } + {
     ['loki-' + name]: obs.loki.manifests[name]
     for name in std.objectFields(obs.loki.manifests)
+    if std.length(obs.config.loki) != 0
   },
 }

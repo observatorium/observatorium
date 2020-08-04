@@ -64,10 +64,10 @@ cr.spec {
     rbac: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'rbac') then cr.spec.api.rbac else default.api.rbac,
     tenants: if std.objectHas(cr.spec, 'api') && std.objectHas(cr.spec.api, 'tenants') then { tenants: cr.spec.api.tenants } else default.api.tenants,
   },
-  loki+:: {
-    image: cr.spec.loki.image,
-    replicas: cr.spec.loki.replicas,
-    version: cr.spec.loki.version,
-    objectStorageConfig: lokiObjectStorageConfig,
-  },
+  loki+:: if std.objectHas(cr.spec, 'loki') then {
+    image: if std.objectHas(cr.spec.loki, 'image') then cr.spec.loki.image else default.loki.image,
+    replicas: if std.objectHas(cr.spec.loki, 'replicas') then cr.spec.loki.replicas else default.loki.replicas,
+    version: if std.objectHas(cr.spec.loki, 'version') then cr.spec.loki.version else default.loki.version,
+    objectStorageConfig: if lokiObjectStorageConfig != null then lokiObjectStorageConfig else default.loki.objectStorageConfig,
+  } else {},
 }
