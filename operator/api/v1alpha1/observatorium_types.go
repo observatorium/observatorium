@@ -46,15 +46,15 @@ type ObservatoriumSpec struct {
 	Query QuerySpec `json:"query,omitempty"`
 	// Loki
 	// +optional
-	Loki LokiSpec `json:"loki,omitempty"`
+	Loki *LokiSpec `json:"loki,omitempty"`
 }
 
 type ObjectStorageConfig struct {
 	// Object Store Config Secret for Thanos
-	Thanos ObjectStorageConfigSpec `json:"thanos"`
+	Thanos *ObjectStorageConfigSpec `json:"thanos"`
 	// Object Store Config Secret for Loki
 	// +optional
-	Loki ObjectStorageConfigSpec `json:"loki"`
+	Loki *ObjectStorageConfigSpec `json:"loki,omitempty"`
 }
 
 type ObjectStorageConfigSpec struct {
