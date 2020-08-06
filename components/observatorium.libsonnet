@@ -254,7 +254,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           obs.loki.manifests['distributor-http-service'].spec.ports[0].port,
         ],
       },
-    },
+    } else {},
   },
 
   loki::
