@@ -11,6 +11,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     replicas: error 'must provide replicas',
     replicationFactor: error 'must provide replication factor',
     objectStorageConfig: error 'must provide objectStorageConfig',
+    logLevel: 'info',
 
     commonLabels:: {
       'app.kubernetes.io/name': 'thanos-receive',
@@ -60,6 +61,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       container.withTerminationMessagePolicy('FallbackToLogsOnError') +
       container.withArgs([
         'receive',
+        '--log.level=' + tr.config.logLevel,
         '--grpc-address=0.0.0.0:%d' % tr.service.spec.ports[0].port,
         '--http-address=0.0.0.0:%d' % tr.service.spec.ports[1].port,
         '--remote-write.address=0.0.0.0:%d' % tr.service.spec.ports[2].port,
@@ -115,6 +117,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       affinity.mixin.podAffinityTerm.withTopologyKey('kubernetes.io/hostname') +
       affinity.mixin.podAffinityTerm.labelSelector.withMatchExpressions([
         matchExpression.new() +
+        matchExpression.withKey('app.kubernetes.io/name') +
+        matchExpression.withOperator('In') +
+        matchExpression.withValues([tr.statefulSet.metadata.labels['app.kubernetes.io/name']]),
+        matchExpression.new() +
         matchExpression.withKey('app.kubernetes.io/instance') +
         matchExpression.withOperator('In') +
         matchExpression.withValues([tr.statefulSet.metadata.labels['app.kubernetes.io/instance']]),
@@ -124,6 +130,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       affinity.mixin.podAffinityTerm.withNamespaces(tr.config.namespace) +
       affinity.mixin.podAffinityTerm.withTopologyKey('topology.kubernetes.io/zone') +
       affinity.mixin.podAffinityTerm.labelSelector.withMatchExpressions([
+        matchExpression.new() +
+        matchExpression.withKey('app.kubernetes.io/name') +
+        matchExpression.withOperator('In') +
+        matchExpression.withValues([tr.statefulSet.metadata.labels['app.kubernetes.io/name']]),
         matchExpression.new() +
         matchExpression.withKey('app.kubernetes.io/instance') +
         matchExpression.withOperator('In') +
@@ -152,7 +162,14 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           matchLabels: tr.config.podLabelSelector,
         },
         endpoints: [
-          { port: 'http' },
+          {
+            port: 'http',
+            relabelings: [{
+              sourceLabels: ['namespace', 'pod'],
+              separator: '/',
+              targetLabel: 'instance',
+            }],
+          },
         ],
       },
     },

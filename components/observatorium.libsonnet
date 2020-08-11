@@ -70,9 +70,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
               spec+: {
                 containers: [
                   if c.name == 'thanos-receive' then c {
-                    args+: [
-                      '--log.level=' + obs.config.receivers.logLevel,
-                    ],
                     env+: [
                       {
                         name: 'DEBUG',
