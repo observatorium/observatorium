@@ -10,6 +10,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     image: error 'must provide image',
     replicas: error 'must provide replicas',
     objectStorageConfig: error 'must provide objectStorageConfig',
+    logLevel: 'info',
 
     commonLabels:: {
       'app.kubernetes.io/name': 'thanos-store',
@@ -47,12 +48,15 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     local container = sts.mixin.spec.template.spec.containersType;
     local containerEnv = container.envType;
     local containerVolumeMount = container.volumeMountsType;
+    local affinity = sts.mixin.spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecutionType;
+    local matchExpression = affinity.mixin.podAffinityTerm.labelSelector.matchExpressionsType;
 
     local c =
       container.new('thanos-store', ts.config.image) +
       container.withTerminationMessagePolicy('FallbackToLogsOnError') +
       container.withArgs([
         'store',
+        '--log.level=' + ts.config.logLevel,
         '--data-dir=/var/thanos/store',
         '--grpc-address=0.0.0.0:%d' % ts.service.spec.ports[0].port,
         '--http-address=0.0.0.0:%d' % ts.service.spec.ports[1].port,
@@ -92,6 +96,22 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     sts.mixin.spec.template.spec.withTerminationGracePeriodSeconds(120) +
     sts.mixin.spec.template.spec.withVolumes([
       volume.fromEmptyDir('data'),
+    ]) +
+    sts.mixin.spec.template.spec.affinity.podAntiAffinity.withPreferredDuringSchedulingIgnoredDuringExecution([
+      affinity.new() +
+      affinity.withWeight(100) +
+      affinity.mixin.podAffinityTerm.withNamespaces(ts.config.namespace) +
+      affinity.mixin.podAffinityTerm.withTopologyKey('kubernetes.io/hostname') +
+      affinity.mixin.podAffinityTerm.labelSelector.withMatchExpressions([
+        matchExpression.new() +
+        matchExpression.withKey('app.kubernetes.io/name') +
+        matchExpression.withOperator('In') +
+        matchExpression.withValues([ts.statefulSet.metadata.labels['app.kubernetes.io/name']]),
+        matchExpression.new() +
+        matchExpression.withKey('app.kubernetes.io/instance') +
+        matchExpression.withOperator('In') +
+        matchExpression.withValues([ts.statefulSet.metadata.labels['app.kubernetes.io/instance']]),
+      ]),
     ]) +
     sts.mixin.spec.selector.withMatchLabels(ts.config.podLabelSelector) +
     {
@@ -257,7 +277,14 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           matchLabels: ts.config.podLabelSelector,
         },
         endpoints: [
-          { port: 'http' },
+          {
+            port: 'http',
+            relabelings: [{
+              sourceLabels: ['namespace', 'pod'],
+              separator: '/',
+              targetLabel: 'instance',
+            }],
+          },
         ],
       },
     },

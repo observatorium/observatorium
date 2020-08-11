@@ -37,6 +37,10 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - thanos-receive
                 - key: app.kubernetes.io/instance
                   operator: In
                   values:
@@ -48,6 +52,10 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - thanos-receive
                 - key: app.kubernetes.io/instance
                   operator: In
                   values:
@@ -59,6 +67,7 @@ spec:
       containers:
       - args:
         - receive
+        - --log.level=debug
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:10902
         - --remote-write.address=0.0.0.0:19291
@@ -70,7 +79,6 @@ spec:
         - --receive.local-endpoint=$(NAME).observatorium-xyz-thanos-receive-default.$(NAMESPACE).svc.cluster.local:10901
         - --tsdb.retention=4d
         - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
-        - --log.level=debug
         env:
         - name: NAME
           valueFrom:

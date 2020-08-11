@@ -30,9 +30,28 @@ spec:
         app.kubernetes.io/version: master-2020-05-24-079ad427
         store.observatorium.io/shard: shard-0
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - thanos-store
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - observatorium-xyz
+              namespaces:
+              - observatorium
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - store
+        - --log.level=info
         - --data-dir=/var/thanos/store
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:10902

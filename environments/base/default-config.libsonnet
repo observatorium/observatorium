@@ -44,6 +44,7 @@
         },
       },
     },
+    logLevel: 'info',
   },
 
   thanosReceiveController: {
@@ -103,6 +104,7 @@
         },
       },
     },
+    logLevel: 'info',
   },
 
   storeCache: {

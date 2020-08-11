@@ -14,6 +14,7 @@ cr.spec {
     image: if std.objectHas(cr.spec.compact, 'image') then cr.spec.compact.image else default.compact.image,
     version: if std.objectHas(cr.spec.compact, 'version') then cr.spec.compact.version else default.compact.version,
     objectStorageConfig: thanosObjectStorageConfig,
+    logLevel: 'info',
   },
   thanosReceiveController+:: {
     image: if std.objectHas(cr.spec, 'thanosReceiveController') && std.objectHas(cr.spec.thanosReceiveController, 'image') then cr.spec.thanosReceiveController.image else default.thanosReceiveController.image,
@@ -21,12 +22,12 @@ cr.spec {
     hashrings: hashrings,
   },
   receivers+:: {
-    logLevel: 'info',
-    debug: '',
     image: if std.objectHas(cr.spec.receivers, 'image') then cr.spec.receivers.image else default.receivers.image,
     version: if std.objectHas(cr.spec.receivers, 'version') then cr.spec.receivers.version else default.receivers.version,
     hashrings: hashrings,
     objectStorageConfig: thanosObjectStorageConfig,
+    logLevel: 'info',
+    debug: '',
   },
   rule+:: {
     image: if std.objectHas(cr.spec.rule, 'image') then cr.spec.rule.image else default.rule.image,
@@ -37,6 +38,7 @@ cr.spec {
     image: if std.objectHas(cr.spec.store, 'image') then cr.spec.store.image else default.store.image,
     version: if std.objectHas(cr.spec.store, 'version') then cr.spec.store.version else default.store.version,
     objectStorageConfig: thanosObjectStorageConfig,
+    logLevel: 'info',
   },
   storeCache+:: {
     image: if std.objectHas(cr.spec.store, 'cache') && std.objectHas(cr.spec.store.cache, 'image') then cr.spec.store.cache.image else default.storeCache.image,
