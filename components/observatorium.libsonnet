@@ -185,19 +185,29 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  queryCache:: (import 'cortex-query-frontend.libsonnet') + {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-      namespace: obs.config.namespace,
-      commonLabels+:: obs.config.commonLabels,
-      downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
-        obs.query.service.metadata.name,
-        obs.query.service.metadata.namespace,
-        obs.query.service.spec.ports[1].port,
-      ],
+  queryFrontend::
+    t.queryFrontend +
+    t.queryFrontend.withServiceMonitor +
+    t.queryFrontend.withSplitInterval +
+    t.queryFrontend.withMaxRetries +
+    t.queryFrontend.withLogQueriesLongerThan +
+    t.queryFrontend.withInMemoryResponseCache + {
+      config+:: {
+        local cfg = self,
+        name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+        namespace: obs.config.namespace,
+        commonLabels+:: obs.config.commonLabels,
+        replicas: 1,
+        downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
+          obs.query.service.metadata.name,
+          obs.query.service.metadata.namespace,
+          9090,
+        ],
+        splitInterval: '24h',
+        maxRetries: 0,
+        logQueriesLongerThan: '5s',
+      },
     },
-  },
 
   receiveService::
     local service = k.core.v1.service;
@@ -223,9 +233,9 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       commonLabels+:: obs.config.commonLabels,
       metrics: {
         readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-          obs.queryCache.service.metadata.name,
-          obs.queryCache.service.metadata.namespace,
-          obs.queryCache.service.spec.ports[0].port,
+          obs.queryFrontend.service.metadata.name,
+          obs.queryFrontend.service.metadata.namespace,
+          obs.queryFrontend.service.spec.ports[0].port,
         ],
         writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
           obs.receiveService.metadata.name,
@@ -278,8 +288,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ['thanos-query-' + name]: obs.query[name]
     for name in std.objectFields(obs.query)
   } + {
-    ['query-cache-' + name]: obs.queryCache[name]
-    for name in std.objectFields(obs.queryCache)
+    ['thanos-query-frontend-' + name]: obs.queryFrontend[name]
+    for name in std.objectFields(obs.queryFrontend)
   } + {
     ['thanos-receive-' + hashring + '-' + name]: obs.receivers[hashring][name]
     for hashring in std.objectFields(obs.receivers)

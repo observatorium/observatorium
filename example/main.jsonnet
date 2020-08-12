@@ -52,10 +52,9 @@ local obs = (import '../environments/base/observatorium.jsonnet');
     objectStorageConfig: obs.config.objectStorageConfig,
     hashrings: obs.config.hashrings,
 
-    queryCache: {
-      image: obs.config.queryCache.image,
-      replicas: obs.config.queryCache.replicas,
-      version: obs.config.queryCache.version,
+    queryFrontend: {
+      image: obs.config.thanosImage,
+      version: obs.config.thanosVersion,
     },
     store: {
       image: obs.config.thanosImage,
