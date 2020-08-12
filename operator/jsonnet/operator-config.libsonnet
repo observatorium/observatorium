@@ -52,9 +52,9 @@ cr.spec {
     image: if std.objectHas(cr.spec, 'query') && std.objectHas(cr.spec.query, 'image') then cr.spec.query.image else default.query.image,
     version: if std.objectHas(cr.spec, 'query') && std.objectHas(cr.spec.query, 'version') then cr.spec.query.version else default.query.version,
   },
-  queryCache+:: {
-    image: if std.objectHas(cr.spec, 'queryCache') && std.objectHas(cr.spec.queryCache, 'image') then cr.spec.queryCache.image else default.queryCache.image,
-    version: if std.objectHas(cr.spec, 'queryCache') && std.objectHas(cr.spec.queryCache, 'version') then cr.spec.queryCache.version else default.queryCache.version,
+  queryFrontend+:: {
+    image: if std.objectHas(cr.spec, 'queryFrontend') && std.objectHas(cr.spec.queryFrontend, 'image') then cr.spec.queryFrontend.image else default.queryFrontend.image,
+    version: if std.objectHas(cr.spec, 'queryFrontend') && std.objectHas(cr.spec.queryFrontend, 'version') then cr.spec.queryFrontend.version else default.queryFrontend.version,
   },
   apiQuery+:: {
     image: if std.objectHas(cr.spec, 'apiQuery') && std.objectHas(cr.spec.apiQuery, 'image') then cr.spec.apiQuery.image else default.apiQuery.image,

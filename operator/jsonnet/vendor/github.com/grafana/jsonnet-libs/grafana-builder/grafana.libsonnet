@@ -1,5 +1,5 @@
 {
-  dashboard(title, uid=''):: {
+  dashboard(title, uid='', datasource='default'):: {
     // Stuff that isn't materialised.
     _nextPanel:: 1,
     addRow(row):: self {
@@ -88,8 +88,8 @@
       list: [
         {
           current: {
-            text: 'default',
-            value: 'default',
+            text: datasource,
+            value: datasource,
           },
           hide: 0,
           label: null,
@@ -282,6 +282,7 @@
         type: if std.objectHas(labelStyle, 'type') then labelStyle.type else 'number',
         unit: if std.objectHas(labelStyle, 'unit') then labelStyle.unit else 'short',
         link: std.objectHas(labelStyle, 'link'),
+        linkTargetBlank: if std.objectHas(labelStyle, 'linkTargetBlank') then labelStyle.linkTargetBlank else false,
         linkTooltip: if std.objectHas(labelStyle, 'linkTooltip') then labelStyle.linkTooltip else 'Drill down',
         linkUrl: if std.objectHas(labelStyle, 'link') then labelStyle.link else '',
       },

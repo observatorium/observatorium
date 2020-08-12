@@ -3,7 +3,7 @@
 
   name: 'observatorium-xyz',
   namespace: 'observatorium',
-  thanosVersion: 'master-2020-05-24-079ad427',  // Fixes a blocker issue in v0.13.0-rc.0
+  thanosVersion: 'master-2020-08-12-70f89d83',  // Fixes a blocker issue in v0.13.0-rc.0
   thanosImage: 'quay.io/thanos/thanos:' + defaultConfig.thanosVersion,
   objectStorageConfig: {
     thanos: {
@@ -122,11 +122,9 @@
     version: defaultConfig.thanosVersion,
   },
 
-  queryCache: {
-    local qcConfig = self,
-    replicas: 1,
-    version: 'master-fdcd992f',
-    image: 'quay.io/cortexproject/cortex:' + qcConfig.version,
+  queryFrontend: {
+    image: defaultConfig.thanosImage,
+    version: defaultConfig.thanosVersion,
   },
 
   api: {

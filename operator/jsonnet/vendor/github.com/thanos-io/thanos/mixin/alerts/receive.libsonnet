@@ -3,6 +3,7 @@
   receive+:: {
     selector: error 'must provide selector for Thanos Receive alerts',
     httpErrorThreshold: 5,
+    forwardErrorThreshold: 20,
     refreshErrorThreshold: 0,
     p99LatencyThreshold: 10,
   },
@@ -46,6 +47,33 @@
             },
           },
           {
+            alert: 'ThanosReceiveHighReplicationFailures',
+            annotations: {
+              message: 'Thanos Receive {{$labels.job}} is failing to replicate {{ $value | humanize }}% of requests.',
+            },
+            expr: |||
+              thanos_receive_replication_factor > 1
+                and
+              (
+                (
+                  sum by (job) (rate(thanos_receive_replications_total{result="error", %(selector)s}[5m]))
+                /
+                  sum by (job) (rate(thanos_receive_replications_total{%(selector)s}[5m]))
+                )
+                >
+                (
+                  max by (job) (floor((thanos_receive_replication_factor{%(selector)s}+1) / 2))
+                /
+                  max by (job) (thanos_receive_hashring_nodes{%(selector)s})
+                )
+              ) * 100
+            ||| % thanos.receive,
+            'for': '5m',
+            labels: {
+              severity: 'warning',
+            },
+          },
+          {
             alert: 'ThanosReceiveHighForwardRequestFailures',
             annotations: {
               message: 'Thanos Receive {{$labels.job}} is failing to forward {{ $value | humanize }}% of requests.',
@@ -55,14 +83,9 @@
                 sum by (job) (rate(thanos_receive_forward_requests_total{result="error", %(selector)s}[5m]))
               /
                 sum by (job) (rate(thanos_receive_forward_requests_total{%(selector)s}[5m]))
-              )
-              >
-              (
-                max by (job) (floor((thanos_receive_replication_factor{%(selector)s}+1) / 2))
-              /
-                max by (job) (thanos_receive_hashring_nodes{%(selector)s})
-              )
+              ) * 100 > %(forwardErrorThreshold)s
             ||| % thanos.receive,
+            'for': '5m',
             labels: {
               severity: 'warning',
             },
@@ -99,12 +122,16 @@
           {
             alert: 'ThanosReceiveNoUpload',
             annotations: {
-              message: 'Thanos Receive {{$labels.job}} has not uploaded latest data to object storage.',
+              message: 'Thanos Receive {{ $labels.instance }} of {{$labels.job}} has not uploaded latest data to object storage.',
             },
-            expr: 'increase(thanos_shipper_uploads_total{%(selector)s}[2h]) == 0' % thanos.receive,
-            'for': '30m',
+            expr: |||
+              (up{%(selector)s} - 1)
+              + on (instance) # filters to only alert on current instance last 3h
+              (sum by (instance) (increase(thanos_shipper_uploads_total{%(selector)s}[3h])) == 0)
+            ||| % thanos.receive,
+            'for': '3h',
             labels: {
-              severity: 'warning',
+              severity: 'critical',
             },
           },
         ],

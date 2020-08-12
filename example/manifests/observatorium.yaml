@@ -38,14 +38,14 @@ spec:
         usernameClaim: email
     version: master-2020-06-26-v0.1.1-105-gc784d77
   apiQuery:
-    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
-    version: master-2020-05-24-079ad427
+    image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
+    version: master-2020-08-12-70f89d83
   compact:
-    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
+    image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
     retentionResolution1h: 1s
     retentionResolution5m: 1s
     retentionResolutionRaw: 14d
-    version: master-2020-05-24-079ad427
+    version: master-2020-08-12-70f89d83
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -73,15 +73,14 @@ spec:
       key: thanos.yaml
       name: thanos-objectstorage
   query:
-    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
-    version: master-2020-05-24-079ad427
-  queryCache:
-    image: quay.io/cortexproject/cortex:master-fdcd992f
-    replicas: 1
-    version: master-fdcd992f
+    image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
+    version: master-2020-08-12-70f89d83
+  queryFrontend:
+    image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
+    version: master-2020-08-12-70f89d83
   receivers:
-    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
-    version: master-2020-05-24-079ad427
+    image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
+    version: master-2020-08-12-70f89d83
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -90,8 +89,8 @@ spec:
           requests:
             storage: 50Gi
   rule:
-    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
-    version: master-2020-05-24-079ad427
+    image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
+    version: master-2020-08-12-70f89d83
     volumeClaimTemplate:
       spec:
         accessModes:
@@ -107,9 +106,9 @@ spec:
       memoryLimitMb: 1024
       replicas: 1
       version: 1.6.3-alpine
-    image: quay.io/thanos/thanos:master-2020-05-24-079ad427
+    image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
     shards: 1
-    version: master-2020-05-24-079ad427
+    version: master-2020-08-12-70f89d83
     volumeClaimTemplate:
       spec:
         accessModes:

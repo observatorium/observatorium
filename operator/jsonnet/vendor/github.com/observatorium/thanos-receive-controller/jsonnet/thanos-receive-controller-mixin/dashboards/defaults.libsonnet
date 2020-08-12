@@ -8,7 +8,7 @@
   grafanaDashboards:: {
     [filename]: grafanaDashboards[filename] {
       uid: std.md5(filename),
-      timezone: '',
+      timezone: 'UTC',
       tags: $._config.grafanaThanos.dashboardTags,
 
       // Modify tooltip to only show a single value
