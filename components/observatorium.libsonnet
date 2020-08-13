@@ -201,7 +201,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
           obs.query.service.metadata.name,
           obs.query.service.metadata.namespace,
-          9090,
+          obs.query.service.spec.ports[1].port,
         ],
         splitInterval: '24h',
         maxRetries: 0,
