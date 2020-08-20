@@ -5,7 +5,7 @@ jobs:
       - image: quay.io/coreos/jsonnet-ci
     steps:
       - checkout
-      - run: find . -type f -not -path './*vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \) | xargs -L1 jsonnetfmt --test
+      - run: make jsonnetfmt
       - run: make vendor-jsonnet
       - run: make generate-cert
       - run: make environments/base/manifests environments/dev/manifests example/manifests tests/manifests
@@ -25,7 +25,17 @@ jobs:
       - store_artifacts:
           path: /tmp/artifacts
 
-  test-operator:
+  operator-build:
+    working_directory: /go/src/github.com/observatorium/deployments
+    docker:
+      - image: quay.io/coreos/jsonnet-ci
+    steps:
+      - checkout
+      - run: cd operator && make vendor-jsonnet
+      - run: cd operator && make environments/base/manifests environments/dev/manifests example/manifests tests/manifests
+      - run: git diff --exit-code
+
+  operator-test:
     machine: true
     steps:
       - checkout
@@ -63,10 +73,12 @@ workflows:
     jobs:
       - build
       - tests
-      - test-operator
+      - operator-build
+      - operator-test
       - container-push:
           requires:
             - build
+            - operator-build
           filters:
             branches:
               only:
