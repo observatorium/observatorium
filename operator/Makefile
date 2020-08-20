@@ -12,7 +12,6 @@ BIN_DIR ?= $(shell pwd)/tmp/bin
 CONTROLLER_GEN ?= $(BIN_DIR)/controller-gen
 JB ?= $(BIN_DIR)/jb
 
-
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: $(CONTROLLER_GEN)
 	$(CONTROLLER_GEN) crd paths="./..." output:crd:artifacts:config=manifests/crds

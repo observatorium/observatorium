@@ -32,7 +32,7 @@ jobs:
     steps:
       - checkout
       - run: cd operator && make vendor-jsonnet
-      - run: cd operator && make environments/base/manifests environments/dev/manifests example/manifests tests/manifests
+      - run: cd operator && make generate manifests
       - run: git diff --exit-code
 
   operator-test:
