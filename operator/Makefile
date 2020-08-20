@@ -26,7 +26,7 @@ vet:
 	go vet ./...
 
 # Generate code
-generate: $(CONTROLLER_GEN) environments/base/manifests environments/dev/manifests example/manifests tests/manifests
+generate: $(CONTROLLER_GEN)
 	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths="./..."
 
 # Build the docker image
