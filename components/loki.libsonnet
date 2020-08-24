@@ -203,7 +203,7 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
   defaultConfig+:: {
     local grpcServerMaxMsgSize = 104857600,
     local querierConcurrency = 32,
-    local indexPeriodHours = 168,
+    local indexPeriodHours = 24,
 
     auth_enabled: true,
     chunk_store_config: {
