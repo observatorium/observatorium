@@ -57,14 +57,14 @@ spec:
   - hashring: default
     tenants: []
   loki:
-    image: docker.io/grafana/loki:1.6.0
+    image: docker.io/grafana/loki:1.6.1
     replicas:
       distributor: 1
       ingester: 1
       querier: 1
       query_frontend: 1
       table_manager: 1
-    version: 1.6.0
+    version: 1.6.1
   objectStorageConfig:
     loki:
       key: endpoint
