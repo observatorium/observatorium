@@ -77,7 +77,7 @@ local obs = (import '../environments/base/observatorium.jsonnet');
       retentionResolutionRaw: obs.config.compact.retentionResolutionRaw,
       retentionResolution5m: obs.config.compact.retentionResolution5m,
       retentionResolution1h: obs.config.compact.retentionResolution1h,
-      enableDownSampling: obs.config.compact.enableDownSampling,
+      enableDownsampling: obs.config.compact.enableDownsampling,
     },
     rule: {
       image: obs.config.thanosImage,
