@@ -8,7 +8,7 @@ local patchObs = obs {
   compact+::
     t.compact.withVolumeClaimTemplate {
       config+:: obs.compact.config,
-    } + (if std.objectHas(obs.compact.config, 'enableDownSampling') && obs.compact.config.enableDownSampling == false then t.compact.withDownsamplingDisabled else {}),
+    } + (if std.objectHas(obs.compact.config, 'enableDownSampling') && obs.compact.config.enableDownSampling == true then {} else t.compact.withDownsamplingDisabled),
 
   rule+::
     t.rule.withVolumeClaimTemplate {

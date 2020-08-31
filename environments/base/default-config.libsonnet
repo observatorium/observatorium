@@ -34,6 +34,7 @@
     retentionResolutionRaw: '14d',
     retentionResolution5m: '1s',
     retentionResolution1h: '1s',
+    enableDownSampling: true,
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],
