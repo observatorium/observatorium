@@ -17,7 +17,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   compact::
     t.compact +
     t.compact.withRetention +
-    t.compact.withDownsamplingDisabled +
     t.compact.withDeleteDelay +
     t.compact.withDeduplication + {
       config+:: {

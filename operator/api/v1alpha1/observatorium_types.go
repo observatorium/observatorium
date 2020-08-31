@@ -227,6 +227,8 @@ type CompactSpec struct {
 	RetentionResolution5m string `json:"retentionResolution5m"`
 	// RetentionResolutionRaw
 	RetentionResolution1h string `json:"retentionResolution1h"`
+	// EnableDownSampling enables the downsampling
+	EnableDownSampling bool `json:"enableDownSampling,omitempty"`
 }
 
 type VolumeClaimTemplate struct {
