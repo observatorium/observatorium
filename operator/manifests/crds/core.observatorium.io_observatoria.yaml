@@ -179,6 +179,9 @@ spec:
             compact:
               description: Thanos CompactSpec
               properties:
+                enableDownsampling:
+                  description: EnableDownsampling enables downsampling.
+                  type: boolean
                 image:
                   description: Thanos image
                   type: string

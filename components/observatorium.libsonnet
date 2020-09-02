@@ -17,7 +17,6 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   compact::
     t.compact +
     t.compact.withRetention +
-    t.compact.withDownsamplingDisabled +
     t.compact.withDeleteDelay +
     t.compact.withDeduplication + {
       config+:: {
@@ -29,7 +28,11 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         deduplicationReplicaLabels: obs.config.deduplicationReplicaLabels,
         deleteDelay: '48h',
       },
-    },
+    } + (
+      if std.objectHas(obs.config.compact, 'enableDownsampling') && obs.config.compact.enableDownsampling == true then
+        {}
+      else t.compact.withDownsamplingDisabled
+    ),
 
   thanosReceiveController:: (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') + {
     config+:: {

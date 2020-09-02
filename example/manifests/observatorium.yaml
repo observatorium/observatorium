@@ -41,6 +41,7 @@ spec:
     image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
     version: master-2020-08-12-70f89d83
   compact:
+    enableDownsampling: false
     image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
     retentionResolution1h: 1s
     retentionResolution5m: 1s
