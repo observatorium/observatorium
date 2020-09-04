@@ -24,70 +24,99 @@ local m = import 'memcached.libsonnet';
     },
   },
 
-  chunkCache:: m {
-    config+:: {
-      local cfg = self,
-      name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-chunk-cache',
-      namespace: mc.config.namespace,
-      commonLabels+:: mc.config.commonLabels {
-        'app.kubernetes.io/component': 'chunk-cache',
+  chunkCache::
+    m +
+    m.withServiceMonitor {
+      config+:: {
+        local cfg = self,
+        name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-chunk-cache',
+        namespace: mc.config.namespace,
+        commonLabels+:: mc.config.commonLabels {
+          'app.kubernetes.io/component': 'chunk-cache',
+        },
+        version:: mc.config.version,
+        image:: mc.config.image,
+        exporterVersion: mc.config.exporterVersion,
+        exporterImage:: mc.config.exporterImage,
+        replicas: mc.config.replicas.chunk_cache,
+        maxItemSize:: '2m',
+        memoryLimitMb: 4096,
       },
-      version:: mc.config.version,
-      image:: mc.config.image,
-      exporterVersion: mc.config.exporterVersion,
-      exporterImage:: mc.config.exporterImage,
-      replicas: mc.config.replicas.chunk_cache,
-      maxItemSize:: '2m',
-      memoryLimitMb: 4096,
-    },
-  },
+    } + if std.objectHas(mc.serviceMonitors, 'chunk_cache') then {
+      serviceMonitor+: mc.serviceMonitors.chunk_cache,
+    } else {},
 
-  indexQueryCache:: m {
-    config+:: {
-      local cfg = self,
-      name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-index-query-cache',
-      namespace: mc.config.namespace,
-      commonLabels+:: mc.config.commonLabels {
-        'app.kubernetes.io/component': 'index-query-cache',
+  indexQueryCache::
+    m +
+    m.withServiceMonitor {
+      config+:: {
+        local cfg = self,
+        name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-index-query-cache',
+        namespace: mc.config.namespace,
+        commonLabels+:: mc.config.commonLabels {
+          'app.kubernetes.io/component': 'index-query-cache',
+        },
+        version:: mc.config.version,
+        image:: mc.config.image,
+        exporterVersion: mc.config.exporterVersion,
+        exporterImage:: mc.config.exporterImage,
+        replicas: mc.config.replicas.index_query_cache,
+        maxItemSize:: '5m',
       },
-      version:: mc.config.version,
-      image:: mc.config.image,
-      exporterVersion: mc.config.exporterVersion,
-      exporterImage:: mc.config.exporterImage,
-      replicas: mc.config.replicas.index_query_cache,
-      maxItemSize:: '5m',
-    },
-  },
+    } + if std.objectHas(mc.serviceMonitors, 'index_query_cache') then {
+      serviceMonitor+: mc.serviceMonitors.index_query_cache,
+    } else {},
 
-  indexWriteCache:: m {
-    config+:: {
-      local cfg = self,
-      name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-index-write-cache',
-      namespace: mc.config.namespace,
-      commonLabels+:: mc.config.commonLabels {
-        'app.kubernetes.io/component': 'index-write-cache',
+  indexWriteCache::
+    m +
+    m.withServiceMonitor {
+      config+:: {
+        local cfg = self,
+        name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-index-write-cache',
+        namespace: mc.config.namespace,
+        commonLabels+:: mc.config.commonLabels {
+          'app.kubernetes.io/component': 'index-write-cache',
+        },
+        version:: mc.config.version,
+        image:: mc.config.image,
+        exporterVersion: mc.config.exporterVersion,
+        exporterImage:: mc.config.exporterImage,
+        replicas: mc.config.replicas.index_write_cache,
       },
-      version:: mc.config.version,
-      image:: mc.config.image,
-      exporterVersion: mc.config.exporterVersion,
-      exporterImage:: mc.config.exporterImage,
-      replicas: mc.config.replicas.index_write_cache,
-    },
-  },
+    } + if std.objectHas(mc.serviceMonitors, 'index_write_cache') then {
+      serviceMonitor+: mc.serviceMonitors.index_write_cache,
+    } else {},
 
-  resultsCache:: m {
-    config+:: {
-      local cfg = self,
-      name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-results-cache',
-      namespace: mc.config.namespace,
-      commonLabels+:: mc.config.commonLabels {
-        'app.kubernetes.io/component': 'results-cache',
+  resultsCache::
+    m +
+    m.withServiceMonitor {
+      config+:: {
+        local cfg = self,
+        name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-results-cache',
+        namespace: mc.config.namespace,
+        commonLabels+:: mc.config.commonLabels {
+          'app.kubernetes.io/component': 'results-cache',
+        },
+        version:: mc.config.version,
+        image:: mc.config.image,
+        exporterVersion: mc.config.exporterVersion,
+        exporterImage:: mc.config.exporterImage,
+        replicas: mc.config.replicas.results_cache,
       },
-      version:: mc.config.version,
-      image:: mc.config.image,
-      exporterVersion: mc.config.exporterVersion,
-      exporterImage:: mc.config.exporterImage,
-      replicas: mc.config.replicas.results_cache,
+    } + if std.objectHas(mc.serviceMonitors, 'results_cache') then {
+      serviceMonitor+: mc.serviceMonitors.results_cache,
+    } else {},
+
+
+  withServiceMonitors: {
+    local l = self,
+    serviceMonitors:: {},
+
+    manifests+:: {
+      'chunk-cache-service-monitor': l.chunkCache.serviceMonitor,
+      'index-query-cache-service-monitor': l.indexQueryCache.serviceMonitor,
+      'index-write-cache-service-monitor': l.indexWriteCache.serviceMonitor,
+      'results-cache-service-monitor': l.resultsCache.serviceMonitor,
     },
   },
 
