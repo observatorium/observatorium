@@ -1,4 +1,32 @@
 local obs = (import '../environments/base/observatorium.jsonnet');
+
+local tls = {
+  name: obs.config.name + '-tls',
+  manifests: {
+    [self.name + '-configmap']: {
+      apiVersion: 'v1',
+      data: {
+        'ca.pem': importstr '../tmp/certs/ca.pem',
+      },
+      kind: 'ConfigMap',
+      metadata: {
+        name: tls.name,
+      },
+    },
+    [self.name + '-secret']: {
+      apiVersion: 'v1',
+      stringData: {
+        'cert.pem': importstr '../tmp/certs/server.pem',
+        'key.pem': importstr '../tmp/certs/server.key',
+      },
+      kind: 'Secret',
+      metadata: {
+        name: tls.name,
+      },
+    },
+  },
+};
+
 local upJob = (import '../components/up-job.libsonnet');
 
 local dex = (import '../components/dex.libsonnet') + {
@@ -50,6 +78,26 @@ local upMetrics = upJob + upJob.withResources + {
   },
 };
 
+local upMetricsTLS = upMetrics {
+  config+:: {
+    name: 'observatorium-up-metrics-tls',
+    writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
+      obs.api.service.metadata.name,
+      obs.api.service.metadata.namespace,
+      obs.api.service.spec.ports[1].port,
+    ],
+    readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
+      obs.api.service.metadata.name,
+      obs.api.service.metadata.namespace,
+      obs.api.service.spec.ports[1].port,
+    ],
+    tls: {
+      configMapName: tls.name,
+      caKey: 'ca.pem',
+    },
+  },
+};
+
 local upLogs = upJob + upJob.withResources + {
   config+:: {
     name: 'observatorium-up-logs',
@@ -98,6 +146,29 @@ local upLogs = upJob + upJob.withResources + {
   },
 };
 
+local upLogsTLS = upLogs {
+  config+:: {
+    name: 'observatorium-up-logs-tls',
+    writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/push' % [
+      obs.api.service.metadata.name,
+      obs.api.service.metadata.namespace,
+      obs.api.service.spec.ports[1].port,
+    ],
+    readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/query' % [
+      obs.api.service.metadata.name,
+      obs.api.service.metadata.namespace,
+      obs.api.service.spec.ports[1].port,
+    ],
+    tls: {
+      configMapName: tls.name,
+      caKey: 'ca.pem',
+    },
+  },
+};
 
+
+tls.manifests +
 upMetrics.manifests +
-upLogs.manifests
+upLogs.manifests +
+upMetricsTLS.manifests +
+upLogsTLS.manifests

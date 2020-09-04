@@ -159,6 +159,26 @@ spec:
                     - oidc
                     type: object
                   type: array
+                tls:
+                  description: TLS configuration for the Observatorium API.
+                  properties:
+                    caKey:
+                      type: string
+                    certKey:
+                      type: string
+                    configMapName:
+                      type: string
+                    keyKey:
+                      type: string
+                    secretName:
+                      type: string
+                  required:
+                  - caKey
+                  - certKey
+                  - configMapName
+                  - keyKey
+                  - secretName
+                  type: object
                 version:
                   description: Version describes the version of API to use.
                   type: string

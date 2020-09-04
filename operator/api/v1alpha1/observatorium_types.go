@@ -180,11 +180,22 @@ type APITenant struct {
 	OIDC TenantOIDC `json:"oidc"`
 }
 
+// TLS contains the TLS configuration for a component.
+type TLS struct {
+	SecretName    string `json:"secretName"`
+	CertKey       string `json:"certKey"`
+	KeyKey        string `json:"keyKey"`
+	ConfigMapName string `json:"configMapName"`
+	CAKey         string `json:"caKey"`
+}
+
 type APISpec struct {
 	// API image
 	Image string `json:"image,omitempty"`
 	// Version describes the version of API to use.
 	Version string `json:"version,omitempty"`
+	// TLS configuration for the Observatorium API.
+	TLS TLS `json:"tls,omitempty"`
 	// RBAC is an RBAC configuration for the Observatorium API.
 	RBAC APIRBAC `json:"rbac"`
 	// Tenants is a slice of tenants for the Observatorium API.

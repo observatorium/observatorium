@@ -2,14 +2,13 @@ apiVersion: core.observatorium.io/v1alpha1
 kind: Observatorium
 metadata:
   labels:
-    app.kubernetes.io/component: observatorium-cr
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: observatorium-cr
     app.kubernetes.io/part-of: observatorium
   name: observatorium-xyz
 spec:
   api:
-    image: quay.io/observatorium/observatorium:master-2020-06-26-v0.1.1-105-gc784d77
+    image: quay.io/observatorium/observatorium:master-2020-09-04-v0.1.1-135-g7c621cf
     rbac:
       roleBindings:
       - name: test
@@ -36,7 +35,14 @@ spec:
         clientSecret: ZXhhbXBsZS1hcHAtc2VjcmV0
         issuerURL: http://dex.dex.svc.cluster.local:5556/dex
         usernameClaim: email
-    version: master-2020-06-26-v0.1.1-105-gc784d77
+    tls:
+      caKey: ca.pem
+      certKey: cert.pem
+      configMapName: observatorium-xyz-tls
+      keyKey: key.pem
+      secretName: observatorium-xyz-tls
+      serverName: observatorium-xyz-observatorium-api.observatorium.svc.cluster.local
+    version: master-2020-09-04-v0.1.1-135-g7c621cf
   apiQuery:
     image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
     version: master-2020-08-12-70f89d83

@@ -18,6 +18,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       'app.kubernetes.io/version': up.config.version,
       'app.kubernetes.io/component': 'test',
     },
+
+    tls: {},
   },
 
   job:
@@ -38,7 +40,22 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           '--latency=10s',
           '--initial-query-delay=5s',
           '--threshold=0.90',
-        ]
+        ] + (
+          if up.config.tls != {} then
+            [
+              '--tls-ca-file=/mnt/tls/' + up.config.tls.caKey,
+            ]
+          else []
+        )
+      ) +
+      container.withVolumeMounts(
+        (if up.config.tls != {} then [
+           {
+             name: 'tls',
+             mountPath: '/mnt/tls',
+             readOnly: true,
+           },
+         ] else [])
       );
 
     job.new() +
@@ -53,7 +70,16 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           },
         },
       },
-    },
+    } + job.mixin.spec.template.spec.withVolumes(
+      (if up.config.tls != {} then [
+         {
+           configMap: {
+             name: up.config.tls.configMapName,
+           },
+           name: 'tls',
+         },
+       ] else [])
+    ),
 
   withResources:: {
     local u = self,
@@ -132,22 +158,27 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                 args+: [
                   '--token-file=/var/shared/token',
                 ],
-              } + container.withVolumeMounts({
-                name: 'shared',
-                mountPath: '/var/shared',
-                readOnly: false,
-              }) else c
+              } + container.withVolumeMounts(
+                c.volumeMounts + [
+                  {
+                    name: 'shared',
+                    mountPath: '/var/shared',
+                    readOnly: true,
+                  },
+                ]
+              ) else c
               for c in super.containers
+            ],
+            volumes+: [
+              {
+                emptyDir: {},
+                name: 'shared',
+              },
             ],
           },
         },
       },
-    } + job.mixin.spec.template.spec.withVolumes(
-      {
-        emptyDir: {},
-        name: 'shared',
-      }
-    ),
+    },
   },
 
   withLogsFile:: {
@@ -168,17 +199,21 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                 '/bin/sh',
                 '-c',
                 |||
-                  cat > /var/shared/logs.yaml << EOF
+                  cat > /var/logs-file/logs.yaml << EOF
                   spec:
                     logs: [ [ "$(date '+%s%N')", "log line"] ]
                   EOF
                 |||,
               ]) +
-              container.withVolumeMounts({
-                name: 'shared',
-                mountPath: '/var/shared',
-                readOnly: false,
-              }),
+              container.withVolumeMounts(
+                [
+                  {
+                    name: 'logs-file',
+                    mountPath: '/var/logs-file',
+                    readOnly: false,
+                  },
+                ],
+              ),
 
             initContainers+: [c],
 
@@ -186,24 +221,30 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
               if c.name == 'observatorium-up' then c {
                 resources: u.config.resources,
                 args+: [
-                  '--logs-file=/var/shared/logs.yaml',
+                  '--logs-file=/var/logs-file/logs.yaml',
                 ],
-              } + container.withVolumeMounts({
-                name: 'shared',
-                mountPath: '/var/shared',
-                readOnly: true,
-              }) else c
+              } + container.withVolumeMounts(
+                c.volumeMounts +
+                [
+                  {
+                    name: 'logs-file',
+                    mountPath: '/var/logs-file',
+                    readOnly: true,
+                  },
+                ],
+              ) else c
               for c in super.containers
+            ],
+            volumes+: [
+              {
+                emptyDir: {},
+                name: 'logs-file',
+              },
             ],
           },
         },
       },
-    } + job.mixin.spec.template.spec.withVolumes(
-      {
-        emptyDir: {},
-        name: 'shared',
-      }
-    ),
+    },
   },
 
   manifests+:: {
