@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: observatorium-up-logs
+  name: observatorium-up-logs-tls
 spec:
   backoffLimit: 5
   template:
@@ -15,8 +15,8 @@ spec:
       containers:
       - args:
         - --endpoint-type=logs
-        - --endpoint-write=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/api/v1/push
-        - --endpoint-read=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/api/v1/query
+        - --endpoint-write=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/api/v1/push
+        - --endpoint-read=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/api/v1/query
         - --period=1s
         - --duration=2m
         - --name=foo
@@ -24,6 +24,7 @@ spec:
         - --latency=10s
         - --initial-query-delay=5s
         - --threshold=0.90
+        - --tls-ca-file=/mnt/tls/ca.pem
         - --token-file=/var/shared/token
         - --logs-file=/var/logs-file/logs.yaml
         image: quay.io/observatorium/up:master-2020-06-15-d763595
@@ -33,6 +34,9 @@ spec:
             cpu: 500m
             memory: 128Mi
         volumeMounts:
+        - mountPath: /mnt/tls
+          name: tls
+          readOnly: true
         - mountPath: /var/shared
           name: shared
           readOnly: true
@@ -76,6 +80,9 @@ spec:
           readOnly: false
       restartPolicy: OnFailure
       volumes:
+      - configMap:
+          name: observatorium-xyz-tls
+        name: tls
       - emptyDir: {}
         name: shared
       - emptyDir: {}
