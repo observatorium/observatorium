@@ -568,6 +568,8 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
 
   withServiceMonitor:: {
     local l = self,
+    serviceMonitors: {},
+
     manifests+:: {
       [name + '-service-monitor']: {
         apiVersion: 'monitoring.coreos.com/v1',
@@ -587,9 +589,9 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
             { port: 'metrics' },
           ],
         },
-      }
+      } + if std.objectHas(l.serviceMonitors, name) then l.serviceMonitors[name] else {}
       for name in std.objectFields(loki.components)
-      if name == 'distributor' || name == 'ingester'
+      if std.member(['distributor', 'query_frontend', 'querier', 'ingester'], name)
     },
   },
 
