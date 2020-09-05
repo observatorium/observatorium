@@ -133,6 +133,15 @@ spec:
                     properties:
                       id:
                         type: string
+                      mTLS:
+                        description: TenantMTLS represents the mTLS configuration
+                          for an Observatorium API tenant.
+                        properties:
+                          caPath:
+                            type: string
+                        required:
+                        - caPath
+                        type: object
                       name:
                         type: string
                       oidc:
@@ -156,7 +165,6 @@ spec:
                     required:
                     - id
                     - name
-                    - oidc
                     type: object
                   type: array
                 tls:
