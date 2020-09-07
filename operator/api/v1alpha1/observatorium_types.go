@@ -175,7 +175,11 @@ type TenantOIDC struct {
 
 // TenantMTLS represents the mTLS configuration for an Observatorium API tenant.
 type TenantMTLS struct {
-	CAPath string `json:"caPath"`
+	CAKey string `json:"caKey"`
+	// +optional
+	SecretName string `json:"secretName"`
+	// +optional
+	ConfigMapName string `json:"configMapName"`
 }
 
 // APITenant represents a tenant in the Observatorium API.

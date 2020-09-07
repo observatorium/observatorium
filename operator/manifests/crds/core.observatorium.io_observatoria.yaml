@@ -137,10 +137,14 @@ spec:
                         description: TenantMTLS represents the mTLS configuration
                           for an Observatorium API tenant.
                         properties:
-                          caPath:
+                          caKey:
+                            type: string
+                          configMapName:
+                            type: string
+                          secretName:
                             type: string
                         required:
-                        - caPath
+                        - caKey
                         type: object
                       name:
                         type: string
