@@ -66,10 +66,21 @@ spec:
       query_frontend: 1
       table_manager: 1
     version: 1.6.1
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 250Mi
   objectStorageConfig:
     loki:
-      key: endpoint
-      name: loki-objectstorage
+      accessKeyIdKey: aws_access_key_id
+      bucketsKey: buckets
+      endpointKey: endpoint
+      regionKey: region
+      secretAccessKeyKey: aws_secret_access_key
+      secretName: loki-objectstorage
     thanos:
       key: thanos.yaml
       name: thanos-objectstorage

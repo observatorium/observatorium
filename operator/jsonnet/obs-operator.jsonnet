@@ -1,4 +1,5 @@
 local t = (import 'kube-thanos/thanos.libsonnet');
+local loki = import '../../components/loki.libsonnet';
 local config = import 'operator-config.libsonnet';
 local obs = ((import '../../components/observatorium.libsonnet') + {
                config+:: config,
@@ -29,6 +30,10 @@ local patchObs = obs {
         config+:: obs.store['shard' + i].config,
       }
     for i in std.range(0, obs.config.store.shards - 1)
+  },
+
+  loki+:: loki.withVolumeClaimTemplate {
+    config+:: obs.loki.config,
   },
 };
 

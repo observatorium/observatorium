@@ -11,8 +11,12 @@
       key: 'thanos.yaml',
     },
     loki: {
-      name: 'loki-objectstorage',
-      key: 'endpoint',
+      secretName: 'loki-objectstorage',
+      endpointKey: 'endpoint',
+      bucketsKey: 'buckets',
+      regionKey: 'region',
+      accessKeyIdKey: 'aws_access_key_id',
+      secretAccessKeyKey: 'aws_secret_access_key',
     },
   },
 
@@ -166,7 +170,7 @@
     },
   },
 
-  loki: {
+  loki+: {
     local lokiConfig = self,
     version: '1.6.1',
     image: 'docker.io/grafana/loki:' + lokiConfig.version,
@@ -177,6 +181,16 @@
       querier: 1,
       query_frontend: 1,
       table_manager: 1,
+    },
+    volumeClaimTemplate: {
+      spec: {
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '250Mi',
+          },
+        },
+      },
     },
   },
 }

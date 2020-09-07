@@ -32,9 +32,9 @@ spec:
         - -target=querier
         - -config.file=/etc/loki/config/config.yaml
         - -limits.per-user-override-config=/etc/loki/config/overrides.yaml
+        - -log.level=error
         - -s3.url=$(S3_URL)
         - -s3.force-path-style=true
-        - -log.level=error
         env:
         - name: S3_URL
           valueFrom:
