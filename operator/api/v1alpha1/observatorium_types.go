@@ -190,11 +190,17 @@ type APITenant struct {
 
 // TLS contains the TLS configuration for a component.
 type TLS struct {
-	SecretName    string `json:"secretName"`
-	CertKey       string `json:"certKey"`
-	KeyKey        string `json:"keyKey"`
+	SecretName string `json:"secretName"`
+	CertKey    string `json:"certKey"`
+	KeyKey     string `json:"keyKey"`
+	// +optional
 	ConfigMapName string `json:"configMapName"`
-	CAKey         string `json:"caKey"`
+	// +optional
+	CAKey string `json:"caKey"`
+	// +optional
+	ServerName string `json:"serverName"`
+	// +optional
+	ReloadInterval string `json:"reloadInterval"`
 }
 
 type APISpec struct {

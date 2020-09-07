@@ -178,12 +178,14 @@ spec:
                       type: string
                     keyKey:
                       type: string
+                    reloadInterval:
+                      type: string
                     secretName:
                       type: string
+                    serverName:
+                      type: string
                   required:
-                  - caKey
                   - certKey
-                  - configMapName
                   - keyKey
                   - secretName
                   type: object
