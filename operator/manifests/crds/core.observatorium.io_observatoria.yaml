@@ -133,6 +133,19 @@ spec:
                     properties:
                       id:
                         type: string
+                      mTLS:
+                        description: TenantMTLS represents the mTLS configuration
+                          for an Observatorium API tenant.
+                        properties:
+                          caKey:
+                            type: string
+                          configMapName:
+                            type: string
+                          secretName:
+                            type: string
+                        required:
+                        - caKey
+                        type: object
                       name:
                         type: string
                       oidc:
@@ -156,7 +169,6 @@ spec:
                     required:
                     - id
                     - name
-                    - oidc
                     type: object
                   type: array
                 tls:
@@ -170,12 +182,14 @@ spec:
                       type: string
                     keyKey:
                       type: string
+                    reloadInterval:
+                      type: string
                     secretName:
                       type: string
+                    serverName:
+                      type: string
                   required:
-                  - caKey
                   - certKey
-                  - configMapName
                   - keyKey
                   - secretName
                   type: object
