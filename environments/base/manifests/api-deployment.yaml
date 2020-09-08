@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: observatorium-api
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: master-2020-09-04-v0.1.1-135-g7c621cf
+    app.kubernetes.io/version: master-2020-09-08-v0.1.1-142-g61a908f
   name: observatorium-xyz-observatorium-api
   namespace: observatorium
 spec:
@@ -28,7 +28,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: observatorium-api
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: master-2020-09-04-v0.1.1-135-g7c621cf
+        app.kubernetes.io/version: master-2020-09-08-v0.1.1-142-g61a908f
     spec:
       containers:
       - args:
@@ -40,7 +40,7 @@ spec:
         - --logs.read.endpoint=http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100
         - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
         - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
-        image: quay.io/observatorium/observatorium:master-2020-09-04-v0.1.1-135-g7c621cf
+        image: quay.io/observatorium/observatorium:master-2020-09-08-v0.1.1-142-g61a908f
         livenessProbe:
           failureThreshold: 10
           httpGet:
