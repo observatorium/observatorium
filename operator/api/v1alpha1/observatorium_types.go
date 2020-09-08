@@ -177,9 +177,9 @@ type TenantOIDC struct {
 type TenantMTLS struct {
 	CAKey string `json:"caKey"`
 	// +optional
-	SecretName string `json:"secretName"`
+	SecretName string `json:"secretName,omitempty"`
 	// +optional
-	ConfigMapName string `json:"configMapName"`
+	ConfigMapName string `json:"configMapName,omitempty"`
 }
 
 // APITenant represents a tenant in the Observatorium API.
@@ -187,9 +187,9 @@ type APITenant struct {
 	Name string `json:"name"`
 	ID   string `json:"id"`
 	// +optional
-	OIDC TenantOIDC `json:"oidc"`
+	OIDC *TenantOIDC `json:"oidc,omitempty"`
 	// +optional
-	MTLS TenantMTLS `json:"mTLS"`
+	MTLS *TenantMTLS `json:"mTLS,omitempty"`
 }
 
 // TLS contains the TLS configuration for a component.
@@ -198,13 +198,13 @@ type TLS struct {
 	CertKey    string `json:"certKey"`
 	KeyKey     string `json:"keyKey"`
 	// +optional
-	ConfigMapName string `json:"configMapName"`
+	ConfigMapName string `json:"configMapName,omitempty"`
 	// +optional
-	CAKey string `json:"caKey"`
+	CAKey string `json:"caKey,omitempty"`
 	// +optional
-	ServerName string `json:"serverName"`
+	ServerName string `json:"serverName,omitempty"`
 	// +optional
-	ReloadInterval string `json:"reloadInterval"`
+	ReloadInterval string `json:"reloadInterval,omitempty"`
 }
 
 type APISpec struct {
