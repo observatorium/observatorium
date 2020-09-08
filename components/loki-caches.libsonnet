@@ -24,6 +24,8 @@ local m = import 'memcached.libsonnet';
     },
   },
 
+  serviceMonitors: {},
+
   chunkCache::
     m +
     m.withServiceMonitor {
@@ -120,18 +122,22 @@ local m = import 'memcached.libsonnet';
     },
   },
 
-  manifests:: {
-  } + if mc.config.enableChuckCache then {
-    'chunk-cache-service': mc.chunkCache.service,
-    'chunk-cache-statefulset': mc.chunkCache.statefulSet,
-  } + if mc.config.enableIndexQueryCache then {
-    'index-query-cache-service': mc.indexQueryCache.service,
-    'index-query-cache-statefulset': mc.indexQueryCache.statefulSet,
-  } + if mc.config.enableIndexWriteCache then {
-    'index-write-cache-service': mc.indexWriteCache.service,
-    'index-write-cache-statefulset': mc.indexWriteCache.statefulSet,
-  } + if mc.config.enableResultsCache then {
-    'results-cache-service': mc.resultsCache.service,
-    'results-cache-statefulset': mc.resultsCache.statefulSet,
-  },
+  manifests::
+    {} +
+    (if mc.config.enableChuckCache then {
+       'chunk-cache-service': mc.chunkCache.service,
+       'chunk-cache-statefulset': mc.chunkCache.statefulSet,
+     } else {}) +
+    (if mc.config.enableIndexQueryCache then {
+       'index-query-cache-service': mc.indexQueryCache.service,
+       'index-query-cache-statefulset': mc.indexQueryCache.statefulSet,
+     } else {}) +
+    (if mc.config.enableIndexWriteCache then {
+       'index-write-cache-service': mc.indexWriteCache.service,
+       'index-write-cache-statefulset': mc.indexWriteCache.statefulSet,
+     } else {}) +
+    (if mc.config.enableResultsCache then {
+       'results-cache-service': mc.resultsCache.service,
+       'results-cache-statefulset': mc.resultsCache.statefulSet,
+     } else {}),
 }

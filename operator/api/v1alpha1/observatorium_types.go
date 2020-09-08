@@ -51,17 +51,37 @@ type ObservatoriumSpec struct {
 
 type ObjectStorageConfig struct {
 	// Object Store Config Secret for Thanos
-	Thanos *ObjectStorageConfigSpec `json:"thanos"`
+	Thanos *ThanosObjectStorageConfigSpec `json:"thanos"`
 	// Object Store Config Secret for Loki
 	// +optional
-	Loki *ObjectStorageConfigSpec `json:"loki,omitempty"`
+	Loki *LokiObjectStorageConfigSpec `json:"loki,omitempty"`
 }
 
-type ObjectStorageConfigSpec struct {
+type ThanosObjectStorageConfigSpec struct {
 	// Object Store Config Secret Name
 	Name string `json:"name"`
 	// Object Store Config key
 	Key string `json:"key"`
+}
+
+type LokiObjectStorageConfigSpec struct {
+	// Object Store Config Secret Name
+	SecretName string `json:"secretName"`
+	// Object Store Config key for S3_URL
+	// +optional
+	EndpointKey string `json:"endpointKey"`
+	// Object Store Config key for AWS_ACCESS_KEY_ID
+	// +optional
+	AccessKeyIDKey string `json:"accessKeyIdKey"`
+	// Object Store Config key for AWS_SECRET_ACCESS_KEY
+	// +optional
+	SecretAccessKeyKey string `json:"secretAccessKeyKey"`
+	// Object Store Config key for S3_BUCKETS
+	// +optional
+	BucketsKey string `json:"bucketsKey"`
+	// Object Store Config key for S3_REGION
+	// +optional
+	RegionKey string `json:"regionKey"`
 }
 
 type ThanosReceiveControllerSpec struct {
@@ -287,6 +307,8 @@ type LokiSpec struct {
 	Replicas map[string]int32 `json:"replicas,omitempty"`
 	// Version of Loki image to be deployed
 	Version string `json:"version,omitempty"`
+	// VolumeClaimTemplate
+	VolumeClaimTemplate VolumeClaimTemplate `json:"volumeClaimTemplate"`
 }
 
 // ObservatoriumStatus defines the observed state of Observatorium

@@ -51,30 +51,19 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
       'app.kubernetes.io/component': normalizedName(component),
     },
 
-  local newDeployment(component, config) =
-    local d = self;
+  local joinGossipRing(component) =
+    loki.defaultConfig.distributor.ring.kvstore.store == 'memberlist' &&
+    loki.defaultConfig.ingester.lifecycler.ring.kvstore.store == 'memberlist' &&
+    std.member(['distributor', 'ingester', 'querier'], component),
+
+  local newLokiContainer(name, component, config) =
     local deployment = k.apps.v1.deployment;
     local container = deployment.mixin.spec.template.spec.containersType;
     local envVar = container.envType;
     local containerPort = container.portsType;
     local containerVolumeMount = container.volumeMountsType;
-    local name = loki.config.name + '-' + normalizedName(component);
-
-    local joinGossipRing =
-      loki.defaultConfig.distributor.ring.kvstore.store == 'memberlist' &&
-      loki.defaultConfig.ingester.lifecycler.ring.kvstore.store == 'memberlist' &&
-      std.member(['distributor', 'ingester', 'querier'], component);
-
-    local commonLabels = newCommonLabels(component);
-
-    local podLabelSelector =
-      newPodLabelsSelector(component) +
-      if joinGossipRing then
-        { 'loki.grafana.com/gossip': 'true' }
-      else {};
 
     local osc = loki.config.objectStorageConfig;
-
     local replicas = loki.config.replicas[component];
 
     local readinessProbe =
@@ -86,36 +75,64 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
       container.mixin.resources.withRequests(config.resources.requests) +
       container.mixin.resources.withLimits(config.resources.limits);
 
-    local c =
-      container.new(name, loki.config.image) +
-      container.withArgs([
-        '-target=' + normalizedName(component),
-        '-config.file=/etc/loki/config/config.yaml',
-        '-limits.per-user-override-config=/etc/loki/config/overrides.yaml',
-        '-s3.url=$(S3_URL)',
-        '-s3.force-path-style=true',
-        '-log.level=error',
-      ]) + container.withEnv([
-        envVar.fromSecretRef('S3_URL', osc.name, osc.key),
-      ]) + container.withPorts(
-        [
-          containerPort.newNamed(3100, 'metrics'),
-          containerPort.newNamed(9095, 'grpc'),
-        ] + if joinGossipRing then
-          [containerPort.newNamed(7946, 'gossip-ring')]
-        else []
-      ) + container.withVolumeMounts([
-        containerVolumeMount.new('config', '/etc/loki/config/'),
-        containerVolumeMount.new('storage', '/data'),
-      ]) + {
-        [name]: readinessProbe[name]
-        for name in std.objectFields(readinessProbe)
-        if config.withReadinessProbe
-      } + {
-        [name]: resources[name]
-        for name in std.objectFields(resources)
-        if std.length(config.resources) > 0
-      };
+    container.new(name, loki.config.image) +
+    container.withArgs([
+      '-target=' + normalizedName(component),
+      '-config.file=/etc/loki/config/config.yaml',
+      '-limits.per-user-override-config=/etc/loki/config/overrides.yaml',
+      '-log.level=error',
+    ] + if std.objectHas(osc, 'endpointKey') then [
+      '-s3.url=$(S3_URL)',
+      '-s3.force-path-style=true',
+    ] else [
+      '-s3.buckets=$(S3_BUCKETS)',
+      '-s3.region=$(S3_REGION)',
+      '-s3.access-key-id=$(AWS_ACCESS_KEY_ID)',
+      '-s3.secret-access-key=$(AWS_SECRET_ACCESS_KEY)',
+    ]) + container.withEnv(
+      if std.objectHas(osc, 'endpointKey') then [
+        envVar.fromSecretRef('S3_URL', osc.secretName, osc.endpointKey),
+      ] else [
+        envVar.fromSecretRef('S3_BUCKETS', osc.secretName, osc.bucketsKey),
+        envVar.fromSecretRef('S3_REGION', osc.secretName, osc.regionKey),
+        envVar.fromSecretRef('AWS_ACCESS_KEY_ID', osc.secretName, osc.accessKeyIdKey),
+        envVar.fromSecretRef('AWS_SECRET_ACCESS_KEY', osc.secretName, osc.secretAccessKeyKey),
+      ]
+    ) + container.withPorts(
+      [
+        containerPort.newNamed(3100, 'metrics'),
+        containerPort.newNamed(9095, 'grpc'),
+      ] + if joinGossipRing(component) then
+        [containerPort.newNamed(7946, 'gossip-ring')]
+      else []
+    ) + container.withVolumeMounts([
+      containerVolumeMount.new('config', '/etc/loki/config/'),
+      containerVolumeMount.new('storage', '/data'),
+    ]) + {
+      [name]: readinessProbe[name]
+      for name in std.objectFields(readinessProbe)
+      if config.withReadinessProbe
+    } + {
+      [name]: resources[name]
+      for name in std.objectFields(resources)
+      if std.length(config.resources) > 0
+    },
+
+  local newDeployment(component, config) =
+    local d = self;
+    local deployment = k.apps.v1.deployment;
+
+    local name = loki.config.name + '-' + normalizedName(component);
+    local replicas = loki.config.replicas[component];
+    local commonLabels = newCommonLabels(component);
+
+    local podLabelSelector =
+      newPodLabelsSelector(component) +
+      if joinGossipRing(component) then
+        { 'loki.grafana.com/gossip': 'true' }
+      else {};
+
+    local c = newLokiContainer(name, component, config);
 
     deployment.new(name, replicas, c, commonLabels) +
     deployment.mixin.metadata.withNamespace(loki.config.namespace) +
@@ -125,6 +142,31 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     deployment.mixin.spec.template.spec.withVolumes([
       { name: 'config', configMap: { name: loki.configmap.metadata.name } },
       { name: 'storage', emptyDir: {} },
+    ]),
+
+  local newStatefulSet(component, config) =
+    local sts = k.apps.v1.statefulSet;
+    local container = sts.mixin.spec.template.spec.containersType;
+    local name = loki.config.name + '-' + normalizedName(component);
+    local replicas = loki.config.replicas[component];
+    local commonLabels = newCommonLabels(component);
+
+    local podLabelSelector =
+      newPodLabelsSelector(component) +
+      if joinGossipRing(component) then
+        { 'loki.grafana.com/gossip': 'true' }
+      else {};
+
+    local c = newLokiContainer(name, component, config);
+
+    sts.new(name, replicas, [c], [], commonLabels) +
+    sts.mixin.metadata.withNamespace(loki.config.namespace) +
+    sts.mixin.metadata.withLabels(commonLabels) +
+    sts.mixin.spec.withServiceName(newGrpcService(component).metadata.name) +
+    sts.mixin.spec.template.metadata.withLabels(podLabelSelector) +
+    sts.mixin.spec.selector.withMatchLabels(podLabelSelector) +
+    sts.mixin.spec.template.spec.withVolumes([
+      { name: 'config', configMap: { name: loki.configmap.metadata.name } },
     ]),
 
   local newGrpcService(component) =
@@ -566,6 +608,32 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     },
   },
 
+  withVolumeClaimTemplate:: {
+    local l = self,
+    config+:: {
+      volumeClaimTemplate: error 'must provide volumeClaimTemplate for ingesters',
+    },
+    manifests+:: {
+      [name + '-deployment']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              volumes: std.filter(function(v) v.name != 'storage', super.volumes),
+            },
+          },
+          volumeClaimTemplates: [l.config.volumeClaimTemplate {
+            metadata+: {
+              name: 'storage',
+              labels+: l.config.podLabelSelector,
+            },
+          }],
+        },
+      }
+      for name in std.objectFields(l.components)
+      if name == 'ingester'
+    },
+  },
+
   withServiceMonitor:: {
     local l = self,
     serviceMonitors: {},
@@ -623,7 +691,11 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
   manifests+:: {
     'config-map': loki.configmap,
   } + {
-    [normalizedName(name) + '-deployment']: newDeployment(name, loki.components[name])
+    [normalizedName(name) + '-deployment']:
+      if name == 'ingester' then
+        newStatefulSet(name, loki.components[name])
+      else
+        newDeployment(name, loki.components[name])
     for name in std.objectFields(loki.components)
   } + {
     [normalizedName(name) + '-grpc-service']: newGrpcService(name)

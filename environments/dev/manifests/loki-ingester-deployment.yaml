@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   labels:
     app.kubernetes.io/component: ingester
@@ -18,6 +18,7 @@ spec:
       app.kubernetes.io/name: loki
       app.kubernetes.io/part-of: observatorium
       loki.grafana.com/gossip: "true"
+  serviceName: observatorium-xyz-loki-ingester-grpc
   template:
     metadata:
       labels:
@@ -32,9 +33,9 @@ spec:
         - -target=ingester
         - -config.file=/etc/loki/config/config.yaml
         - -limits.per-user-override-config=/etc/loki/config/overrides.yaml
+        - -log.level=error
         - -s3.url=$(S3_URL)
         - -s3.force-path-style=true
-        - -log.level=error
         env:
         - name: S3_URL
           valueFrom:
@@ -75,5 +76,16 @@ spec:
       - configMap:
           name: observatorium-xyz-loki
         name: config
-      - emptyDir: {}
-        name: storage
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: loki
+        app.kubernetes.io/part-of: observatorium
+      name: storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 250Mi

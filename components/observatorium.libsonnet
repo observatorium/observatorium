@@ -269,7 +269,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   loki::
     l +
-    l.withMemberList {
+    l.withMemberList +
+    l.withVolumeClaimTemplate {
       config+:: {
         local cfg = self,
         name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],

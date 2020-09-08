@@ -166,6 +166,7 @@ local obs = (import '../environments/base/observatorium.jsonnet');
       image: obs.config.loki.image,
       replicas: obs.config.loki.replicas,
       version: obs.config.loki.version,
+      volumeClaimTemplate: obs.config.loki.volumeClaimTemplate,
     },
   },
 }
