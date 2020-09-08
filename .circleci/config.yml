@@ -25,29 +25,6 @@ jobs:
       - store_artifacts:
           path: /tmp/artifacts
 
-  test-operator:
-    machine: true
-    steps:
-      - checkout
-      - run:
-          name: e2e tests with operator
-          no_output_timeout: 30m
-          command: |
-            ./tests/e2e.sh kind
-            ./tests/e2e.sh deploy-operator
-            ./tests/e2e.sh test --tls
-            ./tests/e2e.sh delete-cr
-      - store_artifacts:
-          path: /tmp/artifacts
-
-  container-push:
-    machine: true
-    steps:
-      - checkout
-      - run: |
-          echo "$DOCKER_PASS" | docker login quay.io --username $DOCKER_USER --password-stdin
-          make container-push
-
 workflows:
   version: 2
   tagged-master:
@@ -63,11 +40,3 @@ workflows:
     jobs:
       - build
       - tests
-      - test-operator
-      - container-push:
-          requires:
-            - build
-          filters:
-            branches:
-              only:
-                - master

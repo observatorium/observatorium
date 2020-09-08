@@ -1,6 +1,5 @@
 /kind
 /kubectl
-/operator/vendor/
 /vendor
 tmp/
 /jsonnetfile.lock.json

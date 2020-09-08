@@ -1,5 +1,0 @@
-root = true
-
-[*.jsonnet]
-indent_size = 2
-indent_style = space
