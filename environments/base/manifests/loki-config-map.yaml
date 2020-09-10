@@ -33,7 +33,7 @@ data:
           "kvstore":
             "store": "memberlist"
           "replication_factor": 1
-      "max_transfer_retries": 60
+      "max_transfer_retries": 0
     "ingester_client":
       "grpc_client_config":
         "max_recv_msg_size": 67108864
