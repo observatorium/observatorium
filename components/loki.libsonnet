@@ -653,7 +653,7 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
         spec: {
           selector: {
             matchLabels: l.config.podLabelSelector {
-              'app.kubernetes.io/component': l.config.name + '-' + name,
+              'app.kubernetes.io/component': name,
             },
           },
           endpoints: [
