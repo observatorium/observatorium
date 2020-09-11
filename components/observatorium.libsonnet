@@ -270,6 +270,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   loki::
     l +
     l.withMemberList +
+    l.withReplicas +
     l.withVolumeClaimTemplate {
       config+:: {
         local cfg = self,
