@@ -412,12 +412,21 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
       replicas: error 'must provide replicas per component',
     },
     manifests+:: {
-      [name + '-deployment']+: {
+      [normalizedName(name) + '-deployment']+: {
         spec+: {
           replicas: l.config.replicas[name],
         },
       }
       for name in std.objectFields(l.config.replicas)
+      if !isStatefulSet(name)
+    } + {
+      [normalizedName(name) + '-statefulset']+: {
+        spec+: {
+          replicas: l.config.replicas[name],
+        },
+      }
+      for name in std.objectFields(l.config.replicas)
+      if isStatefulSet(name)
     },
   },
 
@@ -617,7 +626,7 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
       volumeClaimTemplate: error 'must provide volumeClaimTemplate for ingesters and queriers',
     },
     manifests+:: {
-      [name + '-statefulset']+: {
+      [normalizedName(name) + '-statefulset']+: {
         spec+: {
           template+: {
             spec+: {
@@ -642,7 +651,7 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     serviceMonitors: {},
 
     manifests+:: {
-      [name + '-service-monitor']: {
+      [normalizedName(name) + '-service-monitor']: {
         apiVersion: 'monitoring.coreos.com/v1',
         kind: 'ServiceMonitor',
         metadata+: {
@@ -653,7 +662,7 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
         spec: {
           selector: {
             matchLabels: l.config.podLabelSelector {
-              'app.kubernetes.io/component': name,
+              'app.kubernetes.io/component': normalizedName(name),
             },
           },
           endpoints: [
@@ -688,6 +697,24 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
         },
       }
       for name in std.objectFields(l.config.resources)
+      if !isStatefulSet(name)
+    } + {
+      [normalizedName(name) + '-statefulset']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                c {
+                  resources: l.config.resources[name],
+                }
+                for c in super.containers
+              ],
+            },
+          },
+        },
+      }
+      for name in std.objectFields(l.config.resources)
+      if isStatefulSet(name)
     },
   },
 
