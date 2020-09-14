@@ -1,0 +1,62 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: observatorium-up-metrics
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: test
+        app.kubernetes.io/instance: e2e-test
+        app.kubernetes.io/name: observatorium-up
+        app.kubernetes.io/version: master-2020-06-15-d763595
+    spec:
+      containers:
+      - args:
+        - --endpoint-type=metrics
+        - --endpoint-write=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/receive
+        - --endpoint-read=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/query
+        - --period=1s
+        - --duration=2m
+        - --name=foo
+        - --labels=bar="baz"
+        - --latency=10s
+        - --initial-query-delay=5s
+        - --threshold=0.90
+        - --token-file=/var/shared/token
+        image: quay.io/observatorium/up:master-2020-06-15-d763595
+        name: observatorium-up
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+        volumeMounts:
+        - mountPath: /var/shared
+          name: shared
+          readOnly: true
+      initContainers:
+      - command:
+        - /bin/sh
+        - -c
+        - |
+          curl --request POST \
+              --silent \
+              --url http://dex.dex.svc.cluster.local:5556/dex/token \
+              --header 'content-type: application/x-www-form-urlencoded' \
+              --data grant_type=password \
+              --data username=admin@example.com \
+              --data password=password \
+              --data client_id=test \
+              --data client_secret=ZXhhbXBsZS1hcHAtc2VjcmV0 \
+              --data scope="openid email" | sed 's/^{.*"id_token":[^"]*"\([^"]*\)".*}/\1/' > /var/shared/token
+        image: docker.io/curlimages/curl
+        name: curl
+        volumeMounts:
+        - mountPath: /var/shared
+          name: shared
+          readOnly: false
+      restartPolicy: OnFailure
+      volumes:
+      - emptyDir: {}
+        name: shared
