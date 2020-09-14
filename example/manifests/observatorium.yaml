@@ -8,7 +8,7 @@ metadata:
   name: observatorium-xyz
 spec:
   api:
-    image: quay.io/observatorium/observatorium:master-2020-09-04-v0.1.1-135-g7c621cf
+    image: quay.io/observatorium/observatorium:master-2020-09-08-v0.1.1-142-g61a908f
     rbac:
       roleBindings:
       - name: test
@@ -42,7 +42,7 @@ spec:
       keyKey: key.pem
       secretName: observatorium-xyz-tls
       serverName: observatorium-xyz-observatorium-api.observatorium.svc.cluster.local
-    version: master-2020-09-04-v0.1.1-135-g7c621cf
+    version: master-2020-09-08-v0.1.1-142-g61a908f
   apiQuery:
     image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
     version: master-2020-08-12-70f89d83
