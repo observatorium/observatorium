@@ -1,5 +1,0 @@
-mainResource: obs
-resources:
-- name: obs
-  kind: Observatorium
-  apiVersion: core.observatorium.io/v1alpha1

@@ -1,7 +1,0 @@
-{
-  'error': 'value',
-  'local': 'value',
-  unquoteme: 'value',
-  'but-not-me': 'value',
-  'nor:me': 'value',
-}

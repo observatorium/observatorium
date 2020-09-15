@@ -57,51 +57,6 @@ wait_for_cr() {
     fi
 }
 
-deploy_operator() {
-    docker build -t quay.io/observatorium/observatorium-operator:latest .
-    ./kind load docker-image quay.io/observatorium/observatorium-operator:latest
-    $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0servicemonitorCustomResourceDefinition.yaml
-    $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
-    $KUBECTL create ns observatorium-minio || true
-    $KUBECTL create ns observatorium || true
-    dex
-    $KUBECTL apply -f environments/dev/manifests/minio-secret-thanos.yaml
-    $KUBECTL apply -f environments/dev/manifests/minio-secret-loki.yaml
-    $KUBECTL apply -f environments/dev/manifests/minio-pvc.yaml
-    $KUBECTL apply -f environments/dev/manifests/minio-deployment.yaml
-    $KUBECTL apply -f environments/dev/manifests/minio-service.yaml
-    $KUBECTL apply -n observatorium -f tests/manifests/observatorium-xyz-tls-configmap.yaml
-    $KUBECTL apply -n observatorium -f tests/manifests/observatorium-xyz-tls-secret.yaml
-    $KUBECTL apply -f operator/manifests/crds
-    $KUBECTL apply -f operator/manifests/
-    $KUBECTL apply -n observatorium -f example/manifests
-    wait_for_cr observatorium-xyz
-}
-
-delete_cr() {
-    $KUBECTL delete -n observatorium -f example/manifests
-    target_count="0"
-    timeout=$true
-    interval=0
-    intervals=600
-    while [ $interval -ne $intervals ]; do
-      echo "Waiting for cleaning"
-      count=$($KUBECTL -n observatorium get all | wc -l)
-      if [ "$count" = "$target_count" ]; then
-        echo NS count is now: $count
-	    timeout=$false
-	    break
-	  fi
-	  sleep 5
-	  interval=$((interval+5))
-    done
-
-    if [ $timeout ]; then
-      echo "Timeout waiting for namespace to be empty"
-      exit 1
-    fi
-}
-
 run_test() {
     local suffix
     while [ $# -gt 0 ]; do
