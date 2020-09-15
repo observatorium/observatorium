@@ -26,15 +26,6 @@ jobs:
 
 workflows:
   version: 2
-  tagged-master:
-    jobs:
-      - container-push:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only:
-                - master
   test-and-push:
     jobs:
       - build
