@@ -38,6 +38,7 @@
     retentionResolutionRaw: '14d',
     retentionResolution5m: '1s',
     retentionResolution1h: '1s',
+    replicas: 1,
     enableDownsampling: false,
     volumeClaimTemplate: {
       spec: {
@@ -64,6 +65,7 @@
     version: defaultConfig.thanosVersion,
     hashrings: defaultConfig.hashrings,
     objectStorageConfig: defaultConfig.objectStorageConfig.thanos,
+    replicas: 1,
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],
@@ -82,6 +84,7 @@
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
     objectStorageConfig: defaultConfig.objectStorageConfig.thanos,
+    replicas: 1,
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],
@@ -125,17 +128,20 @@
   query: {
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
+    replicas: 1,
   },
 
   queryFrontend: {
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
+    replicas: 1,
   },
 
   api: {
     local apiConfig = self,
     version: 'master-2020-09-08-v0.1.1-142-g61a908f',
     image: 'quay.io/observatorium/observatorium:' + apiConfig.version,
+    replicas: 1,
   },
 
   apiQuery: {
