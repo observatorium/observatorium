@@ -324,9 +324,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   } + {
     ['api-thanos-query-' + name]: obs.apiQuery[name]
     for name in std.objectFields(obs.apiQuery)
-  } + {
+  } + if std.length(obs.config.loki) != 0 then {
     ['loki-' + name]: obs.loki.manifests[name]
     for name in std.objectFields(obs.loki.manifests)
-    if std.length(obs.config.loki) != 0
-  },
+  } else {},
 }
