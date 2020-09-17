@@ -72,13 +72,6 @@ environments/dev/manifests: environments/dev/main.jsonnet vendor $(JSONNET_SRC) 
 	$(JSONNET) -J vendor -m environments/dev/manifests environments/dev/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find environments/dev/manifests -type f ! -name '*.yaml' -delete
 
-example/manifests: example/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
-	-make fmt
-	-rm -rf example/manifests
-	-mkdir example/manifests
-	$(JSONNET) -J vendor example/main.jsonnet | $(GOJSONTOYAML) > example/manifests/observatorium.yaml
-	find example/manifests -type f ! -name '*.yaml' -delete
-
 tests/manifests: tests/main.jsonnet vendor generate-cert $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
 	-rm -rf tests/manifests
