@@ -37,6 +37,14 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
+  serviceAccount:
+    local sa = k.core.v1.serviceAccount;
+
+    sa.new() +
+    sa.mixin.metadata.withName(mc.config.name) +
+    sa.mixin.metadata.withNamespace(mc.config.namespace) +
+    sa.mixin.metadata.withLabels(mc.config.commonLabels),
+
   service:
     local service = k.core.v1.service;
     local ports = service.mixin.spec.portsType;
@@ -92,6 +100,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     sts.mixin.metadata.withNamespace(mc.config.namespace) +
     sts.mixin.metadata.withLabels(mc.config.commonLabels) +
     sts.mixin.spec.withServiceName(mc.service.metadata.name) +
+    sts.mixin.spec.template.spec.withServiceAccount(mc.serviceAccount.metadata.name) +
     sts.mixin.spec.selector.withMatchLabels(mc.config.podLabelSelector)
     {
       spec+: {
