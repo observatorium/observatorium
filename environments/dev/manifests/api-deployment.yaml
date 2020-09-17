@@ -72,6 +72,7 @@ spec:
           name: tenants
           readOnly: true
           subPath: tenants.yaml
+      serviceAccount: observatorium-xyz-observatorium-api
       volumes:
       - configMap:
           name: observatorium-xyz-observatorium-api

@@ -3,21 +3,13 @@
   "dependencies": [
     {
       "source": {
-        "local": {
-          "directory": "../.."
-        }
-      },
-      "version": ""
-    },
-    {
-      "source": {
         "git": {
           "remote": "https://github.com/grafana/grafonnet-lib.git",
           "subdir": "grafonnet"
         }
       },
-      "version": "8338be68387b5811355aa919d031882ead0c9c6e",
-      "sum": "RixjNQccHT+UlCSvlR4HBiFcTRVdwDz5goWSHEXIf58="
+      "version": "cc1626a1b4dee45c99b78ddd9714dfd5f5d7816e",
+      "sum": "nkgrtMYPCq/YB4r3mKyToepaLhicwWnxDdGIodPpzz0="
     },
     {
       "source": {
@@ -26,8 +18,8 @@
           "subdir": "grafana-builder"
         }
       },
-      "version": "de586e2ac76e9bcee87d34f0042abe1a2ef7cdf3",
-      "sum": "R5WJe6wW0R9vMpOAHaGFwcK8q4NmGZ0aLhdZGKDHeMU="
+      "version": "2cc8d1dcb943eb3ff1dcb85bc9a3933afb36b730",
+      "sum": "mD0zEP9FVFXeag7EaeS5OvUr2A9D6DQhGemoNn6+PLc="
     },
     {
       "source": {
@@ -36,7 +28,7 @@
           "subdir": "monitoring/jaeger-mixin"
         }
       },
-      "version": "6f8fe448c7a021bbdac78e5d848e2fb7346a1d99",
+      "version": "4dd57f3a436d889a86664708ae1ce801a62d4f61",
       "sum": "U/RwaRP/ps+5dVyeVxeFEb2psfZHQgEjHU2Jeb454Kg="
     },
     {
@@ -67,8 +59,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "61a908f68dd14370c7a5ff4daa9a939f3de4e8f1",
-      "sum": "EL4Ya4FBqpjNxVgEZWpbYnX5xOE9DmBJKtoGQnPWMoc=",
+      "version": "62b04aa21710b81038c0ae33ceceaf6b7938d56d",
+      "sum": "hm3I2Ufw5R1sZ+PlEyZHo7d+07werXpiJbJQodiABdg=",
       "name": "observatorium"
     },
     {
@@ -99,8 +91,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "1c19d6ec9f6314cd0ac934c1910c292ce444d70e",
-      "sum": "crX1Oka/qzvrDnig5yY7GkK9XVZhaY7/QSF70ab48a4="
+      "version": "ef77a1120c23176fadc6647a3dcab1999aefe03b",
+      "sum": "paJPEJngHOtoiuRLVvvp8LaaI3UFjGLa/NwG4yfaMIE="
     },
     {
       "source": {
@@ -109,8 +101,8 @@
           "subdir": "mixin"
         }
       },
-      "version": "7f0364db2333aaf03bc7cb4b88ed737402f69b5b",
-      "sum": "N9utIFDClAjZ3Jgp0GY/JY34Qg2cy0n9oWcmT/ctnM0="
+      "version": "727a351b5a1e0b817c7d894edf8dd9b7cf5e73e1",
+      "sum": "nrCj5SWVYkgchWtqpHzMNfmukqChjYbPdT8BGBs9RVg="
     }
   ],
   "legacyImports": false
