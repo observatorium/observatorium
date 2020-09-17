@@ -62,4 +62,5 @@ spec:
             scheme: HTTP
           periodSeconds: 5
         volumeMounts: []
+      serviceAccount: observatorium-xyz-observatorium-api
       volumes: []
