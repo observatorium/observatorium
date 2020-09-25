@@ -75,4 +75,5 @@ spec:
             scheme: HTTP
           periodSeconds: 5
         terminationMessagePolicy: FallbackToLogsOnError
+      serviceAccount: observatorium-xyz-thanos
       terminationGracePeriodSeconds: 120

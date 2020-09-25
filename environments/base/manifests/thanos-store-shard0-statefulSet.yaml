@@ -134,6 +134,7 @@ spec:
         - mountPath: /var/thanos/store
           name: data
           readOnly: false
+      serviceAccount: observatorium-xyz-thanos
       terminationGracePeriodSeconds: 120
       volumes:
       - emptyDir: {}

@@ -54,4 +54,4 @@ spec:
         ports:
         - containerPort: 9150
           name: metrics
-      serviceAccount: observatorium-xyz-thanos-store-memcached
+      serviceAccount: observatorium-xyz-thanos

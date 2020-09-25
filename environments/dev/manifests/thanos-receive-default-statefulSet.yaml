@@ -125,6 +125,7 @@ spec:
           readOnly: false
         - mountPath: /var/lib/thanos-receive
           name: hashring-config
+      serviceAccount: observatorium-xyz-thanos
       terminationGracePeriodSeconds: 900
       volumes:
       - emptyDir: {}

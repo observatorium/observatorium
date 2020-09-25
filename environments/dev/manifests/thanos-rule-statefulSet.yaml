@@ -75,6 +75,7 @@ spec:
         - mountPath: /var/thanos/rule
           name: data
           readOnly: false
+      serviceAccount: observatorium-xyz-thanos
       volumes:
       - emptyDir: {}
         name: data

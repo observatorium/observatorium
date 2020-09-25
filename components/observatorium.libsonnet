@@ -14,6 +14,14 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     deduplicationReplicaLabels:: ['replica'],
   },
 
+  thanosServiceAccount::
+    local sa = k.core.v1.serviceAccount;
+
+    sa.new() +
+    sa.mixin.metadata.withName(obs.config.name + '-thanos') +
+    sa.mixin.metadata.withNamespace(obs.config.namespace) +
+    sa.mixin.metadata.withLabels(obs.config.commonLabels),
+
   compact::
     t.compact +
     t.compact.withRetention +
@@ -27,6 +35,16 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         commonLabels+:: obs.config.commonLabels,
         deduplicationReplicaLabels: obs.config.deduplicationReplicaLabels,
         deleteDelay: '48h',
+      },
+    } + {
+      statefulSet+: {
+        spec+: {
+          template+: {
+            spec+: {
+              serviceAccount: obs.thanosServiceAccount.metadata.name,
+            },
+          },
+        },
       },
     } + (
       if std.objectHas(obs.config.compact, 'enableDownsampling') && obs.config.compact.enableDownsampling == true then
@@ -83,6 +101,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                   else c
                   for c in super.containers
                 ],
+                serviceAccount: obs.thanosServiceAccount.metadata.name,
               },
             },
           },
@@ -98,6 +117,16 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       namespace: obs.config.namespace,
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
+    },
+  } + {
+    statefulSet+: {
+      spec+: {
+        template+: {
+          spec+: {
+            serviceAccount: obs.thanosServiceAccount.metadata.name,
+          },
+        },
+      },
     },
   },
 
@@ -148,6 +177,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                   } else c
                   for c in super.containers
                 ],
+                serviceAccount: obs.thanosServiceAccount.metadata.name,
               },
             },
           },
@@ -167,6 +197,16 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       memoryRequestBytes: 128 * 1024 * 1024,
       memoryLimitBytes: 256 * 1024 * 1024,
     },
+  } + {
+    statefulSet+: {
+      spec+: {
+        template+: {
+          spec+: {
+            serviceAccount: obs.thanosServiceAccount.metadata.name,
+          },
+        },
+      },
+    },
   },
 
   query:: t.query + t.query.withQueryTimeout {
@@ -185,6 +225,16 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
       ],
       replicaLabels: obs.config.replicaLabels,
+    },
+  } + {
+    deployment+: {
+      spec+: {
+        template+: {
+          spec+: {
+            serviceAccount: obs.thanosServiceAccount.metadata.name,
+          },
+        },
+      },
     },
   },
 
@@ -209,6 +259,16 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         splitInterval: '24h',
         maxRetries: 0,
         logQueriesLongerThan: '5s',
+      },
+    } + {
+      deployment+: {
+        spec+: {
+          template+: {
+            spec+: {
+              serviceAccount: obs.thanosServiceAccount.metadata.name,
+            },
+          },
+        },
       },
     },
 
@@ -301,6 +361,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     for name in std.objectFields(obs.receivers[hashring])
   } + {
     'thanos-receive-service': obs.receiveService,
+  } + {
+    '01-thanos-service-account': obs.thanosServiceAccount,
   } + {
     ['thanos-compact-' + name]: obs.compact[name]
     for name in std.objectFields(obs.compact)
