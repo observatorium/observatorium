@@ -186,7 +186,6 @@
       ingester: 1,
       querier: 1,
       query_frontend: 1,
-      table_manager: 1,
     },
     volumeClaimTemplate: {
       spec: {

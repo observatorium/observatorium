@@ -236,13 +236,6 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
         limits: { cpu: '200m', memory: '200Mi' },
       },
     },
-    table_manager: {
-      withReadinessProbe: true,
-      resources: {
-        requests: { cpu: '50m', memory: '100Mi' },
-        limits: { cpu: '100m', memory: '200Mi' },
-      },
-    },
   },
 
   defaultConfig+:: {
@@ -364,22 +357,6 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
         resync_interval: '5s',
         shared_store: 's3',
       },
-    },
-    table_manager: {
-      chunk_tables_provisioning: {
-        inactive_read_throughput: 0,
-        inactive_write_throughput: 0,
-        provisioned_read_throughput: 0,
-        provisioned_write_throughput: 0,
-      },
-      index_tables_provisioning: {
-        inactive_read_throughput: 0,
-        inactive_write_throughput: 0,
-        provisioned_read_throughput: 0,
-        provisioned_write_throughput: 0,
-      },
-      retention_deletes_enabled: false,
-      retention_period: '0s',
     },
   },
 

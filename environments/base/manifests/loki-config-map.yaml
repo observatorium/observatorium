@@ -93,19 +93,6 @@ data:
         "cache_location": "/data/loki/index_cache"
         "resync_interval": "5s"
         "shared_store": "s3"
-    "table_manager":
-      "chunk_tables_provisioning":
-        "inactive_read_throughput": 0
-        "inactive_write_throughput": 0
-        "provisioned_read_throughput": 0
-        "provisioned_write_throughput": 0
-      "index_tables_provisioning":
-        "inactive_read_throughput": 0
-        "inactive_write_throughput": 0
-        "provisioned_read_throughput": 0
-        "provisioned_write_throughput": 0
-      "retention_deletes_enabled": false
-      "retention_period": "0s"
   overrides.yaml: '{}'
 kind: ConfigMap
 metadata:
