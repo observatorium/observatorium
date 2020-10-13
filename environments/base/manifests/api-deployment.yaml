@@ -40,6 +40,7 @@ spec:
         - --logs.read.endpoint=http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100
         - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
         - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
+        - --middleware.rate-limiter.grpc-address=http://observatorium-xyz-gubernator.observatorium.svc.cluster.local:81
         image: quay.io/observatorium/observatorium:master-2020-09-08-v0.1.1-142-g61a908f
         livenessProbe:
           failureThreshold: 10

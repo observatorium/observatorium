@@ -54,7 +54,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       container.withEnv([
         env.fromFieldPath('GUBER_K8S_NAMESPACE', 'metadata.namespace'),
         env.fromFieldPath('GUBER_K8S_POD_IP', 'status.podIP'),
-        env.new('GUBER_K8S_POD_PORT', gubernator.service.spec.ports[1].port),
+        env.new('GUBER_K8S_POD_PORT', std.toString(gubernator.service.spec.ports[1].port)),
         env.new('GUBER_K8S_ENDPOINTS_SELECTOR', 'app.kubernetes.io/name=gubernator'),
       ]) +
       container.withPorts([
@@ -69,7 +69,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     deployments.mixin.metadata.withNamespace(gubernator.config.namespace) +
     deployments.mixin.spec.selector.withMatchLabels(gubernator.config.podLabelSelector) +
     deployments.mixin.spec.template.metadata.withLabels(gubernator.config.commonLabels) +
-    deployments.mixin.spec.template.spec.withRestartPolicy('always') +
+    deployments.mixin.spec.template.spec.withRestartPolicy('Always') +
     deployments.mixin.spec.template.spec.withContainers([c]),
 
   withServiceMonitor:: {

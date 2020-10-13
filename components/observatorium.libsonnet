@@ -1,6 +1,7 @@
 local t = (import 'kube-thanos/thanos.libsonnet');
 local l = (import './loki.libsonnet');
-local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
+local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
+local api = (import 'observatorium/observatorium-api.libsonnet');
 
 {
   local obs = self,
@@ -237,7 +238,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  api:: (import 'observatorium/observatorium-api.libsonnet') + {
+  api:: api + api.withRateLimiter {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
@@ -254,6 +255,13 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           obs.receiveService.metadata.name,
           obs.receiveService.metadata.namespace,
           obs.receiveService.spec.ports[2].port,
+        ],
+      },
+      rateLimiter: {
+        grpcAddress: 'http://%s.%s.svc.cluster.local:%d' % [
+          obs.gubernator.service.metadata.name,
+          obs.gubernator.service.metadata.namespace,
+          obs.gubernator.service.spec.ports[1].port,
         ],
       },
     } + if std.length(obs.config.loki) != 0 then {

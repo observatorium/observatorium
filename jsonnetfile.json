@@ -40,11 +40,11 @@
     {
       "source": {
         "git": {
-          "remote": "https://github.com/observatorium/observatorium",
+          "remote": "https://github.com/kakkoyun/observatorium",
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "master",
+      "version": "ratelimit",
       "name": "observatorium"
     },
     {
