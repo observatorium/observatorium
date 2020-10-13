@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: observatorium-xyz-gubernator
+  namespace: observatorium
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: rate-limiter
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: gubernator
+      app.kubernetes.io/part-of: observatorium
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: rate-limiter
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: gubernator
+        app.kubernetes.io/part-of: observatorium
+        app.kubernetes.io/version: latest
+    spec:
+      containers:
+      - env:
+        - name: GUBER_K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: GUBER_K8S_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: GUBER_K8S_POD_PORT
+          value: 81
+        - name: GUBER_K8S_ENDPOINTS_SELECTOR
+          value: app.kubernetes.io/name=gubernator
+        image: ' thrawn01/gubernator:latest'
+        name: gubernator
+        ports:
+        - containerPort: 80
+          name: http
+        - containerPort: 81
+          name: grpc
+        resources:
+          limits: {}
+          requests: {}
+      restartPolicy: always

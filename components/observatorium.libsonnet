@@ -227,6 +227,16 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ) +
     service.mixin.metadata.withNamespace(obs.config.namespace),
 
+  gubernator:: (import 'gubernator.libsonnet') + {
+    config+:: {
+      local cfg = self,
+      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+      namespace: obs.config.namespace,
+      replicas: 2,
+      commonLabels+:: obs.config.commonLabels,
+    },
+  },
+
   api:: (import 'observatorium/observatorium-api.libsonnet') + {
     config+:: {
       local cfg = self,
@@ -321,6 +331,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ['api-' + name]: obs.api[name]
     for name in std.objectFields(obs.api)
     if obs.api[name] != null
+  } {
+    ['gubernator-' + name]: obs.gubernator[name]
+    for name in std.objectFields(obs.gubernator)
+    if obs.gubernator[name] != null
   } + {
     ['api-thanos-query-' + name]: obs.apiQuery[name]
     for name in std.objectFields(obs.apiQuery)

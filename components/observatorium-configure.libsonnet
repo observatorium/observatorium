@@ -43,6 +43,10 @@
     config+:: obs.config.api,
   },
 
+  gubernator+:: {
+    config+:: obs.config.gubernator,
+  },
+
   apiQuery+:: {
     config+:: obs.config.apiQuery,
   },

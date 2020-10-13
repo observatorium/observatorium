@@ -144,6 +144,13 @@
     replicas: 1,
   },
 
+  gubernator: {
+    local gubernatorConfig = self,
+    version: 'latest',
+    image: ' thrawn01/gubernator:' + gubernatorConfig.version,
+    replicas: 2,
+  },
+
   apiQuery: {
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
