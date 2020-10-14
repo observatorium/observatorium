@@ -61,6 +61,11 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
         containerPort.newNamed(80, 'http'),
         containerPort.newNamed(81, 'grpc'),
       ]) +
+      container.mixin.readinessProbe.withFailureThreshold(3) +
+      container.mixin.readinessProbe.withPeriodSeconds(30) +
+      container.mixin.readinessProbe.withInitialDelaySeconds(10) +
+      container.mixin.readinessProbe.withTimeoutSeconds(1) +
+      container.mixin.readinessProbe.httpGet.withPath('/v1/HealthCheck').withPort(gubernator.service.spec.ports[0].port).withScheme('HTTP') +
       container.mixin.resources.withLimits(gubernator.config.resources.limits) +
       container.mixin.resources.withRequests(gubernator.config.resources.requests);
 
