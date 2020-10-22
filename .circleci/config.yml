@@ -8,7 +8,7 @@ jobs:
       - run: make fmt
       - run: make generate-cert
       - run: make generate tests/manifests
-      - run: git diff --exit-code -- . ':(exclude)tests/manifests/observatorium-xyz-tls-secret.yaml' ':(exclude)tests/manifests/observatorium-xyz-tls-configmap.yaml'
+      - run: git diff --exit-code -- . ':(exclude)tests/manifests/observatorium-xyz-tls-secret.yaml' ':(exclude)tests/manifests/observatorium-xyz-tls-configmap.yaml' ':(exclude)tests/manifests/observatorium-xyz-tls-dex.yaml' ':(exclude)tests/manifests/test-ca-tls.yaml'
       - run: make validate
 
   tests:
@@ -20,6 +20,7 @@ jobs:
           no_output_timeout: 30m
           command : |
             ./tests/e2e.sh kind
+            ./tests/e2e.sh prepare-e2e
             ./tests/e2e.sh deploy
             ./tests/e2e.sh test
       - store_artifacts:

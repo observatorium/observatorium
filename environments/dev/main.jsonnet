@@ -11,6 +11,7 @@ local dex = (import '../../components/dex.libsonnet')({
         id: 'test',
         name: 'test',
         secret: 'ZXhhbXBsZS1hcHAtc2VjcmV0',
+        issuerCAPath: '/var/run/tls/test/service-ca.crt',
       },
     ],
     enablePasswordDB: true,
@@ -82,12 +83,15 @@ local obs = (import '../base/observatorium.jsonnet') + {
             oidc: {
               clientID: dex.config.config.staticClients[0].id,
               clientSecret: dex.config.config.staticClients[0].secret,
-              issuerURL: 'http://%s.%s.svc.cluster.local:%d/dex' % [
+              issuerURL: 'https://%s.%s.svc.cluster.local:%d/dex' % [
                 dex.service.metadata.name,
                 dex.service.metadata.namespace,
                 dex.service.spec.ports[0].port,
               ],
+              issuerCAPath: dex.config.config.staticClients[0].issuerCAPath,
               usernameClaim: 'email',
+              configMapName:: '%s-ca-tls' % [dex.config.config.staticClients[0].id],
+              caKey:: 'service-ca.crt',
             },
             rateLimits: [
               {
@@ -136,7 +140,26 @@ local up = (import 'up/up.libsonnet')(
   },
 );
 
+local tls = {
+  name: '%s-ca-tls' % [dex.config.config.staticClients[0].id],
+  manifests: {
+    [self.name]: {  // similar to OpenShift's service-ca injection
+      apiVersion: 'v1',
+      kind: 'ConfigMap',
+      metadata: {
+        name: '%s-ca-tls' % [dex.config.config.staticClients[0].id],
+        namespace: obs.api.service.metadata.namespace,
+        annotations: {
+          'service.beta.openshift.io/inject-cabundle': 'true',
+        },
+      },
+    },
+  },
+};
+
+
 obs.manifests +
+tls.manifests +
 { ['up-' + name]: up[name] for name in std.objectFields(up) if up[name] != null } +
 {
   'minio-deployment': minio.deployment,

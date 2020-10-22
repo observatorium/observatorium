@@ -74,6 +74,10 @@ spec:
           name: tenants
           readOnly: true
           subPath: tenants.yaml
+        - mountPath: /var/run/tls/test/service-ca.crt
+          name: test-tls-configmap
+          readOnly: true
+          subPath: service-ca.crt
       serviceAccountName: observatorium-xyz-observatorium-api
       volumes:
       - configMap:
@@ -82,3 +86,6 @@ spec:
       - name: tenants
         secret:
           secretName: observatorium-xyz-observatorium-api
+      - configMap:
+          name: test-ca-tls
+        name: test-tls-configmap

@@ -1,9 +1,10 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: observatorium-xyz-tls
+  name: dex-tls
+  namespace: dex
 stringData:
-  cert.pem: |
+  tls.crt: |
     -----BEGIN CERTIFICATE-----
     MIICFjCCAbygAwIBAgIUSNpS4mDMd63nNsE7iXZL38z24kYwCgYIKoZIzj0EAwIw
     GDEWMBQGA1UEAxMNb2JzZXJ2YXRvcml1bTAeFw0yMDExMTExNDI2MDBaFw0yMTEx
@@ -18,7 +19,7 @@ stringData:
     y3GvWOCAFJUDxRzSVGv2iL9t8zFfyCECIQD3Rk3gT2lQP4Lwr/67o8hufpMYyE2D
     Ro+9KMDZiuOSRg==
     -----END CERTIFICATE-----
-  key.pem: |
+  tls.key: |
     -----BEGIN EC PRIVATE KEY-----
     MHcCAQEEICJtK1BLq8f1Jpbbhqj0QBexbFdk03B4vROp+DrLIxb6oAoGCCqGSM49
     AwEHoUQDQgAET3DvwAn3gI6aqKtq1tgIxCUcPagQhdgE6zxPQRZkHTw2HrbkBJIQ

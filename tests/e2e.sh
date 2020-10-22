@@ -14,6 +14,19 @@ kind() {
     ./kind create cluster
 }
 
+prepare-e2e() {
+    # in a real OpenShift cluster, this secret is automatically created and populated
+    # based on the annotation in the dex service. For tests, we need to manually create this.
+    $KUBECTL create ns dex || true
+    $KUBECTL apply -f tests/manifests/observatorium-xyz-tls-dex.yaml
+
+    # in a real OpenShift cluster, this configmap is automatically populated with the service-ca
+    # upon creation. For the e2e tests, we need to manually populate it.
+    $KUBECTL create ns observatorium || true
+    cp environments/dev/manifests/test-ca-tls.yaml environments/dev/manifests/test-ca-tls.yaml.orig
+    cp tests/manifests/test-ca-tls.yaml environments/dev/manifests/test-ca-tls.yaml
+}
+
 dex() {
     $KUBECTL create ns dex || true
     $KUBECTL apply -f environments/dev/manifests/dex-secret.yaml
@@ -62,6 +75,13 @@ run_test() {
     $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up-logs"$suffix" || (must_gather "$ARTIFACT_DIR" && exit 1)
 }
 
+after_test() {
+    if [ -f environments/dev/manifests/test-ca-tls.yaml.orig ]
+    then
+        mv environments/dev/manifests/test-ca-tls.yaml.orig environments/dev/manifests/test-ca-tls.yaml
+    fi
+}
+
 must_gather() {
     local artifact_dir="$1"
 
@@ -95,6 +115,10 @@ kind)
     kind
     ;;
 
+prepare-e2e)
+    prepare-e2e
+    ;;
+
 deploy)
     deploy
     ;;
@@ -102,9 +126,10 @@ deploy)
 test)
     shift
     run_test "$@"
+    after_test
     ;;
 
 *)
-    echo "usage: $(basename "$0") { kind | deploy | test }"
+    echo "usage: $(basename "$0") { kind | prepare-e2e | deploy | test }"
     ;;
 esac
