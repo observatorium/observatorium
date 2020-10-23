@@ -44,16 +44,16 @@ run_test() {
         shift
     done
 
-    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium-minio deploy/minio || (must_gather "$ARTIFACT_DIR" && exit 1)
-    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-thanos-query-frontend || (must_gather "$ARTIFACT_DIR" && exit 1)
-    $KUBECTL wait --for=condition=available --timeout=10m -n observatorium deploy/observatorium-xyz-loki-query-frontend || (must_gather "$ARTIFACT_DIR" && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=5m -n observatorium-minio deploy/minio || (must_gather "$ARTIFACT_DIR" && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=5m -n observatorium deploy/observatorium-xyz-thanos-query-frontend || (must_gather "$ARTIFACT_DIR" && exit 1)
+    $KUBECTL wait --for=condition=available --timeout=5m -n observatorium deploy/observatorium-xyz-loki-query-frontend || (must_gather "$ARTIFACT_DIR" && exit 1)
     $KUBECTL apply -f tests/manifests/observatorium-xyz-tls-configmap.yaml
     $KUBECTL apply -f tests/manifests/observatorium-up-metrics"$suffix".yaml
 
     sleep 5
 
     # This should wait for ~2min for the job to finish.
-    $KUBECTL wait --for=condition=complete --timeout=5m -n default job/observatorium-up-metrics"$suffix" || (must_gather "$ARTIFACT_DIR" && exit 1)
+    $KUBECTL wait --for=condition=complete --timeout=10m -n default job/observatorium-up-metrics"$suffix" || (must_gather "$ARTIFACT_DIR" && exit 1)
     $KUBECTL apply -f tests/manifests/observatorium-up-logs"$suffix".yaml
 
     sleep 5
