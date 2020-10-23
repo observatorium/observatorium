@@ -45,9 +45,3 @@ $(JSONNETFMT): .bingo/jsonnetfmt.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/jsonnetfmt-v0.16.0"
 	@cd .bingo && $(GO) build -modfile=jsonnetfmt.mod -o=$(GOBIN)/jsonnetfmt-v0.16.0 "github.com/google/go-jsonnet/cmd/jsonnetfmt"
-
-GENERATE_TLS_CERT := $(GOBIN)/generate-tls-cert
-$(GENERATE_TLS_CERT): .bingo/generate-tls-cert.mod
-	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/generate-tls-cert"
-	@cd .bingo && $(GO) build -modfile=generate-tls-cert.mod -tags tools -o=$(GOBIN)/generate-tls-cert "github.com/observatorium/observatorium/test/tls"
