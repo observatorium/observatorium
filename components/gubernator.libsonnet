@@ -27,6 +27,47 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
+  serviceAccount:
+    local sa = k.core.v1.serviceAccount;
+
+    sa.new() +
+    sa.mixin.metadata.withName(gubernator.config.name) +
+    sa.mixin.metadata.withNamespace(gubernator.config.namespace) +
+    sa.mixin.metadata.withLabels(gubernator.config.commonLabels),
+
+  role:
+    local role = k.rbac.v1.role;
+    local rules = role.rulesType;
+
+    role.new() +
+    role.mixin.metadata.withName(gubernator.config.name) +
+    role.mixin.metadata.withNamespace(gubernator.config.namespace) +
+    role.mixin.metadata.withLabels(gubernator.config.commonLabels) +
+    role.withRules([
+      rules.new() +
+      rules.withApiGroups(['']) +
+      rules.withResources([
+        'endpoints',
+      ]) +
+      rules.withVerbs(['list', 'watch', 'get']),
+    ]),
+
+  roleBinding:
+    local rb = k.rbac.v1.roleBinding;
+
+    rb.new() +
+    rb.mixin.metadata.withName(gubernator.config.name) +
+    rb.mixin.metadata.withNamespace(gubernator.config.namespace) +
+    rb.mixin.metadata.withLabels(gubernator.config.commonLabels) +
+    rb.mixin.roleRef.withApiGroup('rbac.authorization.k8s.io') +
+    rb.mixin.roleRef.withName(gubernator.role.metadata.name) +
+    rb.mixin.roleRef.mixinInstance({ kind: 'Role' }) +
+    rb.withSubjects([{
+      kind: 'ServiceAccount',
+      name: gubernator.serviceAccount.metadata.name,
+      namespace: gubernator.serviceAccount.metadata.namespace,
+    }]),
+
   service:
     local service = k.core.v1.service;
     local ports = service.mixin.spec.portsType;
@@ -43,8 +84,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     service.mixin.metadata.withLabels(gubernator.config.commonLabels),
 
   deployment:
-    local deployments = k.apps.v1.deployment;
-    local container = deployments.mixin.spec.template.spec.containersType;
+    local deployment = k.apps.v1.deployment;
+    local container = deployment.mixin.spec.template.spec.containersType;
     local containerPort = container.portsType;
     local env = container.envType;
     local containerVolumeMount = container.volumeMountsType;
@@ -69,13 +110,18 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       container.mixin.resources.withLimits(gubernator.config.resources.limits) +
       container.mixin.resources.withRequests(gubernator.config.resources.requests);
 
-    deployments.new('gubernator', gubernator.config.replicas, c, gubernator.config.commonLabels) +
-    deployments.mixin.metadata.withName(gubernator.config.name) +
-    deployments.mixin.metadata.withNamespace(gubernator.config.namespace) +
-    deployments.mixin.spec.selector.withMatchLabels(gubernator.config.podLabelSelector) +
-    deployments.mixin.spec.template.metadata.withLabels(gubernator.config.commonLabels) +
-    deployments.mixin.spec.template.spec.withRestartPolicy('Always') +
-    deployments.mixin.spec.template.spec.withContainers([c]),
+    deployment.new() +
+    deployment.mixin.metadata.withName(gubernator.config.name) +
+    deployment.mixin.metadata.withNamespace(gubernator.config.namespace) +
+    deployment.mixin.metadata.withLabels(gubernator.config.commonLabels) +
+    deployment.mixin.spec.withReplicas(gubernator.config.replicas) +
+    deployment.mixin.spec.selector.withMatchLabels(gubernator.config.podLabelSelector) +
+    deployment.mixin.spec.template.metadata.withLabels(gubernator.config.commonLabels) +
+    deployment.mixin.spec.template.spec.withServiceAccount(gubernator.serviceAccount.metadata.name) +
+    deployment.mixin.spec.template.spec.withRestartPolicy('Always') +
+    deployment.mixin.spec.template.spec.withContainers([c]) +
+    deployment.mixin.spec.strategy.rollingUpdate.withMaxSurge(0) +
+    deployment.mixin.spec.strategy.rollingUpdate.withMaxUnavailable(1),
 
   withServiceMonitor:: {
     local gubernator = self,

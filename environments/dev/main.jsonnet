@@ -91,6 +91,18 @@ local obs = (import '../base/observatorium.jsonnet') + {
               ],
               usernameClaim: 'email',
             },
+            rateLimits: [
+              {
+                endpoint: '/api/metrics/v1/.+/api/v1/receive',
+                limit: 100,
+                window: '1s',
+              },
+              {
+                endpoint: '/api/logs/v1/.*',
+                limit: 100,
+                window: '1s',
+              },
+            ],
           },
         ],
       },

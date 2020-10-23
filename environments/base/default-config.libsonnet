@@ -146,9 +146,9 @@
 
   gubernator: {
     local gubernatorConfig = self,
-    version: 'latest',
-    image: ' thrawn01/gubernator:' + gubernatorConfig.version,
-    replicas: 2,
+    version: '0.9.1',
+    image: 'thrawn01/gubernator:' + gubernatorConfig.version,
+    replicas: 1,
   },
 
   apiQuery: {
