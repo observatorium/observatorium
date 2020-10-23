@@ -34,17 +34,6 @@
     {
       "source": {
         "git": {
-          "remote": "https://github.com/kakkoyun/observatorium.git",
-          "subdir": "jsonnet/lib"
-        }
-      },
-      "version": "3816705356c4a5b2badb9349aa29dddc5d9e11eb",
-      "sum": "5124DS81/CsWilqsIlHLam47vS+6zTHiDASXj7eTOTU=",
-      "name": "observatorium"
-    },
-    {
-      "source": {
-        "git": {
           "remote": "https://github.com/ksonnet/ksonnet-lib.git",
           "subdir": ""
         }
@@ -62,6 +51,17 @@
       },
       "version": "101618191a5dae835f7c8a90e6f0df40072e2cb3",
       "sum": "vERnAgUe02tI7S4cRK2KSEsyuVm6XFT9v8RucCG/8B8="
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/observatorium/observatorium.git",
+          "subdir": "jsonnet/lib"
+        }
+      },
+      "version": "7c57706b8380a63abe4713f92300c29a9a30f335",
+      "sum": "R3V1fekf9J7pJ/vlmbvAQBJtKRUFoaxnNtPrKwKkMSg=",
+      "name": "observatorium"
     },
     {
       "source": {
