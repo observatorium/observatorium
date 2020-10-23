@@ -23,8 +23,7 @@ generate-cert: $(GENERATE_TLS_CERT) | $(CERT_DIR)
 	cd $(CERT_DIR) && $(GENERATE_TLS_CERT) -server-common-name=observatorium-xyz-observatorium-api.observatorium.svc.cluster.local
 
 # Not managed by Bingo directly, as it requires the -tags tools flag
-GENERATE_TLS_CERT := $(GOBIN)/generate-tls-cert
-$(GENERATE_TLS_CERT): .bingo/generate-tls-cert.mod
+$(GENERATE_TLS_CERT):
 	@echo "(re)installing $(GOBIN)/generate-tls-cert"
 	@cd .bingo && $(GO) build -modfile=generate-tls-cert.mod -tags tools -o=$(GOBIN)/generate-tls-cert "github.com/observatorium/observatorium/test/tls"
 
