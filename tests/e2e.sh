@@ -104,15 +104,7 @@ test)
     run_test "$@"
     ;;
 
-deploy-operator)
-    deploy_operator
-    ;;
-
-delete-cr)
-    delete_cr
-    ;;
-
 *)
-    echo "usage: $(basename "$0") { kind | deploy | test | deploy-operator | delete-cr }"
+    echo "usage: $(basename "$0") { kind | deploy | test }"
     ;;
 esac
