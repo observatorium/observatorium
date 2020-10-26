@@ -1,6 +1,7 @@
 local t = (import 'kube-thanos/thanos.libsonnet');
 local l = (import './loki.libsonnet');
-local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
+local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
+local api = (import 'observatorium/observatorium-api.libsonnet');
 
 {
   local obs = self,
@@ -227,7 +228,17 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ) +
     service.mixin.metadata.withNamespace(obs.config.namespace),
 
-  api:: (import 'observatorium/observatorium-api.libsonnet') + {
+  gubernator:: (import 'gubernator.libsonnet') + {
+    config+:: {
+      local cfg = self,
+      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+      namespace: obs.config.namespace,
+      replicas: 2,
+      commonLabels+:: obs.config.commonLabels,
+    },
+  },
+
+  api:: api + api.withRateLimiter {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
@@ -244,6 +255,13 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
           obs.receiveService.metadata.name,
           obs.receiveService.metadata.namespace,
           obs.receiveService.spec.ports[2].port,
+        ],
+      },
+      rateLimiter: {
+        grpcAddress: '%s.%s.svc.cluster.local:%d' % [
+          obs.gubernator.service.metadata.name,
+          obs.gubernator.service.metadata.namespace,
+          obs.gubernator.service.spec.ports[1].port,
         ],
       },
     } + if std.length(obs.config.loki) != 0 then {
@@ -321,6 +339,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     ['api-' + name]: obs.api[name]
     for name in std.objectFields(obs.api)
     if obs.api[name] != null
+  } {
+    ['gubernator-' + name]: obs.gubernator[name]
+    for name in std.objectFields(obs.gubernator)
+    if obs.gubernator[name] != null
   } + {
     ['api-thanos-query-' + name]: obs.apiQuery[name]
     for name in std.objectFields(obs.apiQuery)

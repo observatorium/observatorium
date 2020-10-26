@@ -139,8 +139,15 @@
 
   api: {
     local apiConfig = self,
-    version: 'master-2020-09-08-v0.1.1-142-g61a908f',
+    version: 'master-2020-10-23-v0.1.1-180-g7c57706',
     image: 'quay.io/observatorium/observatorium:' + apiConfig.version,
+    replicas: 1,
+  },
+
+  gubernator: {
+    local gubernatorConfig = self,
+    version: '0.9.1',
+    image: 'thrawn01/gubernator:' + gubernatorConfig.version,
     replicas: 1,
   },
 
