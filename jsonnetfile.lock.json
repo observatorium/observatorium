@@ -77,16 +77,6 @@
     {
       "source": {
         "git": {
-          "remote": "https://github.com/observatorium/thanos-receive-controller.git",
-          "subdir": "jsonnet/thanos-receive-controller-mixin"
-        }
-      },
-      "version": "a9d9169ef2c4da1eafd6badbc90a4b4804c8c101",
-      "sum": "/m671jdzWQfkKGuPN2jN6W8/rnbzEBgG6bLzr4erRGs="
-    },
-    {
-      "source": {
-        "git": {
           "remote": "https://github.com/thanos-io/kube-thanos.git",
           "subdir": "jsonnet/kube-thanos"
         }
