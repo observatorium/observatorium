@@ -94,12 +94,12 @@ local obs = (import '../base/observatorium.jsonnet') + {
             rateLimits: [
               {
                 endpoint: '/api/metrics/v1/.+/api/v1/receive',
-                limit: 100,
+                limit: 1000,
                 window: '1s',
               },
               {
                 endpoint: '/api/logs/v1/.*',
-                limit: 100,
+                limit: 1000,
                 window: '1s',
               },
             ],

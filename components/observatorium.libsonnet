@@ -258,7 +258,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
         ],
       },
       rateLimiter: {
-        grpcAddress: 'http://%s.%s.svc.cluster.local:%d' % [
+        grpcAddress: '%s.%s.svc.cluster.local:%d' % [
           obs.gubernator.service.metadata.name,
           obs.gubernator.service.metadata.namespace,
           obs.gubernator.service.spec.ports[1].port,
