@@ -695,6 +695,39 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     },
   },
 
+  withNodeSelector:: {
+    local l = self,
+    config+:: {
+      nodeSelector: error 'must provide nodeSelector',
+    },
+
+    manifests+:: {
+      [normalizedName(name) + '-deployment']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              nodeSelector: std.mapWithKey(function(k, v) v, l.config.nodeSelector),
+            },
+          },
+        },
+      }
+      for name in std.objectFields(l.components)
+      if !isStatefulSet(name)
+    } + {
+      [normalizedName(name) + '-statefulset']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              nodeSelector: std.mapWithKey(function(k, v) v, l.config.nodeSelector),
+            },
+          },
+        },
+      }
+      for name in std.objectFields(l.components)
+      if isStatefulSet(name)
+    },
+  },
+
   manifests+:: {
     'config-map': loki.configmap,
   } + {

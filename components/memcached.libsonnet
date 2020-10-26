@@ -143,6 +143,23 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
+  withNodeSelector:: {
+    local mc = self,
+    config+:: {
+      nodeSelector: error 'must provide nodeSelector',
+    },
+
+    statefulSet+: {
+      spec+: {
+        template+: {
+          spec+: {
+            nodeSelector: std.mapWithKey(function(k, v) v, mc.config.nodeSelector),
+          },
+        },
+      },
+    },
+  },
+
   util:: {
     // Convert number to k8s "quantity" (ie 1.5Gi -> "1536Mi")
     // as per https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go
