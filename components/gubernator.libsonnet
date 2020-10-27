@@ -95,8 +95,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       container.withEnv([
         env.fromFieldPath('GUBER_K8S_NAMESPACE', 'metadata.namespace'),
         env.fromFieldPath('GUBER_K8S_POD_IP', 'status.podIP'),
-        // env.new('GUBER_HTTP_ADDRESS', '0.0.0.0:%s' % gubernator.service.spec.ports[0].targetPort),
-        // env.new('GUBER_GRPC_ADDRESS', '0.0.0.0:%s' % gubernator.service.spec.ports[1].targetPort),
+        env.new('GUBER_HTTP_ADDRESS', '0.0.0.0:%s' % gubernator.service.spec.ports[0].targetPort),
+        env.new('GUBER_GRPC_ADDRESS', '0.0.0.0:%s' % gubernator.service.spec.ports[1].targetPort),
         env.new('GUBER_K8S_POD_PORT', std.toString(gubernator.service.spec.ports[1].port)),
         env.new('GUBER_K8S_ENDPOINTS_SELECTOR', 'app.kubernetes.io/name=gubernator'),
       ]) +

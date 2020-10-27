@@ -40,6 +40,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: GUBER_HTTP_ADDRESS
+          value: 0.0.0.0:80
+        - name: GUBER_GRPC_ADDRESS
+          value: 0.0.0.0:81
         - name: GUBER_K8S_POD_PORT
           value: "8081"
         - name: GUBER_K8S_ENDPOINTS_SELECTOR
