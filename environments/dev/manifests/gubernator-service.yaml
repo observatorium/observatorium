@@ -12,10 +12,10 @@ metadata:
 spec:
   ports:
   - name: http
-    port: 80
+    port: 8080
     targetPort: 80
   - name: grpc
-    port: 81
+    port: 8081
     targetPort: 81
   selector:
     app.kubernetes.io/component: rate-limiter

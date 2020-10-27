@@ -41,7 +41,7 @@ spec:
             fieldRef:
               fieldPath: status.podIP
         - name: GUBER_K8S_POD_PORT
-          value: "81"
+          value: "8081"
         - name: GUBER_K8S_ENDPOINTS_SELECTOR
           value: app.kubernetes.io/name=gubernator
         image: thrawn01/gubernator:0.9.1

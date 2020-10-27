@@ -76,8 +76,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       gubernator.config.name,
       gubernator.config.podLabelSelector,
       [
-        ports.newNamed('http', 80, 80),
-        ports.newNamed('grpc', 81, 81),
+        ports.newNamed('http', 8080, 80),
+        ports.newNamed('grpc', 8081, 81),
       ],
     ) +
     service.mixin.metadata.withNamespace(gubernator.config.namespace) +
@@ -95,18 +95,17 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       container.withEnv([
         env.fromFieldPath('GUBER_K8S_NAMESPACE', 'metadata.namespace'),
         env.fromFieldPath('GUBER_K8S_POD_IP', 'status.podIP'),
+        // env.new('GUBER_HTTP_ADDRESS', '0.0.0.0:%s' % gubernator.service.spec.ports[0].targetPort),
+        // env.new('GUBER_GRPC_ADDRESS', '0.0.0.0:%s' % gubernator.service.spec.ports[1].targetPort),
         env.new('GUBER_K8S_POD_PORT', std.toString(gubernator.service.spec.ports[1].port)),
         env.new('GUBER_K8S_ENDPOINTS_SELECTOR', 'app.kubernetes.io/name=gubernator'),
       ]) +
-      container.withPorts([
-        containerPort.newNamed(80, 'http'),
-        containerPort.newNamed(81, 'grpc'),
-      ]) +
+      container.withPorts([containerPort.newNamed(p.targetPort, p.name) for p in gubernator.service.spec.ports]) +
       container.mixin.readinessProbe.withFailureThreshold(3) +
       container.mixin.readinessProbe.withPeriodSeconds(30) +
       container.mixin.readinessProbe.withInitialDelaySeconds(10) +
       container.mixin.readinessProbe.withTimeoutSeconds(1) +
-      container.mixin.readinessProbe.httpGet.withPath('/v1/HealthCheck').withPort(gubernator.service.spec.ports[0].port).withScheme('HTTP') +
+      container.mixin.readinessProbe.httpGet.withPath('/v1/HealthCheck').withPort(gubernator.service.spec.ports[0].targetPort).withScheme('HTTP') +
       container.mixin.resources.withLimits(gubernator.config.resources.limits) +
       container.mixin.resources.withRequests(gubernator.config.resources.requests);
 
