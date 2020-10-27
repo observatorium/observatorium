@@ -41,9 +41,9 @@ spec:
             fieldRef:
               fieldPath: status.podIP
         - name: GUBER_HTTP_ADDRESS
-          value: 0.0.0.0:80
+          value: 0.0.0.0:8080
         - name: GUBER_GRPC_ADDRESS
-          value: 0.0.0.0:81
+          value: 0.0.0.0:8081
         - name: GUBER_K8S_POD_PORT
           value: "8081"
         - name: GUBER_K8S_ENDPOINTS_SELECTOR
@@ -51,15 +51,15 @@ spec:
         image: thrawn01/gubernator:0.9.1
         name: gubernator
         ports:
-        - containerPort: 80
+        - containerPort: 8080
           name: http
-        - containerPort: 81
+        - containerPort: 8081
           name: grpc
         readinessProbe:
           failureThreshold: 3
           httpGet:
             path: /v1/HealthCheck
-            port: 80
+            port: 8080
             scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 30

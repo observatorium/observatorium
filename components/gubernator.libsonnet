@@ -76,8 +76,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       gubernator.config.name,
       gubernator.config.podLabelSelector,
       [
-        ports.newNamed('http', 8080, 80),
-        ports.newNamed('grpc', 8081, 81),
+        ports.newNamed('http', 8080, 8080),
+        ports.newNamed('grpc', 8081, 8081),
       ],
     ) +
     service.mixin.metadata.withNamespace(gubernator.config.namespace) +

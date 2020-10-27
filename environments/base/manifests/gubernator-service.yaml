@@ -13,10 +13,10 @@ spec:
   ports:
   - name: http
     port: 8080
-    targetPort: 80
+    targetPort: 8080
   - name: grpc
     port: 8081
-    targetPort: 81
+    targetPort: 8081
   selector:
     app.kubernetes.io/component: rate-limiter
     app.kubernetes.io/instance: observatorium-xyz
