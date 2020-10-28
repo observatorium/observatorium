@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: gubernator
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: 0.9.1
+    app.kubernetes.io/version: 1.0.0-rc.1
   name: observatorium-xyz-gubernator
   namespace: observatorium
 spec:
@@ -28,7 +28,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: gubernator
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: 0.9.1
+        app.kubernetes.io/version: 1.0.0-rc.1
     spec:
       containers:
       - env:
@@ -48,7 +48,7 @@ spec:
           value: "8081"
         - name: GUBER_K8S_ENDPOINTS_SELECTOR
           value: app.kubernetes.io/name=gubernator
-        image: thrawn01/gubernator:0.9.1
+        image: thrawn01/gubernator:1.0.0-rc.1
         name: gubernator
         ports:
         - containerPort: 8080

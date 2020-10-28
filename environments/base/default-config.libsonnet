@@ -146,7 +146,7 @@
 
   gubernator: {
     local gubernatorConfig = self,
-    version: '0.9.1',
+    version: '1.0.0-rc.1',
     image: 'thrawn01/gubernator:' + gubernatorConfig.version,
     replicas: 1,
   },
