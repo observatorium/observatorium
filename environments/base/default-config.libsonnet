@@ -178,7 +178,6 @@
     replicas: {
       chunk_cache: 1,
       index_query_cache: 1,
-      index_write_cache: 1,
       results_cache: 1,
     },
   },
@@ -189,6 +188,7 @@
     image: 'docker.io/grafana/loki:' + lokiConfig.version,
     objectStorageConfig: defaultConfig.objectStorageConfig.loki,
     replicas: {
+      compactor: 1,
       distributor: 1,
       ingester: 1,
       querier: 1,

@@ -14,7 +14,6 @@ local m = import 'memcached.libsonnet';
 
     enableChuckCache: false,
     enableIndexQueryCache: false,
-    enableIndexWriteCache: false,
     enableResultsCache: false,
 
     commonLabels:: {
@@ -69,26 +68,6 @@ local m = import 'memcached.libsonnet';
       serviceMonitor+: mc.serviceMonitors.index_query_cache,
     } else {},
 
-  indexWriteCache::
-    m +
-    m.withServiceMonitor {
-      config+:: {
-        local cfg = self,
-        name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-index-write-cache',
-        namespace: mc.config.namespace,
-        commonLabels+:: mc.config.commonLabels {
-          'app.kubernetes.io/component': 'index-write-cache',
-        },
-        version:: mc.config.version,
-        image:: mc.config.image,
-        exporterVersion: mc.config.exporterVersion,
-        exporterImage:: mc.config.exporterImage,
-        replicas: mc.config.replicas.index_write_cache,
-      },
-    } + if std.objectHas(mc.serviceMonitors, 'index_write_cache') then {
-      serviceMonitor+: mc.serviceMonitors.index_write_cache,
-    } else {},
-
   resultsCache::
     m +
     m.withServiceMonitor {
@@ -117,7 +96,6 @@ local m = import 'memcached.libsonnet';
     manifests+:: {
       'chunk-cache-service-monitor': l.chunkCache.serviceMonitor,
       'index-query-cache-service-monitor': l.indexQueryCache.serviceMonitor,
-      'index-write-cache-service-monitor': l.indexWriteCache.serviceMonitor,
       'results-cache-service-monitor': l.resultsCache.serviceMonitor,
     },
   },
@@ -131,10 +109,6 @@ local m = import 'memcached.libsonnet';
     (if mc.config.enableIndexQueryCache then {
        'index-query-cache-service': mc.indexQueryCache.service,
        'index-query-cache-statefulset': mc.indexQueryCache.statefulSet,
-     } else {}) +
-    (if mc.config.enableIndexWriteCache then {
-       'index-write-cache-service': mc.indexWriteCache.service,
-       'index-write-cache-statefulset': mc.indexWriteCache.statefulSet,
      } else {}) +
     (if mc.config.enableResultsCache then {
        'results-cache-service': mc.resultsCache.service,
