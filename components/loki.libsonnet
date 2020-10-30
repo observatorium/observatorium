@@ -57,7 +57,7 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     std.member(['distributor', 'ingester', 'querier'], component),
 
   local isStatefulSet(component) =
-    std.member(['ingester', 'querier'], component),
+    std.member(['compactor', 'ingester', 'querier'], component),
 
   local newLokiContainer(name, component, config) =
     local deployment = k.apps.v1.deployment;
@@ -208,6 +208,13 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     service.mixin.metadata.withLabels(commonLabels),
 
   components:: {
+    compactor: {
+      withReadinessProbe: true,
+      resources: {
+        requests: { cpu: '100m', memory: '100Mi' },
+        limits: { cpu: '200m', memory: '200Mi' },
+      },
+    },
     distributor: {
       withReadinessProbe: true,
       resources: {
@@ -249,6 +256,11 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     },
     // Warning: Do not add join_members here use withMemberList
     // memberlist: {},
+    compactor: {
+      compaction_interval: '2h',
+      shared_store: 's3',
+      working_directory: '/data/loki/compactor',
+    },
     distributor: {
       ring: {
         kvstore: {
@@ -390,6 +402,9 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     config+:: {
       replicas: error 'must provide replicas per component',
     },
+
+    assert l.config.replicas.compactor == 1 : 'Only one replica for compactor component allowed',
+
     manifests+:: {
       [normalizedName(name) + '-deployment']+: {
         spec+: {
@@ -449,28 +464,6 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
           },
           memcached_client: {
             addresses: l.config.indexQueryCache,
-            consistent_hash: true,
-          },
-        },
-      },
-    },
-  },
-
-  withIndexWriteCache:: {
-    local l = self,
-    config+:: {
-      indexWriteCache: error 'must provide addresses for index writes cache',
-    },
-
-    defaultConfig+:: {
-      chunk_store_config+: {
-        write_dedupe_cache_config: {
-          memcached: {
-            batch_size: 100,
-            parallelism: 100,
-          },
-          memcached_client: {
-            addresses: l.config.indexWriteCache,
             consistent_hash: true,
           },
         },
@@ -649,7 +642,7 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
         },
       } + if std.objectHas(l.serviceMonitors, name) then l.serviceMonitors[name] else {}
       for name in std.objectFields(loki.components)
-      if std.member(['distributor', 'query_frontend', 'querier', 'ingester'], name)
+      if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'ingester'], name)
     },
   },
 
