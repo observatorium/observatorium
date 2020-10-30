@@ -43,6 +43,7 @@ data:
       "ingestion_burst_size_mb": 20
       "ingestion_rate_mb": 10
       "ingestion_rate_strategy": "global"
+      "max_cache_freshness_per_query": "10m"
       "max_global_streams_per_user": 10000
       "max_query_length": "12000h"
       "max_query_parallelism": 32
@@ -72,7 +73,7 @@ data:
       "split_queries_by_interval": "30m"
     "schema_config":
       "configs":
-      - "from": "2018-04-15"
+      - "from": "2020-10-01"
         "index":
           "period": "24h"
           "prefix": "loki_index_"
@@ -91,7 +92,8 @@ data:
       "boltdb_shipper":
         "active_index_directory": "/data/loki/index"
         "cache_location": "/data/loki/index_cache"
-        "resync_interval": "5s"
+        "cache_ttl": "24h"
+        "resync_interval": "5m"
         "shared_store": "s3"
   overrides.yaml: '{}'
 kind: ConfigMap
@@ -100,6 +102,6 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: 1.6.1
+    app.kubernetes.io/version: 2.0.0
   name: observatorium-xyz-loki
   namespace: observatorium

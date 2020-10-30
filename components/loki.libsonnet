@@ -304,6 +304,7 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
       ingestion_burst_size_mb: 20,
       ingestion_rate_mb: 10,
       ingestion_rate_strategy: 'global',
+      max_cache_freshness_per_query: '10m',
       max_global_streams_per_user: 10000,
       max_query_length: '12000h',
       max_query_parallelism: 32,
@@ -330,9 +331,9 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     schema_config: {
       configs: [
         {
-          from: '2018-04-15',
+          from: '2020-10-01',
           index: {
-            period: '%dh' % indexPeriodHours,
+            period: '24h',
             prefix: 'loki_index_',
           },
           object_store: 's3',
@@ -354,7 +355,8 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
       boltdb_shipper: {
         active_index_directory: '/data/loki/index',
         cache_location: '/data/loki/index_cache',
-        resync_interval: '5s',
+        cache_ttl: '24h',
+        resync_interval: '5m',
         shared_store: 's3',
       },
     },
@@ -489,7 +491,6 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
         cache_results: true,
         max_retries: 5,
         results_cache: {
-          max_freshness: '10m',
           cache: {
             memcached_client: {
               timeout: '500ms',

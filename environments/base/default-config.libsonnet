@@ -185,7 +185,7 @@
 
   loki+: {
     local lokiConfig = self,
-    version: '1.6.1',
+    version: '2.0.0',
     image: 'docker.io/grafana/loki:' + lokiConfig.version,
     objectStorageConfig: defaultConfig.objectStorageConfig.loki,
     replicas: {
