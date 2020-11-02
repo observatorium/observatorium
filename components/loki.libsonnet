@@ -705,6 +705,6 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
   } + {
     [normalizedName(name) + '-http-service']: newHttpService(name)
     for name in std.objectFields(loki.components)
-    if std.member(['distributor', 'query_frontend', 'querier', 'ingester'], name)
+    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'ingester'], name)
   },
 }
