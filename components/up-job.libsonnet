@@ -1,5 +1,3 @@
-local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
-
 {
   local up = self,
 
@@ -12,6 +10,8 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     writeEndpoint: error 'must provide writeEndpoint',
     readEndpoint: error 'must provide readEndpoint',
 
+    tls: {},
+
     commonLabels:: {
       'app.kubernetes.io/name': 'observatorium-up',
       'app.kubernetes.io/instance': up.config.name,
@@ -19,67 +19,73 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       'app.kubernetes.io/component': 'test',
     },
 
-    tls: {},
+    podLabelSelector:: {
+      [labelName]: up.config.commonLabels[labelName]
+      for labelName in std.objectFields(up.config.commonLabels)
+      if !std.setMember(labelName, ['app.kubernetes.io/version'])
+    },
   },
 
   job:
-    local job = k.batch.v1.job;
-    local container = job.mixin.spec.template.spec.containersType;
+    local c = {
+      name: 'observatorium-up',
+      image: up.config.image,
+      args: [
+        '--endpoint-type=' + up.config.endpointType,
+        '--endpoint-write=' + up.config.writeEndpoint,
+        '--endpoint-read=' + up.config.readEndpoint,
+        '--period=1s',
+        '--duration=2m',
+        '--name=foo',
+        '--labels=bar="baz"',
+        '--latency=10s',
+        '--initial-query-delay=5s',
+        '--threshold=0.90',
+      ] + (
+        if up.config.tls != {} then
+          [
+            '--tls-ca-file=/mnt/tls/' + up.config.tls.caKey,
+          ]
+        else []
+      ),
+      volumeMounts: if up.config.tls != {} then [
+        {
+          name: 'tls',
+          mountPath: '/mnt/tls',
+          readOnly: true,
+        },
+      ] else [],
+    };
 
-    local c =
-      container.new('observatorium-up', up.config.image) +
-      container.withArgs(
-        [
-          '--endpoint-type=' + up.config.endpointType,
-          '--endpoint-write=' + up.config.writeEndpoint,
-          '--endpoint-read=' + up.config.readEndpoint,
-          '--period=1s',
-          '--duration=2m',
-          '--name=foo',
-          '--labels=bar="baz"',
-          '--latency=10s',
-          '--initial-query-delay=5s',
-          '--threshold=0.90',
-        ] + (
-          if up.config.tls != {} then
-            [
-              '--tls-ca-file=/mnt/tls/' + up.config.tls.caKey,
-            ]
-          else []
-        )
-      ) +
-      container.withVolumeMounts(
-        (if up.config.tls != {} then [
-           {
-             name: 'tls',
-             mountPath: '/mnt/tls',
-             readOnly: true,
-           },
-         ] else [])
-      );
-
-    job.new() +
-    job.mixin.metadata.withName(up.config.name) +
-    job.mixin.spec.withBackoffLimit(up.config.backoffLimit) +
-    job.mixin.spec.template.metadata.withLabels(up.config.commonLabels) +
-    job.mixin.spec.template.spec.withContainers([c]) {
-      spec+: {
-        template+: {
-          spec+: {
+    {
+      apiVersion: 'batch/v1',
+      kind: 'Job',
+      metadata: {
+        name: up.config.name,
+        labels: up.config.commonLabels,
+      },
+      spec: {
+        backoffLimit: up.config.backoffLimit,
+        selector: { matchLabels: up.config.podLabelSelector },
+        template: {
+          metadata: {
+            labels: up.config.commonLabels,
+          },
+          spec: {
+            containers: [c],
             restartPolicy: 'OnFailure',
+            volumes: if up.config.tls != {} then [
+              {
+                configMap: {
+                  name: up.config.tls.configMapName,
+                },
+                name: 'tls',
+              },
+            ] else [],
           },
         },
       },
-    } + job.mixin.spec.template.spec.withVolumes(
-      (if up.config.tls != {} then [
-         {
-           configMap: {
-             name: up.config.tls.configMapName,
-           },
-           name: 'tls',
-         },
-       ] else [])
-    ),
+    },
 
   withResources:: {
     local u = self,
@@ -104,9 +110,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   },
 
   withGetToken:: {
-    local job = k.batch.v1.job,
-    local container = job.mixin.spec.template.spec.containersType,
-    local u = self,
+    local up = self,
     config+:: {
       curlImage: error 'must provide image for cURL',
       tokenEndpoint: error 'must provide token endpoint',
@@ -120,9 +124,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       spec+: {
         template+: {
           spec+: {
-            local c =
-              container.new('curl', u.config.curlImage) +
-              container.withCommand([
+            local curl = {
+              name: 'curl',
+              image: up.config.curlImage,
+              command: [
                 '/bin/sh',
                 '-c',
                 |||
@@ -137,36 +142,37 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                       --data client_secret=%s \
                       --data scope="openid email" | sed 's/^{.*"id_token":[^"]*"\([^"]*\)".*}/\1/' > /var/shared/token
                 ||| % [
-                  u.config.tokenEndpoint,
-                  u.config.username,
-                  u.config.password,
-                  u.config.clientID,
-                  u.config.clientSecret,
+                  up.config.tokenEndpoint,
+                  up.config.username,
+                  up.config.password,
+                  up.config.clientID,
+                  up.config.clientSecret,
                 ],
-              ]) +
-              container.withVolumeMounts({
-                name: 'shared',
-                mountPath: '/var/shared',
-                readOnly: false,
-              }),
+              ],
+              volumeMounts: [
+                {
+                  name: 'shared',
+                  mountPath: '/var/shared',
+                  readOnly: false,
+                },
+              ],
+            },
 
-            initContainers+: [c],
-
+            initContainers+: [curl],
             containers: [
               if c.name == 'observatorium-up' then c {
-                resources: u.config.resources,
+                resources: up.config.resources,
                 args+: [
                   '--token-file=/var/shared/token',
                 ],
-              } + container.withVolumeMounts(
-                c.volumeMounts + [
+                volumeMounts: c.volumeMounts + [
                   {
                     name: 'shared',
                     mountPath: '/var/shared',
                     readOnly: true,
                   },
-                ]
-              ) else c
+                ],
+              } else c
               for c in super.containers
             ],
             volumes+: [
@@ -182,9 +188,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   },
 
   withLogsFile:: {
-    local job = k.batch.v1.job,
-    local container = job.mixin.spec.template.spec.containersType,
-    local u = self,
+    local up = self,
     config+:: {
       bashImage: error 'must provide image for bash',
     },
@@ -193,9 +197,10 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
       spec+: {
         template+: {
           spec+: {
-            local c =
-              container.new('logs-file', u.config.bashImage) +
-              container.withCommand([
+            local c = {
+              name: 'logs-file',
+              image: up.config.bashImage,
+              command: [
                 '/bin/sh',
                 '-c',
                 |||
@@ -204,35 +209,32 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
                     logs: [ [ "$(date '+%s%N')", "log line"] ]
                   EOF
                 |||,
-              ]) +
-              container.withVolumeMounts(
-                [
-                  {
-                    name: 'logs-file',
-                    mountPath: '/var/logs-file',
-                    readOnly: false,
-                  },
-                ],
-              ),
+              ],
+              volumeMounts: [
+                {
+                  name: 'logs-file',
+                  mountPath: '/var/logs-file',
+                  readOnly: false,
+                },
+              ],
+            },
 
             initContainers+: [c],
-
             containers: [
               if c.name == 'observatorium-up' then c {
-                resources: u.config.resources,
+                resources: up.config.resources,
                 args+: [
                   '--logs-file=/var/logs-file/logs.yaml',
                 ],
-              } + container.withVolumeMounts(
-                c.volumeMounts +
-                [
-                  {
-                    name: 'logs-file',
-                    mountPath: '/var/logs-file',
-                    readOnly: true,
-                  },
-                ],
-              ) else c
+                volumeMounts: c.volumeMounts +
+                              [
+                                {
+                                  name: 'logs-file',
+                                  mountPath: '/var/logs-file',
+                                  readOnly: true,
+                                },
+                              ],
+              }
               for c in super.containers
             ],
             volumes+: [
