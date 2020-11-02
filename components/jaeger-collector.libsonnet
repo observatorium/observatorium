@@ -1,5 +1,3 @@
-local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
-local service = k.core.v1.service;
 local jaegerAgent = import './jaeger-agent.libsonnet';
 
 {
@@ -13,100 +11,168 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
       size: '50Gi',
     },
 
-    headlessService:
-      service.new(
-        'jaeger-collector-headless',
-        $.jaeger.deployment.metadata.labels,
-        [
-          service.mixin.spec.portsType.newNamed('grpc', 14250, 14250),
+    headlessService: {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: 'jaeger-collector-headless',
+        namespace: j.namespace,
+        labels: $.jaeger.deployment.metadata.labels {
+          'app.kubernetes.io/name': $.jaeger.deployment.metadata.name,
+        },
+      },
+      spec: {
+        ports: [
+          { name: 'grpc', targetPort: 14250, port: 14250 },
         ],
-      ) +
-      service.mixin.metadata.withNamespace(j.namespace) +
-      service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }) +
-      service.mixin.spec.withClusterIp('None'),
+        ClusterIP: 'None',
+      },
+    },
 
-    queryService:
-      service.new(
-        'jaeger-query',
-        $.jaeger.deployment.metadata.labels,
-        [
-          service.mixin.spec.portsType.newNamed('query', 16686, 16686),
+    queryService: {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: 'jaeger-query',
+        namespace: j.namespace,
+        labels: $.jaeger.deployment.metadata.labels {
+          'app.kubernetes.io/name': $.jaeger.deployment.metadata.name,
+        },
+      },
+      spec: {
+        ports: [
+          { name: 'query', targetPort: 16686, port: 16686 },
         ],
-      ) +
-      service.mixin.metadata.withNamespace(j.namespace) +
-      service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }),
+      },
+    },
 
-    adminService:
-      service.new(
-        'jaeger-admin',
-        $.jaeger.deployment.metadata.labels,
-        [
-          service.mixin.spec.portsType.newNamed('admin-http', 14269, 14269),
+    adminService: {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: 'jaeger-admin',
+        namespace: j.namespace,
+        labels: $.jaeger.deployment.metadata.labels {
+          'app.kubernetes.io/name': $.jaeger.deployment.metadata.name,
+        },
+      },
+      spec: {
+        ports: [
+          { name: 'admin-http', targetPort: 14269, port: 14269 },
         ],
-      ) +
-      service.mixin.metadata.withNamespace(j.namespace) +
-      service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }),
+      },
+    },
 
-    agentService:
-      service.new(
-        'jaeger-agent-discovery',
-        { 'app.kubernetes.io/tracing': 'jaeger-agent' },
-        [
-          service.mixin.spec.portsType.newNamed('metrics', 14271, 14271),
+    agentService: {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: 'jaeger-agent-discovery',
+        namespace: j.namespace,
+        labels: { 'app.kubernetes.io/tracing': 'jaeger-agent' },
+      },
+      spec: {
+        ports: [
+          { name: 'metrics', targetPort: 14271, port: 14271 },
         ],
-      ) +
-      service.mixin.metadata.withNamespace(j.namespace) +
-      service.mixin.metadata.withLabels({ 'app.kubernetes.io/name': 'jaeger-agent' }),
+      },
+    },
 
-    volumeClaim:
-      local claim = k.core.v1.persistentVolumeClaim;
-      claim.new() +
-      claim.mixin.metadata.withName('jaeger-store-data') +
-      claim.mixin.metadata.withNamespace(j.namespace) +
-      claim.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }) +
-      claim.mixin.spec.withAccessModes('ReadWriteOnce') +
-      claim.mixin.spec.resources.withRequests({ storage: j.pvc.size },) +
-      claim.mixin.spec.withStorageClassName(j.pvc.class),
+    volumeClaim: {
+      metadata: {
+        name: 'jaeger-store-data',
+        namespace: j.namespace,
+        labels: { 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name },
+      },
+      spec: {
+        accessModes: ['ReadWriteOnce'],
+        storageClassName: j.pvc.class,
+        resources: {
+          requests: {
+            storage: j.pvc.size,
+          },
+        },
+      },
+    },
 
     deployment:
-      local deployment = k.apps.v1.deployment;
-      local container = deployment.mixin.spec.template.spec.containersType;
-      local containerPort = container.portsType;
-      local env = container.envType;
-      local mount = container.volumeMountsType;
-      local volume = k.apps.v1.statefulSet.mixin.spec.template.spec.volumesType;
-
-      local c =
-        container.new($.jaeger.deployment.metadata.name, j.image) +
-        container.withArgs([
+      local c = {
+        name: '$.jaeger.deployment.metadata.name',
+        image: j.image,
+        args: [
           '--collector.queue-size=4000',
-        ],) +
-        container.withEnv([
-          env.new('SPAN_STORAGE_TYPE', 'memory'),
-        ]) + container.withPorts(
-          [
-            containerPort.newNamed(14250, 'grpc'),
-            containerPort.newNamed(14269, 'admin-http'),
-            containerPort.newNamed(16686, 'query'),
-          ],
-        ) +
-        container.withVolumeMounts([mount.new('jaeger-store-data', '/var/jaeger/store')]) +
-        container.mixin.readinessProbe.withFailureThreshold(3) +
-        container.mixin.readinessProbe.withPeriodSeconds(30) +
-        container.mixin.readinessProbe.withInitialDelaySeconds(10) +
-        container.mixin.readinessProbe.httpGet.withPath('/').withPort(14269).withScheme('HTTP') +
-        container.mixin.livenessProbe.withPeriodSeconds(30) +
-        container.mixin.livenessProbe.withFailureThreshold(4) +
-        container.mixin.livenessProbe.httpGet.withPath('/').withPort(14269).withScheme('HTTP') +
-        container.mixin.resources.withRequests({ cpu: '1', memory: '1Gi' }) +
-        container.mixin.resources.withLimits({ cpu: '4', memory: '4Gi' });
+        ],
+        env: [
+          {
+            name: 'SPAN_STORAGE_TYPE',
+            value: 'memory',
+          },
+        ],
+        ports: [
+          { name: 'admin-http', targetPort: 14269, port: 14269 },
+          { name: 'metrics', targetPort: 14271, port: 14271 },
+          { name: 'query', targetPort: 16686, port: 16686 },
+          { name: 'grpc', targetPort: 14250, port: 14250 },
+        ],
+        volumeMounts: [
+          {
+            name: 'jaeger-store-data',
+            mountPath: '/var/jaeger/store',
+          },
+        ],
+        livenessProbe: { failureThreshold: 4, periodSeconds: 30, httpGet: {
+          scheme: 'HTTP',
+          port: 14269,
+          path: '',
+        } },
+        readinessProbe: { failureThreshold: 3, periodSeconds: 30, initailDelaySeconds: 10, httpGet: {
+          scheme: 'HTTP',
+          port: 14269,
+          path: '/',
+        } },
+        terminationMessagePolicy: 'FallbackToLogsOnError',
+        resources: {
+          requests: { cpu: '1', memory: '1Gi' },
+          limits: { cpu: '4', memory: '4Gi' },
+        },
+      };
 
-      deployment.new('jaeger-all-in-one', j.replicas, c, $.jaeger.deployment.metadata.labels) +
-      deployment.mixin.metadata.withNamespace(j.namespace) +
-      deployment.mixin.metadata.withLabels({ 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name }) +
-      deployment.mixin.spec.selector.withMatchLabels($.jaeger.deployment.metadata.labels) +
-      deployment.mixin.spec.strategy.rollingUpdate.withMaxSurge(0) +
-      deployment.mixin.spec.strategy.rollingUpdate.withMaxUnavailable(1) +
-      deployment.mixin.spec.template.spec.withVolumes(volume.fromPersistentVolumeClaim($.jaeger.volumeClaim.metadata.name, $.jaeger.volumeClaim.metadata.name)),
+      {
+        apiVersion: 'apps/v1',
+        kind: 'Deployment',
+        metadata: {
+          name: 'jaeger-all-in-one',
+          namespace: j.namespace,
+          labels: { 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name },
+        },
+        spec: {
+          replicas: j.replicas,
+          selector: { matchLabels: $.jaeger.deployment.metadata.labels },
+          strategy: {
+            rollingUpdate: {
+              maxSurge: 0,
+              maxUnavailable: 1,
+            },
+          },
+          template: {
+            metadata: {
+              labels: gubernator.config.commonLabels,
+            },
+            spec: {
+              containers: [c],
+              serviceAccount: gubernator.serviceAccount.metadata.name,
+              restartPolicy: 'Always',
+              volumes: [
+                {
+                  name: $.jaeger.volumeClaim.metadata.name,
+                  persistentVolumeClaim: {
+                    claimName: $.jaeger.volumeClaim.metadata.name,
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
   },
 }
