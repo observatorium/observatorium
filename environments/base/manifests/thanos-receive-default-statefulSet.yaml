@@ -118,6 +118,7 @@ spec:
             port: 10902
             scheme: HTTP
           periodSeconds: 5
+        resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /var/thanos/receive
@@ -125,7 +126,6 @@ spec:
           readOnly: false
         - mountPath: /var/lib/thanos-receive
           name: hashring-config
-      resources: {}
       terminationGracePeriodSeconds: 900
       volumes:
       - configMap:

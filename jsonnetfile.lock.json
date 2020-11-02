@@ -81,8 +81,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "8fcbc59dd28bf17c50eaaeb5ed27fdd5e2b8a8ad",
-      "sum": "Hj+EVRJcu9MZubOX4qN3D0LLqBcSP+aUcpIf4VOHMUI="
+      "version": "c7eac108e8f4f451c76fe7acf4808f7c1676fe64",
+      "sum": "Qn8DZPN2g8MGjF23Bdr9EJsuTAXrPIdfSRQPLv+WfDI="
     },
     {
       "source": {

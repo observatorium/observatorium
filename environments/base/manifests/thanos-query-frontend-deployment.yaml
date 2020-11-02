@@ -74,6 +74,6 @@ spec:
             port: 9090
             scheme: HTTP
           periodSeconds: 5
+        resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
-      resources: {}
       terminationGracePeriodSeconds: 120
