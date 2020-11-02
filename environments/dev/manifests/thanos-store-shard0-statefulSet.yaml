@@ -56,43 +56,55 @@ spec:
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:10902
         - --objstore.config=$(OBJSTORE_CONFIG)
+        - --ignore-deletion-marks-delay=24h
         - --experimental.enable-index-cache-postings-compression
         - |-
-          --index-cache.config="config":
-            "addresses":
-            - "dnssrv+_client._tcp.observatorium-xyz-thanos-store-memcached.observatorium.svc"
+          --index-cache.config="addresses":
+          - "dnssrv+_client._tcp.observatorium-xyz-thanos-store-memcached.observatorium.svc"
+          "config":
             "dns_provider_update_interval": "10s"
-            "max_async_buffer_size": 100000
-            "max_async_concurrency": 100
-            "max_get_multi_batch_size": 1000
-            "max_get_multi_concurrency": 900
-            "max_idle_connections": 1000
+            "max_async_buffer_size": 10000
+            "max_async_concurrency": 20
+            "max_get_multi_batch_size": 0
+            "max_get_multi_concurrency": 100
+            "max_idle_connections": 100
             "max_item_size": "1MiB"
-            "timeout": "2s"
+            "timeout": "500ms"
+          "max_async_buffer_size": 100000
+          "max_async_concurrency": 100
+          "max_get_multi_batch_size": 1000
+          "max_get_multi_concurrency": 900
+          "max_idle_connections": 1000
+          "timeout": "2s"
           "type": "memcached"
         - |-
-          --store.caching-bucket.config="blocks_iter_ttl": "5m"
+          --store.caching-bucket.config="addresses":
+          - "dnssrv+_client._tcp.observatorium-xyz-thanos-store-memcached.observatorium.svc"
+          "blocks_iter_ttl": "5m"
           "chunk_object_attrs_ttl": "24h"
           "chunk_subrange_size": 16000
           "chunk_subrange_ttl": "24h"
           "config":
-            "addresses":
-            - "dnssrv+_client._tcp.observatorium-xyz-thanos-store-memcached.observatorium.svc"
             "dns_provider_update_interval": "10s"
-            "max_async_buffer_size": 100000
-            "max_async_concurrency": 100
-            "max_get_multi_batch_size": 1000
-            "max_get_multi_concurrency": 900
-            "max_idle_connections": 1000
+            "max_async_buffer_size": 10000
+            "max_async_concurrency": 20
+            "max_get_multi_batch_size": 0
+            "max_get_multi_concurrency": 100
+            "max_idle_connections": 100
             "max_item_size": "1MiB"
-            "timeout": "2s"
+            "timeout": "500ms"
+          "max_async_buffer_size": 100000
+          "max_async_concurrency": 100
           "max_chunks_get_range_requests": 3
+          "max_get_multi_batch_size": 1000
+          "max_get_multi_concurrency": 900
+          "max_idle_connections": 1000
           "metafile_content_ttl": "24h"
           "metafile_doesnt_exist_ttl": "15m"
           "metafile_exists_ttl": "2h"
           "metafile_max_size": "1MiB"
+          "timeout": "2s"
           "type": "memcached"
-        - --ignore-deletion-marks-delay=24h
         - |
           --selector.relabel-config=
             - action: hashmod
@@ -134,8 +146,21 @@ spec:
         - mountPath: /var/thanos/store
           name: data
           readOnly: false
+      resources: {}
       terminationGracePeriodSeconds: 120
-      volumes:
-      - emptyDir: {}
-        name: data
-  volumeClaimTemplates: null
+      volumes: []
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        app.kubernetes.io/component: object-store-gateway
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: thanos-store
+        app.kubernetes.io/part-of: observatorium
+        store.observatorium.io/shard: shard-0
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi

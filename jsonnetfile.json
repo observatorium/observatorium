@@ -64,7 +64,7 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "master"
+      "version": "no-ksonnet-functions"
     },
     {
       "source": {
@@ -74,6 +74,16 @@
         }
       },
       "version": "master"
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/ksonnet/ksonnet-lib.git",
+          "subdir": ""
+        }
+      },
+      "version": "master",
+      "name": "ksonnet"
     }
   ],
   "legacyImports": true

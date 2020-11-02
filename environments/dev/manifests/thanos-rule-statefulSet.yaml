@@ -70,12 +70,24 @@ spec:
             scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 5
+        resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /var/thanos/rule
           name: data
           readOnly: false
-      volumes:
-      - emptyDir: {}
-        name: data
-  volumeClaimTemplates: null
+      volumes: []
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        app.kubernetes.io/component: rule-evaluation-engine
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: thanos-rule
+        app.kubernetes.io/part-of: observatorium
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi

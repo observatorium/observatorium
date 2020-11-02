@@ -76,8 +76,8 @@ spec:
         - --tsdb.path=/var/thanos/receive
         - --label=replica="$(NAME)"
         - --label=receive="true"
-        - --receive.local-endpoint=$(NAME).observatorium-xyz-thanos-receive-default.$(NAMESPACE).svc.cluster.local:10901
         - --tsdb.retention=4d
+        - --receive.local-endpoint=$(NAME).observatorium-xyz-thanos-receive-default.$(NAMESPACE).svc.cluster.local:10901
         - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
         env:
         - name: NAME
@@ -125,11 +125,24 @@ spec:
           readOnly: false
         - mountPath: /var/lib/thanos-receive
           name: hashring-config
+      resources: {}
       terminationGracePeriodSeconds: 900
       volumes:
-      - emptyDir: {}
-        name: data
       - configMap:
           name: observatorium-xyz-thanos-receive-controller-tenants-generated
         name: hashring-config
-  volumeClaimTemplates: null
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        app.kubernetes.io/component: database-write-hashring
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: thanos-receive
+        app.kubernetes.io/part-of: observatorium
+        controller.receive.thanos.io/hashring: default
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi

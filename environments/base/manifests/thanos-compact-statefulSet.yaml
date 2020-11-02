@@ -39,8 +39,8 @@ spec:
         - --retention.resolution-5m=1s
         - --retention.resolution-1h=1s
         - --delete-delay=48h
-        - --deduplication.replica-label=replica
         - --downsampling.disable
+        - --deduplication.replica-label=replica
         env:
         - name: OBJSTORE_CONFIG
           valueFrom:
@@ -71,8 +71,20 @@ spec:
         - mountPath: /var/thanos/compact
           name: data
           readOnly: false
+      resources: {}
       terminationGracePeriodSeconds: 120
-      volumes:
-      - emptyDir: {}
-        name: data
-  volumeClaimTemplates: null
+      volumes: []
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        app.kubernetes.io/component: database-compactor
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: thanos-compact
+        app.kubernetes.io/part-of: observatorium
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi

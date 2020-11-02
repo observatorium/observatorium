@@ -1,7 +1,8 @@
 local t = (import 'kube-thanos/thanos.libsonnet');
 local l = (import './loki.libsonnet');
-local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
-local api = (import 'observatorium/observatorium-api.libsonnet');
+local thanosReceiveController = (import 'thanos-receive-controller/thanos-receive-controller.libsonnet');
+local memcached = (import 'memcached.libsonnet');
+local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
 
 {
   local obs = self,
@@ -15,27 +16,17 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     deduplicationReplicaLabels:: ['replica'],
   },
 
-  compact::
-    t.compact +
-    t.compact.withRetention +
-    t.compact.withDeleteDelay +
-    t.compact.withDeduplication + {
-      config+:: {
-        local cfg = self,
-        name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-        namespace: obs.config.namespace,
-        replicas: 1,
-        commonLabels+:: obs.config.commonLabels,
-        deduplicationReplicaLabels: obs.config.deduplicationReplicaLabels,
-        deleteDelay: '48h',
-      },
-    } + (
-      if std.objectHas(obs.config.compact, 'enableDownsampling') && obs.config.compact.enableDownsampling == true then
-        {}
-      else t.compact.withDownsamplingDisabled
-    ),
+  compact:: t.compact({
+    name: '%s-thanos-compact' % obs.config.name,
+    namespace: obs.config.namespace,
+    replicas: 1,
+    commonLabels+:: obs.config.commonLabels,
+    deduplicationReplicaLabels: obs.config.deduplicationReplicaLabels,
+    deleteDelay: '48h',
+    disableDownsampling: true,
+  }),
 
-  thanosReceiveController:: (import 'thanos-receive-controller/thanos-receive-controller.libsonnet') + {
+  thanosReceiveController:: thanosReceiveController {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
@@ -45,24 +36,41 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     },
   },
 
+  receiversService::
+    {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: '%s-thanos-receive' % obs.config.name,
+        namespace: obs.config.namespace,
+      },
+      spec: {
+        selector: { 'app.kubernetes.io/name': 'thanos-receive' },
+        ports: [
+          { name: 'grpc', port: 10901, targetPort: 10901 },
+          { name: 'http', port: 10902, targetPort: 10902 },
+          { name: 'remote-write', port: 19291, targetPort: 19291 },
+        ],
+      },
+    },
+
   receivers:: {
     [hashring.hashring]:
-      t.receive +
-      t.receive.withRetention +
-      t.receive.withHashringConfigMap + {
-        config+:: {
-          local cfg = self,
-          name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'] + '-' + hashring.hashring,
-          namespace: obs.config.namespace,
-          replicas: 1,
-          replicationFactor: 1,
-          retention: '4d',
-          hashringConfigMapName: '%s-generated' % obs.thanosReceiveController.configmap.metadata.name,
-          commonLabels+::
-            obs.config.commonLabels {
-              'controller.receive.thanos.io/hashring': hashring.hashring,
-            },
-        },
+      t.receive({
+        name: '%s-thanos-receive-%s' % [obs.config.name, hashring.hashring],
+        namespace: obs.config.namespace,
+        replicas: 1,
+        replicaLabels: obs.config.replicaLabels,
+        replicationFactor: 1,
+        retention: '4d',
+        hashringConfigMapName: '%s-generated' % obs.thanosReceiveController.configmap.metadata.name,
+        commonLabels+::
+          obs.config.commonLabels {
+            'controller.receive.thanos.io/hashring': hashring.hashring,
+          },
+      }) +
+      {
+        podDisruptionBudget:: {},  // hide this object, we don't want it
         statefulSet+: {
           metadata+: {
             labels+: {
@@ -92,42 +100,48 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     for hashring in obs.config.hashrings
   },
 
-  rule:: t.rule {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+  rule::
+    t.rule({
+      name: obs.config.name + '-' + 'thanos-rule',
       namespace: obs.config.namespace,
       replicas: 1,
       commonLabels+:: obs.config.commonLabels,
-    },
-  },
+      queriers: ['dnssrv+_http._tcp.%s.%s.svc.cluster.local' % [obs.query.service.metadata.name, obs.query.service.metadata.namespace]],
+    }),
 
   store:: {
     ['shard' + i]:
-      t.store +
-      t.store.withIndexCacheMemcached +
-      t.store.withCachingBucketMemcached +
-      t.store.withIgnoreDeletionMarksDelay {
-        config+:: {
-          local cfg = self,
-          name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'] + '-shard-' + i,
-          namespace: obs.config.namespace,
-          commonLabels+:: obs.config.commonLabels {
-            'store.observatorium.io/shard': 'shard-' + i,
-          },
-          replicas: 1,
-          ignoreDeletionMarksDelay: '24h',
-          memcached+: {
-            addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
-            timeout: '2s',
-            maxIdleConnections: 1000,
-            maxAsyncConcurrency: 100,
-            maxAsyncBufferSize: 100000,
-            maxGetMultiConcurrency: 900,
-            maxGetMultiBatchSize: 1000,
-          },
+      t.store({
+
+
+        name: '%s-thanos-store-shard-%d' % [obs.config.name, i],
+        namespace: obs.config.namespace,
+        commonLabels+:: obs.config.commonLabels {
+          'store.observatorium.io/shard': 'shard-' + i,
         },
-      } + {
+        replicas: 1,
+        ignoreDeletionMarksDelay: '24h',
+
+        local memcachedDefaults = {
+          timeout: '2s',
+          max_idle_connections: 1000,
+          max_async_concurrency: 100,
+          max_async_buffer_size: 100000,
+          max_get_multi_concurrency: 900,
+          max_get_multi_batch_size: 1000,
+        },
+
+        indexCache: {
+          type: 'memcached',
+          addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
+          config: memcachedDefaults {},
+        },
+        bucketCache: {
+          type: 'memcached',
+          addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
+          config: memcachedDefaults {},
+        },
+      }) + {
         statefulSet+: {
           spec+: {
             template+: {
@@ -157,7 +171,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     for i in std.range(0, obs.config.store.shards - 1)
   },
 
-  storeCache:: (import 'memcached.libsonnet') + {
+  storeCache:: memcached {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-thanos-store-' + cfg.commonLabels['app.kubernetes.io/name'],
@@ -170,63 +184,57 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     },
   },
 
-  query:: t.query + t.query.withQueryTimeout {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+  query: t.query({
+    name: '%s-thanos-query' % obs.config.name,
+    namespace: obs.config.namespace,
+    commonLabels+:: obs.config.commonLabels,
+    replicas: 1,
+    queryTimeout: '15m',
+    stores: [
+      'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
+      for service in
+        [obs.rule.service] +
+        [obs.store[shard].service for shard in std.objectFields(obs.store)] +
+        [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
+    ],
+    replicaLabels: obs.config.replicaLabels,
+  }),
+
+  queryFrontend::
+    t.queryFrontend({
+      name: '%s-thanos-query-frontend' % obs.config.name,
       namespace: obs.config.namespace,
       commonLabels+:: obs.config.commonLabels,
       replicas: 1,
-      queryTimeout: '15m',
-      stores: [
-        'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
-        for service in
-          [obs.rule.service] +
-          [obs.store[shard].service for shard in std.objectFields(obs.store)] +
-          [obs.receivers[hashring].service for hashring in std.objectFields(obs.receivers)]
+      downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
+        obs.query.service.metadata.name,
+        obs.query.service.metadata.namespace,
+        obs.query.service.spec.ports[1].port,
       ],
-      replicaLabels: obs.config.replicaLabels,
-    },
-  },
+      splitInterval: '24h',
+      maxRetries: 0,
+      logQueriesLongerThan: '5s',
+      serviceMonitor: true,
+    }),
 
-  queryFrontend::
-    t.queryFrontend +
-    t.queryFrontend.withServiceMonitor +
-    t.queryFrontend.withSplitInterval +
-    t.queryFrontend.withMaxRetries +
-    t.queryFrontend.withLogQueriesLongerThan +
-    t.queryFrontend.withInMemoryResponseCache + {
-      config+:: {
-        local cfg = self,
-        name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+  receiveService::
+    {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: '%s-thanos-receive' % obs.config.name,
         namespace: obs.config.namespace,
-        commonLabels+:: obs.config.commonLabels,
-        replicas: 1,
-        downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
-          obs.query.service.metadata.name,
-          obs.query.service.metadata.namespace,
-          obs.query.service.spec.ports[1].port,
+      },
+      spec: {
+        selector: { 'app.kubernetes.io/name': 'thanos-receive' },
+        ports: [
+          { name: 'grpc', port: 10901, targetPort: 10901 },
+          { name: 'http', port: 10902, targetPort: 10902 },
+          { name: 'remote-write', port: 19291, targetPort: 19291 },
         ],
-        splitInterval: '24h',
-        maxRetries: 0,
-        logQueriesLongerThan: '5s',
       },
     },
 
-  receiveService::
-    local service = k.core.v1.service;
-    local ports = service.mixin.spec.portsType;
-
-    service.new(
-      obs.config.name + '-thanos-receive',
-      { 'app.kubernetes.io/name': 'thanos-receive' },
-      [
-        ports.newNamed('grpc', 10901, 10901),
-        ports.newNamed('http', 10902, 10902),
-        ports.newNamed('remote-write', 19291, 19291),
-      ]
-    ) +
-    service.mixin.metadata.withNamespace(obs.config.namespace),
 
   gubernator:: (import 'gubernator.libsonnet') + {
     config+:: {
@@ -238,7 +246,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     },
   },
 
-  api:: api + api.withRateLimiter {
+  api:: observatoriumAPI + observatoriumAPI.withRateLimiter {
     config+:: {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
@@ -252,9 +260,9 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
           obs.queryFrontend.service.spec.ports[0].port,
         ],
         writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-          obs.receiveService.metadata.name,
-          obs.receiveService.metadata.namespace,
-          obs.receiveService.spec.ports[2].port,
+          obs.receiversService.metadata.name,
+          obs.receiversService.metadata.namespace,
+          obs.receiversService.spec.ports[2].port,
         ],
       },
       rateLimiter: {
@@ -301,37 +309,37 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
 } + {
   local obs = self,
 
-  rule+:: {
-    config+:: {
-      queriers: ['dnssrv+_http._tcp.%s.%s.svc.cluster.local' % [obs.query.service.metadata.name, obs.query.service.metadata.namespace]],
-    },
-  },
-
   manifests+:: {
     ['thanos-query-' + name]: obs.query[name]
     for name in std.objectFields(obs.query)
+    if obs.query[name] != null
   } + {
     ['thanos-query-frontend-' + name]: obs.queryFrontend[name]
     for name in std.objectFields(obs.queryFrontend)
+    if obs.queryFrontend[name] != null
   } + {
     ['thanos-receive-' + hashring + '-' + name]: obs.receivers[hashring][name]
     for hashring in std.objectFields(obs.receivers)
     for name in std.objectFields(obs.receivers[hashring])
+    if obs.receivers[hashring][name] != null
   } + {
-    'thanos-receive-service': obs.receiveService,
+    'thanos-receive-service': obs.receiversService,
   } + {
     ['thanos-compact-' + name]: obs.compact[name]
     for name in std.objectFields(obs.compact)
+    if obs.compact[name] != null
   } + {
     ['thanos-store-' + shard + '-' + name]: obs.store[shard][name]
     for shard in std.objectFields(obs.store)
     for name in std.objectFields(obs.store[shard])
+    if obs.store[shard][name] != null
   } + {
     ['store-cache-' + name]: obs.storeCache[name]
     for name in std.objectFields(obs.storeCache)
   } + {
     ['thanos-rule-' + name]: obs.rule[name]
     for name in std.objectFields(obs.rule)
+    if obs.rule[name] != null
   } + {
     ['thanos-receive-controller-' + name]: obs.thanosReceiveController[name]
     for name in std.objectFields(obs.thanosReceiveController)
