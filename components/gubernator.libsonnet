@@ -1,5 +1,3 @@
-local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
-
 {
   local gubernator = self,
 
@@ -27,100 +25,147 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  serviceAccount:
-    local sa = k.core.v1.serviceAccount;
+  serviceAccount: {
+    apiVersion: 'v1',
+    kind: 'ServiceAccount',
+    metadata: {
+      name: gubernator.config.name,
+      namespace: gubernator.config.namespace,
+      labels: gubernator.config.commonLabels,
+    },
+  },
 
-    sa.new() +
-    sa.mixin.metadata.withName(gubernator.config.name) +
-    sa.mixin.metadata.withNamespace(gubernator.config.namespace) +
-    sa.mixin.metadata.withLabels(gubernator.config.commonLabels),
+  role: {
+    apiVersion: 'rbac.authorization.k8s.io/v1',
+    kind: 'Role',
+    metadata: {
+      name: gubernator.config.name,
+      namespace: gubernator.config.namespace,
+      labels: gubernator.config.commonLabels,
+    },
 
-  role:
-    local role = k.rbac.v1.role;
-    local rules = role.rulesType;
+    rules: [{
+      apiGroups: [''],
+      resources: ['endpoints'],
+      verbs: ['list', 'watch', 'get'],
+    }],
+  },
 
-    role.new() +
-    role.mixin.metadata.withName(gubernator.config.name) +
-    role.mixin.metadata.withNamespace(gubernator.config.namespace) +
-    role.mixin.metadata.withLabels(gubernator.config.commonLabels) +
-    role.withRules([
-      rules.new() +
-      rules.withApiGroups(['']) +
-      rules.withResources([
-        'endpoints',
-      ]) +
-      rules.withVerbs(['list', 'watch', 'get']),
-    ]),
+  roleBinding: {
+    apiVersion: 'rbac.authorization.k8s.io/v1',
+    kind: 'RoleBinding',
+    metadata: {
+      name: gubernator.config.name,
+      namespace: gubernator.config.namespace,
+      labels: gubernator.config.commonLabels,
+    },
 
-  roleBinding:
-    local rb = k.rbac.v1.roleBinding;
-
-    rb.new() +
-    rb.mixin.metadata.withName(gubernator.config.name) +
-    rb.mixin.metadata.withNamespace(gubernator.config.namespace) +
-    rb.mixin.metadata.withLabels(gubernator.config.commonLabels) +
-    rb.mixin.roleRef.withApiGroup('rbac.authorization.k8s.io') +
-    rb.mixin.roleRef.withName(gubernator.role.metadata.name) +
-    rb.mixin.roleRef.mixinInstance({ kind: 'Role' }) +
-    rb.withSubjects([{
+    roleRef: {
+      apiGroup: 'rbac.authorization.k8s.io',
+      kind: 'Role',
+      name: gubernator.role.metadata.name,
+    },
+    subjects: [{
       kind: 'ServiceAccount',
       name: gubernator.serviceAccount.metadata.name,
       namespace: gubernator.serviceAccount.metadata.namespace,
-    }]),
+    }],
+  },
 
-  service:
-    local service = k.core.v1.service;
-    local ports = service.mixin.spec.portsType;
-
-    service.new(
-      gubernator.config.name,
-      gubernator.config.podLabelSelector,
-      [
-        ports.newNamed('http', 8080, 8080),
-        ports.newNamed('grpc', 8081, 8081),
+  service: {
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata: {
+      name: gubernator.config.name,
+      namespace: gubernator.config.namespace,
+      labels: gubernator.config.commonLabels,
+    },
+    spec: {
+      ports: [
+        { name: 'http', targetPort: 8080, port: 8080 },
+        { name: 'grpc', targetPort: 8081, port: 8081 },
       ],
-    ) +
-    service.mixin.metadata.withNamespace(gubernator.config.namespace) +
-    service.mixin.metadata.withLabels(gubernator.config.commonLabels),
+      selector: gubernator.config.podLabelSelector,
+    },
+  },
 
   deployment:
-    local deployment = k.apps.v1.deployment;
-    local container = deployment.mixin.spec.template.spec.containersType;
-    local containerPort = container.portsType;
-    local env = container.envType;
-    local containerVolumeMount = container.volumeMountsType;
+    local c = {
+      name: 'gubernator',
+      image: gubernator.config.image,
+      env: [
+        {
+          name: 'GUBER_K8S_NAMESPACE',
+          valueFrom: { fieldRef: { fieldPath: 'metadata.namespace' } },
+        },
+        {
+          name: 'GUBER_K8S_POD_IP',
+          valueFrom: { fieldRef: { fieldPath: 'status.podIP' } },
+        },
+        {
+          name: 'GUBER_HTTP_ADDRESS',
+          value: '0.0.0.0:%s' % gubernator.service.spec.ports[0].targetPort,
+        },
+        {
+          name: 'GUBER_GRPC_ADDRESS',
+          value: '0.0.0.0:%s' % gubernator.service.spec.ports[1].targetPort,
+        },
+        {
+          name: 'GUBER_K8S_POD_PORT',
+          value: std.toString(gubernator.service.spec.ports[1].port),
+        },
+        {
+          name: 'GUBER_K8S_ENDPOINTS_SELECTOR',
+          value: 'app.kubernetes.io/name=gubernator',
+        },
+      ],
+      ports: [
+        { name: port.name, containerPort: port.port }
+        for port in gubernator.service.spec.ports
+      ],
+      readinessProbe: {
+        failureThreshold: 3,
+        periodSeconds: 30,
+        initialDelaySeconds: 10,
+        timeoutSeconds: 1,
+        httpGet: {
+          scheme: 'HTTP',
+          port: gubernator.service.spec.ports[0].port,
+          path: '/v1/HealthCheck',
+        },
+      },
+      resources: gubernator.config.resources,
+    };
 
-    local c =
-      container.new('gubernator', gubernator.config.image) +
-      container.withEnv([
-        env.fromFieldPath('GUBER_K8S_NAMESPACE', 'metadata.namespace'),
-        env.fromFieldPath('GUBER_K8S_POD_IP', 'status.podIP'),
-        env.new('GUBER_HTTP_ADDRESS', '0.0.0.0:%s' % gubernator.service.spec.ports[0].targetPort),
-        env.new('GUBER_GRPC_ADDRESS', '0.0.0.0:%s' % gubernator.service.spec.ports[1].targetPort),
-        env.new('GUBER_K8S_POD_PORT', std.toString(gubernator.service.spec.ports[1].port)),
-        env.new('GUBER_K8S_ENDPOINTS_SELECTOR', 'app.kubernetes.io/name=gubernator'),
-      ]) +
-      container.withPorts([containerPort.newNamed(p.targetPort, p.name) for p in gubernator.service.spec.ports]) +
-      container.mixin.readinessProbe.withFailureThreshold(3) +
-      container.mixin.readinessProbe.withPeriodSeconds(30) +
-      container.mixin.readinessProbe.withInitialDelaySeconds(10) +
-      container.mixin.readinessProbe.withTimeoutSeconds(1) +
-      container.mixin.readinessProbe.httpGet.withPath('/v1/HealthCheck').withPort(gubernator.service.spec.ports[0].targetPort).withScheme('HTTP') +
-      container.mixin.resources.withLimits(gubernator.config.resources.limits) +
-      container.mixin.resources.withRequests(gubernator.config.resources.requests);
-
-    deployment.new() +
-    deployment.mixin.metadata.withName(gubernator.config.name) +
-    deployment.mixin.metadata.withNamespace(gubernator.config.namespace) +
-    deployment.mixin.metadata.withLabels(gubernator.config.commonLabels) +
-    deployment.mixin.spec.withReplicas(gubernator.config.replicas) +
-    deployment.mixin.spec.selector.withMatchLabels(gubernator.config.podLabelSelector) +
-    deployment.mixin.spec.template.metadata.withLabels(gubernator.config.commonLabels) +
-    deployment.mixin.spec.template.spec.withServiceAccount(gubernator.serviceAccount.metadata.name) +
-    deployment.mixin.spec.template.spec.withRestartPolicy('Always') +
-    deployment.mixin.spec.template.spec.withContainers([c]) +
-    deployment.mixin.spec.strategy.rollingUpdate.withMaxSurge(0) +
-    deployment.mixin.spec.strategy.rollingUpdate.withMaxUnavailable(1),
+    {
+      apiVersion: 'apps/v1',
+      kind: 'Deployment',
+      metadata: {
+        name: gubernator.config.name,
+        namespace: gubernator.config.namespace,
+        labels: gubernator.config.commonLabels,
+      },
+      spec: {
+        replicas: gubernator.config.replicas,
+        selector: { matchLabels: gubernator.config.podLabelSelector },
+        strategy: {
+          rollingUpdate: {
+            maxSurge: 0,
+            maxUnavailable: 1,
+          },
+        },
+        template: {
+          metadata: {
+            labels: gubernator.config.commonLabels,
+          },
+          spec: {
+            containers: [c],
+            serviceAccount: gubernator.serviceAccount.metadata.name,
+            restartPolicy: 'Always',
+          },
+        },
+      },
+    },
 
   withServiceMonitor:: {
     local gubernator = self,
