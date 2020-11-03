@@ -183,7 +183,7 @@
 
   statefulSet:
     local c = {
-      name: 'etch',
+      name: 'etcd',
       image: etcd.config.image,
       command: [
         '/bin/sh',

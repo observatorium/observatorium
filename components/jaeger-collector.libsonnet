@@ -25,7 +25,7 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
         ports: [
           { name: 'grpc', targetPort: 14250, port: 14250 },
         ],
-        ClusterIP: 'None',
+        clusterIP: 'None',
       },
     },
 

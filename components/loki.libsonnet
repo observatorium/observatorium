@@ -1,5 +1,3 @@
-local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
-
 {
   local loki = self,
 
@@ -26,17 +24,19 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     },
   },
 
-  configmap::
-    local configmap = k.core.v1.configMap;
-
-    configmap.new() +
-    configmap.mixin.metadata.withName(loki.config.name) +
-    configmap.mixin.metadata.withNamespace(loki.config.namespace) +
-    configmap.mixin.metadata.withLabels(loki.config.commonLabels) +
-    configmap.withData({
+  configmap:: {
+    apiVersion: 'v1',
+    kind: 'ConfigMap',
+    metadata: {
+      name: loki.config.name,
+      namespace: loki.config.namespace,
+      labels: loki.config.commonLabels,
+    },
+    data: {
       'config.yaml': std.manifestYamlDoc(loki.defaultConfig),
       'overrides.yaml': std.manifestYamlDoc(loki.defaultOverrides),
-    }),
+    },
+  },
 
   local normalizedName(id) =
     std.strReplace(id, '_', '-'),
@@ -60,58 +60,80 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     std.member(['compactor', 'ingester', 'querier'], component),
 
   local newLokiContainer(name, component, config) =
-    local deployment = k.apps.v1.deployment;
-    local container = deployment.mixin.spec.template.spec.containersType;
-    local envVar = container.envType;
-    local containerPort = container.portsType;
-    local containerVolumeMount = container.volumeMountsType;
-
     local osc = loki.config.objectStorageConfig;
     local replicas = loki.config.replicas[component];
 
-    local readinessProbe =
-      container.mixin.readinessProbe.withInitialDelaySeconds(15) +
-      container.mixin.readinessProbe.withTimeoutSeconds(1) +
-      container.mixin.readinessProbe.httpGet.withPath('/ready').withPort(3100).withScheme('HTTP');
+    local readinessProbe = { readinessProbe: {
+      initialDelaySeconds: 15,
+      timeoutSeconds: 1,
+      httpGet: {
+        scheme: 'HTTP',
+        port: 3100,
+        path: '/ready',
+      },
+    } };
 
-    local resources =
-      container.mixin.resources.withRequests(config.resources.requests) +
-      container.mixin.resources.withLimits(config.resources.limits);
+    local resources = { resources: config.resources };
 
-    container.new(name, loki.config.image) +
-    container.withArgs([
-      '-target=' + normalizedName(component),
-      '-config.file=/etc/loki/config/config.yaml',
-      '-limits.per-user-override-config=/etc/loki/config/overrides.yaml',
-      '-log.level=error',
-    ] + if std.objectHas(osc, 'endpointKey') then [
-      '-s3.url=$(S3_URL)',
-      '-s3.force-path-style=true',
-    ] else [
-      '-s3.buckets=$(S3_BUCKETS)',
-      '-s3.region=$(S3_REGION)',
-      '-s3.access-key-id=$(AWS_ACCESS_KEY_ID)',
-      '-s3.secret-access-key=$(AWS_SECRET_ACCESS_KEY)',
-    ]) + container.withEnv(
-      if std.objectHas(osc, 'endpointKey') then [
-        envVar.fromSecretRef('S3_URL', osc.secretName, osc.endpointKey),
+    {
+      name: name,
+      image: loki.config.image,
+      args: [
+        '-target=' + normalizedName(component),
+        '-config.file=/etc/loki/config/config.yaml',
+        '-limits.per-user-override-config=/etc/loki/config/overrides.yaml',
+        '-log.level=error',
+      ] + if std.objectHas(osc, 'endpointKey') then [
+        '-s3.url=$(S3_URL)',
+        '-s3.force-path-style=true',
       ] else [
-        envVar.fromSecretRef('S3_BUCKETS', osc.secretName, osc.bucketsKey),
-        envVar.fromSecretRef('S3_REGION', osc.secretName, osc.regionKey),
-        envVar.fromSecretRef('AWS_ACCESS_KEY_ID', osc.secretName, osc.accessKeyIdKey),
-        envVar.fromSecretRef('AWS_SECRET_ACCESS_KEY', osc.secretName, osc.secretAccessKeyKey),
-      ]
-    ) + container.withPorts(
-      [
-        containerPort.newNamed(3100, 'metrics'),
-        containerPort.newNamed(9095, 'grpc'),
+        '-s3.buckets=$(S3_BUCKETS)',
+        '-s3.region=$(S3_REGION)',
+        '-s3.access-key-id=$(AWS_ACCESS_KEY_ID)',
+        '-s3.secret-access-key=$(AWS_SECRET_ACCESS_KEY)',
+      ],
+      env: if std.objectHas(osc, 'endpointKey') then [
+        { name: 'S3_URL', valueFrom: { secretKeyRef: {
+          name: osc.secretName,
+          key: osc.endpointKey,
+        } } },
+      ] else [
+        { name: 'S3_BUCKETS', valueFrom: { secretKeyRef: {
+          name: osc.secretName,
+          key: osc.bucketsKey,
+        } } },
+        { name: 'S3_REGION', valueFrom: { secretKeyRef: {
+          name: osc.secretName,
+          key: osc.regionKey,
+        } } },
+        { name: 'AWS_ACCESS_KEY_ID', valueFrom: { secretKeyRef: {
+          name: osc.secretName,
+          key: osc.accessKeyIdKey,
+        } } },
+        { name: 'AWS_SECRET_ACCESS_KEY', valueFrom: { secretKeyRef: {
+          name: osc.secretName,
+          key: osc.secretAccessKeyKey,
+        } } },
+      ],
+      ports: [
+        { name: 'metrics', containerPort: 3100 },
+        { name: 'grpc', containerPort: 9095 },
       ] + if joinGossipRing(component) then
-        [containerPort.newNamed(7946, 'gossip-ring')]
-      else []
-    ) + container.withVolumeMounts([
-      containerVolumeMount.new('config', '/etc/loki/config/'),
-      containerVolumeMount.new('storage', '/data'),
-    ]) + {
+        [{ name: 'gossip-ring', containerPort: 7946 }]
+      else [],
+      volumeMounts: [
+        {
+          name: 'config',
+          mountPath: '/etc/loki/config/',
+          readOnly: false,
+        },
+        {
+          name: 'storage',
+          mountPath: '/data',
+          readOnly: false,
+        },
+      ],
+    } + {
       [name]: readinessProbe[name]
       for name in std.objectFields(readinessProbe)
       if config.withReadinessProbe
@@ -122,90 +144,106 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     },
 
   local newDeployment(component, config) =
-    local d = self;
-    local deployment = k.apps.v1.deployment;
-
     local name = loki.config.name + '-' + normalizedName(component);
-    local replicas = loki.config.replicas[component];
-    local commonLabels = newCommonLabels(component);
-
     local podLabelSelector =
       newPodLabelsSelector(component) +
       if joinGossipRing(component) then
         { 'loki.grafana.com/gossip': 'true' }
       else {};
 
-    local c = newLokiContainer(name, component, config);
-
-    deployment.new(name, replicas, c, commonLabels) +
-    deployment.mixin.metadata.withNamespace(loki.config.namespace) +
-    deployment.mixin.metadata.withLabels(commonLabels) +
-    deployment.mixin.spec.template.metadata.withLabels(podLabelSelector) +
-    deployment.mixin.spec.selector.withMatchLabels(podLabelSelector) +
-    deployment.mixin.spec.template.spec.withVolumes([
-      { name: 'config', configMap: { name: loki.configmap.metadata.name } },
-      { name: 'storage', emptyDir: {} },
-    ]),
+    {
+      apiVersion: 'apps/v1',
+      kind: 'Deployment',
+      metadata: {
+        name: name,
+        namespace: loki.config.namespace,
+        labels: newCommonLabels(component),
+      },
+      spec: {
+        replicas: loki.config.replicas[component],
+        selector: { matchLabels: podLabelSelector },
+        template: {
+          metadata: {
+            labels: podLabelSelector,
+          },
+          spec: {
+            containers: [newLokiContainer(name, component, config)],
+            volumes: [
+              { name: 'config', configMap: { name: loki.configmap.metadata.name } },
+              { name: 'storage', emptyDir: {} },
+            ],
+          },
+        },
+      },
+    },
 
   local newStatefulSet(component, config) =
-    local sts = k.apps.v1.statefulSet;
-    local container = sts.mixin.spec.template.spec.containersType;
     local name = loki.config.name + '-' + normalizedName(component);
-    local replicas = loki.config.replicas[component];
-    local commonLabels = newCommonLabels(component);
-
     local podLabelSelector =
       newPodLabelsSelector(component) +
       if joinGossipRing(component) then
         { 'loki.grafana.com/gossip': 'true' }
       else {};
 
-    local c = newLokiContainer(name, component, config);
+    {
+      apiVersion: 'apps/v1',
+      kind: 'StatefulSet',
+      metadata: {
+        name: name,
+        namespace: loki.config.namespace,
+        labels: newCommonLabels(component),
+      },
+      spec: {
+        replicas: loki.config.replicas[component],
+        selector: { matchLabels: podLabelSelector },
+        serviceName: newGrpcService(component).metadata.name,
+        template: {
+          metadata: {
+            labels: podLabelSelector,
+          },
+          spec: {
+            containers: [newLokiContainer(name, component, config)],
+            volumes: [
+              { name: 'config', configMap: { name: loki.configmap.metadata.name } },
+            ],
+            volumeClaimTemplates:: null,
+          },
+        },
+      },
+    },
 
-    sts.new(name, replicas, [c], [], commonLabels) +
-    sts.mixin.metadata.withNamespace(loki.config.namespace) +
-    sts.mixin.metadata.withLabels(commonLabels) +
-    sts.mixin.spec.withServiceName(newGrpcService(component).metadata.name) +
-    sts.mixin.spec.template.metadata.withLabels(podLabelSelector) +
-    sts.mixin.spec.selector.withMatchLabels(podLabelSelector) +
-    sts.mixin.spec.template.spec.withVolumes([
-      { name: 'config', configMap: { name: loki.configmap.metadata.name } },
-    ]),
+  local newGrpcService(component) = {
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata: {
+      name: loki.config.name + '-' + normalizedName(component) + '-grpc',
+      namespace: loki.config.namespace,
+      labels: newCommonLabels(component),
+    },
+    spec: {
+      ports: [
+        { name: 'grpc', targetPort: 9095, port: 9095 },
+      ],
+      selector: newPodLabelsSelector(component),
+      clusterIP: 'None',
+    },
+  },
 
-  local newGrpcService(component) =
-    local service = k.core.v1.service;
-    local ports = service.mixin.spec.portsType;
-    local commonLabels = newCommonLabels(component);
-    local podLabelSelector = newPodLabelsSelector(component);
-    local name = loki.config.name + '-' + normalizedName(component) + '-grpc';
-
-    service.new(
-      name,
-      podLabelSelector,
-      [
-        ports.newNamed('grcp', 9095, 9095),
-      ]
-    ) +
-    service.mixin.metadata.withNamespace(loki.config.namespace) +
-    service.mixin.metadata.withLabels(commonLabels) +
-    service.mixin.spec.withClusterIp('None'),
-
-  local newHttpService(component) =
-    local service = k.core.v1.service;
-    local ports = service.mixin.spec.portsType;
-    local commonLabels = newCommonLabels(component);
-    local podLabelSelector = newPodLabelsSelector(component);
-    local name = loki.config.name + '-' + normalizedName(component) + '-http';
-
-    service.new(
-      name,
-      podLabelSelector,
-      [
-        ports.newNamed('metrics', 3100, 3100),
-      ]
-    ) +
-    service.mixin.metadata.withNamespace(loki.config.namespace) +
-    service.mixin.metadata.withLabels(commonLabels),
+  local newHttpService(component) = {
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata: {
+      name: loki.config.name + '-' + normalizedName(component) + '-http',
+      namespace: loki.config.namespace,
+      labels: newCommonLabels(component),
+    },
+    spec: {
+      ports: [
+        { name: 'metrics', targetPort: 3100, port: 3100 },
+      ],
+      selector: newPodLabelsSelector(component),
+    },
+  },
 
   components:: {
     compactor: {
@@ -536,21 +574,22 @@ local k = (import 'ksonnet/ksonnet.beta.4/k.libsonnet');
     local gossipRingName = 'gossip-ring',
     local gossipPort = 7946,
     local gossipSvc =
-      local service = k.core.v1.service;
-      local ports = service.mixin.spec.portsType;
-      local name = l.config.name + '-' + gossipRingName;
-
-      service.new(
-        name,
-        l.config.podLabelSelector { 'loki.grafana.com/gossip': 'true' },
-        [
-          ports.newNamed(gossipRingName, gossipPort, gossipPort) +
-          ports.withProtocol('TCP'),
-        ]
-      ) +
-      service.mixin.metadata.withNamespace(l.config.namespace) +
-      service.mixin.metadata.withLabels(l.config.commonLabels) +
-      service.mixin.spec.withClusterIp('None'),
+      {
+        apiVersion: 'v1',
+        kind: 'Service',
+        metadata: {
+          name: l.config.name + '-' + gossipRingName,
+          namespace: l.config.namespace,
+          labels: l.config.commonLabels,
+        },
+        spec: {
+          ports: [
+            { name: gossipRingName, targetPort: gossipPort, port: gossipPort, protocol: 'TCP' },
+          ],
+          selector: l.config.podLabelSelector { 'loki.grafana.com/gossip': 'true' },
+          clusterIP: 'None',
+        },
+      },
 
     defaultConfig+:: {
       distributor+: {

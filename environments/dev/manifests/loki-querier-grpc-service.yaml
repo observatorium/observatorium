@@ -12,7 +12,7 @@ metadata:
 spec:
   clusterIP: None
   ports:
-  - name: grcp
+  - name: grpc
     port: 9095
     targetPort: 9095
   selector:
