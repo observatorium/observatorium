@@ -9,11 +9,6 @@ metadata:
   name: observatorium-up-metrics-tls
 spec:
   backoffLimit: 5
-  selector:
-    matchLabels:
-      app.kubernetes.io/component: test
-      app.kubernetes.io/instance: e2e-test
-      app.kubernetes.io/name: observatorium-up
   template:
     metadata:
       labels:

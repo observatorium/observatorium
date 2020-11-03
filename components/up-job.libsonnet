@@ -18,12 +18,6 @@
       'app.kubernetes.io/version': up.config.version,
       'app.kubernetes.io/component': 'test',
     },
-
-    podLabelSelector:: {
-      [labelName]: up.config.commonLabels[labelName]
-      for labelName in std.objectFields(up.config.commonLabels)
-      if !std.setMember(labelName, ['app.kubernetes.io/version'])
-    },
   },
 
   job:
@@ -41,20 +35,14 @@
         '--latency=10s',
         '--initial-query-delay=5s',
         '--threshold=0.90',
-      ] + (
-        if up.config.tls != {} then
-          [
-            '--tls-ca-file=/mnt/tls/' + up.config.tls.caKey,
-          ]
-        else []
-      ),
-      volumeMounts: if up.config.tls != {} then [
-        {
-          name: 'tls',
-          mountPath: '/mnt/tls',
-          readOnly: true,
-        },
+      ] + if up.config.tls != {} then [
+        '--tls-ca-file=/mnt/tls/' + up.config.tls.caKey,
       ] else [],
+      volumeMounts: if up.config.tls != {} then [{
+        name: 'tls',
+        mountPath: '/mnt/tls',
+        readOnly: true,
+      }] else [],
     };
 
     {
@@ -66,7 +54,6 @@
       },
       spec: {
         backoffLimit: up.config.backoffLimit,
-        selector: { matchLabels: up.config.podLabelSelector },
         template: {
           metadata: {
             labels: up.config.commonLabels,
@@ -74,14 +61,12 @@
           spec: {
             containers: [c],
             restartPolicy: 'OnFailure',
-            volumes: if up.config.tls != {} then [
-              {
-                configMap: {
-                  name: up.config.tls.configMapName,
-                },
-                name: 'tls',
+            volumes: if up.config.tls != {} then [{
+              configMap: {
+                name: up.config.tls.configMapName,
               },
-            ] else [],
+              name: 'tls',
+            }] else [],
           },
         },
       },
@@ -165,13 +150,11 @@
                 args+: [
                   '--token-file=/var/shared/token',
                 ],
-                volumeMounts: c.volumeMounts + [
-                  {
-                    name: 'shared',
-                    mountPath: '/var/shared',
-                    readOnly: true,
-                  },
-                ],
+                volumeMounts: c.volumeMounts + [{
+                  name: 'shared',
+                  mountPath: '/var/shared',
+                  readOnly: true,
+                }],
               } else c
               for c in super.containers
             ],
@@ -210,13 +193,11 @@
                   EOF
                 |||,
               ],
-              volumeMounts: [
-                {
-                  name: 'logs-file',
-                  mountPath: '/var/logs-file',
-                  readOnly: false,
-                },
-              ],
+              volumeMounts: [{
+                name: 'logs-file',
+                mountPath: '/var/logs-file',
+                readOnly: false,
+              }],
             },
 
             initContainers+: [c],
@@ -226,14 +207,11 @@
                 args+: [
                   '--logs-file=/var/logs-file/logs.yaml',
                 ],
-                volumeMounts: c.volumeMounts +
-                              [
-                                {
-                                  name: 'logs-file',
-                                  mountPath: '/var/logs-file',
-                                  readOnly: true,
-                                },
-                              ],
+                volumeMounts: c.volumeMounts + [{
+                  name: 'logs-file',
+                  mountPath: '/var/logs-file',
+                  readOnly: true,
+                }],
               }
               for c in super.containers
             ],
