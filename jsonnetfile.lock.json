@@ -8,8 +8,8 @@
           "subdir": "grafonnet"
         }
       },
-      "version": "cc1626a1b4dee45c99b78ddd9714dfd5f5d7816e",
-      "sum": "nkgrtMYPCq/YB4r3mKyToepaLhicwWnxDdGIodPpzz0="
+      "version": "356bd73e4792ffe107725776ca8946895969c191",
+      "sum": "CSMZ3dJrpJpwvffie8BqcfrIVVwiKNqdPEN+1XWRBGU="
     },
     {
       "source": {
@@ -18,7 +18,7 @@
           "subdir": "grafana-builder"
         }
       },
-      "version": "2cc8d1dcb943eb3ff1dcb85bc9a3933afb36b730",
+      "version": "8488040f4687d6b00959254d6258c8a947a47ce1",
       "sum": "mD0zEP9FVFXeag7EaeS5OvUr2A9D6DQhGemoNn6+PLc="
     },
     {
@@ -28,7 +28,7 @@
           "subdir": "monitoring/jaeger-mixin"
         }
       },
-      "version": "4dd57f3a436d889a86664708ae1ce801a62d4f61",
+      "version": "2a0d8cc26018b09763f5b1dcdf925b6f46ea1882",
       "sum": "U/RwaRP/ps+5dVyeVxeFEb2psfZHQgEjHU2Jeb454Kg="
     },
     {
@@ -59,8 +59,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "7c57706b8380a63abe4713f92300c29a9a30f335",
-      "sum": "R3V1fekf9J7pJ/vlmbvAQBJtKRUFoaxnNtPrKwKkMSg=",
+      "version": "e32405763b667866022ca84af5c4c34ffea7700e",
+      "sum": "+ukVuSkPUldTYPS9QtJ5LXrF1Rua/GZjTOGYu85aPPY=",
       "name": "observatorium"
     },
     {
@@ -81,8 +81,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "ef77a1120c23176fadc6647a3dcab1999aefe03b",
-      "sum": "paJPEJngHOtoiuRLVvvp8LaaI3UFjGLa/NwG4yfaMIE="
+      "version": "c157b38e8ca5980d6d9948fba4f337e73b8b4525",
+      "sum": "m5/NHvGG9Y/qrM90Tfrklgt/UoJ5ZeTLRN4CJyz8MKY="
     },
     {
       "source": {
@@ -91,8 +91,8 @@
           "subdir": "mixin"
         }
       },
-      "version": "727a351b5a1e0b817c7d894edf8dd9b7cf5e73e1",
-      "sum": "nrCj5SWVYkgchWtqpHzMNfmukqChjYbPdT8BGBs9RVg="
+      "version": "5abda5216c1e4b5640721c02104e0296fee60697",
+      "sum": "mrGkez7/fKqBJDQqtNtPblpvXtrmtYP/gcMACHb0jS4="
     }
   ],
   "legacyImports": false

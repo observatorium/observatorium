@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: thanos-receive
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: master-2020-08-12-70f89d83
+    app.kubernetes.io/version: v0.16.0
     controller.receive.thanos.io: thanos-receive-controller
     controller.receive.thanos.io/hashring: default
   name: observatorium-xyz-thanos-receive-default
@@ -28,7 +28,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-receive
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: master-2020-08-12-70f89d83
+        app.kubernetes.io/version: v0.16.0
         controller.receive.thanos.io/hashring: default
     spec:
       affinity:
@@ -76,8 +76,8 @@ spec:
         - --tsdb.path=/var/thanos/receive
         - --label=replica="$(NAME)"
         - --label=receive="true"
-        - --receive.local-endpoint=$(NAME).observatorium-xyz-thanos-receive-default.$(NAMESPACE).svc.cluster.local:10901
         - --tsdb.retention=4d
+        - --receive.local-endpoint=$(NAME).observatorium-xyz-thanos-receive-default.$(NAMESPACE).svc.cluster.local:10901
         - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
         env:
         - name: NAME
@@ -95,7 +95,7 @@ spec:
               name: thanos-objectstorage
         - name: DEBUG
           value: "1"
-        image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
+        image: quay.io/thanos/thanos:v0.16.0
         livenessProbe:
           failureThreshold: 8
           httpGet:
@@ -118,6 +118,7 @@ spec:
             port: 10902
             scheme: HTTP
           periodSeconds: 5
+        resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /var/thanos/receive
@@ -127,9 +128,21 @@ spec:
           name: hashring-config
       terminationGracePeriodSeconds: 900
       volumes:
-      - emptyDir: {}
-        name: data
       - configMap:
           name: observatorium-xyz-thanos-receive-controller-tenants-generated
         name: hashring-config
-  volumeClaimTemplates: null
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        app.kubernetes.io/component: database-write-hashring
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: thanos-receive
+        app.kubernetes.io/part-of: observatorium
+        controller.receive.thanos.io/hashring: default
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi

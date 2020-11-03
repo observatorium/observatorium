@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: thanos-compact
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: master-2020-08-12-70f89d83
+    app.kubernetes.io/version: v0.16.0
   name: observatorium-xyz-thanos-compact
   namespace: observatorium
 spec:
@@ -25,7 +25,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-compact
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: master-2020-08-12-70f89d83
+        app.kubernetes.io/version: v0.16.0
     spec:
       containers:
       - args:
@@ -39,15 +39,15 @@ spec:
         - --retention.resolution-5m=1s
         - --retention.resolution-1h=1s
         - --delete-delay=48h
-        - --deduplication.replica-label=replica
         - --downsampling.disable
+        - --deduplication.replica-label=replica
         env:
         - name: OBJSTORE_CONFIG
           valueFrom:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
-        image: quay.io/thanos/thanos:master-2020-08-12-70f89d83
+        image: quay.io/thanos/thanos:v0.16.0
         livenessProbe:
           failureThreshold: 4
           httpGet:
@@ -66,13 +66,25 @@ spec:
             port: 10902
             scheme: HTTP
           periodSeconds: 5
+        resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /var/thanos/compact
           name: data
           readOnly: false
       terminationGracePeriodSeconds: 120
-      volumes:
-      - emptyDir: {}
-        name: data
-  volumeClaimTemplates: null
+      volumes: []
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        app.kubernetes.io/component: database-compactor
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: thanos-compact
+        app.kubernetes.io/part-of: observatorium
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi
