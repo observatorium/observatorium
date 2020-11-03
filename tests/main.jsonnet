@@ -114,12 +114,12 @@ local upLogs = upJob + upJob.withResources + {
       },
     },
     endpointType: 'logs',
-    writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/push' % [
+    writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/push' % [
       obs.api.service.metadata.name,
       obs.api.service.metadata.namespace,
       obs.api.service.spec.ports[1].port,
     ],
-    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/query' % [
+    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/query' % [
       obs.api.service.metadata.name,
       obs.api.service.metadata.namespace,
       obs.api.service.spec.ports[1].port,
