@@ -130,16 +130,17 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
           max_get_multi_concurrency: 900,
           max_get_multi_batch_size: 1000,
         },
-
         indexCache: {
           type: 'memcached',
-          addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
-          config: memcachedDefaults {},
+          config+: memcachedDefaults {
+            addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
+          },
         },
         bucketCache: {
           type: 'memcached',
-          addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
-          config: memcachedDefaults {},
+          config+: memcachedDefaults {
+            addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
+          },
         },
       }) + {
         statefulSet+: {
