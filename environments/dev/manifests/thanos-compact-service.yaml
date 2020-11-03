@@ -13,7 +13,7 @@ spec:
   ports:
   - name: http
     port: 10902
-    targetPort: http
+    targetPort: 10902
   selector:
     app.kubernetes.io/component: database-compactor
     app.kubernetes.io/instance: observatorium-xyz
