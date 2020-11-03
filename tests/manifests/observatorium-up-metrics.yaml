@@ -39,7 +39,7 @@ spec:
         volumeMounts:
         - mountPath: /var/shared
           name: shared
-          readOnly: true
+          readOnly: false
       initContainers:
       - command:
         - /bin/sh

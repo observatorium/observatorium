@@ -47,7 +47,7 @@
                 { name: 'configs', containerPort: 5778 },
                 { name: 'metrics', containerPort: 14271 },
               ],
-              readinessProbe: {
+              livenessProbe: {
                 failureThreshold: 5,
                 httpGet: {
                   scheme: 'HTTP',

@@ -17,14 +17,13 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
       metadata: {
         name: 'jaeger-collector-headless',
         namespace: j.namespace,
-        labels: $.jaeger.deployment.metadata.labels {
-          'app.kubernetes.io/name': $.jaeger.deployment.metadata.name,
-        },
+        labels: { 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name },
       },
       spec: {
         ports: [
           { name: 'grpc', targetPort: 14250, port: 14250 },
         ],
+        selector: $.jaeger.deployment.metadata.labels,
         clusterIP: 'None',
       },
     },
@@ -35,14 +34,13 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
       metadata: {
         name: 'jaeger-query',
         namespace: j.namespace,
-        labels: $.jaeger.deployment.metadata.labels {
-          'app.kubernetes.io/name': $.jaeger.deployment.metadata.name,
-        },
+        labels: { 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name },
       },
       spec: {
         ports: [
           { name: 'query', targetPort: 16686, port: 16686 },
         ],
+        selector: $.jaeger.deployment.metadata.labels,
       },
     },
 
@@ -52,14 +50,13 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
       metadata: {
         name: 'jaeger-admin',
         namespace: j.namespace,
-        labels: $.jaeger.deployment.metadata.labels {
-          'app.kubernetes.io/name': $.jaeger.deployment.metadata.name,
-        },
+        labels: { 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name },
       },
       spec: {
         ports: [
           { name: 'admin-http', targetPort: 14269, port: 14269 },
         ],
+        selector: $.jaeger.deployment.metadata.labels,
       },
     },
 
@@ -69,16 +66,19 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
       metadata: {
         name: 'jaeger-agent-discovery',
         namespace: j.namespace,
-        labels: { 'app.kubernetes.io/tracing': 'jaeger-agent' },
+        labels: { 'app.kubernetes.io/name': 'jaeger-agent' },
       },
       spec: {
         ports: [
           { name: 'metrics', targetPort: 14271, port: 14271 },
         ],
+        selector: { 'app.kubernetes.io/tracing': 'jaeger-agent' },
       },
     },
 
     volumeClaim: {
+      apiVersion: 'v1',
+      kind: 'PersistentVolumeClaim',
       metadata: {
         name: 'jaeger-store-data',
         namespace: j.namespace,
@@ -97,20 +97,15 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
 
     deployment:
       local c = {
-        name: '$.jaeger.deployment.metadata.name',
+        name: $.jaeger.deployment.metadata.name,
         image: j.image,
-        args: [
-          '--collector.queue-size=4000',
-        ],
-        env: [
-          {
-            name: 'SPAN_STORAGE_TYPE',
-            value: 'memory',
-          },
-        ],
+        args: ['--collector.queue-size=4000'],
+        env: [{
+          name: 'SPAN_STORAGE_TYPE',
+          value: 'memory',
+        }],
         ports: [
           { name: 'admin-http', targetPort: 14269, port: 14269 },
-          { name: 'metrics', targetPort: 14271, port: 14271 },
           { name: 'query', targetPort: 16686, port: 16686 },
           { name: 'grpc', targetPort: 14250, port: 14250 },
         ],
@@ -118,32 +113,34 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
           {
             name: 'jaeger-store-data',
             mountPath: '/var/jaeger/store',
+            readOnly: false,
           },
         ],
         livenessProbe: { failureThreshold: 4, periodSeconds: 30, httpGet: {
           scheme: 'HTTP',
           port: 14269,
-          path: '',
+          path: '/',
         } },
-        readinessProbe: { failureThreshold: 3, periodSeconds: 30, initailDelaySeconds: 10, httpGet: {
+        readinessProbe: { failureThreshold: 3, periodSeconds: 30, initialDelaySeconds: 10, httpGet: {
           scheme: 'HTTP',
           port: 14269,
           path: '/',
         } },
-        terminationMessagePolicy: 'FallbackToLogsOnError',
         resources: {
           requests: { cpu: '1', memory: '1Gi' },
           limits: { cpu: '4', memory: '4Gi' },
         },
       };
 
+
       {
+        local labels = { 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name },
         apiVersion: 'apps/v1',
         kind: 'Deployment',
         metadata: {
           name: 'jaeger-all-in-one',
           namespace: j.namespace,
-          labels: { 'app.kubernetes.io/name': $.jaeger.deployment.metadata.name },
+          labels: labels,
         },
         spec: {
           replicas: j.replicas,
@@ -156,20 +153,16 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
           },
           template: {
             metadata: {
-              labels: gubernator.config.commonLabels,
+              labels: labels,
             },
             spec: {
               containers: [c],
-              serviceAccount: gubernator.serviceAccount.metadata.name,
-              restartPolicy: 'Always',
-              volumes: [
-                {
-                  name: $.jaeger.volumeClaim.metadata.name,
-                  persistentVolumeClaim: {
-                    claimName: $.jaeger.volumeClaim.metadata.name,
-                  },
+              volumes: [{
+                name: $.jaeger.volumeClaim.metadata.name,
+                persistentVolumeClaim: {
+                  claimName: $.jaeger.volumeClaim.metadata.name,
                 },
-              ],
+              }],
             },
           },
         },

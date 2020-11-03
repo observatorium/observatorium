@@ -7,6 +7,7 @@
     version: error 'must provide version',
     image: error 'must provide image',
     endpointType: error 'must provide endpoint type',
+    replicas: 1,
     queryConfig: {},
     readEndpoint: '',
     writeEndpoint: '',

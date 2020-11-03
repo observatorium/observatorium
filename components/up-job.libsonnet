@@ -153,7 +153,7 @@
                 volumeMounts: c.volumeMounts + [{
                   name: 'shared',
                   mountPath: '/var/shared',
-                  readOnly: true,
+                  readOnly: false,
                 }],
               } else c
               for c in super.containers
