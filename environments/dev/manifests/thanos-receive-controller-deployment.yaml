@@ -42,4 +42,5 @@ spec:
         ports:
         - containerPort: 8080
           name: http
+        resources: {}
       serviceAccount: observatorium-xyz-thanos-receive-controller
