@@ -40,7 +40,7 @@ spec:
         volumeMounts:
         - mountPath: /var/shared
           name: shared
-          readOnly: false
+          readOnly: true
         - mountPath: /var/logs-file
           name: logs-file
           readOnly: true

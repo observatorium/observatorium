@@ -43,7 +43,7 @@ spec:
           readOnly: true
         - mountPath: /var/shared
           name: shared
-          readOnly: false
+          readOnly: true
       initContainers:
       - command:
         - /bin/sh
