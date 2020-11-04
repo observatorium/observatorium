@@ -80,16 +80,8 @@
                 { name: 'https', containerPort: sm.config.oauthProxy.httpsPort },
               ],
               volumeMounts: [
-                {
-                  mountPath: '/etc/tls/private',
-                  name: sm.config.oauthProxy.tlsSecretName,
-                  readOnly: false,
-                },
-                {
-                  mountPath: '/etc/proxy/secrets',
-                  name: sm.config.oauthProxy.sessionSecretName,
-                  readOnly: false,
-                },
+                { mountPath: '/etc/tls/private', name: sm.config.oauthProxy.tlsSecretName, readOnly: false },
+                { mountPath: '/etc/proxy/secrets', name: sm.config.oauthProxy.sessionSecretName, readOnly: false },
               ],
               resources: sm.config.oauthProxy.resources,
             },

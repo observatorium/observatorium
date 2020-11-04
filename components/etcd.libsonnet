@@ -200,33 +200,17 @@
         for port in etcd.service.spec.ports
       ],
       volumeMounts: [
-        {
-          name: 'scripts',
-          mountPath: '/scripts',
-        },
-        {
-          name: 'storage',
-          mountPath: '/var/run/etcd',
-        },
+        { name: 'scripts', mountPath: '/scripts' },
+        { name: 'storage', mountPath: '/var/run/etcd' },
       ],
       resources: {
-        requests: {
-          cpu: '100m',
-          memory: '128Mi',
-        },
-        limits: {
-          cpu: '200m',
-          memory: '256Mi',
-        },
+        requests: { cpu: '100m', memory: '128Mi' },
+        limits: { cpu: '200m', memory: '256Mi' },
       },
       lifecycle: {
         preStop: {
           exec: {
-            command: [
-              '/bin/sh',
-              '-ec',
-              '/scripts/etcd-pre-stop.sh',
-            ],
+            command: ['/bin/sh', '-ec', '/scripts/etcd-pre-stop.sh'],
           },
         },
       },

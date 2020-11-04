@@ -110,11 +110,7 @@ local jaegerAgent = import './jaeger-agent.libsonnet';
           { name: 'grpc', targetPort: 14250, port: 14250 },
         ],
         volumeMounts: [
-          {
-            name: 'jaeger-store-data',
-            mountPath: '/var/jaeger/store',
-            readOnly: false,
-          },
+          { name: 'jaeger-store-data', mountPath: '/var/jaeger/store', readOnly: false },
         ],
         livenessProbe: { failureThreshold: 4, periodSeconds: 30, httpGet: {
           scheme: 'HTTP',

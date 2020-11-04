@@ -178,9 +178,7 @@
         namespace: gubernator.config.namespace,
       },
       spec: {
-        selector: {
-          matchLabels: gubernator.config.podLabelSelector,
-        },
+        selector: { matchLabels: gubernator.config.podLabelSelector },
         endpoints: [
           { port: 'http' },
         ],

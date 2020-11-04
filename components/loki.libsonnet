@@ -122,16 +122,8 @@
         [{ name: 'gossip-ring', containerPort: 7946 }]
       else [],
       volumeMounts: [
-        {
-          name: 'config',
-          mountPath: '/etc/loki/config/',
-          readOnly: false,
-        },
-        {
-          name: 'storage',
-          mountPath: '/data',
-          readOnly: false,
-        },
+        { name: 'config', mountPath: '/etc/loki/config/', readOnly: false },
+        { name: 'storage', mountPath: '/data', readOnly: false },
       ],
     } + {
       [name]: readinessProbe[name]

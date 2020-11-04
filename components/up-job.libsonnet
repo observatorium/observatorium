@@ -135,11 +135,7 @@
                 ],
               ],
               volumeMounts: [
-                {
-                  name: 'shared',
-                  mountPath: '/var/shared',
-                  readOnly: false,
-                },
+                { name: 'shared', mountPath: '/var/shared', readOnly: false },
               ],
             },
 
@@ -159,10 +155,7 @@
               for c in super.containers
             ],
             volumes+: [
-              {
-                emptyDir: {},
-                name: 'shared',
-              },
+              { emptyDir: {}, name: 'shared' },
             ],
           },
         },
@@ -193,11 +186,9 @@
                   EOF
                 |||,
               ],
-              volumeMounts: [{
-                name: 'logs-file',
-                mountPath: '/var/logs-file',
-                readOnly: false,
-              }],
+              volumeMounts: [
+                { name: 'logs-file', mountPath: '/var/logs-file', readOnly: false },
+              ],
             },
 
             initContainers+: [c],
@@ -216,10 +207,7 @@
               for c in super.containers
             ],
             volumes+: [
-              {
-                emptyDir: {},
-                name: 'logs-file',
-              },
+              { emptyDir: {}, name: 'logs-file' },
             ],
           },
         },
