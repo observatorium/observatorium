@@ -14,6 +14,12 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     },
     replicaLabels:: ['prometheus_replica', 'rule_replica', 'replica'],
     deduplicationReplicaLabels:: ['replica'],
+
+    podLabelSelector:: {
+      [labelName]: obs.config.commonLabels[labelName]
+      for labelName in std.objectFields(obs.config.commonLabels)
+      if !std.setMember(labelName, ['app.kubernetes.io/version'])
+    },
   },
 
   compact:: t.compact({
@@ -36,23 +42,23 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     },
   },
 
-  receiversService::
-    {
-      apiVersion: 'v1',
-      kind: 'Service',
-      metadata: {
-        name: '%s-thanos-receive' % obs.config.name,
-        namespace: obs.config.namespace,
-      },
-      spec: {
-        selector: { 'app.kubernetes.io/name': 'thanos-receive' },
-        ports: [
-          { name: 'grpc', port: 10901, targetPort: 10901 },
-          { name: 'http', port: 10902, targetPort: 10902 },
-          { name: 'remote-write', port: 19291, targetPort: 19291 },
-        ],
-      },
+  receiversService:: {
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata: {
+      name: '%s-thanos-receive' % obs.config.name,
+      namespace: obs.config.namespace,
+      labels: obs.config.commonLabels { 'app.kubernetes.io/name': 'thanos-receive' },
     },
+    spec: {
+      selector: { 'app.kubernetes.io/name': 'thanos-receive' },
+      ports: [
+        { name: 'grpc', port: 10901, targetPort: 10901 },
+        { name: 'http', port: 10902, targetPort: 10902 },
+        { name: 'remote-write', port: 19291, targetPort: 19291 },
+      ],
+    },
+  },
 
   receivers:: {
     [hashring.hashring]:
@@ -100,75 +106,71 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     for hashring in obs.config.hashrings
   },
 
-  rule::
-    t.rule({
-      name: obs.config.name + '-' + 'thanos-rule',
-      namespace: obs.config.namespace,
-      replicas: 1,
-      commonLabels+:: obs.config.commonLabels,
-      queriers: ['dnssrv+_http._tcp.%s.%s.svc.cluster.local' % [obs.query.service.metadata.name, obs.query.service.metadata.namespace]],
-    }),
+  rule:: t.rule({
+    name: obs.config.name + '-' + 'thanos-rule',
+    namespace: obs.config.namespace,
+    replicas: 1,
+    commonLabels+:: obs.config.commonLabels,
+    queriers: ['dnssrv+_http._tcp.%s.%s.svc.cluster.local' % [obs.query.service.metadata.name, obs.query.service.metadata.namespace]],
+  }),
 
   store:: {
-    ['shard' + i]:
-      t.store({
+    ['shard' + i]: t.store({
+      name: '%s-thanos-store-shard-%d' % [obs.config.name, i],
+      namespace: obs.config.namespace,
+      commonLabels+:: obs.config.commonLabels {
+        'store.observatorium.io/shard': 'shard-' + i,
+      },
+      replicas: 1,
+      ignoreDeletionMarksDelay: '24h',
 
-
-        name: '%s-thanos-store-shard-%d' % [obs.config.name, i],
-        namespace: obs.config.namespace,
-        commonLabels+:: obs.config.commonLabels {
-          'store.observatorium.io/shard': 'shard-' + i,
+      local memcachedDefaults = {
+        timeout: '2s',
+        max_idle_connections: 1000,
+        max_async_concurrency: 100,
+        max_async_buffer_size: 100000,
+        max_get_multi_concurrency: 900,
+        max_get_multi_batch_size: 1000,
+      },
+      indexCache: {
+        type: 'memcached',
+        config+: memcachedDefaults {
+          addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
         },
-        replicas: 1,
-        ignoreDeletionMarksDelay: '24h',
-
-        local memcachedDefaults = {
-          timeout: '2s',
-          max_idle_connections: 1000,
-          max_async_concurrency: 100,
-          max_async_buffer_size: 100000,
-          max_get_multi_concurrency: 900,
-          max_get_multi_batch_size: 1000,
+      },
+      bucketCache: {
+        type: 'memcached',
+        config+: memcachedDefaults {
+          addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
         },
-        indexCache: {
-          type: 'memcached',
-          config+: memcachedDefaults {
-            addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
-          },
-        },
-        bucketCache: {
-          type: 'memcached',
-          config+: memcachedDefaults {
-            addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.storeCache.service.metadata.name, obs.storeCache.service.metadata.namespace]],
-          },
-        },
-      }) + {
-        statefulSet+: {
-          spec+: {
-            template+: {
-              spec+: {
-                containers: [
-                  if c.name == 'thanos-store' then c {
-                    args+: [
-                      |||
-                        --selector.relabel-config=
-                          - action: hashmod
-                            source_labels: ["__block_id"]
-                            target_label: shard
-                            modulus: %d
-                          - action: keep
-                            source_labels: ["shard"]
-                            regex: %d
-                      ||| % [obs.config.store.shards, i],
-                    ],
-                  } else c
-                  for c in super.containers
-                ],
-              },
+      },
+    }) + {
+      statefulSet+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                if c.name == 'thanos-store' then c {
+                  args+: [
+                    |||
+                      --selector.relabel-config=
+                        - action: hashmod
+                          source_labels: ["__block_id"]
+                          target_label: shard
+                          modulus: %d
+                        - action: keep
+                          source_labels: ["shard"]
+                          regex: %d
+                    ||| % [obs.config.store.shards, i],
+                  ],
+                } else c
+                for c in super.containers
+              ],
             },
           },
         },
-      }
+      },
+    }
     for i in std.range(0, obs.config.store.shards - 1)
   },
 
@@ -185,7 +187,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     },
   },
 
-  query: t.query({
+  query:: t.query({
     name: '%s-thanos-query' % obs.config.name,
     namespace: obs.config.namespace,
     commonLabels+:: obs.config.commonLabels,
@@ -201,41 +203,21 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     replicaLabels: obs.config.replicaLabels,
   }),
 
-  queryFrontend::
-    t.queryFrontend({
-      name: '%s-thanos-query-frontend' % obs.config.name,
-      namespace: obs.config.namespace,
-      commonLabels+:: obs.config.commonLabels,
-      replicas: 1,
-      downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
-        obs.query.service.metadata.name,
-        obs.query.service.metadata.namespace,
-        obs.query.service.spec.ports[1].port,
-      ],
-      splitInterval: '24h',
-      maxRetries: 0,
-      logQueriesLongerThan: '5s',
-      serviceMonitor: true,
-    }),
-
-  receiveService::
-    {
-      apiVersion: 'v1',
-      kind: 'Service',
-      metadata: {
-        name: '%s-thanos-receive' % obs.config.name,
-        namespace: obs.config.namespace,
-      },
-      spec: {
-        selector: { 'app.kubernetes.io/name': 'thanos-receive' },
-        ports: [
-          { name: 'grpc', port: 10901, targetPort: 10901 },
-          { name: 'http', port: 10902, targetPort: 10902 },
-          { name: 'remote-write', port: 19291, targetPort: 19291 },
-        ],
-      },
-    },
-
+  queryFrontend:: t.queryFrontend({
+    name: '%s-thanos-query-frontend' % obs.config.name,
+    namespace: obs.config.namespace,
+    commonLabels+:: obs.config.commonLabels,
+    replicas: 1,
+    downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
+      obs.query.service.metadata.name,
+      obs.query.service.metadata.namespace,
+      obs.query.service.spec.ports[1].port,
+    ],
+    splitInterval: '24h',
+    maxRetries: 0,
+    logQueriesLongerThan: '5s',
+    serviceMonitor: true,
+  }),
 
   gubernator:: (import 'gubernator.libsonnet') + {
     config+:: {

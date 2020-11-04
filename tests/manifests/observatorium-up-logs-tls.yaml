@@ -1,6 +1,11 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
+  labels:
+    app.kubernetes.io/component: test
+    app.kubernetes.io/instance: e2e-test
+    app.kubernetes.io/name: observatorium-up
+    app.kubernetes.io/version: master-2020-06-15-d763595
   name: observatorium-up-logs-tls
 spec:
   backoffLimit: 5

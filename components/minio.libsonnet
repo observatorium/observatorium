@@ -52,26 +52,17 @@
               image: 'minio/minio',
               name: 'minio',
               ports: [
-                {
-                  containerPort: 9000,
-                },
+                { containerPort: 9000 },
               ],
               volumeMounts: [
-                {
-                  mountPath: '/storage',
-                  name: 'storage',
-                },
+                { mountPath: '/storage', name: 'storage' },
               ],
             },
           ],
-          volumes: [
-            {
-              name: 'storage',
-              persistentVolumeClaim: {
-                claimName: 'minio',
-              },
-            },
-          ],
+          volumes: [{
+            name: 'storage',
+            persistentVolumeClaim: { claimName: 'minio' },
+          }],
         },
       },
     },
@@ -81,20 +72,14 @@
     apiVersion: 'v1',
     kind: 'PersistentVolumeClaim',
     metadata: {
-      labels: {
-        'app.kubernetes.io/name': 'minio',
-      },
+      labels: { 'app.kubernetes.io/name': 'minio' },
       name: 'minio',
       namespace: minio.config.namespace,
     },
     spec: {
-      accessModes: [
-        'ReadWriteOnce',
-      ],
+      accessModes: ['ReadWriteOnce'],
       resources: {
-        requests: {
-          storage: '10Gi',
-        },
+        requests: { storage: '10Gi' },
       },
     },
   },
@@ -142,15 +127,9 @@
     },
     spec: {
       ports: [
-        {
-          port: 9000,
-          protocol: 'TCP',
-          targetPort: 9000,
-        },
+        { port: 9000, protocol: 'TCP', targetPort: 9000 },
       ],
-      selector: {
-        'app.kubernetes.io/name': 'minio',
-      },
+      selector: { 'app.kubernetes.io/name': 'minio' },
       type: 'ClusterIP',
     },
   },

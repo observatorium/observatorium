@@ -4,57 +4,6 @@
     {
       "source": {
         "git": {
-          "remote": "https://github.com/grafana/grafonnet-lib.git",
-          "subdir": "grafonnet"
-        }
-      },
-      "version": "356bd73e4792ffe107725776ca8946895969c191",
-      "sum": "CSMZ3dJrpJpwvffie8BqcfrIVVwiKNqdPEN+1XWRBGU="
-    },
-    {
-      "source": {
-        "git": {
-          "remote": "https://github.com/grafana/jsonnet-libs.git",
-          "subdir": "grafana-builder"
-        }
-      },
-      "version": "8488040f4687d6b00959254d6258c8a947a47ce1",
-      "sum": "mD0zEP9FVFXeag7EaeS5OvUr2A9D6DQhGemoNn6+PLc="
-    },
-    {
-      "source": {
-        "git": {
-          "remote": "https://github.com/jaegertracing/jaeger.git",
-          "subdir": "monitoring/jaeger-mixin"
-        }
-      },
-      "version": "2a0d8cc26018b09763f5b1dcdf925b6f46ea1882",
-      "sum": "U/RwaRP/ps+5dVyeVxeFEb2psfZHQgEjHU2Jeb454Kg="
-    },
-    {
-      "source": {
-        "git": {
-          "remote": "https://github.com/ksonnet/ksonnet-lib.git",
-          "subdir": ""
-        }
-      },
-      "version": "0d2f82676817bbf9e4acf6495b2090205f323b9f",
-      "sum": "h28BXZ7+vczxYJ2sCt8JuR9+yznRtU/iA6DCpQUrtEg=",
-      "name": "ksonnet"
-    },
-    {
-      "source": {
-        "git": {
-          "remote": "https://github.com/metalmatze/slo-libsonnet.git",
-          "subdir": "slo-libsonnet"
-        }
-      },
-      "version": "101618191a5dae835f7c8a90e6f0df40072e2cb3",
-      "sum": "vERnAgUe02tI7S4cRK2KSEsyuVm6XFT9v8RucCG/8B8="
-    },
-    {
-      "source": {
-        "git": {
           "remote": "https://github.com/observatorium/observatorium.git",
           "subdir": "jsonnet/lib"
         }
@@ -70,8 +19,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "a9d9169ef2c4da1eafd6badbc90a4b4804c8c101",
-      "sum": "iUbwzPZ/0QrozWTfoXlmRhd1CMAnkcCaWtATTlSnoMk=",
+      "version": "080af8b212d22dbc9ae0782fe8c567db3f8c16f2",
+      "sum": "ngp1sBIn/yrzKIygjOg/gPvR/n+X7ayVN23wH1EefgY=",
       "name": "thanos-receive-controller"
     },
     {
@@ -83,16 +32,6 @@
       },
       "version": "c157b38e8ca5980d6d9948fba4f337e73b8b4525",
       "sum": "m5/NHvGG9Y/qrM90Tfrklgt/UoJ5ZeTLRN4CJyz8MKY="
-    },
-    {
-      "source": {
-        "git": {
-          "remote": "https://github.com/thanos-io/thanos.git",
-          "subdir": "mixin"
-        }
-      },
-      "version": "5abda5216c1e4b5640721c02104e0296fee60697",
-      "sum": "mrGkez7/fKqBJDQqtNtPblpvXtrmtYP/gcMACHb0jS4="
     }
   ],
   "legacyImports": false

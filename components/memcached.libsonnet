@@ -1,5 +1,3 @@
-local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
-
 {
   local mc = self,
 
@@ -38,69 +36,89 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
   },
 
   service:
-    local service = k.core.v1.service;
-    local ports = service.mixin.spec.portsType;
-
-    service.new(
-      mc.config.name,
-      mc.config.podLabelSelector,
-      [
-        ports.newNamed('client', 11211, 11211),
-        ports.newNamed('metrics', 9150, 9150),
-      ]
-    ) +
-    service.mixin.metadata.withNamespace(mc.config.namespace) +
-    service.mixin.metadata.withLabels(mc.config.commonLabels) +
-    service.mixin.spec.withClusterIp('None'),
+    {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: mc.config.name,
+        namespace: mc.config.namespace,
+        labels: mc.config.commonLabels,
+      },
+      spec: {
+        ports: [
+          { name: 'client', targetPort: 11211, port: 11211 },
+          { name: 'metrics', targetPort: 9150, port: 9150 },
+        ],
+        selector: mc.config.podLabelSelector,
+        clusterIP: 'None',
+      },
+    },
 
   statefulSet:
-    local sts = k.apps.v1.statefulSet;
-    local container = sts.mixin.spec.template.spec.containersType;
-
-    local memcached =
-      container.new('memcached', mc.config.image) +
-      container.withTerminationMessagePolicy('FallbackToLogsOnError') +
-      container.withPorts([
-        { name: 'client', containerPort: mc.service.spec.ports[0].port },
-      ]) +
-      container.withArgs([
+    local memcached = {
+      name: 'memcached',
+      image: mc.config.image,
+      args: [
         '-m %(memoryLimitMb)s' % mc.config,
         '-I %(maxItemSize)s' % mc.config,
         '-c %(connectionLimit)s' % mc.config,
         '-v',
-      ]) +
-      container.mixin.resources.withRequests({
-        cpu: mc.config.cpuRequest,
-        memory: mc.util.bytesToK8sQuantity(mc.config.memoryRequestBytes),
-      }) +
-      container.mixin.resources.withLimits({
-        cpu: mc.config.cpuLimit,
-        memory: mc.util.bytesToK8sQuantity(mc.config.memoryLimitBytes),
-      });
+      ],
+      ports: [
+        { name: 'client', containerPort: mc.service.spec.ports[0].port },
+      ],
+      resources: {
+        requests: {
+          cpu: mc.config.cpuRequest,
+          memory: mc.util.bytesToK8sQuantity(mc.config.memoryRequestBytes),
+        },
+        limits: {
+          cpu: mc.config.cpuLimit,
+          memory: mc.util.bytesToK8sQuantity(mc.config.memoryLimitBytes),
+        },
+      },
+      terminationMessagePolicy: 'FallbackToLogsOnError',
+    };
 
-    local exporter =
-      container.new('exporter', mc.config.exporterImage) +
-      container.withPorts([
-        { name: 'metrics', containerPort: mc.service.spec.ports[1].port },
-      ]) +
-      container.withArgs([
+    local exporter = {
+      name: 'exporter',
+      image: mc.config.exporterImage,
+      args: [
         '--memcached.address=localhost:%d' % mc.service.spec.ports[0].port,
         '--web.listen-address=0.0.0.0:%d' % mc.service.spec.ports[1].port,
-      ]);
+      ],
+      ports: [
+        { name: 'metrics', containerPort: mc.service.spec.ports[1].port },
+      ],
+    };
 
-    sts.new(mc.config.name, mc.config.replicas, [memcached, exporter], [], mc.config.commonLabels) +
-    sts.mixin.metadata.withNamespace(mc.config.namespace) +
-    sts.mixin.metadata.withLabels(mc.config.commonLabels) +
-    sts.mixin.spec.withServiceName(mc.service.metadata.name) +
-    sts.mixin.spec.selector.withMatchLabels(mc.config.podLabelSelector)
     {
-      spec+: {
-        volumeClaimTemplates:: null,
+      apiVersion: 'apps/v1',
+      kind: 'StatefulSet',
+      metadata: {
+        name: mc.config.name,
+        namespace: mc.config.namespace,
+        labels: mc.config.commonLabels,
+      },
+      spec: {
+        replicas: mc.config.replicas,
+        selector: { matchLabels: mc.config.podLabelSelector },
+        serviceName: mc.service.metadata.name,
+        template: {
+          metadata: {
+            labels: mc.config.commonLabels,
+          },
+          spec: {
+            containers: [memcached, exporter],
+            volumeClaimTemplates:: null,
+          },
+        },
       },
     },
 
   withServiceMonitor:: {
     local mc = self,
+
     serviceMonitor: {
       apiVersion: 'monitoring.coreos.com/v1',
       kind: 'ServiceMonitor',
@@ -121,6 +139,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
 
   withResources:: {
     local mc = self,
+
     config+:: {
       resources: error 'must provide resources',
     },

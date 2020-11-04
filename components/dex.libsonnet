@@ -10,16 +10,10 @@
       issuer: 'http://%s.%s.svc.cluster.local:5556/dex' % [dex.config.name, dex.config.namespace],
       storage: {
         type: 'sqlite3',
-        config: {
-          file: '/storage/dex.db',
-        },
+        config: { file: '/storage/dex.db' },
       },
-      web: {
-        http: '0.0.0.0:5556',
-      },
-      logger: {
-        level: 'debug',
-      },
+      web: { http: '0.0.0.0:5556' },
+      logger: { level: 'debug' },
     },
 
     commonLabels:: {
@@ -54,21 +48,11 @@
               name: 'dex',
               command: ['/usr/local/bin/dex', 'serve', '/etc/dex/cfg/config.yaml'],
               ports: [
-                {
-                  name: 'http',
-                  containerPort: 5556,
-                },
+                { name: 'http', containerPort: 5556 },
               ],
               volumeMounts: [
-                {
-                  name: 'config',
-                  mountPath: '/etc/dex/cfg',
-                },
-                {
-                  name: 'storage',
-                  mountPath: '/storage',
-                  readOnly: false,
-                },
+                { name: 'config', mountPath: '/etc/dex/cfg' },
+                { name: 'storage', mountPath: '/storage', readOnly: false },
               ],
             },
           ],
@@ -78,18 +62,13 @@
               secret: {
                 secretName: dex.config.name,
                 items: [
-                  {
-                    key: 'config.yaml',
-                    path: 'config.yaml',
-                  },
+                  { key: 'config.yaml', path: 'config.yaml' },
                 ],
               },
             },
             {
               name: 'storage',
-              persistentVolumeClaim: {
-                claimName: dex.config.name,
-              },
+              persistentVolumeClaim: { claimName: dex.config.name },
             },
           ],
         },
@@ -119,13 +98,9 @@
       namespace: dex.config.namespace,
     },
     spec: {
-      accessModes: [
-        'ReadWriteOnce',
-      ],
+      accessModes: ['ReadWriteOnce'],
       resources: {
-        requests: {
-          storage: '1Gi',
-        },
+        requests: { storage: '1Gi' },
       },
     },
   },
@@ -140,11 +115,7 @@
     },
     spec: {
       ports: [
-        {
-          port: 5556,
-          protocol: 'TCP',
-          targetPort: 5556,
-        },
+        { port: 5556, protocol: 'TCP', targetPort: 5556 },
       ],
       selector: dex.config.commonLabels,
       type: 'ClusterIP',

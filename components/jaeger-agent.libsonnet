@@ -1,8 +1,3 @@
-local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
-local deployment = k.apps.v1.deployment;
-local container = deployment.mixin.spec.template.spec.containersType;
-local containerEnv = container.envType;
-
 {
   local jm = self,
   config+:: {
@@ -29,25 +24,42 @@ local containerEnv = container.envType;
         },
         spec+: {
           containers+: [
-            container.new('jaeger-agent', sm.config.jaegerAgent.image) +
-            container.withArgs([
-              '--reporter.grpc.host-port=' + sm.config.jaegerAgent.collectorAddress,
-              '--reporter.type=grpc',
-              '--jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)',
-            ]) +
-            container.withEnv([
-              containerEnv.fromFieldPath('NAMESPACE', 'metadata.namespace'),
-              containerEnv.fromFieldPath('POD', 'metadata.name'),
-            ]) +
-            container.mixin.livenessProbe.withFailureThreshold(5) +
-            container.mixin.livenessProbe.httpGet.withPath('/').withPort(14271).withScheme('HTTP') +
-            container.mixin.resources.withRequests({ cpu: '32m', memory: '64Mi' }) +
-            container.mixin.resources.withLimits({ cpu: '128m', memory: '128Mi' }) +
-            container.withPorts([
-              container.portsType.newNamed(6831, 'jaeger-thrift'),
-              container.portsType.newNamed(5778, 'configs'),
-              container.portsType.newNamed(14271, 'metrics'),
-            ]),
+            {
+              name: 'jaeger-agent',
+              image: sm.config.jaegerAgent.image,
+              args: [
+                '--reporter.grpc.host-port=' + sm.config.jaegerAgent.collectorAddress,
+                '--reporter.type=grpc',
+                '--jaeger.tags=pod.namespace=$(NAMESPACE),pod.name=$(POD)',
+              ],
+              env: [
+                {
+                  name: 'NAMESPACE',
+                  valueFrom: { fieldRef: { fieldPath: 'metadata.namespace' } },
+                },
+                {
+                  name: 'POD',
+                  valueFrom: { fieldRef: { fieldPath: 'metadata.name' } },
+                },
+              ],
+              ports: [
+                { name: 'jaeger-thrift', containerPort: 6831 },
+                { name: 'configs', containerPort: 5778 },
+                { name: 'metrics', containerPort: 14271 },
+              ],
+              livenessProbe: {
+                failureThreshold: 5,
+                httpGet: {
+                  scheme: 'HTTP',
+                  port: 14271,
+                  path: '/',
+                },
+              },
+              resources: {
+                requests: { cpu: '32m', memory: '64Mi' },
+                limits: { cpu: '128m', memory: '128Mi' },
+              },
+            },
           ],
         },
       },

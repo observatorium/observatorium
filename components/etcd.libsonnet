@@ -1,5 +1,3 @@
-local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
-
 {
   local etcd = self,
 
@@ -24,14 +22,15 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  configmap:
-    local configmap = k.core.v1.configMap;
-
-    configmap.new() +
-    configmap.mixin.metadata.withName(etcd.config.name) +
-    configmap.mixin.metadata.withNamespace(etcd.config.namespace) +
-    configmap.mixin.metadata.withLabels(etcd.config.commonLabels) +
-    configmap.withData({
+  configmap: {
+    apiVersion: 'v1',
+    kind: 'ConfigMap',
+    metadata: {
+      name: etcd.config.name,
+      namespace: etcd.config.namespace,
+      labels: etcd.config.commonLabels,
+    },
+    data: {
       'etcd-pre-stop.sh': |||
         EPS=""
         for i in $(seq 0 $((${INITIAL_CLUSTER_SIZE} - 1))); do
@@ -162,80 +161,86 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
             --initial-cluster-state new \
             --data-dir /var/run/etcd/default.etcd
       |||,
-    }),
+    },
+  },
 
-  service:
-    local service = k.core.v1.service;
-    local ports = service.mixin.spec.portsType;
-
-    service.new(
-      etcd.config.name,
-      etcd.config.podLabelSelector,
-      [
-        ports.newNamed('client', 2379, 2379) +
-        ports.withProtocol('TCP'),
-        ports.newNamed('peer', 2380, 2380) +
-        ports.withProtocol('TCP'),
-      ]
-    ) +
-    service.mixin.metadata.withNamespace(etcd.config.namespace) +
-    service.mixin.metadata.withLabels(etcd.config.commonLabels),
+  service: {
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata: {
+      name: etcd.config.name,
+      namespace: etcd.config.namespace,
+      labels: etcd.config.commonLabels,
+    },
+    spec: {
+      ports: [
+        { name: 'client', targetPort: 2379, port: 2379, protocol: 'TCP' },
+        { name: 'peer', targetPort: 2380, port: 2380, protocol: 'TCP' },
+      ],
+      selector: etcd.config.podLabelSelector,
+    },
+  },
 
   statefulSet:
-    local statefulset = k.apps.v1.statefulSet;
-    local container = statefulset.mixin.spec.template.spec.containersType;
-    local envVar = container.envType;
-    local containerPort = container.portsType;
-    local containerVolumeMount = container.volumeMountsType;
-
-    local c =
-      container.new('etcd', etcd.config.image) +
-      container.withCommand([
+    local c = {
+      name: 'etcd',
+      image: etcd.config.image,
+      command: [
         '/bin/sh',
         '-ec',
         '/scripts/etcd-server.sh',
-      ]) + container.withEnv([
+      ],
+      env: [
         { name: 'ETCDCTL_API', value: '3' },
         { name: 'INITIAL_CLUSTER_SIZE', value: '%d' % etcd.config.replicas },
         { name: 'SET_NAME', value: etcd.config.name },
-      ]) + container.withPorts([
-        containerPort.newNamed(2379, 'client'),
-        containerPort.newNamed(2380, 'peer'),
-      ]) + container.mixin.resources.withRequests({
-        cpu: '100m',
-        memory: '128Mi',
-      }) + container.mixin.resources.withLimits({
-        cpu: '200m',
-        memory: '256Mi',
-      }) + container.withVolumeMounts([
-        containerVolumeMount.new('scripts', '/scripts'),
-        containerVolumeMount.new('storage', '/var/run/etcd'),
-      ]) + {
-        lifecycle: {
-          preStop: {
-            exec: {
-              command: [
-                '/bin/sh',
-                '-ec',
-                '/scripts/etcd-pre-stop.sh',
-              ],
-            },
+      ],
+      ports: [
+        { name: port.name, containerPort: port.port }
+        for port in etcd.service.spec.ports
+      ],
+      volumeMounts: [
+        { name: 'scripts', mountPath: '/scripts' },
+        { name: 'storage', mountPath: '/var/run/etcd' },
+      ],
+      resources: {
+        requests: { cpu: '100m', memory: '128Mi' },
+        limits: { cpu: '200m', memory: '256Mi' },
+      },
+      lifecycle: {
+        preStop: {
+          exec: {
+            command: ['/bin/sh', '-ec', '/scripts/etcd-pre-stop.sh'],
           },
         },
-      };
+      },
+    };
 
-    statefulset.new(etcd.config.name, etcd.config.replicas, [c], [], etcd.config.commonLabels) +
-    statefulset.mixin.metadata.withNamespace(etcd.config.namespace) +
-    statefulset.mixin.metadata.withLabels(etcd.config.commonLabels) +
-    statefulset.mixin.spec.selector.withMatchLabels(etcd.config.podLabelSelector) +
-    statefulset.mixin.spec.withServiceName(etcd.service.metadata.name) +
-    statefulset.mixin.spec.template.spec.withVolumes([
-      { name: 'scripts', configMap: { name: etcd.configmap.metadata.name, defaultMode: std.parseOctal('777') } },
-      { name: 'storage', emptyDir: {} },
-    ])
     {
-      spec+: {
-        volumeClaimTemplates:: null,
+      apiVersion: 'apps/v1',
+      kind: 'StatefulSet',
+      metadata: {
+        name: etcd.config.name,
+        namespace: etcd.config.namespace,
+        labels: etcd.config.commonLabels,
+      },
+      spec: {
+        replicas: etcd.config.replicas,
+        selector: { matchLabels: etcd.config.podLabelSelector },
+        serviceName: etcd.service.metadata.name,
+        template: {
+          metadata: {
+            labels: etcd.config.commonLabels,
+          },
+          spec: {
+            containers: [c],
+            volumes: [
+              { name: 'scripts', configMap: { name: etcd.configmap.metadata.name, defaultMode: std.parseOctal('777') } },
+              { name: 'storage', emptyDir: {} },
+            ],
+            volumeClaimTemplates:: null,
+          },
+        },
       },
     },
 

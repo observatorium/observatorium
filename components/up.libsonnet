@@ -1,5 +1,3 @@
-local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
-
 {
   local up = self,
 
@@ -9,6 +7,7 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     version: error 'must provide version',
     image: error 'must provide image',
     endpointType: error 'must provide endpoint type',
+    replicas: 1,
     queryConfig: {},
     readEndpoint: '',
     writeEndpoint: '',
@@ -33,85 +32,89 @@ local k = import 'ksonnet/ksonnet.beta.4/k.libsonnet';
     },
   },
 
-  service:
-    local service = k.core.v1.service;
-    local ports = service.mixin.spec.portsType;
-
-    service.new(
-      up.config.name,
-      up.config.podLabelSelector,
-      [
-        ports.newNamed('http', 8080, 8080),
+  service: {
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata: {
+      name: up.config.name,
+      namespace: up.config.namespace,
+      labels: up.config.commonLabels,
+    },
+    spec: {
+      ports: [
+        { name: 'http', targetPort: 8080, port: 8080 },
       ],
-    ) +
-    service.mixin.metadata.withNamespace(up.config.namespace) +
-    service.mixin.metadata.withLabels(up.config.commonLabels),
+      selector: up.config.podLabelSelector,
+    },
+  },
 
   deployment:
-    local d = k.apps.v1.deployment;
-    local container = d.mixin.spec.template.spec.containersType;
-    local containerPort = container.portsType;
-    local env = container.envType;
-    local containerVolumeMount = container.volumeMountsType;
-
-    local c =
-      container.new('observatorium-up', up.config.image) +
-      container.withArgs(
-        [
-          '--duration=0',
-          '--log.level=debug',
-          '--endpoint-type=' + up.config.endpointType,
-        ] + (
-          if up.config.queryConfig != {} then
-            ['--queries-file=/etc/up/queries.yaml']
-          else []
-        ) + (
-          if up.config.readEndpoint != '' then
-            ['--endpoint-read=' + up.config.readEndpoint]
-          else []
-        ) + (
-          if up.config.writeEndpoint != '' then
-            ['--endpoint-write=' + up.config.writeEndpoint]
-          else []
-        ) + (
-          if up.config.logs != '' then
-            ['--logs=' + up.config.logs]
-          else []
-        )
-      ) +
-      container.withPorts([
-        containerPort.newNamed(8080, 'http'),
-      ]) +
-      container.withVolumeMounts(
+    local c = {
+      name: 'observatorium-up',
+      image: up.config.image,
+      args: [
+        '--duration=0',
+        '--log.level=debug',
+        '--endpoint-type=' + up.config.endpointType,
+      ] + (
         if up.config.queryConfig != {} then
-          [
-            {
-              mountPath: '/etc/up/',
-              name: 'query-config',
-              readOnly: false,
-            },
-          ] else [],
-      ) +
-      container.mixin.resources.withLimits(up.config.resources.limits) +
-      container.mixin.resources.withRequests(up.config.resources.requests);
+          ['--queries-file=/etc/up/queries.yaml']
+        else []
+      ) + (
+        if up.config.readEndpoint != '' then
+          ['--endpoint-read=' + up.config.readEndpoint]
+        else []
+      ) + (
+        if up.config.writeEndpoint != '' then
+          ['--endpoint-write=' + up.config.writeEndpoint]
+        else []
+      ) + (
+        if up.config.logs != '' then
+          ['--logs=' + up.config.logs]
+        else []
+      ),
+      ports: [
+        { name: port.name, containerPort: port.port }
+        for port in up.service.spec.ports
+      ],
+      volumeMounts: if up.config.queryConfig != {} then [{
+        mountPath: '/etc/up/',
+        name: 'query-config',
+        readOnly: false,
+      }] else [],
+      resources: up.config.resources,
+    };
 
-    d.new() +
-    d.mixin.metadata.withName(up.config.name) +
-    d.mixin.metadata.withNamespace(up.config.namespace) +
-    d.mixin.spec.selector.withMatchLabels(up.config.podLabelSelector) +
-    d.mixin.spec.template.metadata.withLabels(up.config.commonLabels) +
-    d.mixin.spec.template.spec.withVolumes(
-      if up.config.queryConfig != {} then
-        [
-          {
-            configMap: {
-              name: up.config.name,
-            },
-            name: 'query-config',
+    {
+      apiVersion: 'apps/v1',
+      kind: 'Deployment',
+      metadata: {
+        name: up.config.name,
+        namespace: up.config.namespace,
+        labels: up.config.commonLabels,
+      },
+      spec: {
+        replicas: up.config.replicas,
+        selector: { matchLabels: up.config.podLabelSelector },
+        template: {
+          metadata: {
+            labels: up.config.commonLabels,
           },
-        ] else [],
-    ) +
-    d.mixin.spec.template.spec.withContainers([c]),
+          spec: {
+            containers: [c],
+            volumes: if up.config.queryConfig != {} then
+              [
+                {
+                  configMap: {
+                    name: up.config.name,
+                  },
+                  name: 'query-config',
+                },
+              ] else [],
+          },
+        },
+      },
+    },
 
   configmap:
     if up.config.queryConfig != {} then {
