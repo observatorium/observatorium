@@ -137,6 +137,16 @@
     replicas: 1,
   },
 
+  queryFrontendCache: {
+    local scConfig = self,
+    replicas: 1,
+    version: '1.6.3-alpine',
+    image: 'docker.io/memcached:' + scConfig.version,
+    exporterVersion: 'v0.6.0',
+    exporterImage: 'prom/memcached-exporter:' + scConfig.exporterVersion,
+    memoryLimitMb: 1024,
+  },
+
   api: {
     local apiConfig = self,
     version: 'master-2020-11-02-v0.1.1-192-ge324057',

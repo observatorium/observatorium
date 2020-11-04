@@ -217,7 +217,32 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     maxRetries: 0,
     logQueriesLongerThan: '5s',
     serviceMonitor: true,
+    queryRangeCache: {
+      type: 'memcached',
+      config+: {
+        addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.queryFrontendCache.service.metadata.name, obs.queryFrontendCache.service.metadata.namespace]],
+      },
+    },
+    labelsCache: {
+      type: 'memcached',
+      config+: {
+        addresses: ['dnssrv+_client._tcp.%s.%s.svc' % [obs.queryFrontendCache.service.metadata.name, obs.queryFrontendCache.service.metadata.namespace]],
+      },
+    },
   }),
+
+  queryFrontendCache:: memcached {
+    config+:: {
+      local cfg = self,
+      name: obs.config.name + '-thanos-query-frontend-' + cfg.commonLabels['app.kubernetes.io/name'],
+      namespace: obs.config.namespace,
+      commonLabels+:: obs.config.commonLabels,
+      cpuRequest:: '100m',
+      cpuLimit:: '200m',
+      memoryRequestBytes: 128 * 1024 * 1024,
+      memoryLimitBytes: 256 * 1024 * 1024,
+    },
+  },
 
   gubernator:: (import 'gubernator.libsonnet') + {
     config+:: {
@@ -300,6 +325,9 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     ['thanos-query-frontend-' + name]: obs.queryFrontend[name]
     for name in std.objectFields(obs.queryFrontend)
     if obs.queryFrontend[name] != null
+  } + {
+    ['query-frontend-cache-' + name]: obs.queryFrontendCache[name]
+    for name in std.objectFields(obs.queryFrontendCache)
   } + {
     ['thanos-receive-' + hashring + '-' + name]: obs.receivers[hashring][name]
     for hashring in std.objectFields(obs.receivers)
