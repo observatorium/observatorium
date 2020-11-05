@@ -123,7 +123,8 @@
     exporterVersion: 'v0.6.0',
     exporterImage: 'prom/memcached-exporter:' + scConfig.exporterVersion,
     memoryLimitMb: 1024,
-    cpuLimit:: '100m',
+    cpuRequest:: '50m',
+    cpuLimit:: '50m',
     memoryLimitBytes: 128 * 1024 * 1024,
   },
 
@@ -147,7 +148,8 @@
     exporterVersion: 'v0.6.0',
     exporterImage: 'prom/memcached-exporter:' + scConfig.exporterVersion,
     memoryLimitMb: 1024,
-    cpuLimit:: '100m',
+    cpuRequest:: '50m',
+    cpuLimit:: '50m',
     memoryLimitBytes: 128 * 1024 * 1024,
   },
 
