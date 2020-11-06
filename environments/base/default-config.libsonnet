@@ -3,7 +3,7 @@
 
   name: 'observatorium-xyz',
   namespace: 'observatorium',
-  thanosVersion: 'v0.16.0',
+  thanosVersion: 'master-2020-11-04-a4576d85',
   thanosImage: 'quay.io/thanos/thanos:' + defaultConfig.thanosVersion,
   objectStorageConfig: {
     thanos: {
@@ -123,6 +123,9 @@
     exporterVersion: 'v0.6.0',
     exporterImage: 'prom/memcached-exporter:' + scConfig.exporterVersion,
     memoryLimitMb: 1024,
+    cpuRequest:: '50m',
+    cpuLimit:: '50m',
+    memoryLimitBytes: 128 * 1024 * 1024,
   },
 
   query: {
@@ -135,6 +138,19 @@
     image: defaultConfig.thanosImage,
     version: defaultConfig.thanosVersion,
     replicas: 1,
+  },
+
+  queryFrontendCache: {
+    local scConfig = self,
+    replicas: 1,
+    version: '1.6.3-alpine',
+    image: 'docker.io/memcached:' + scConfig.version,
+    exporterVersion: 'v0.6.0',
+    exporterImage: 'prom/memcached-exporter:' + scConfig.exporterVersion,
+    memoryLimitMb: 1024,
+    cpuRequest:: '50m',
+    cpuLimit:: '50m',
+    memoryLimitBytes: 128 * 1024 * 1024,
   },
 
   api: {
@@ -158,7 +174,7 @@
 
   up: {
     local upConfig = self,
-    version: 'master-2020-06-03-8a20b4e',
+    version: 'master-2020-11-04-0c6ece8',
     image: 'quay.io/observatorium/up:' + upConfig.version,
   },
 

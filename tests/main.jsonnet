@@ -39,7 +39,7 @@ local dex = (import '../components/dex.libsonnet') + {
 local upMetrics = upJob + upJob.withResources + {
   config+:: {
     name: 'observatorium-up-metrics',
-    version: 'master-2020-06-15-d763595',
+    version: 'master-2020-11-04-0c6ece8',
     image: 'quay.io/observatorium/up:' + self.version,
     commonLabels+:: {
       'app.kubernetes.io/instance': 'e2e-test',
@@ -101,7 +101,7 @@ local upMetricsTLS = upMetrics {
 local upLogs = upJob + upJob.withResources + {
   config+:: {
     name: 'observatorium-up-logs',
-    version: 'master-2020-06-15-d763595',
+    version: 'master-2020-11-04-0c6ece8',
     image: 'quay.io/observatorium/up:' + self.version,
     commonLabels+:: {
       'app.kubernetes.io/instance': 'e2e-test',

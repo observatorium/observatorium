@@ -5,7 +5,7 @@ metadata:
     app.kubernetes.io/component: test
     app.kubernetes.io/instance: e2e-test
     app.kubernetes.io/name: observatorium-up
-    app.kubernetes.io/version: master-2020-06-15-d763595
+    app.kubernetes.io/version: master-2020-11-04-0c6ece8
   name: observatorium-up-logs
 spec:
   backoffLimit: 5
@@ -15,7 +15,7 @@ spec:
         app.kubernetes.io/component: test
         app.kubernetes.io/instance: e2e-test
         app.kubernetes.io/name: observatorium-up
-        app.kubernetes.io/version: master-2020-06-15-d763595
+        app.kubernetes.io/version: master-2020-11-04-0c6ece8
     spec:
       containers:
       - args:
@@ -31,7 +31,7 @@ spec:
         - --threshold=0.90
         - --token-file=/var/shared/token
         - --logs-file=/var/logs-file/logs.yaml
-        image: quay.io/observatorium/up:master-2020-06-15-d763595
+        image: quay.io/observatorium/up:master-2020-11-04-0c6ece8
         name: observatorium-up
         resources:
           limits:

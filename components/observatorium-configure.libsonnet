@@ -39,6 +39,10 @@
     config+:: obs.config.queryFrontend,
   },
 
+  queryFrontendCache+:: {
+    config+:: obs.config.queryFrontendCache,
+  },
+
   api+:: {
     config+:: obs.config.api,
   },
