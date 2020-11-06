@@ -236,6 +236,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
       local cfg = self,
       name: obs.config.name + '-thanos-query-frontend-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
+      component: 'query-frontend-cache',
       commonLabels+:: obs.config.commonLabels,
       cpuRequest:: '100m',
       cpuLimit:: '200m',

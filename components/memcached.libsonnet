@@ -21,11 +21,12 @@
     memoryRequestBytes:: std.ceil((mc.config.memoryLimitMb * mc.config.overprovisionFactor) + 100) * 1024 * 1024,
     memoryLimitBytes:: mc.config.memoryLimitMb * 1.5 * 1024 * 1024,
 
+    component:: 'store-cache',
     commonLabels:: {
       'app.kubernetes.io/name': 'memcached',
       'app.kubernetes.io/instance': mc.config.name,
       'app.kubernetes.io/version': mc.config.version,
-      'app.kubernetes.io/component': 'store-cache',
+      'app.kubernetes.io/component': mc.config.component,
     },
 
     podLabelSelector:: {
