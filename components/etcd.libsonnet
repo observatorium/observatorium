@@ -1,26 +1,39 @@
-{
+// These are the defaults for this components configuration.
+// When calling the function to generate the component's manifest,
+// you can pass an object structured like the default to overwrite default values.
+local defaults = {
+  local defaults = self,
+  name: error 'must provide name',
+  namespace: error 'must provide namespace',
+  version: error 'must provide version',
+  image: error 'must provide image',
+  replicas: error 'must provide replicas',
+  ports: {
+    client: 2379,
+    peer: 2380,
+  },
+
+  commonLabels:: {
+    'app.kubernetes.io/name': 'loki',
+    'app.kubernetes.io/instance': etcd.config.name,
+    'app.kubernetes.io/version': etcd.config.version,
+    'app.kubernetes.io/component': 'ring-store',
+  },
+
+  podLabelSelector:: {
+    [labelName]: etcd.config.commonLabels[labelName]
+    for labelName in std.objectFields(etcd.config.commonLabels)
+    if !std.setMember(labelName, ['app.kubernetes.io/version'])
+  },
+};
+
+function(param) {
   local etcd = self,
 
-  config:: {
-    name: error 'must provide name',
-    namespace: error 'must provide namespace',
-    version: error 'must provide version',
-    image: error 'must provide image',
-    replicas: error 'must provide replicas',
-
-    commonLabels:: {
-      'app.kubernetes.io/name': 'loki',
-      'app.kubernetes.io/instance': etcd.config.name,
-      'app.kubernetes.io/version': etcd.config.version,
-      'app.kubernetes.io/component': 'ring-store',
-    },
-
-    podLabelSelector:: {
-      [labelName]: etcd.config.commonLabels[labelName]
-      for labelName in std.objectFields(etcd.config.commonLabels)
-      if !std.setMember(labelName, ['app.kubernetes.io/version'])
-    },
-  },
+  // Combine the defaults and the passed params to make the component's config.
+  config:: defaults + params,
+  // Safety checks for combined config of defaults and params
+  assert std.isNumber(tr.config.replicas) && tr.config.replicas >= 0 : 'etcd has to be number >= 0',
 
   configmap: {
     apiVersion: 'v1',
@@ -174,8 +187,16 @@
     },
     spec: {
       ports: [
-        { name: 'client', targetPort: 2379, port: 2379, protocol: 'TCP' },
-        { name: 'peer', targetPort: 2380, port: 2380, protocol: 'TCP' },
+        {
+          assert std.isString(name),
+          assert std.isNumber(tr.config.ports[name]),
+
+          name: name,
+          port: tr.config.ports[name],
+          targetPort: tr.config.ports[name],
+          protocol: 'TCP',
+        }
+        for name in std.objectFields(tr.config.ports)
       ],
       selector: etcd.config.podLabelSelector,
     },
@@ -243,10 +264,4 @@
         },
       },
     },
-
-  manifests:: {
-    'ring-store-service': etcd.service,
-    'ring-store-configmap': etcd.configmap,
-    'ring-store-statefulset': etcd.statefulSet,
-  },
 }
