@@ -20,7 +20,6 @@ jobs:
           no_output_timeout: 30m
           command : |
             ./tests/e2e.sh kind
-            ./tests/e2e.sh prepare-e2e
             ./tests/e2e.sh deploy
             ./tests/e2e.sh test
       - store_artifacts:

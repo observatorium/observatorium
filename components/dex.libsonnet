@@ -144,16 +144,14 @@ function(params) {
             {
               name: 'tls',
               secret: {
-                // this secret is created automatically by OpenShift when
-                // the service has the appropriate annotation
                 secretName: dex.config.tlsSecret,
                 items: [
                   {
-                    key: 'tls.crt',
+                    key: dex.config.tlsCertMapEntry,
                     path: 'tls.crt',
                   },
                   {
-                    key: 'tls.key',
+                    key: dex.config.tlsKeyMapEntry,
                     path: 'tls.key',
                   },
                 ],
