@@ -1,29 +1,42 @@
-{
+// These are the defaults for this components configuration.
+// When calling the function to generate the component's manifest,
+// you can pass an object structured like the default to overwrite default values.
+local defaults = {
+  local defaults = self,
+  name: error 'must provide name',
+  namespace: error 'must provide namespace',
+  version: error 'must provide version',
+  image: error 'must provide image',
+  ports: {
+    http: 8080,
+    grpc: 8081,
+  },
+  resources: {},
+  serviceMonitor: false,
+
+  commonLabels:: {
+    'app.kubernetes.io/name': 'gubernator',
+    'app.kubernetes.io/instance': defaults.name,
+    'app.kubernetes.io/version': defaults.version,
+    'app.kubernetes.io/component': 'rate-limiter',
+  },
+
+  podLabelSelector:: {
+    [labelName]: defaults.commonLabels[labelName]
+    for labelName in std.objectFields(defaults.commonLabels)
+    if !std.setMember(labelName, ['app.kubernetes.io/version'])
+  },
+};
+
+function(params) {
   local gubernator = self,
 
-  config:: {
-    name: error 'must provide name',
-    namespace: error 'must provide namespace',
-    version: error 'must provide version',
-    image: error 'must provide image',
-    resources: {
-      requests: {},
-      limits: {},
-    },
-
-    commonLabels:: {
-      'app.kubernetes.io/name': 'gubernator',
-      'app.kubernetes.io/instance': gubernator.config.name,
-      'app.kubernetes.io/version': gubernator.config.version,
-      'app.kubernetes.io/component': 'rate-limiter',
-    },
-
-    podLabelSelector:: {
-      [labelName]: gubernator.config.commonLabels[labelName]
-      for labelName in std.objectFields(gubernator.config.commonLabels)
-      if !std.setMember(labelName, ['app.kubernetes.io/version'])
-    },
-  },
+  // Combine the defaults and the passed params to make the component's config.
+  config:: defaults + params,
+  // Safety checks for combined config of defaults and params
+  assert std.isNumber(gubernator.config.replicas) && gubernator.config.replicas >= 0 : 'gubernator replicas has to be number >= 0',
+  assert std.isObject(gubernator.config.resources),
+  assert std.isBoolean(gubernator.config.serviceMonitor),
 
   serviceAccount: {
     apiVersion: 'v1',
@@ -82,8 +95,15 @@
     },
     spec: {
       ports: [
-        { name: 'http', targetPort: 8080, port: 8080 },
-        { name: 'grpc', targetPort: 8081, port: 8081 },
+        {
+          assert std.isString(name),
+          assert std.isNumber(gubernator.config.ports[name]),
+
+          name: name,
+          port: gubernator.config.ports[name],
+          targetPort: gubernator.config.ports[name],
+        }
+        for name in std.objectFields(gubernator.config.ports)
       ],
       selector: gubernator.config.podLabelSelector,
     },
@@ -94,30 +114,12 @@
       name: 'gubernator',
       image: gubernator.config.image,
       env: [
-        {
-          name: 'GUBER_K8S_NAMESPACE',
-          valueFrom: { fieldRef: { fieldPath: 'metadata.namespace' } },
-        },
-        {
-          name: 'GUBER_K8S_POD_IP',
-          valueFrom: { fieldRef: { fieldPath: 'status.podIP' } },
-        },
-        {
-          name: 'GUBER_HTTP_ADDRESS',
-          value: '0.0.0.0:%s' % gubernator.service.spec.ports[0].targetPort,
-        },
-        {
-          name: 'GUBER_GRPC_ADDRESS',
-          value: '0.0.0.0:%s' % gubernator.service.spec.ports[1].targetPort,
-        },
-        {
-          name: 'GUBER_K8S_POD_PORT',
-          value: std.toString(gubernator.service.spec.ports[1].port),
-        },
-        {
-          name: 'GUBER_K8S_ENDPOINTS_SELECTOR',
-          value: 'app.kubernetes.io/name=gubernator',
-        },
+        { name: 'GUBER_K8S_NAMESPACE', valueFrom: { fieldRef: { fieldPath: 'metadata.namespace' } } },
+        { name: 'GUBER_K8S_POD_IP', valueFrom: { fieldRef: { fieldPath: 'status.podIP' } } },
+        { name: 'GUBER_HTTP_ADDRESS', value: '0.0.0.0:%s' % gubernator.config.ports.http },
+        { name: 'GUBER_GRPC_ADDRESS', value: '0.0.0.0:%s' % gubernator.config.ports.grpc },
+        { name: 'GUBER_K8S_POD_PORT', value: std.toString(gubernator.config.ports.grpc) },
+        { name: 'GUBER_K8S_ENDPOINTS_SELECTOR', value: 'app.kubernetes.io/name=gubernator' },
       ],
       ports: [
         { name: port.name, containerPort: port.port }
@@ -130,7 +132,7 @@
         timeoutSeconds: 1,
         httpGet: {
           scheme: 'HTTP',
-          port: gubernator.service.spec.ports[0].port,
+          port: gubernator.config.ports.http,
           path: '/v1/HealthCheck',
         },
       },
@@ -167,27 +169,18 @@
       },
     },
 
-  withServiceMonitor:: {
-    local gubernator = self,
-
-    serviceMonitor: {
-      apiVersion: 'monitoring.coreos.com/v1',
-      kind: 'ServiceMonitor',
-      metadata+: {
-        name: gubernator.config.name,
-        namespace: gubernator.config.namespace,
-      },
-      spec: {
-        selector: { matchLabels: gubernator.config.podLabelSelector },
-        endpoints: [
-          { port: 'http' },
-        ],
-      },
+  serviceMonitor: if gubernator.config.serviceMonitor == true then {
+    apiVersion: 'monitoring.coreos.com/v1',
+    kind: 'ServiceMonitor',
+    metadata+: {
+      name: gubernator.config.name,
+      namespace: gubernator.config.namespace,
     },
-  },
-
-  manifests+:: {
-    'gubernator-deployment': gubernator.deployment,
-    'gubernator-service': gubernator.service,
+    spec: {
+      selector: { matchLabels: gubernator.config.podLabelSelector },
+      endpoints: [
+        { port: 'http' },
+      ],
+    },
   },
 }

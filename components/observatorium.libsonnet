@@ -245,15 +245,13 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     },
   },
 
-  gubernator:: (import 'gubernator.libsonnet') + {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-      namespace: obs.config.namespace,
-      replicas: 2,
-      commonLabels+:: obs.config.commonLabels,
-    },
-  },
+  gubernator:: (import 'gubernator.libsonnet')({
+    local cfg = self,
+    name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+    namespace: obs.config.namespace,
+    replicas: 2,
+    commonLabels+:: obs.config.commonLabels,
+  }),
 
   api:: observatoriumAPI + observatoriumAPI.withRateLimiter {
     config+:: {
@@ -278,7 +276,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
         grpcAddress: '%s.%s.svc.cluster.local:%d' % [
           obs.gubernator.service.metadata.name,
           obs.gubernator.service.metadata.namespace,
-          obs.gubernator.service.spec.ports[1].port,
+          obs.gubernator.config.ports.grpc,
         ],
       },
     } + if std.length(obs.config.loki) != 0 then {
