@@ -108,12 +108,10 @@ local obs = (import '../base/observatorium.jsonnet') + {
   },
 };
 
-local minio = (import '../../components/minio.libsonnet') + {
-  config:: {
-    namespace: 'observatorium-minio',
-    bucketSecretNamespace: obs.config.namespace,
-  },
-};
+local minio = (import '../../components/minio.libsonnet')({
+  namespace: 'observatorium-minio',
+  bucketSecretNamespace: obs.config.namespace,
+});
 
 local up = (import '../../components/up.libsonnet') + {
   config+:: {
@@ -139,6 +137,12 @@ local up = (import '../../components/up.libsonnet') + {
 };
 
 obs.manifests +
-minio.manifests +
 up.manifests +
+{
+  'minio-deployment': minio.deployment,
+  'minio-pvc': minio.pvc,
+  'minio-secret-thanos': minio.secretThanos,
+  'minio-secret-loki': minio.secretLoki,
+  'minio-service': minio.service,
+} +
 { ['dex-' + name]: dex[name] for name in std.objectFields(dex) if dex[name] != null }
