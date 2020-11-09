@@ -10,7 +10,8 @@ metadata:
   namespace: dex
 spec:
   ports:
-  - port: 5556
+  - name: http
+    port: 5556
     protocol: TCP
     targetPort: 5556
   selector:
