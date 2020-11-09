@@ -29,12 +29,10 @@ local tls = {
 
 local upJob = (import '../components/up-job.libsonnet');
 
-local dex = (import '../components/dex.libsonnet') + {
-  config+:: {
-    name: 'dex',
-    namespace: 'dex',
-  },
-};
+local dex = (import '../components/dex.libsonnet')({
+  name: 'dex',
+  namespace: 'dex',
+});
 
 local upMetrics = upJob + upJob.withResources + {
   config+:: {
