@@ -113,8 +113,8 @@ local minio = (import '../../components/minio.libsonnet')({
   bucketSecretNamespace: obs.config.namespace,
 });
 
-local up = (import '../../components/up.libsonnet') + {
-  config+:: {
+local up = (import 'up/up.libsonnet')(
+  {
     local cfg = self,
     name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
     namespace: obs.config.namespace,
@@ -134,10 +134,10 @@ local up = (import '../../components/up.libsonnet') + {
       obs.api.service.spec.ports[1].port,
     ],
   },
-};
+);
 
 obs.manifests +
-up.manifests +
+{ ['up-' + name]: up[name] for name in std.objectFields(up) if up[name] != null } +
 {
   'minio-deployment': minio.deployment,
   'minio-pvc': minio.pvc,

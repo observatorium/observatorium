@@ -62,6 +62,7 @@ spec:
             port: 8081
             scheme: HTTP
           periodSeconds: 5
+        resources: {}
         volumeMounts: []
-      serviceAccount: observatorium-xyz-observatorium-api
+      serviceAccountName: observatorium-xyz-observatorium-api
       volumes: []

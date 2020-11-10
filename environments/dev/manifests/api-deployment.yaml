@@ -64,6 +64,7 @@ spec:
             port: 8081
             scheme: HTTP
           periodSeconds: 5
+        resources: {}
         volumeMounts:
         - mountPath: /etc/observatorium/rbac.yaml
           name: rbac
@@ -73,7 +74,7 @@ spec:
           name: tenants
           readOnly: true
           subPath: tenants.yaml
-      serviceAccount: observatorium-xyz-observatorium-api
+      serviceAccountName: observatorium-xyz-observatorium-api
       volumes:
       - configMap:
           name: observatorium-xyz-observatorium-api

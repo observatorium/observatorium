@@ -249,8 +249,8 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     commonLabels+:: obs.config.commonLabels,
   }),
 
-  api:: observatoriumAPI + observatoriumAPI.withRateLimiter {
-    config+:: {
+  api:: observatoriumAPI(
+    {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
@@ -294,7 +294,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
         ],
       },
     } else {},
-  },
+  ),
 
   loki::
     l +

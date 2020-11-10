@@ -14,6 +14,16 @@
     {
       "source": {
         "git": {
+          "remote": "https://github.com/observatorium/up",
+          "subdir": "jsonnet"
+        }
+      },
+      "version": "master",
+      "name": "up"
+    },
+    {
+      "source": {
+        "git": {
           "remote": "https://github.com/observatorium/thanos-receive-controller",
           "subdir": "jsonnet/lib"
         }
