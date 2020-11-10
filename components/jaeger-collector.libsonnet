@@ -14,6 +14,7 @@ local defaults = {
     admin: 14269,
     query: 16686,
     grpc: 14250,
+    metrics: 14271,
   },
   resources: {},
   serviceMonitor: false,
@@ -52,7 +53,7 @@ function(params) {
     },
     spec: {
       ports: [
-        { name: 'grpc', targetPort: 14250, port: 14250 },
+        { name: 'grpc', targetPort: j.config.grpc, port: j.config.grpc },
       ],
       selector: $.jaeger.deployment.metadata.labels,
       clusterIP: 'None',
@@ -69,7 +70,7 @@ function(params) {
     },
     spec: {
       ports: [
-        { name: 'query', targetPort: 16686, port: 16686 },
+        { name: 'query', targetPort: j.config.query, port: j.config.query },
       ],
       selector: $.jaeger.deployment.metadata.labels,
     },
@@ -85,7 +86,7 @@ function(params) {
     },
     spec: {
       ports: [
-        { name: 'admin', targetPort: 14269, port: 14269 },
+        { name: 'admin', targetPort: j.config.admin, port: j.config.admin },
       ],
       selector: $.jaeger.deployment.metadata.labels,
     },
@@ -101,7 +102,7 @@ function(params) {
     },
     spec: {
       ports: [
-        { name: 'metrics', targetPort: 14271, port: 14271 },
+        { name: 'metrics', targetPort: j.config.metrics, port: j.config.metrics },
       ],
       selector: { 'app.kubernetes.io/tracing': 'jaeger-agent' },
     },
@@ -151,12 +152,12 @@ function(params) {
       ],
       livenessProbe: { failureThreshold: 4, periodSeconds: 30, httpGet: {
         scheme: 'HTTP',
-        port: 14269,
+        port: j.config.admin,
         path: '/',
       } },
       readinessProbe: { failureThreshold: 3, periodSeconds: 30, initialDelaySeconds: 10, httpGet: {
         scheme: 'HTTP',
-        port: 14269,
+        port: j.config.admin,
         path: '/',
       } },
       resources: {

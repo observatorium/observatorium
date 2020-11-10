@@ -1,7 +1,7 @@
 // Convert number to k8s "quantity" (ie 1.5Gi -> "1536Mi")
 // as per https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go
 // Original from https://github.com/grafana/jsonnet-libs/blob/master/memcached/memcached.libsonnet
-local bytesToK8sQuantity(i) =
+local bytesToKubernetesQuantity(i) =
   local remove_factors_exponent(x, y) =
     if x % y > 0
     then 0
@@ -99,11 +99,11 @@ function(params) {
       resources: if std.objectHas(mc.config.resources, 'memcached') then mc.config.resources.memcached else {
         requests: {
           cpu: mc.config.cpuRequest,
-          memory: bytesToK8sQuantity(mc.config.memoryRequestBytes),
+          memory: bytesToKubernetesQuantity(mc.config.memoryRequestBytes),
         },
         limits: {
           cpu: mc.config.cpuLimit,
-          memory: bytesToK8sQuantity(mc.config.memoryLimitBytes),
+          memory: bytesToKubernetesQuantity(mc.config.memoryLimitBytes),
         },
       },
       terminationMessagePolicy: 'FallbackToLogsOnError',
