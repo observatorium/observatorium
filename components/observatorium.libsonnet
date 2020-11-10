@@ -214,7 +214,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     splitInterval: '24h',
     maxRetries: 0,
     logQueriesLongerThan: '5s',
-    serviceMonitor: true,
+    serviceMonitor: false,
     queryRangeCache: {
       type: 'memcached',
       config+: {

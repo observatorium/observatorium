@@ -162,7 +162,7 @@ function(params) {
           },
           spec: {
             containers: [c],
-            serviceAccount: gubernator.serviceAccount.metadata.name,
+            serviceAccountName: gubernator.serviceAccount.metadata.name,
             restartPolicy: 'Always',
           },
         },

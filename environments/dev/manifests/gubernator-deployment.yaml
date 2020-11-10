@@ -66,4 +66,4 @@ spec:
           timeoutSeconds: 1
         resources: {}
       restartPolicy: Always
-      serviceAccount: observatorium-xyz-gubernator
+      serviceAccountName: observatorium-xyz-gubernator
