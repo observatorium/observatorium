@@ -24,7 +24,7 @@ generate: environments/base/manifests environments/dev/manifests
 
 .PHONY: validate
 validate: $(KUBEVAL) generate
-	$(KUBEVAL) --ignore-missing-schemas environments/base/manifests/*.yaml
+	$(KUBEVAL) --ignore-missing-schemas environments/base/manifests/*.yaml environments/dev/manifests/*.yaml tests/manifests/*.yaml
 
 environments/base/manifests: environments/base/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
