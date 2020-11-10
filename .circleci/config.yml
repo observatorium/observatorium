@@ -7,8 +7,9 @@ jobs:
       - checkout
       - run: make fmt
       - run: make generate-cert
-      - run: make environments/base/manifests environments/dev/manifests tests/manifests
+      - run: make generate tests/manifests
       - run: git diff --exit-code -- . ':(exclude)tests/manifests/observatorium-xyz-tls-secret.yaml' ':(exclude)tests/manifests/observatorium-xyz-tls-configmap.yaml'
+      - run: make validate
 
   tests:
     machine: true
