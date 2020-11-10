@@ -10,6 +10,8 @@ GENERATE_TLS_CERT ?= $(BIN_DIR)/generate-tls-cert
 
 JSONNET_SRC = $(shell find . -type f -not -path './*vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \))
 
+all: generate validate
+
 vendor: $(JB)
 	$(JB) install
 
@@ -19,6 +21,10 @@ fmt: $(JSONNETFMT) $(JSONNET_SRC)
 
 .PHONY: generate
 generate: environments/base/manifests environments/dev/manifests
+
+.PHONY: validate
+validate: $(KUBEVAL) generate
+	$(KUBEVAL) --ignore-missing-schemas environments/base/manifests/*.yaml environments/dev/manifests/*.yaml tests/manifests/*.yaml
 
 environments/base/manifests: environments/base/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
