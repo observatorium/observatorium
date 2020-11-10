@@ -17,6 +17,10 @@ vendor: $(JB)
 fmt: $(JSONNETFMT) $(JSONNET_SRC)
 	$(JSONNETFMT) -n 2 --max-blank-lines 2 --string-style s --comment-style s -i $(JSONNET_SRC)
 
+.PHONY: lint
+lint: generate .kube-linter.yaml $(KUBE_LINTER)
+	$(KUBE_LINTER) --config .kube-linter.yaml lint environments/base/manifests environments/base/manifests
+
 .PHONY: generate
 generate: environments/base/manifests environments/dev/manifests
 
