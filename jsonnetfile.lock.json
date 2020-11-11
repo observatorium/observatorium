@@ -19,8 +19,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "080af8b212d22dbc9ae0782fe8c567db3f8c16f2",
-      "sum": "ngp1sBIn/yrzKIygjOg/gPvR/n+X7ayVN23wH1EefgY=",
+      "version": "429ae1f5f2ce5f7c4234251e97df6007aeb4a29a",
+      "sum": "sqF9titAn3N2HHKY9mCzbZ+d/xL5ZBQ/ej/t190jY6o=",
       "name": "thanos-receive-controller"
     },
     {
