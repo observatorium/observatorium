@@ -32,15 +32,14 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     disableDownsampling: true,
   }),
 
-  thanosReceiveController:: thanosReceiveController {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-      namespace: obs.config.namespace,
-      replicas: 1,
-      commonLabels+:: obs.config.commonLabels,
-    },
-  },
+  thanosReceiveController:: thanosReceiveController({
+    local cfg = self,
+    name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+    namespace: obs.config.namespace,
+    replicas: 1,
+    commonLabels+:: obs.config.commonLabels,
+    serviceMonitor: false,
+  }),
 
   receiversService:: {
     apiVersion: 'v1',
