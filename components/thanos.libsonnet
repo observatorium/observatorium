@@ -2,6 +2,7 @@ local t = (import 'kube-thanos/thanos.libsonnet');
 local rc = (import 'thanos-receive-controller/thanos-receive-controller.libsonnet');
 local memcached = (import 'memcached.libsonnet');
 
+// TODO(kakkoyun): Move this to upstream kube-thanos.
 local storeShards(shards, cfg) = {
   ['shard' + i]: t.store(cfg {
     name+: '-%d' % i,
@@ -36,7 +37,8 @@ local storeShards(shards, cfg) = {
   for i in std.range(0, shards - 1)
 };
 
-local receiveRings(hashrings, cfg) = {
+// TODO(kakkoyun): Move this to upstream kube-thanos.
+local receiveHashrings(hashrings, cfg) = {
   [hashring.hashring]: t.receive(cfg {
     name+: '-' + hashring.hashring,
     commonLabels+:: {
@@ -176,7 +178,8 @@ function(params) {
     },
   },
 
-  receivers:: receiveRings(thanos.config.hashrings, {
+  // TODO(kakkoyun): Move this to upstream kube-thanos.
+  receivers:: receiveHashrings(thanos.config.hashrings, {
     name: thanos.config.name + '-thanos-receive',
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
@@ -279,7 +282,7 @@ function(params) {
     cpuLimit:: '50m',
     memoryLimitMb: 1024,
     memoryRequestBytes: 128 * 1024 * 1024,
-    memoryLimitBytes: 256 * 1024 * 1024,
+    memoryLimitBytes: 128 * 1024 * 1024,
   }),
 
   query:: t.query({
@@ -345,7 +348,7 @@ function(params) {
     cpuLimit:: '50m',
     memoryLimitMb: 1024,
     memoryRequestBytes: 128 * 1024 * 1024,
-    memoryLimitBytes: 256 * 1024 * 1024,
+    memoryLimitBytes: 128 * 1024 * 1024,
   }),
 
   manifests:: {
