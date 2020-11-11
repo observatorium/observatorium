@@ -93,6 +93,10 @@ local metricsConfig = {
     password: 'password',
     clientID: 'test',
     clientSecret: 'ZXhhbXBsZS1hcHAtc2VjcmV0',
+    oidc: {
+      configMapName: tls.name,
+      caKey: 'ca.pem',
+    },
   },
 };
 
@@ -152,6 +156,10 @@ local logsConfig = {
     password: 'password',
     clientID: 'test',
     clientSecret: 'ZXhhbXBsZS1hcHAtc2VjcmV0',
+    oidc: {
+      configMapName: tls.name,
+      caKey: 'ca.pem',
+    },
   },
   sendLogs: {
     // Note: Keep debian here because we need coreutils' date

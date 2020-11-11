@@ -47,6 +47,7 @@ spec:
         - |
           curl --request POST \
               --silent \
+              --cacert /mnt/oidc-tls/ca.pem \
               --url https://dex.dex.svc.cluster.local:5556/dex/token \
               --header 'content-type: application/x-www-form-urlencoded' \
               --data grant_type=password \
@@ -61,7 +62,13 @@ spec:
         - mountPath: /var/shared
           name: shared
           readOnly: false
+        - mountPath: /mnt/oidc-tls
+          name: oidc-tls
+          readOnly: true
       restartPolicy: OnFailure
       volumes:
       - emptyDir: {}
         name: shared
+      - configMap:
+          name: observatorium-xyz-tls
+        name: oidc-tls
