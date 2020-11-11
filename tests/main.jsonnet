@@ -27,46 +27,41 @@ local tls = {
   },
 };
 
-local upJob = (import '../components/up-job.libsonnet');
+local up = (import 'up/job/up.libsonnet');
 
-local dex = (import '../components/dex.libsonnet') + {
-  config+:: {
-    name: 'dex',
-    namespace: 'dex',
-  },
-};
+local dex = (import '../components/dex.libsonnet')({
+  name: 'dex',
+  namespace: 'dex',
+});
 
-local upMetrics = upJob + upJob.withResources + {
-  config+:: {
-    name: 'observatorium-up-metrics',
-    version: 'master-2020-11-04-0c6ece8',
-    image: 'quay.io/observatorium/up:' + self.version,
-    commonLabels+:: {
-      'app.kubernetes.io/instance': 'e2e-test',
-    },
-    backoffLimit: 5,
-    resources: {
-      limits: {
-        memory: '128Mi',
-        cpu: '500m',
-      },
-    },
-    endpointType: 'metrics',
-    writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
-    ],
-    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
-    ],
+local metricsConfig = {
+  name: 'observatorium-up-metrics',
+  version: 'master-2020-11-04-0c6ece8',
+  image: 'quay.io/observatorium/up:' + self.version,
+  commonLabels+:: {
+    'app.kubernetes.io/instance': 'e2e-test',
   },
-} + upJob.withGetToken {
-  config+:: {
-    curlImage: 'docker.io/curlimages/curl',
-    tokenEndpoint: 'http://%s.%s.svc.cluster.local:%d/dex/token' % [
+  backoffLimit: 5,
+  resources: {
+    limits: {
+      memory: '128Mi',
+      cpu: '500m',
+    },
+  },
+  endpointType: 'metrics',
+  writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
+    obs.api.service.metadata.name,
+    obs.api.service.metadata.namespace,
+    obs.api.service.spec.ports[1].port,
+  ],
+  readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
+    obs.api.service.metadata.name,
+    obs.api.service.metadata.namespace,
+    obs.api.service.spec.ports[1].port,
+  ],
+  getToken: {
+    image: 'docker.io/curlimages/curl',
+    endpoint: 'http://%s.%s.svc.cluster.local:%d/dex/token' % [
       dex.service.metadata.name,
       dex.service.metadata.namespace,
       dex.service.spec.ports[0].port,
@@ -78,57 +73,54 @@ local upMetrics = upJob + upJob.withResources + {
   },
 };
 
-local upMetricsTLS = upMetrics {
-  config+:: {
-    name: 'observatorium-up-metrics-tls',
-    writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
-    ],
-    readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
-    ],
-    tls: {
-      configMapName: tls.name,
-      caKey: 'ca.pem',
-    },
-  },
-};
+local upMetrics = up(metricsConfig);
 
-local upLogs = upJob + upJob.withResources + {
-  config+:: {
-    name: 'observatorium-up-logs',
-    version: 'master-2020-11-04-0c6ece8',
-    image: 'quay.io/observatorium/up:' + self.version,
-    commonLabels+:: {
-      'app.kubernetes.io/instance': 'e2e-test',
-    },
-    backoffLimit: 5,
-    resources: {
-      limits: {
-        memory: '128Mi',
-        cpu: '500m',
-      },
-    },
-    endpointType: 'logs',
-    writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/push' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
-    ],
-    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/query' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
-    ],
+local upMetricsTLS = up(metricsConfig {
+  name: 'observatorium-up-metrics-tls',
+  writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
+    obs.api.service.metadata.name,
+    obs.api.service.metadata.namespace,
+    obs.api.service.spec.ports[1].port,
+  ],
+  readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
+    obs.api.service.metadata.name,
+    obs.api.service.metadata.namespace,
+    obs.api.service.spec.ports[1].port,
+  ],
+  tls: {
+    configMapName: tls.name,
+    caKey: 'ca.pem',
   },
-} + upJob.withGetToken {
-  config+:: {
-    curlImage: 'docker.io/curlimages/curl',
-    tokenEndpoint: 'http://%s.%s.svc.cluster.local:%d/dex/token' % [
+});
+
+local logsConfig = {
+  name: 'observatorium-up-logs',
+  version: 'master-2020-11-04-0c6ece8',
+  image: 'quay.io/observatorium/up:' + self.version,
+  commonLabels+:: {
+    'app.kubernetes.io/instance': 'e2e-test',
+  },
+  backoffLimit: 5,
+  resources: {
+    limits: {
+      memory: '128Mi',
+      cpu: '500m',
+    },
+  },
+  endpointType: 'logs',
+  writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/push' % [
+    obs.api.service.metadata.name,
+    obs.api.service.metadata.namespace,
+    obs.api.service.spec.ports[1].port,
+  ],
+  readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/query' % [
+    obs.api.service.metadata.name,
+    obs.api.service.metadata.namespace,
+    obs.api.service.spec.ports[1].port,
+  ],
+  getToken: {
+    image: 'docker.io/curlimages/curl',
+    endpoint: 'http://%s.%s.svc.cluster.local:%d/dex/token' % [
       dex.service.metadata.name,
       dex.service.metadata.namespace,
       dex.service.spec.ports[0].port,
@@ -138,37 +130,36 @@ local upLogs = upJob + upJob.withResources + {
     clientID: 'test',
     clientSecret: 'ZXhhbXBsZS1hcHAtc2VjcmV0',
   },
-} + upJob.withLogsFile {
-  config+:: {
+  sendLogs: {
     // Note: Keep debian here because we need coreutils' date
     // for timestamp generation in nanoseconds.
-    bashImage: 'docker.io/debian',
+    image: 'docker.io/debian',
   },
 };
 
-local upLogsTLS = upLogs {
-  config+:: {
-    name: 'observatorium-up-logs-tls',
-    writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/push' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
-    ],
-    readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/query' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
-    ],
-    tls: {
-      configMapName: tls.name,
-      caKey: 'ca.pem',
-    },
+local upLogs = up(logsConfig);
+
+local upLogsTLS = up(logsConfig {
+  name: 'observatorium-up-logs-tls',
+  writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/push' % [
+    obs.api.service.metadata.name,
+    obs.api.service.metadata.namespace,
+    obs.api.service.spec.ports[1].port,
+  ],
+  readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/query' % [
+    obs.api.service.metadata.name,
+    obs.api.service.metadata.namespace,
+    obs.api.service.spec.ports[1].port,
+  ],
+  tls: {
+    configMapName: tls.name,
+    caKey: 'ca.pem',
   },
-};
+});
 
 
-tls.manifests +
-upMetrics.manifests +
-upLogs.manifests +
-upMetricsTLS.manifests +
-upLogsTLS.manifests
+tls.manifests
+{ 'observatorium-up-metrics': upMetrics.job } +
+{ 'observatorium-up-metrics-tls': upMetricsTLS.job } +
+{ 'observatorium-up-logs': upLogs.job } +
+{ 'observatorium-up-logs-tls': upLogsTLS.job }

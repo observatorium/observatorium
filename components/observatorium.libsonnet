@@ -174,18 +174,16 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     for i in std.range(0, obs.config.store.shards - 1)
   },
 
-  storeCache:: memcached {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-thanos-store-' + cfg.commonLabels['app.kubernetes.io/name'],
-      namespace: obs.config.namespace,
-      commonLabels+:: obs.config.commonLabels,
-      cpuRequest:: '100m',
-      cpuLimit:: '200m',
-      memoryRequestBytes: 128 * 1024 * 1024,
-      memoryLimitBytes: 256 * 1024 * 1024,
-    },
-  },
+  storeCache:: memcached({
+    local cfg = self,
+    name: obs.config.name + '-thanos-store-' + cfg.commonLabels['app.kubernetes.io/name'],
+    namespace: obs.config.namespace,
+    commonLabels+:: obs.config.commonLabels,
+    cpuRequest:: '100m',
+    cpuLimit:: '200m',
+    memoryRequestBytes: 128 * 1024 * 1024,
+    memoryLimitBytes: 256 * 1024 * 1024,
+  }),
 
   query:: t.query({
     name: '%s-thanos-query' % obs.config.name,
@@ -216,7 +214,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     splitInterval: '24h',
     maxRetries: 0,
     logQueriesLongerThan: '5s',
-    serviceMonitor: true,
+    serviceMonitor: false,
     queryRangeCache: {
       type: 'memcached',
       config+: {
@@ -231,32 +229,28 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
     },
   }),
 
-  queryFrontendCache:: memcached {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-thanos-query-frontend-' + cfg.commonLabels['app.kubernetes.io/name'],
-      namespace: obs.config.namespace,
-      component: 'query-frontend-cache',
-      commonLabels+:: obs.config.commonLabels,
-      cpuRequest:: '100m',
-      cpuLimit:: '200m',
-      memoryRequestBytes: 128 * 1024 * 1024,
-      memoryLimitBytes: 256 * 1024 * 1024,
-    },
-  },
+  queryFrontendCache:: memcached({
+    local cfg = self,
+    name: obs.config.name + '-thanos-query-frontend-' + cfg.commonLabels['app.kubernetes.io/name'],
+    namespace: obs.config.namespace,
+    component: 'query-frontend-cache',
+    commonLabels+:: obs.config.commonLabels,
+    cpuRequest:: '100m',
+    cpuLimit:: '200m',
+    memoryRequestBytes: 128 * 1024 * 1024,
+    memoryLimitBytes: 256 * 1024 * 1024,
+  }),
 
-  gubernator:: (import 'gubernator.libsonnet') + {
-    config+:: {
-      local cfg = self,
-      name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-      namespace: obs.config.namespace,
-      replicas: 2,
-      commonLabels+:: obs.config.commonLabels,
-    },
-  },
+  gubernator:: (import 'gubernator.libsonnet')({
+    local cfg = self,
+    name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+    namespace: obs.config.namespace,
+    replicas: 2,
+    commonLabels+:: obs.config.commonLabels,
+  }),
 
-  api:: observatoriumAPI + observatoriumAPI.withRateLimiter {
-    config+:: {
+  api:: observatoriumAPI(
+    {
       local cfg = self,
       name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
       namespace: obs.config.namespace,
@@ -278,7 +272,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
         grpcAddress: '%s.%s.svc.cluster.local:%d' % [
           obs.gubernator.service.metadata.name,
           obs.gubernator.service.metadata.namespace,
-          obs.gubernator.service.spec.ports[1].port,
+          obs.gubernator.config.ports.grpc,
         ],
       },
     } + if std.length(obs.config.loki) != 0 then {
@@ -300,7 +294,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
         ],
       },
     } else {},
-  },
+  ),
 
   loki::
     l +
@@ -329,6 +323,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
   } + {
     ['query-frontend-cache-' + name]: obs.queryFrontendCache[name]
     for name in std.objectFields(obs.queryFrontendCache)
+    if obs.queryFrontendCache[name] != null
   } + {
     ['thanos-receive-' + hashring + '-' + name]: obs.receivers[hashring][name]
     for hashring in std.objectFields(obs.receivers)
@@ -348,6 +343,7 @@ local observatoriumAPI = (import 'observatorium/observatorium-api.libsonnet');
   } + {
     ['store-cache-' + name]: obs.storeCache[name]
     for name in std.objectFields(obs.storeCache)
+    if obs.storeCache[name] != null
   } + {
     ['thanos-rule-' + name]: obs.rule[name]
     for name in std.objectFields(obs.rule)

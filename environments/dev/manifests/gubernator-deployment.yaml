@@ -51,10 +51,10 @@ spec:
         image: thrawn01/gubernator:1.0.0-rc.1
         name: gubernator
         ports:
-        - containerPort: 8080
-          name: http
         - containerPort: 8081
           name: grpc
+        - containerPort: 8080
+          name: http
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -64,8 +64,6 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 30
           timeoutSeconds: 1
-        resources:
-          limits: {}
-          requests: {}
+        resources: {}
       restartPolicy: Always
-      serviceAccount: observatorium-xyz-gubernator
+      serviceAccountName: observatorium-xyz-gubernator

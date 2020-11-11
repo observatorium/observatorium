@@ -8,8 +8,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "e32405763b667866022ca84af5c4c34ffea7700e",
-      "sum": "+ukVuSkPUldTYPS9QtJ5LXrF1Rua/GZjTOGYu85aPPY=",
+      "version": "cd90bd3d69cd1e2a86311f8589812f60770df877",
+      "sum": "COiE/nS+SDkbOomr5Q0nj9gD1O/BBCtiGHFjlNgjsU4=",
       "name": "observatorium"
     },
     {
@@ -22,6 +22,17 @@
       "version": "080af8b212d22dbc9ae0782fe8c567db3f8c16f2",
       "sum": "ngp1sBIn/yrzKIygjOg/gPvR/n+X7ayVN23wH1EefgY=",
       "name": "thanos-receive-controller"
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/observatorium/up.git",
+          "subdir": "jsonnet"
+        }
+      },
+      "version": "1f966bb0ad27255f9a968f9ad5905ccfdb885f9c",
+      "sum": "cMb7+5CZYI1Vn2BhVo3OUq60UWAHNxMjgicLb8CBCrE=",
+      "name": "up"
     },
     {
       "source": {

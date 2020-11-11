@@ -1,37 +1,35 @@
-local dex = (import '../../components/dex.libsonnet') + {
-  config+:: {
-    local cfg = self,
-    name: 'dex',
-    namespace: 'dex',
-    config+: {
-      oauth2: {
-        passwordConnector: 'local',
+local dex = (import '../../components/dex.libsonnet')({
+  local cfg = self,
+  name: 'dex',
+  namespace: 'dex',
+  config+: {
+    oauth2: {
+      passwordConnector: 'local',
+    },
+    staticClients: [
+      {
+        id: 'test',
+        name: 'test',
+        secret: 'ZXhhbXBsZS1hcHAtc2VjcmV0',
       },
-      staticClients: [
-        {
-          id: 'test',
-          name: 'test',
-          secret: 'ZXhhbXBsZS1hcHAtc2VjcmV0',
-        },
-      ],
-      enablePasswordDB: true,
-      staticPasswords: [
-        {
-          email: 'admin@example.com',
-          // bcrypt hash of the string "password"
-          hash: '$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W',
-          username: 'admin',
-          userID: '08a8684b-db88-4b73-90a9-3cd1661f5466',
-        },
-      ],
-    },
-    version: 'v2.24.0',
-    image: 'quay.io/dexidp/dex:v2.24.0',
-    commonLabels+:: {
-      'app.kubernetes.io/instance': 'e2e-test',
-    },
+    ],
+    enablePasswordDB: true,
+    staticPasswords: [
+      {
+        email: 'admin@example.com',
+        // bcrypt hash of the string "password"
+        hash: '$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W',
+        username: 'admin',
+        userID: '08a8684b-db88-4b73-90a9-3cd1661f5466',
+      },
+    ],
   },
-};
+  version: 'v2.24.0',
+  image: 'quay.io/dexidp/dex:v2.24.0',
+  commonLabels+:: {
+    'app.kubernetes.io/instance': 'e2e-test',
+  },
+});
 
 local obs = (import '../base/observatorium.jsonnet') + {
   config+:: {
@@ -110,15 +108,13 @@ local obs = (import '../base/observatorium.jsonnet') + {
   },
 };
 
-local minio = (import '../../components/minio.libsonnet') + {
-  config:: {
-    namespace: 'observatorium-minio',
-    bucketSecretNamespace: obs.config.namespace,
-  },
-};
+local minio = (import '../../components/minio.libsonnet')({
+  namespace: 'observatorium-minio',
+  bucketSecretNamespace: obs.config.namespace,
+});
 
-local up = (import '../../components/up.libsonnet') + {
-  config+:: {
+local up = (import 'up/up.libsonnet')(
+  {
     local cfg = self,
     name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
     namespace: obs.config.namespace,
@@ -138,9 +134,15 @@ local up = (import '../../components/up.libsonnet') + {
       obs.api.service.spec.ports[1].port,
     ],
   },
-};
+);
 
 obs.manifests +
-minio.manifests +
-up.manifests +
-dex.manifests
+{ ['up-' + name]: up[name] for name in std.objectFields(up) if up[name] != null } +
+{
+  'minio-deployment': minio.deployment,
+  'minio-pvc': minio.pvc,
+  'minio-secret-thanos': minio.secretThanos,
+  'minio-secret-loki': minio.secretLoki,
+  'minio-service': minio.service,
+} +
+{ ['dex-' + name]: dex[name] for name in std.objectFields(dex) if dex[name] != null }

@@ -68,26 +68,22 @@ local m = import 'memcached.libsonnet';
       serviceMonitor+: mc.serviceMonitors.index_query_cache,
     } else {},
 
-  resultsCache::
-    m +
-    m.withServiceMonitor {
-      config+:: {
-        local cfg = self,
-        name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-results-cache',
-        namespace: mc.config.namespace,
-        commonLabels+:: mc.config.commonLabels {
-          'app.kubernetes.io/component': 'results-cache',
-        },
-        version:: mc.config.version,
-        image:: mc.config.image,
-        exporterVersion: mc.config.exporterVersion,
-        exporterImage:: mc.config.exporterImage,
-        replicas: mc.config.replicas.results_cache,
-      },
-    } + if std.objectHas(mc.serviceMonitors, 'results_cache') then {
-      serviceMonitor+: mc.serviceMonitors.results_cache,
-    } else {},
-
+  resultsCache:: m({
+    local cfg = self,
+    name: mc.config.name + '-' + mc.config.commonLabels['app.kubernetes.io/name'] + '-results-cache',
+    namespace: mc.config.namespace,
+    commonLabels+:: mc.config.commonLabels {
+      'app.kubernetes.io/component': 'results-cache',
+    },
+    version:: mc.config.version,
+    image:: mc.config.image,
+    exporterVersion: mc.config.exporterVersion,
+    exporterImage:: mc.config.exporterImage,
+    replicas: mc.config.replicas.results_cache,
+    serviceMonitor: true,
+  }) + if std.objectHas(mc.serviceMonitors, 'results_cache') then {
+    serviceMonitor+: mc.serviceMonitors.results_cache,
+  } else {},
 
   withServiceMonitors: {
     local l = self,
