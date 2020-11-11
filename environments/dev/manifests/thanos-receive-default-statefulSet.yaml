@@ -67,7 +67,7 @@ spec:
       containers:
       - args:
         - receive
-        - --log.level=debug
+        - --log.level=info
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:10902
         - --remote-write.address=0.0.0.0:19291
@@ -94,7 +94,7 @@ spec:
               key: thanos.yaml
               name: thanos-objectstorage
         - name: DEBUG
-          value: "1"
+          value: ""
         image: quay.io/thanos/thanos:master-2020-11-04-a4576d85
         livenessProbe:
           failureThreshold: 8
