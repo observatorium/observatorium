@@ -120,8 +120,8 @@ local up = (import 'up/up.libsonnet')(
     namespace: obs.config.namespace,
     replicas: 1,
     commonLabels+:: obs.config.commonLabels,
-    version: obs.config.up.version,
-    image: obs.config.up.image,
+    version: 'master-2020-11-04-0c6ece8',
+    image: 'quay.io/observatorium/up:' + cfg.version,
     endpointType: 'metrics',
     writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
       obs.api.service.metadata.name,
