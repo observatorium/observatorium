@@ -59,12 +59,9 @@ local receiveHashrings(hashrings, cfg) = {
           spec+: {
             containers: [
               if c.name == 'thanos-receive' then c {
-                env+: [
-                  {
-                    name: 'DEBUG',
-                    value: receiver.config.debug,
-                  },
-                ],
+                env+: if std.objectHas(receiver.config, 'debug') && receiver.config.debug != '' then [
+                  { name: 'DEBUG', value: receiver.config.debug },
+                ] else [],
               }
               else c
               for c in super.containers
@@ -178,7 +175,6 @@ function(params) {
     },
   },
 
-  // TODO(kakkoyun): Move this to upstream kube-thanos.
   receivers:: receiveHashrings(thanos.config.hashrings, {
     name: thanos.config.name + '-thanos-receive',
     namespace: thanos.config.namespace,
@@ -202,7 +198,6 @@ function(params) {
     },
     hashringConfigMapName: '%s-generated' % thanos.receiveController.configmap.metadata.name,
     logLevel: 'info',
-    debug: '',
   }),
 
   rule:: t.rule({

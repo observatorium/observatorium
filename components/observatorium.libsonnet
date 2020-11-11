@@ -80,7 +80,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
         obs.gubernator.config.ports.grpc,
       ],
     },
-  } + if std.length(obs.config.loki) != 0 then {  // TODO(kakkoyun): obs.loki.manifests
+  } + if std.length(obs.config.loki) != 0 then {
     logs: {
       readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
         obs.loki.manifests['query-frontend-http-service'].metadata.name,
