@@ -1,5 +1,10 @@
 local obs = (import '../environments/base/observatorium.jsonnet');
 
+local dex = (import '../components/dex.libsonnet')({
+  name: 'dex',
+  namespace: 'dex',
+});
+
 local tls = {
   name: obs.config.name + '-tls',
   manifests: {
@@ -13,6 +18,17 @@ local tls = {
         name: tls.name,
       },
     },
+    'test-ca-tls': {  // similar to OpenShift's service-ca injection
+      apiVersion: 'v1',
+      data: {
+        'service-ca.crt': importstr '../tmp/certs/ca.pem',
+      },
+      kind: 'ConfigMap',
+      metadata: {
+        name: 'test-ca-tls',
+        namespace: obs.api.service.metadata.namespace,
+      },
+    },
     [self.name + '-secret']: {
       apiVersion: 'v1',
       stringData: {
@@ -24,15 +40,22 @@ local tls = {
         name: tls.name,
       },
     },
+    [self.name + '-dex']: {
+      apiVersion: 'v1',
+      stringData: {
+        'tls.crt': importstr '../tmp/certs/server.pem',
+        'tls.key': importstr '../tmp/certs/server.key',
+      },
+      kind: 'Secret',
+      metadata: {
+        name: dex.config.tlsSecret,
+        namespace: dex.config.namespace,
+      },
+    },
   },
 };
 
 local up = (import 'up/job/up.libsonnet');
-
-local dex = (import '../components/dex.libsonnet')({
-  name: 'dex',
-  namespace: 'dex',
-});
 
 local metricsConfig = {
   name: 'observatorium-up-metrics',
@@ -61,7 +84,7 @@ local metricsConfig = {
   ],
   getToken: {
     image: 'docker.io/curlimages/curl',
-    endpoint: 'http://%s.%s.svc.cluster.local:%d/dex/token' % [
+    endpoint: 'https://%s.%s.svc.cluster.local:%d/dex/token' % [
       dex.service.metadata.name,
       dex.service.metadata.namespace,
       dex.service.spec.ports[0].port,
@@ -70,6 +93,10 @@ local metricsConfig = {
     password: 'password',
     clientID: 'test',
     clientSecret: 'ZXhhbXBsZS1hcHAtc2VjcmV0',
+    oidc: {
+      configMapName: tls.name,
+      caKey: 'ca.pem',
+    },
   },
 };
 
@@ -120,7 +147,7 @@ local logsConfig = {
   ],
   getToken: {
     image: 'docker.io/curlimages/curl',
-    endpoint: 'http://%s.%s.svc.cluster.local:%d/dex/token' % [
+    endpoint: 'https://%s.%s.svc.cluster.local:%d/dex/token' % [
       dex.service.metadata.name,
       dex.service.metadata.namespace,
       dex.service.spec.ports[0].port,
@@ -129,6 +156,10 @@ local logsConfig = {
     password: 'password',
     clientID: 'test',
     clientSecret: 'ZXhhbXBsZS1hcHAtc2VjcmV0',
+    oidc: {
+      configMapName: tls.name,
+      caKey: 'ca.pem',
+    },
   },
   sendLogs: {
     // Note: Keep debian here because we need coreutils' date
@@ -156,7 +187,6 @@ local upLogsTLS = up(logsConfig {
     caKey: 'ca.pem',
   },
 });
-
 
 tls.manifests
 { 'observatorium-up-metrics': upMetrics.job } +

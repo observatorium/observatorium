@@ -1,6 +1,6 @@
 apiVersion: v1
 data:
-  ca.pem: |
+  service-ca.crt: |
     -----BEGIN CERTIFICATE-----
     MIIBdDCCARqgAwIBAgIUB5CYV6TcmsmemJZ2vcjfoUQTgB0wCgYIKoZIzj0EAwIw
     GDEWMBQGA1UEAxMNb2JzZXJ2YXRvcml1bTAeFw0yMDExMTIxMzA3MDBaFw0yNTEx
@@ -13,4 +13,5 @@ data:
     -----END CERTIFICATE-----
 kind: ConfigMap
 metadata:
-  name: observatorium-xyz-tls
+  name: test-ca-tls
+  namespace: observatorium

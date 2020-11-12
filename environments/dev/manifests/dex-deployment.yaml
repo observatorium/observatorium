@@ -39,6 +39,8 @@ spec:
         - mountPath: /storage
           name: storage
           readOnly: false
+        - mountPath: /etc/dex/tls
+          name: tls
       volumes:
       - name: config
         secret:
@@ -49,3 +51,11 @@ spec:
       - name: storage
         persistentVolumeClaim:
           claimName: dex
+      - name: tls
+        secret:
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+          secretName: dex-tls

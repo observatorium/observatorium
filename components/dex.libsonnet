@@ -7,13 +7,20 @@ local defaults = {
   image: error 'must provide image',
   version: error 'must provide version',
   namespace: error 'must provide namespace',
+  tlsSecret: '%s-tls' % [defaults.name],
+  tlsCertKey: 'tls.crt',  // the key in the config map for the cert
+  tlsKeyKey: 'tls.key',  // the key in the config map for the cert key
   config: {
-    issuer: 'http://%s.%s.svc.cluster.local:5556/dex' % [defaults.name, defaults.namespace],
+    issuer: 'https://%s.%s.svc.cluster.local:5556/dex' % [defaults.name, defaults.namespace],
     storage: {
       type: 'sqlite3',
       config: { file: '/storage/dex.db' },
     },
-    web: { http: '0.0.0.0:5556' },
+    web: {
+      https: '0.0.0.0:5556',
+      tlsCert: '/etc/dex/tls/tls.crt',
+      tlsKey: '/etc/dex/tls/tls.key',
+    },
     logger: { level: 'debug' },
   },
   ports: { http: 5556 },
@@ -116,6 +123,7 @@ function(params) {
               volumeMounts: [
                 { name: 'config', mountPath: '/etc/dex/cfg' },
                 { name: 'storage', mountPath: '/storage', readOnly: false },
+                { name: 'tls', mountPath: '/etc/dex/tls' },
               ],
             },
           ],
@@ -132,6 +140,22 @@ function(params) {
             {
               name: 'storage',
               persistentVolumeClaim: { claimName: dex.config.name },
+            },
+            {
+              name: 'tls',
+              secret: {
+                secretName: dex.config.tlsSecret,
+                items: [
+                  {
+                    key: dex.config.tlsCertKey,
+                    path: 'tls.crt',
+                  },
+                  {
+                    key: dex.config.tlsKeyKey,
+                    path: 'tls.key',
+                  },
+                ],
+              },
             },
           ],
         },

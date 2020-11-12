@@ -16,6 +16,7 @@ kind() {
 
 dex() {
     $KUBECTL create ns dex || true
+    $KUBECTL apply -f tests/manifests/observatorium-xyz-tls-dex.yaml
     $KUBECTL apply -f environments/dev/manifests/dex-secret.yaml
     $KUBECTL apply -f environments/dev/manifests/dex-pvc.yaml
     $KUBECTL apply -f environments/dev/manifests/dex-deployment.yaml
@@ -30,6 +31,10 @@ deploy() {
     $KUBECTL create ns observatorium-minio || true
     $KUBECTL create ns observatorium || true
     dex
+
+    # service CA for the first tenant, "test"
+    $KUBECTL apply -f tests/manifests/test-ca-tls.yaml
+
     $KUBECTL apply -f environments/dev/manifests/
 }
 
