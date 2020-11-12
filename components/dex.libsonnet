@@ -8,8 +8,8 @@ local defaults = {
   version: error 'must provide version',
   namespace: error 'must provide namespace',
   tlsSecret: '%s-tls' % [defaults.name],
-  tlsCertMapEntry: 'tls.crt',
-  tlsKeyMapEntry: 'tls.key',
+  tlsCertKey: 'tls.crt',  // the key in the config map for the cert
+  tlsKeyKey: 'tls.key',  // the key in the config map for the cert key
   config: {
     issuer: 'https://%s.%s.svc.cluster.local:5556/dex' % [defaults.name, defaults.namespace],
     storage: {
@@ -147,11 +147,11 @@ function(params) {
                 secretName: dex.config.tlsSecret,
                 items: [
                   {
-                    key: dex.config.tlsCertMapEntry,
+                    key: dex.config.tlsCertKey,
                     path: 'tls.crt',
                   },
                   {
-                    key: dex.config.tlsKeyMapEntry,
+                    key: dex.config.tlsKeyKey,
                     path: 'tls.key',
                   },
                 ],
