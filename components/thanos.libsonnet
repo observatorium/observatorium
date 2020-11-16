@@ -4,6 +4,10 @@ local memcached = (import 'memcached.libsonnet');
 
 // TODO(kakkoyun): Move this to upstream kube-thanos.
 local storeShards(shards, cfg) = {
+  config:: cfg {
+    shards: shards,
+  },
+} + {
   ['shard' + i]: t.store(cfg {
     name+: '-%d' % i,
     commonLabels+:: { 'store.observatorium.io/shard': 'shard-' + i },
@@ -39,12 +43,13 @@ local storeShards(shards, cfg) = {
 
 // TODO(kakkoyun): Move this to upstream kube-thanos.
 local receiveHashrings(hashrings, cfg) = {
+  config:: cfg,
+} + {
   [hashring.hashring]: t.receive(cfg {
     name+: '-' + hashring.hashring,
     commonLabels+:: {
       'controller.receive.thanos.io/hashring': hashring.hashring,
     },
-    replicas: 1,
   }) {
     local receiver = self,
     podDisruptionBudget:: {},  // hide this object, we don't want it
@@ -182,6 +187,7 @@ function(params) {
     image: thanos.config.image,
     version: thanos.config.version,
     hashrings: thanos.config.hashrings,
+    replicas: 1,
     replicaLabels: thanos.config.replicaLabels,
     replicationFactor: 1,
     retention: '4d',
