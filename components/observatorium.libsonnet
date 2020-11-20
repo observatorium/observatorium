@@ -9,6 +9,8 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     name: 'observatorium-xyz',
     namespace: 'observatorium',
 
+    loki: {},
+
     commonLabels:: {
       'app.kubernetes.io/part-of': 'observatorium',
       'app.kubernetes.io/instance': obs.config.name,
@@ -80,7 +82,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
         obs.gubernator.config.ports.grpc,
       ],
     },
-  } + if std.length(obs.config.loki) != 0 then {
+  } + if std.objectHas(obs.config, 'loki') && std.length(obs.config.loki) != 0 then {
     logs: {
       readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
         obs.loki.manifests['query-frontend-http-service'].metadata.name,
