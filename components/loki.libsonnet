@@ -411,10 +411,6 @@
       config: error 'must provide loki config',
     },
 
-    assert l.defaultConfig.auth_enabled == true : 'Disabling auth not allowed in multi-tenancy',
-    assert l.defaultConfig.distributor.ring.kvstore.store != 'memberlist' : 'Use withMemberList to configure memberlist store',
-    assert l.defaultConfig.ingester.lifecycler.ring.kvstore.store != 'memberlist' : 'Use withMemberList to configure memberlist store',
-
     defaultConfig+:: l.config.config,
   },
 
