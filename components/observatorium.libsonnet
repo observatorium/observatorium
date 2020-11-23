@@ -34,6 +34,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     loki +
     loki.withMemberList +
     loki.withReplicas +
+    loki.withDataReplication +
     loki.withVolumeClaimTemplate {
       config+:: {
         local cfg = self,
@@ -41,6 +42,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
         namespace: obs.config.namespace,
         commonLabels+:: obs.config.commonLabels,
         replicas: obs.config.replicas,
+        replicationFactor: 1,
       },
     },
 
