@@ -330,7 +330,6 @@
           kvstore: {
             store: 'inmemory',
           },
-          replication_factor: 1,
         },
       },
       max_transfer_retries: 0,
@@ -716,6 +715,53 @@
         },
       }
       for name in std.objectFields(l.config.resources)
+      if isStatefulSet(name)
+    },
+  },
+
+  withDataReplication:: {
+    local l = self,
+    config+:: {
+      replicationFactor: error 'must provide replication factor',
+    },
+
+    manifests+:: {
+      [normalizedName(name) + '-deployment']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                c {
+                  args+: [
+                    '-distributor.replication-factor=%d' % l.config.replicationFactor,
+                  ],
+                }
+                for c in super.containers
+              ],
+            },
+          },
+        },
+      }
+      for name in std.objectFields(l.components)
+      if !isStatefulSet(name)
+    } + {
+      [normalizedName(name) + '-statefulset']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                c {
+                  args+: [
+                    '-distributor.replication-factor=%d' % l.config.replicationFactor,
+                  ],
+                }
+                for c in super.containers
+              ],
+            },
+          },
+        },
+      }
+      for name in std.objectFields(l.components)
       if isStatefulSet(name)
     },
   },

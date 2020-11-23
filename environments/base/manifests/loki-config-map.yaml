@@ -36,7 +36,6 @@ data:
           "heartbeat_timeout": "1m"
           "kvstore":
             "store": "memberlist"
-          "replication_factor": 1
       "max_transfer_retries": 0
     "ingester_client":
       "grpc_client_config":
