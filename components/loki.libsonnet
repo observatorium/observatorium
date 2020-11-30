@@ -73,6 +73,18 @@
       },
     } };
 
+    local livenessProbe = {
+      livenessProbe: {
+        failureThreshold: 10,
+        periodSeconds: 30,
+        httpGet: {
+          scheme: 'HTTP',
+          port: 3100,
+          path: '/metrics',
+        },
+      },
+    };
+
     local resources = { resources: config.resources };
 
     {
@@ -129,6 +141,10 @@
       [name]: readinessProbe[name]
       for name in std.objectFields(readinessProbe)
       if config.withReadinessProbe
+    } + {
+      [name]: livenessProbe[name]
+      for name in std.objectFields(livenessProbe)
+      if config.withLivenessProbe
     } + {
       [name]: resources[name]
       for name in std.objectFields(resources)
@@ -239,6 +255,7 @@
 
   components:: {
     compactor: {
+      withLivenessProbe: true,
       withReadinessProbe: true,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
@@ -246,6 +263,7 @@
       },
     },
     distributor: {
+      withLivenessProbe: true,
       withReadinessProbe: true,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
@@ -253,6 +271,7 @@
       },
     },
     ingester: {
+      withLivenessProbe: true,
       withReadinessProbe:: true,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
@@ -260,6 +279,7 @@
       },
     },
     querier: {
+      withLivenessProbe: true,
       withReadinessProbe:: true,
       resources:: {
         requests: { cpu: '100m', memory: '100Mi' },
@@ -267,6 +287,7 @@
       },
     },
     query_frontend: {
+      withLivenessProbe: true,
       withReadinessProbe: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
