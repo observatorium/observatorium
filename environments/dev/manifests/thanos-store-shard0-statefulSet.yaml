@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: thanos-store
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: master-2020-11-04-a4576d85
+    app.kubernetes.io/version: v0.17.1
     store.observatorium.io/shard: shard-0
   name: observatorium-xyz-thanos-store-shard-0
   namespace: observatorium
@@ -27,7 +27,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: master-2020-11-04-a4576d85
+        app.kubernetes.io/version: v0.17.1
         store.observatorium.io/shard: shard-0
     spec:
       affinity:
@@ -52,12 +52,12 @@ spec:
       - args:
         - store
         - --log.level=info
+        - --log.format=logfmt
         - --data-dir=/var/thanos/store
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:10902
         - --objstore.config=$(OBJSTORE_CONFIG)
         - --ignore-deletion-marks-delay=24h
-        - --experimental.enable-index-cache-postings-compression
         - |-
           --index-cache.config="config":
             "addresses":
@@ -108,7 +108,7 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
-        image: quay.io/thanos/thanos:master-2020-11-04-a4576d85
+        image: quay.io/thanos/thanos:v0.17.1
         livenessProbe:
           failureThreshold: 8
           httpGet:
