@@ -46,6 +46,7 @@ spec:
         - --grpc-address=0.0.0.0:10901
         - --http-address=0.0.0.0:9090
         - --log.level=info
+        - --log.format=logfmt
         - --query.replica-label=prometheus_replica
         - --query.replica-label=rule_replica
         - --query.replica-label=replica

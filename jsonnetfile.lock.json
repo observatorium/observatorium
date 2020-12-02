@@ -19,7 +19,7 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "429ae1f5f2ce5f7c4234251e97df6007aeb4a29a",
+      "version": "640385d4b1a08f70df2db76a58b46512241d41ef",
       "sum": "sqF9titAn3N2HHKY9mCzbZ+d/xL5ZBQ/ej/t190jY6o=",
       "name": "thanos-receive-controller"
     },
@@ -30,7 +30,7 @@
           "subdir": "jsonnet"
         }
       },
-      "version": "1a8a104bd7842d7235902af14c5a03252c3144ff",
+      "version": "ec9ecc69c91cce9d6f6d7ce4c0054424c697a8a4",
       "sum": "0FKabnXd0rMeu8YpkkopEOknqBf5PLq/DIIDd0ve7cU=",
       "name": "up"
     },
@@ -41,8 +41,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "39435d26b21bbbab6c423429e2f7275cc0a54ecd",
-      "sum": "gxvo3maoosfhInRxp4Ct1PmtH5JF09TCtitAGVJ3yKY="
+      "version": "d7696758dd8b90d8f6d02e7739a21ce34b48c8c1",
+      "sum": "cmvtINsnwAGR+ZFiz5cGg+9TRfQhnkGwiKQEqXmB5dQ="
     }
   ],
   "legacyImports": false
