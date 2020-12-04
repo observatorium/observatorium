@@ -50,7 +50,7 @@ tests/manifests: tests/main.jsonnet vendor generate-cert $(JSONNET_SRC) $(JSONNE
 .PHONY: generate-cert
 # Generate TLS certificates for local development.
 generate-cert: $(GENERATE_TLS_CERT) | $(CERT_DIR)
-	cd $(CERT_DIR) && $(GENERATE_TLS_CERT) -server-common-name=observatorium-xyz-observatorium-api.observatorium.svc.cluster.local -server-sans localhost,127.0.0.1,dex.dex.svc.cluster.local
+	cd $(CERT_DIR) && $(GENERATE_TLS_CERT) -server-common-name=observatorium-xyz-observatorium-api.observatorium.svc.cluster.local -server-sans localhost,127.0.0.1,dex.dex.svc.cluster.local,observatorium-xyz-observatorium-api.observatorium.svc.cluster.local
 
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
