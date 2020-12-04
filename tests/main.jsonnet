@@ -1,4 +1,4 @@
-local obs = (import '../environments/base/observatorium.jsonnet');
+local obs = (import '../components/observatorium.libsonnet');
 
 local dex = (import '../components/dex.libsonnet')({
   name: 'dex',
