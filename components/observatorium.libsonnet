@@ -94,7 +94,6 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     version: '2.0.0',
     image: 'docker.io/grafana/loki:' + cfg.version,
     replicationFactor: 1,
-    // dataReplication: true ?
     replicas: {
       compactor: 1,
       distributor: 1,

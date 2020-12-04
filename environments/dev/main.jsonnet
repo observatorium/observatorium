@@ -1,5 +1,4 @@
 local dex = (import '../../components/dex.libsonnet')({
-  local cfg = self,
   name: 'dex',
   namespace: 'dex',
   config+: {
@@ -35,14 +34,6 @@ local dex = (import '../../components/dex.libsonnet')({
 local api = (import 'observatorium/observatorium-api.libsonnet');
 local obs = (import '../../components/observatorium.libsonnet');
 local dev = obs {
-  // TODO(kakkoyun): !!
-  // config+:: {
-  //   receivers+:: {
-  //     logLevel: 'debug',
-  //     debug: '1',
-  //   },
-  // },
-
   api: api(
     obs.api.config {
       rbac: {
@@ -119,28 +110,26 @@ local minio = (import '../../components/minio.libsonnet')({
   bucketSecretNamespace: dev.config.namespace,
 });
 
-local up = (import 'up/up.libsonnet')(
-  {
-    local cfg = self,
-    name: dev.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-    namespace: dev.config.namespace,
-    replicas: 1,
-    commonLabels+:: dev.config.commonLabels,
-    version: 'master-2020-11-04-0c6ece8',
-    image: 'quay.io/observatorium/up:' + cfg.version,
-    endpointType: 'metrics',
-    writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
-      dev.api.service.metadata.name,
-      dev.api.service.metadata.namespace,
-      dev.api.service.spec.ports[1].port,
-    ],
-    readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
-      dev.api.service.metadata.name,
-      dev.api.service.metadata.namespace,
-      dev.api.service.spec.ports[1].port,
-    ],
-  },
-);
+local up = (import 'up/up.libsonnet')({
+  local cfg = self,
+  name: dev.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+  namespace: dev.config.namespace,
+  replicas: 1,
+  commonLabels+:: dev.config.commonLabels,
+  version: 'master-2020-11-04-0c6ece8',
+  image: 'quay.io/observatorium/up:' + cfg.version,
+  endpointType: 'metrics',
+  writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
+    dev.api.service.metadata.name,
+    dev.api.service.metadata.namespace,
+    dev.api.service.spec.ports[1].port,
+  ],
+  readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
+    dev.api.service.metadata.name,
+    dev.api.service.metadata.namespace,
+    dev.api.service.spec.ports[1].port,
+  ],
+});
 
 dev.manifests +
 { ['up-' + name]: up[name] for name in std.objectFields(up) if up[name] != null } +

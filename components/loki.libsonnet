@@ -15,6 +15,7 @@ local defaults = {
   ports: {
     gossip: 7946,
   },
+  replicationFactor: 0,
 
   resources: {},
   serviceMonitors: {},
@@ -49,6 +50,7 @@ function(params) {
   // Safety checks for combined config of defaults and params.
   assert std.isNumber(loki.config.queryConcurrency),
   assert std.isNumber(loki.config.queryParallelism),
+  assert std.isNumber(loki.config.replicationFactor),
   assert std.isObject(loki.config.replicas) : 'replicas has to be an object',
   assert std.isObject(loki.config.resources) : 'replicas has to be an object',
   assert std.isObject(loki.config.serviceMonitors) : 'serviceMonitors has to be an object',
@@ -689,53 +691,6 @@ function(params) {
   //   },
   // },
 
-  // withDataReplication:: {
-  //   local l = self,
-  //   config+:: {
-  //     replicationFactor: error 'must provide replication factor',
-  //   },
-
-  //   manifests+:: {
-  //     [normalizedName(name) + '-deployment']+: {
-  //       spec+: {
-  //         template+: {
-  //           spec+: {
-  //             containers: [
-  //               c {
-  //                 args+: [
-  //                   '-distributor.replication-factor=%d' % l.config.replicationFactor,
-  //                 ],
-  //               }
-  //               for c in super.containers
-  //             ],
-  //           },
-  //         },
-  //       },
-  //     }
-  //     for name in std.objectFields(l.components)
-  //     if !isStatefulSet(name)
-  //   } + {
-  //     [normalizedName(name) + '-statefulset']+: {
-  //       spec+: {
-  //         template+: {
-  //           spec+: {
-  //             containers: [
-  //               c {
-  //                 args+: [
-  //                   '-distributor.replication-factor=%d' % l.config.replicationFactor,
-  //                 ],
-  //               }
-  //               for c in super.containers
-  //             ],
-  //           },
-  //         },
-  //       },
-  //     }
-  //     for name in std.objectFields(l.components)
-  //     if isStatefulSet(name)
-  //   },
-  // },
-
   manifests: {
     'config-map': loki.configmap,
   } + {
@@ -762,6 +717,54 @@ function(params) {
       }
       for name in std.objectFields(loki.config.replicas)
       if !isStatefulSet(name)
+    } + {
+      [normalizedName(name) + '-statefulset']+: {
+        spec+: {
+          replicas: loki.config.replicas[name],
+        },
+      }
+      for name in std.objectFields(loki.config.replicas)
+      if isStatefulSet(name)
+    } else {}
+  ) + (
+    if loki.config.replicationFactor > 0 then {
+      [normalizedName(name) + '-deployment']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                c {
+                  args+: [
+                    '-distributor.replication-factor=%d' % loki.config.replicationFactor,
+                  ],
+                }
+                for c in super.containers
+              ],
+            },
+          },
+        },
+      }
+      for name in std.objectFields(loki.components)
+      if !isStatefulSet(name)
+    } + {
+      [normalizedName(name) + '-statefulset']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                c {
+                  args+: [
+                    '-distributor.replication-factor=%d' % loki.config.replicationFactor,
+                  ],
+                }
+                for c in super.containers
+              ],
+            },
+          },
+        },
+      }
+      for name in std.objectFields(loki.components)
+      if isStatefulSet(name)
     } + {
       [normalizedName(name) + '-statefulset']+: {
         spec+: {

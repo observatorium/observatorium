@@ -34,6 +34,7 @@ spec:
         - -log.level=error
         - -s3.url=$(S3_URL)
         - -s3.force-path-style=true
+        - -distributor.replication-factor=1
         env:
         - name: S3_URL
           valueFrom:
