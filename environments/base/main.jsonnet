@@ -1,1 +1,1 @@
-(import 'observatorium.jsonnet').manifests
+(import '../../components/observatorium.libsonnet').manifests

@@ -6,12 +6,11 @@ metadata:
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
     app.kubernetes.io/version: 2.0.0
-  name: observatorium-xyz-loki-gossip-ring
   namespace: observatorium
 spec:
   clusterIP: None
   ports:
-  - name: gossip-ring
+  - name: gossip
     port: 7946
     protocol: TCP
     targetPort: 7946

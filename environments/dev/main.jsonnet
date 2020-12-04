@@ -32,17 +32,19 @@ local dex = (import '../../components/dex.libsonnet')({
   },
 });
 
-local obs = (import '../base/observatorium.jsonnet') + {
-  config+:: {
-    receivers+:: {
-      logLevel: 'debug',
-      debug: '1',
-    },
-  },
+local api = (import 'observatorium/observatorium-api.libsonnet');
+local obs = (import '../../components/observatorium.libsonnet');
+local dev = obs {
+  // TODO(kakkoyun): !!
+  // config+:: {
+  //   receivers+:: {
+  //     logLevel: 'debug',
+  //     debug: '1',
+  //   },
+  // },
 
-
-  api+: {
-    config+: {
+  api: api(
+    obs.api.config {
       rbac: {
         roles: [
           {
@@ -109,38 +111,38 @@ local obs = (import '../base/observatorium.jsonnet') + {
         ],
       },
     },
-  },
+  ),
 };
 
 local minio = (import '../../components/minio.libsonnet')({
   namespace: 'observatorium-minio',
-  bucketSecretNamespace: obs.config.namespace,
+  bucketSecretNamespace: dev.config.namespace,
 });
 
 local up = (import 'up/up.libsonnet')(
   {
     local cfg = self,
-    name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-    namespace: obs.config.namespace,
+    name: dev.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+    namespace: dev.config.namespace,
     replicas: 1,
-    commonLabels+:: obs.config.commonLabels,
+    commonLabels+:: dev.config.commonLabels,
     version: 'master-2020-11-04-0c6ece8',
     image: 'quay.io/observatorium/up:' + cfg.version,
     endpointType: 'metrics',
     writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
+      dev.api.service.metadata.name,
+      dev.api.service.metadata.namespace,
+      dev.api.service.spec.ports[1].port,
     ],
     readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
-      obs.api.service.metadata.name,
-      obs.api.service.metadata.namespace,
-      obs.api.service.spec.ports[1].port,
+      dev.api.service.metadata.name,
+      dev.api.service.metadata.namespace,
+      dev.api.service.spec.ports[1].port,
     ],
   },
 );
 
-obs.manifests +
+dev.manifests +
 { ['up-' + name]: up[name] for name in std.objectFields(up) if up[name] != null } +
 {
   'minio-deployment': minio.deployment,
