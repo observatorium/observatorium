@@ -18,15 +18,16 @@ local defaults = {
   replicationFactor: 0,
 
   resources: {},
-  serviceMonitors: {},
   volumeClaimTemplates: {},
-
   memberlist: {},
   etcd: {},
 
+  chunkCache: '',
   indexQueryCache: [],
   storeChunkCache: [],
   resultsCache: [],
+
+  etcdEndpoints: [],
 
   commonLabels:: {
     'app.kubernetes.io/name': 'loki',
@@ -53,13 +54,13 @@ function(params) {
   assert std.isNumber(loki.config.replicationFactor),
   assert std.isObject(loki.config.replicas) : 'replicas has to be an object',
   assert std.isObject(loki.config.resources) : 'replicas has to be an object',
-  assert std.isObject(loki.config.serviceMonitors) : 'serviceMonitors has to be an object',
   assert std.isObject(loki.config.volumeClaimTemplates) : 'volumeClaimTemplates has to be an object',
   assert std.isObject(loki.config.memberlist) : 'memberlist has to be an object',
   assert std.isObject(loki.config.etcd) : 'etcd has to be an object',
   assert std.isArray(loki.config.resultsCache) : 'resultsCache has to be an array',
   assert std.isArray(loki.config.indexQueryCache) : 'indexQueryCache has to be an array',
   assert std.isArray(loki.config.storeChunkCache) : 'storeChunkCache has to be an array',
+  assert std.isArray(loki.config.etcdEndpoints) : 'etcdEndpoints has to be an array',
 
   configmap:: {
     apiVersion: 'v1',
@@ -309,13 +310,13 @@ function(params) {
 
   components:: {
     compactor: {
-      // TODO(kakkoyun): withServiceMonitor?
       withLivenessProbe: true,
       withReadinessProbe: true,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
+      withServiceMonitor: false,
     },
     distributor: {
       withLivenessProbe: true,
@@ -324,7 +325,19 @@ function(params) {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
-    },
+      withServiceMonitor: false,
+    } + (
+      if loki.config.etcdEndpoints != [] then {
+        ring: {
+          kvstore: {
+            store: 'etcd',
+            etcd: {
+              endpoints: loki.config.etcdEndpoints,
+            },
+          },
+        },
+      } else {}
+    ),
     ingester: {
       withLivenessProbe: true,
       withReadinessProbe: true,
@@ -332,7 +345,21 @@ function(params) {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
-    },
+      withServiceMonitor: false,
+    } + (
+      if loki.config.etcdEndpoints != [] then {
+        lifecycler+: {
+          ring+: {
+            kvstore: {
+              store: 'etcd',
+              etcd: {
+                endpoints: loki.config.etcdEndpoints,
+              },
+            },
+          },
+        },
+      } else {}
+    ),
     querier: {
       withLivenessProbe: true,
       withReadinessProbe: true,
@@ -340,6 +367,7 @@ function(params) {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
+      withServiceMonitor: false,
     },
     query_frontend: {
       withLivenessProbe: true,
@@ -348,6 +376,7 @@ function(params) {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
+      withServiceMonitor: false,
     },
   },
 
@@ -360,7 +389,23 @@ function(params) {
     auth_enabled: true,
     chunk_store_config: {
       max_look_back_period: '0s',
-    },
+    } + (
+      if loki.config.chunkCache != '' then {
+        chunk_cache_config: {
+          memcached: {
+            batch_size: 100,
+            parallelism: 100,
+          },
+          memcached_client: {
+            addresses: loki.config.chunkCache,
+            timeout: '100ms',
+            max_idle_conns: 100,
+            update_interval: '1m',
+            consistent_hash: true,
+          },
+        },
+      } else {}
+    ),
 
     memberlist+: if loki.config.memberlist != {} then {
       bind_port: loki.config.ports.gossip,
@@ -460,7 +505,25 @@ function(params) {
       cache_results: true,
       max_retries: 5,
       split_queries_by_interval: '30m',
-    },
+    } + (
+      if loki.config.resultsCache != [] then {
+        split_queries_by_interval: '30m',
+        align_queries_with_step: true,
+        cache_results: true,
+        max_retries: 5,
+        results_cache: {
+          cache: {
+            memcached_client: {
+              timeout: '500ms',
+              consistent_hash: true,
+              addresses: loki.config.resultsCache,
+              update_interval: '1m',
+              max_idle_conns: 16,
+            },
+          },
+        },
+      } else {}
+    ),
     schema_config: {
       configs: [
         {
@@ -492,134 +555,24 @@ function(params) {
         resync_interval: '5m',
         shared_store: 's3',
       },
-    },
+    } + (
+      if loki.config.indexQueryCache != [] then {
+        index_queries_cache_config: {
+          memcached: {
+            batch_size: 100,
+            parallelism: 100,
+          },
+          memcached_client: {
+            addresses: loki.config.indexQueryCache,
+            consistent_hash: true,
+          },
+        },
+      } else {}
+    ),
   },
-
-  // TODO(kakkoyun): Refactor me!
-  // withConfig:: {
-  //   local l = self,
-  //   config+:: {
-  //     config: error 'must provide loki config',
-  //   },
-  //   defaultConfig+:: l.config.config,
-  // },
 
   // Loki config overrides.
   defaultOverrides:: {},
-
-  // TODO(kakkoyun): Refactor me!
-  // withOverrides:: {
-  //   local l = self,
-  //   config+:: {
-  //     overrides: error 'must provide loki config overrides',
-  //   },
-  //   defaultOverrides+:: l.config.overrides,
-  // },
-  // TODO(kakkoyun): Refactor me!
-  // withChunkStoreCache:: {
-  //   local l = self,
-  //   config+:: {
-  //     chunkCache: error 'must provide addresses for chunk store cache',
-  //   },
-  //   defaultConfig+:: {
-  //     chunk_store_config+: {
-  //       chunk_cache_config: {
-  //         memcached: {
-  //           batch_size: 100,
-  //           parallelism: 100,
-  //         },
-  //         memcached_client: {
-  //           addresses: l.config.chunkCache,
-  //           timeout: '100ms',
-  //           max_idle_conns: 100,
-  //           update_interval: '1m',
-  //           consistent_hash: true,
-  //         },
-  //       },
-  //     },
-  //   },
-  // },
-
-  // TODO(kakkoyun): Refactor me!
-  // withIndexQueryCache:: {
-  //   local l = self,
-  //   config+:: {
-  //     indexQueryCache: error 'must provide addresses for index query cache',
-  //   },
-  //   defaultConfig+:: {
-  //     storage_config+: {
-  //       index_queries_cache_config: {
-  //         memcached: {
-  //           batch_size: 100,
-  //           parallelism: 100,
-  //         },
-  //         memcached_client: {
-  //           addresses: l.config.indexQueryCache,
-  //           consistent_hash: true,
-  //         },
-  //       },
-  //     },
-  //   },
-  // },
-
-  // TODO(kakkoyun): Refactor me!
-  // withResultsCache:: {
-  //   local l = self,
-  //   config+:: {
-  //     resultsCache: error 'must provide addresses for frontend results cache',
-  //   },
-  //   defaultConfig+:: {
-  //     query_range+: {
-  //       split_queries_by_interval: '30m',
-  //       align_queries_with_step: true,
-  //       cache_results: true,
-  //       max_retries: 5,
-  //       results_cache: {
-  //         cache: {
-  //           memcached_client: {
-  //             timeout: '500ms',
-  //             consistent_hash: true,
-  //             addresses: l.config.resultsCache,
-  //             update_interval: '1m',
-  //             max_idle_conns: 16,
-  //           },
-  //         },
-  //       },
-  //     },
-  //   },
-  // },
-
-  // TODO(kakkoyun): Refactor me!
-  // withEtcd:: {
-  //   local l = self,
-  //   config+:: {
-  //     etcdEndpoints: error 'must provide etcd endpoints list',
-  //   },
-  //   defaultConfig+:: {
-  //     distributor+: {
-  //       ring: {
-  //         kvstore: {
-  //           store: 'etcd',
-  //           etcd: {
-  //             endpoints: l.config.etcdEndpoints,
-  //           },
-  //         },
-  //       },
-  //     },
-  //     ingester+: {
-  //       lifecycler+: {
-  //         ring+: {
-  //           kvstore: {
-  //             store: 'etcd',
-  //             etcd: {
-  //               endpoints: l.config.etcdEndpoints,
-  //             },
-  //           },
-  //         },
-  //       },
-  //     },
-  //   },
-  // },
 
   serviceMonitors: {
     [normalizedName(name)]: {
@@ -780,11 +733,9 @@ function(params) {
       for name in std.objectFields(loki.components)
       if isStatefulSet(name)
     }
-  ) + (
-    if std.length(loki.config.serviceMonitors) != {} then {
-      [normalizedName(name) + '-service-monitor']: loki.serviceMonitors[name]
-      for name in std.objectFields(loki.components)
-      if std.objectHas(loki.config.serviceMonitors, name)
-    }
-  ),
+  ) + {
+    [normalizedName(name) + '-service-monitor']: loki.serviceMonitors[name]
+    for name in std.objectFields(loki.components)
+    if std.objectHas(loki.serviceMonitors, name) && loki.components[name].withServiceMonitor
+  },
 }
