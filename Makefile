@@ -19,6 +19,10 @@ vendor: $(JB)
 fmt: $(JSONNETFMT) $(JSONNET_SRC)
 	$(JSONNETFMT) -n 2 --max-blank-lines 2 --string-style s --comment-style s -i $(JSONNET_SRC)
 
+.PHONY: lint
+lint: $(JSONNET_LINT) vendor
+	echo ${JSONNET_SRC} | xargs -n 1 -- $(JSONNET_LINT) -J vendor
+
 .PHONY: generate
 generate: environments/base/manifests environments/dev/manifests
 
