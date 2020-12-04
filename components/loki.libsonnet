@@ -309,6 +309,7 @@ function(params) {
 
   components:: {
     compactor: {
+      // TODO(kakkoyun): withServiceMonitor?
       withLivenessProbe: true,
       withReadinessProbe: true,
       resources: {
@@ -326,7 +327,7 @@ function(params) {
     },
     ingester: {
       withLivenessProbe: true,
-      withReadinessProbe:: true,
+      withReadinessProbe: true,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -334,8 +335,8 @@ function(params) {
     },
     querier: {
       withLivenessProbe: true,
-      withReadinessProbe:: true,
-      resources:: {
+      withReadinessProbe: true,
+      resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
@@ -350,6 +351,7 @@ function(params) {
     },
   },
 
+  // Loki config.
   defaultConfig+:: {
     local grpcServerMaxMsgSize = 104857600,
     local querierConcurrency = 32,
@@ -499,10 +501,10 @@ function(params) {
   //   config+:: {
   //     config: error 'must provide loki config',
   //   },
-
   //   defaultConfig+:: l.config.config,
   // },
 
+  // Loki config overrides.
   defaultOverrides:: {},
 
   // TODO(kakkoyun): Refactor me!
@@ -513,57 +515,12 @@ function(params) {
   //   },
   //   defaultOverrides+:: l.config.overrides,
   // },
-
-  withResources:: {
-    local l = self,
-    config+:: {
-      resources: error 'must provide resources per component',
-    },
-
-    manifests+:: {
-      [normalizedName(name) + '-deployment']+: {
-        spec+: {
-          template+: {
-            spec+: {
-              containers: [
-                c {
-                  resources: l.config.resources[name],
-                }
-                for c in super.containers
-              ],
-            },
-          },
-        },
-      }
-      for name in std.objectFields(l.config.resources)
-      if !isStatefulSet(name)
-    } + {
-      [normalizedName(name) + '-statefulset']+: {
-        spec+: {
-          template+: {
-            spec+: {
-              containers: [
-                c {
-                  resources: l.config.resources[name],
-                }
-                for c in super.containers
-              ],
-            },
-          },
-        },
-      }
-      for name in std.objectFields(l.config.resources)
-      if isStatefulSet(name)
-    },
-  },
-
-// TODO(kakkoyun): Refactor me!
+  // TODO(kakkoyun): Refactor me!
   // withChunkStoreCache:: {
   //   local l = self,
   //   config+:: {
   //     chunkCache: error 'must provide addresses for chunk store cache',
   //   },
-
   //   defaultConfig+:: {
   //     chunk_store_config+: {
   //       chunk_cache_config: {
@@ -583,13 +540,12 @@ function(params) {
   //   },
   // },
 
-// TODO(kakkoyun): Refactor me!
+  // TODO(kakkoyun): Refactor me!
   // withIndexQueryCache:: {
   //   local l = self,
   //   config+:: {
   //     indexQueryCache: error 'must provide addresses for index query cache',
   //   },
-
   //   defaultConfig+:: {
   //     storage_config+: {
   //       index_queries_cache_config: {
@@ -606,13 +562,12 @@ function(params) {
   //   },
   // },
 
-// TODO(kakkoyun): Refactor me!
+  // TODO(kakkoyun): Refactor me!
   // withResultsCache:: {
   //   local l = self,
   //   config+:: {
   //     resultsCache: error 'must provide addresses for frontend results cache',
   //   },
-
   //   defaultConfig+:: {
   //     query_range+: {
   //       split_queries_by_interval: '30m',
@@ -637,11 +592,9 @@ function(params) {
   // TODO(kakkoyun): Refactor me!
   // withEtcd:: {
   //   local l = self,
-
   //   config+:: {
   //     etcdEndpoints: error 'must provide etcd endpoints list',
   //   },
-
   //   defaultConfig+:: {
   //     distributor+: {
   //       ring: {
@@ -710,6 +663,42 @@ function(params) {
     for name in std.objectFields(loki.components)
     if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'ingester'], name)
   } + (
+    if std.length(loki.config.resources) != {} then {
+      [normalizedName(name) + '-deployment']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                c {
+                  resources: loki.config.resources[name],
+                }
+                for c in super.containers
+              ],
+            },
+          },
+        },
+      }
+      for name in std.objectFields(loki.config.resources)
+      if !isStatefulSet(name)
+    } + {
+      [normalizedName(name) + '-statefulset']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                c {
+                  resources: loki.config.resources[name],
+                }
+                for c in super.containers
+              ],
+            },
+          },
+        },
+      }
+      for name in std.objectFields(loki.config.resources)
+      if isStatefulSet(name)
+    }
+  ) + (
     if std.length(loki.config.replicas) != {} then {
       [normalizedName(name) + '-deployment']+: {
         spec+: {
