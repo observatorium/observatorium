@@ -44,6 +44,13 @@ spec:
               key: endpoint
               name: loki-objectstorage
         image: docker.io/grafana/loki:2.0.0
+        livenessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /metrics
+            port: 3100
+            scheme: HTTP
+          periodSeconds: 30
         name: observatorium-xyz-loki-querier
         ports:
         - containerPort: 3100
