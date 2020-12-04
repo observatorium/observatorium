@@ -493,8 +493,7 @@ function(params) {
     },
   },
 
-  defaultOverrides:: {},
-
+  // TODO(kakkoyun): Refactor me!
   // withConfig:: {
   //   local l = self,
   //   config+:: {
@@ -504,6 +503,9 @@ function(params) {
   //   defaultConfig+:: l.config.config,
   // },
 
+  defaultOverrides:: {},
+
+  // TODO(kakkoyun): Refactor me!
   // withOverrides:: {
   //   local l = self,
   //   config+:: {
@@ -555,35 +557,7 @@ function(params) {
     },
   },
 
-  // withServiceMonitor:: {
-  //   local l = self,
-  //   serviceMonitors: {},
-
-  //   manifests+:: {
-  //     [normalizedName(name) + '-service-monitor']: {
-  //       apiVersion: 'monitoring.coreos.com/v1',
-  //       kind: 'ServiceMonitor',
-  //       metadata+: {
-  //         name: l.config.name + '-' + name,
-  //         namespace: l.config.namespace,
-  //         labels: l.config.commonLabels,
-  //       },
-  //       spec: {
-  //         selector: {
-  //           matchLabels: l.config.podLabelSelector {
-  //             'app.kubernetes.io/component': normalizedName(name),
-  //           },
-  //         },
-  //         endpoints: [
-  //           { port: 'metrics' },
-  //         ],
-  //       },
-  //     } + if std.objectHas(l.serviceMonitors, name) then l.serviceMonitors[name] else {}
-  //     for name in std.objectFields(loki.components)
-  //     if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'ingester'], name)
-  //   },
-  // },
-
+// TODO(kakkoyun): Refactor me!
   // withChunkStoreCache:: {
   //   local l = self,
   //   config+:: {
@@ -609,6 +583,7 @@ function(params) {
   //   },
   // },
 
+// TODO(kakkoyun): Refactor me!
   // withIndexQueryCache:: {
   //   local l = self,
   //   config+:: {
@@ -631,6 +606,7 @@ function(params) {
   //   },
   // },
 
+// TODO(kakkoyun): Refactor me!
   // withResultsCache:: {
   //   local l = self,
   //   config+:: {
@@ -658,6 +634,7 @@ function(params) {
   //   },
   // },
 
+  // TODO(kakkoyun): Refactor me!
   // withEtcd:: {
   //   local l = self,
 
@@ -690,6 +667,30 @@ function(params) {
   //     },
   //   },
   // },
+
+  serviceMonitors: {
+    [normalizedName(name)]: {
+      apiVersion: 'monitoring.coreos.com/v1',
+      kind: 'ServiceMonitor',
+      metadata+: {
+        name: loki.config.name + '-' + name,
+        namespace: loki.config.namespace,
+        labels: loki.config.commonLabels,
+      },
+      spec: {
+        selector: {
+          matchLabels: loki.config.podLabelSelector {
+            'app.kubernetes.io/component': normalizedName(name),
+          },
+        },
+        endpoints: [
+          { port: 'metrics' },
+        ],
+      },
+    }
+    for name in std.objectFields(loki.components)
+    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'ingester'], name)
+  },
 
   manifests: {
     'config-map': loki.configmap,
@@ -725,7 +726,31 @@ function(params) {
       }
       for name in std.objectFields(loki.config.replicas)
       if isStatefulSet(name)
-    } else {}
+    }
+  ) + (
+    if std.length(loki.config.volumeClaimTemplates) != {} then {
+      [normalizedName(name) + '-statefulset']+: {
+        spec+: {
+          template+: {
+            spec+: {
+              volumes: std.filter(function(v) v.name != 'storage', super.volumes),
+            },
+          },
+          volumeClaimTemplates: [loki.config.volumeClaimTemplate {
+            metadata+: {
+              name: 'storage',
+              labels+: loki.config.podLabelSelector,
+            },
+          }],
+        },
+      }
+      for name in std.objectFields(loki.components)
+      if isStatefulSet(name)
+    }
+  ) + (
+    if loki.config.memberlist != {} then {
+      [loki.config.memberlist.ringName]: memberlistService(loki.config),
+    }
   ) + (
     if loki.config.replicationFactor > 0 then {
       [normalizedName(name) + '-deployment']+: {
@@ -765,38 +790,12 @@ function(params) {
       }
       for name in std.objectFields(loki.components)
       if isStatefulSet(name)
-    } + {
-      [normalizedName(name) + '-statefulset']+: {
-        spec+: {
-          replicas: loki.config.replicas[name],
-        },
-      }
-      for name in std.objectFields(loki.config.replicas)
-      if isStatefulSet(name)
-    } else {}
+    }
   ) + (
-    if std.length(loki.config.volumeClaimTemplates) != {} then {
-      [normalizedName(name) + '-statefulset']+: {
-        spec+: {
-          template+: {
-            spec+: {
-              volumes: std.filter(function(v) v.name != 'storage', super.volumes),
-            },
-          },
-          volumeClaimTemplates: [loki.config.volumeClaimTemplate {
-            metadata+: {
-              name: 'storage',
-              labels+: loki.config.podLabelSelector,
-            },
-          }],
-        },
-      }
+    if std.length(loki.config.serviceMonitors) != {} then {
+      [normalizedName(name) + '-service-monitor']: loki.serviceMonitors[name]
       for name in std.objectFields(loki.components)
-      if isStatefulSet(name)
-    } else {}
-  ) + (
-    if loki.config.memberlist != {} then
-      { [loki.config.memberlist.ringName]: memberlistService(loki.config) }
-    else {}
+      if std.objectHas(loki.config.serviceMonitors, name)
+    }
   ),
 }
