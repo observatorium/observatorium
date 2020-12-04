@@ -288,24 +288,22 @@ function(params) {
     },
   },
 
-  local memberlistService(cfg) =
-    {
-      apiVersion: 'v1',
-      kind: 'Service',
-      metadata: {
-        // TODO(kakkoyun): !!
-        // name: cfg.name + '-' + cfg.memberlist.ringName,
-        namespace: cfg.namespace,
-        labels: cfg.commonLabels,
-      },
-      spec: {
-        ports: [
-          { name: 'gossip', targetPort: cfg.ports.gossip, port: cfg.ports.gossip, protocol: 'TCP' },
-        ],
-        selector: cfg.podLabelSelector { 'loki.grafana.com/gossip': 'true' },
-        clusterIP: 'None',
-      },
+  local memberlistService(cfg) = {
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata: {
+      name: cfg.name + '-' + cfg.memberlist.ringName,
+      namespace: cfg.namespace,
+      labels: cfg.commonLabels,
     },
+    spec: {
+      ports: [
+        { name: 'gossip', targetPort: cfg.ports.gossip, port: cfg.ports.gossip, protocol: 'TCP' },
+      ],
+      selector: cfg.podLabelSelector { 'loki.grafana.com/gossip': 'true' },
+      clusterIP: 'None',
+    },
+  },
 
   components:: {
     compactor: {
@@ -350,149 +348,148 @@ function(params) {
     },
   },
 
-  defaultConfig+::
-    {
-      local grpcServerMaxMsgSize = 104857600,
-      local querierConcurrency = 32,
-      local indexPeriodHours = 24,
+  defaultConfig+:: {
+    local grpcServerMaxMsgSize = 104857600,
+    local querierConcurrency = 32,
+    local indexPeriodHours = 24,
 
-      auth_enabled: true,
-      chunk_store_config: {
-        max_look_back_period: '0s',
-      },
+    auth_enabled: true,
+    chunk_store_config: {
+      max_look_back_period: '0s',
+    },
 
-      // memberlist+: if loki.config.memberList != {} then {
-      //   bind_port: loki.config.ports,
-      //   abort_if_cluster_join_fails: false,
-      //   min_join_backoff: '1s',
-      //   max_join_backoff: '1m',
-      //   max_join_retries: 10,
-      //   join_members: [
-      //     local gossipSvc = memberlistService(loki.config);
-      //     '%s.%s.svc.cluster.local:%d' % [
-      //       gossipSvc.metadata.name,
-      //       gossipSvc.metadata.namespace,
-      //       gossipSvc.spec.ports[0].port,
-      //     ],
-      //   ],
-      // },
-
-      compactor: {
-        compaction_interval: '2h',
-        shared_store: 's3',
-        working_directory: '/data/loki/compactor',
-      },
-      distributor: {
-        ring: {
-          kvstore: {
-            store: if loki.config.memberList != {} then 'memberlist' else 'inmemory',
-          },
-        },
-      },
-      frontend: {
-        compress_responses: true,
-        max_outstanding_per_tenant: 200,
-      },
-      frontend_worker: {
-        frontend_address: '%s.%s.svc.cluster.local:9095' % [
-          loki.config.name + '-query-frontend-grpc',
-          loki.config.namespace,
+    memberlist+: if loki.config.memberlist != {} then {
+      bind_port: loki.config.ports.gossip,
+      abort_if_cluster_join_fails: false,
+      min_join_backoff: '1s',
+      max_join_backoff: '1m',
+      max_join_retries: 10,
+      join_members: [
+        local gossipSvc = memberlistService(loki.config);
+        '%s.%s.svc.cluster.local:%d' % [
+          gossipSvc.metadata.name,
+          gossipSvc.metadata.namespace,
+          gossipSvc.spec.ports[0].port,
         ],
-        grpc_client_config: {
-          max_send_msg_size: grpcServerMaxMsgSize,
-        },
-        parallelism: loki.config.queryParallelism,
-      },
-      ingester: {
-        chunk_block_size: 262144,
-        chunk_encoding: 'snappy',
-        chunk_idle_period: '2h',
-        chunk_retain_period: '1m',
-        chunk_target_size: 1.572864e+06,
-        lifecycler: {
-          heartbeat_period: '5s',
-          interface_names: [
-            'eth0',
-          ],
-          join_after: if loki.config.memberList != {} then '60s' else '30s',
-          num_tokens: 512,
-          ring: {
-            heartbeat_timeout: '1m',
-            kvstore: {
-              store: if loki.config.memberList != {} then 'memberlist' else 'inmemory',
-            },
-          },
-        },
-        max_transfer_retries: 0,
-      },
-      ingester_client: {
-        grpc_client_config: {
-          max_recv_msg_size: 1024 * 1024 * 64,
-        },
-        remote_timeout: '1s',
-      },
-      limits_config: {
-        enforce_metric_name: false,
-        ingestion_burst_size_mb: 20,
-        ingestion_rate_mb: 10,
-        ingestion_rate_strategy: 'global',
-        max_cache_freshness_per_query: '10m',
-        max_global_streams_per_user: 10000,
-        max_query_length: '12000h',
-        max_query_parallelism: 32,
-        max_streams_per_user: 0,
-        reject_old_samples: true,
-        reject_old_samples_max_age: '%dh' % indexPeriodHours,
-      },
-      querier: {
-        query_timeout: '1h',
-        tail_max_duration: '1h',
-        extra_query_delay: '0s',
-        query_ingesters_within: '2h',
-        engine: {
-          timeout: '3m',
-          max_look_back_period: '5m',
-        },
-      },
-      query_range: {
-        align_queries_with_step: true,
-        cache_results: true,
-        max_retries: 5,
-        split_queries_by_interval: '30m',
-      },
-      schema_config: {
-        configs: [
-          {
-            from: '2020-10-01',
-            index: {
-              period: '24h',
-              prefix: 'loki_index_',
-            },
-            object_store: 's3',
-            schema: 'v11',
-            store: 'boltdb-shipper',
-          },
-        ],
-      },
-      server: {
-        graceful_shutdown_timeout: '5s',
-        grpc_server_max_concurrent_streams: 1000,
-        grpc_server_max_recv_msg_size: grpcServerMaxMsgSize,
-        grpc_server_max_send_msg_size: grpcServerMaxMsgSize,
-        http_listen_port: 3100,
-        http_server_idle_timeout: '120s',
-        http_server_write_timeout: '1m',
-      },
-      storage_config: {
-        boltdb_shipper: {
-          active_index_directory: '/data/loki/index',
-          cache_location: '/data/loki/index_cache',
-          cache_ttl: '24h',
-          resync_interval: '5m',
-          shared_store: 's3',
+      ],
+    },
+
+    compactor: {
+      compaction_interval: '2h',
+      shared_store: 's3',
+      working_directory: '/data/loki/compactor',
+    },
+    distributor: {
+      ring: {
+        kvstore: {
+          store: if loki.config.memberlist != {} then 'memberlist' else 'inmemory',
         },
       },
     },
+    frontend: {
+      compress_responses: true,
+      max_outstanding_per_tenant: 200,
+    },
+    frontend_worker: {
+      frontend_address: '%s.%s.svc.cluster.local:9095' % [
+        loki.config.name + '-query-frontend-grpc',
+        loki.config.namespace,
+      ],
+      grpc_client_config: {
+        max_send_msg_size: grpcServerMaxMsgSize,
+      },
+      parallelism: loki.config.queryParallelism,
+    },
+    ingester: {
+      chunk_block_size: 262144,
+      chunk_encoding: 'snappy',
+      chunk_idle_period: '2h',
+      chunk_retain_period: '1m',
+      chunk_target_size: 1.572864e+06,
+      lifecycler: {
+        heartbeat_period: '5s',
+        interface_names: [
+          'eth0',
+        ],
+        join_after: if loki.config.memberlist != {} then '60s' else '30s',
+        num_tokens: 512,
+        ring: {
+          heartbeat_timeout: '1m',
+          kvstore: {
+            store: if loki.config.memberlist != {} then 'memberlist' else 'inmemory',
+          },
+        },
+      },
+      max_transfer_retries: 0,
+    },
+    ingester_client: {
+      grpc_client_config: {
+        max_recv_msg_size: 1024 * 1024 * 64,
+      },
+      remote_timeout: '1s',
+    },
+    limits_config: {
+      enforce_metric_name: false,
+      ingestion_burst_size_mb: 20,
+      ingestion_rate_mb: 10,
+      ingestion_rate_strategy: 'global',
+      max_cache_freshness_per_query: '10m',
+      max_global_streams_per_user: 10000,
+      max_query_length: '12000h',
+      max_query_parallelism: 32,
+      max_streams_per_user: 0,
+      reject_old_samples: true,
+      reject_old_samples_max_age: '%dh' % indexPeriodHours,
+    },
+    querier: {
+      query_timeout: '1h',
+      tail_max_duration: '1h',
+      extra_query_delay: '0s',
+      query_ingesters_within: '2h',
+      engine: {
+        timeout: '3m',
+        max_look_back_period: '5m',
+      },
+    },
+    query_range: {
+      align_queries_with_step: true,
+      cache_results: true,
+      max_retries: 5,
+      split_queries_by_interval: '30m',
+    },
+    schema_config: {
+      configs: [
+        {
+          from: '2020-10-01',
+          index: {
+            period: '24h',
+            prefix: 'loki_index_',
+          },
+          object_store: 's3',
+          schema: 'v11',
+          store: 'boltdb-shipper',
+        },
+      ],
+    },
+    server: {
+      graceful_shutdown_timeout: '5s',
+      grpc_server_max_concurrent_streams: 1000,
+      grpc_server_max_recv_msg_size: grpcServerMaxMsgSize,
+      grpc_server_max_send_msg_size: grpcServerMaxMsgSize,
+      http_listen_port: 3100,
+      http_server_idle_timeout: '120s',
+      http_server_write_timeout: '1m',
+    },
+    storage_config: {
+      boltdb_shipper: {
+        active_index_directory: '/data/loki/index',
+        cache_location: '/data/loki/index_cache',
+        cache_ttl: '24h',
+        resync_interval: '5m',
+        shared_store: 's3',
+      },
+    },
+  },
 
   defaultOverrides:: {},
 
@@ -795,8 +792,8 @@ function(params) {
       if isStatefulSet(name)
     } else {}
   ) + (
-    if loki.config.memberList != {} then
-      { [loki.config.memberList.ringName]: memberlistService(loki.config) }
+    if loki.config.memberlist != {} then
+      { [loki.config.memberlist.ringName]: memberlistService(loki.config) }
     else {}
   ),
 }
