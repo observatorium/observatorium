@@ -22,10 +22,9 @@ local defaults = {
   memberlist: {},
   etcd: {},
 
-  chunkCache: '',
-  indexQueryCache: [],
-  storeChunkCache: [],
-  resultsCache: [],
+  indexQueryCache: '',
+  storeChunkCache: '',
+  resultsCache: '',
 
   etcdEndpoints: [],
 
@@ -57,9 +56,6 @@ function(params) {
   assert std.isObject(loki.config.volumeClaimTemplates) : 'volumeClaimTemplates has to be an object',
   assert std.isObject(loki.config.memberlist) : 'memberlist has to be an object',
   assert std.isObject(loki.config.etcd) : 'etcd has to be an object',
-  assert std.isArray(loki.config.resultsCache) : 'resultsCache has to be an array',
-  assert std.isArray(loki.config.indexQueryCache) : 'indexQueryCache has to be an array',
-  assert std.isArray(loki.config.storeChunkCache) : 'storeChunkCache has to be an array',
   assert std.isArray(loki.config.etcdEndpoints) : 'etcdEndpoints has to be an array',
 
   configmap:: {
@@ -390,14 +386,14 @@ function(params) {
     chunk_store_config: {
       max_look_back_period: '0s',
     } + (
-      if loki.config.chunkCache != '' then {
+      if loki.config.storeChunkCache != '' then {
         chunk_cache_config: {
           memcached: {
             batch_size: 100,
             parallelism: 100,
           },
           memcached_client: {
-            addresses: loki.config.chunkCache,
+            addresses: loki.config.storeChunkCache,
             timeout: '100ms',
             max_idle_conns: 100,
             update_interval: '1m',
@@ -421,7 +417,7 @@ function(params) {
           gossipSvc.spec.ports[0].port,
         ],
       ],
-    },
+    } else {},
 
     compactor: {
       compaction_interval: '2h',
@@ -506,7 +502,7 @@ function(params) {
       max_retries: 5,
       split_queries_by_interval: '30m',
     } + (
-      if loki.config.resultsCache != [] then {
+      if loki.config.resultsCache != '' then {
         split_queries_by_interval: '30m',
         align_queries_with_step: true,
         cache_results: true,
@@ -556,7 +552,7 @@ function(params) {
         shared_store: 's3',
       },
     } + (
-      if loki.config.indexQueryCache != [] then {
+      if loki.config.indexQueryCache != '' then {
         index_queries_cache_config: {
           memcached: {
             batch_size: 100,
@@ -574,7 +570,7 @@ function(params) {
   // Loki config overrides.
   defaultOverrides:: {},
 
-  serviceMonitors: {
+  serviceMonitors:: {
     [normalizedName(name)]: {
       apiVersion: 'monitoring.coreos.com/v1',
       kind: 'ServiceMonitor',
@@ -692,7 +688,7 @@ function(params) {
   ) + (
     if loki.config.memberlist != {} then {
       [loki.config.memberlist.ringName]: memberlistService(loki.config),
-    }
+    } else {}
   ) + (
     if loki.config.replicationFactor > 0 then {
       [normalizedName(name) + '-deployment']+: {
@@ -732,7 +728,7 @@ function(params) {
       }
       for name in std.objectFields(loki.components)
       if isStatefulSet(name)
-    }
+    } else {}
   ) + {
     [normalizedName(name) + '-service-monitor']: loki.serviceMonitors[name]
     for name in std.objectFields(loki.components)
