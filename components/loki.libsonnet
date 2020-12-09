@@ -17,6 +17,7 @@ local defaults = {
   },
   replicationFactor: 1,
 
+  // TODO(kakkoyun): Is it duplicated with components?
   resources: {},
   volumeClaimTemplates: {},
   memberlist: {},
@@ -569,11 +570,11 @@ function(params) {
   },
 
   serviceMonitors:: {
-    [normalizedName(name)]: {
+    [name]: {
       apiVersion: 'monitoring.coreos.com/v1',
       kind: 'ServiceMonitor',
       metadata+: {
-        name: loki.config.name + '-' + name,
+        name: loki.config.name + '-' + normalizedName(name),
         namespace: loki.config.namespace,
         labels: loki.config.commonLabels,
       },
