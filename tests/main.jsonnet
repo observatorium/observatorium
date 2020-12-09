@@ -1,4 +1,4 @@
-local obs = (import '../environments/base/observatorium.jsonnet');
+local obs = (import '../components/observatorium.libsonnet');
 
 local dex = (import '../components/dex.libsonnet')({
   name: 'dex',
@@ -172,12 +172,12 @@ local upLogs = up(logsConfig);
 
 local upLogsTLS = up(logsConfig {
   name: 'observatorium-up-logs-tls',
-  writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/push' % [
+  writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/push' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
     obs.api.service.spec.ports[1].port,
   ],
-  readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/api/v1/query' % [
+  readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/query' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
     obs.api.service.spec.ports[1].port,

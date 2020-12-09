@@ -9,8 +9,6 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     name: 'observatorium-xyz',
     namespace: 'observatorium',
 
-    loki: {},
-
     commonLabels:: {
       'app.kubernetes.io/part-of': 'observatorium',
       'app.kubernetes.io/instance': obs.config.name,
@@ -30,22 +28,6 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     },
   }),
 
-  loki::
-    loki +
-    loki.withMemberList +
-    loki.withReplicas +
-    loki.withDataReplication +
-    loki.withVolumeClaimTemplate {
-      config+:: {
-        local cfg = self,
-        name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-        namespace: obs.config.namespace,
-        commonLabels+:: obs.config.commonLabels,
-        replicas: obs.config.replicas,
-        replicationFactor: 1,
-      },
-    },
-
   gubernator:: (import 'gubernator.libsonnet')({
     local cfg = self,
     name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
@@ -58,13 +40,14 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
 
   api:: api({
     local cfg = self,
-    name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-    namespace: obs.config.namespace,
-    commonLabels+:: obs.config.commonLabels,
+    // TODO(kakkoyun): Upgrade in a separate PR.
+    // version: 	'master-2020-12-04-v0.1.1-194-gb4d2f9e',
     version: 'master-2020-11-02-v0.1.1-192-ge324057',
     image: 'quay.io/observatorium/observatorium:' + cfg.version,
+    name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+    namespace: obs.config.namespace,
     replicas: 1,
-
+    commonLabels+:: obs.config.commonLabels,
     metrics: {
       readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
         obs.thanos.queryFrontend.service.metadata.name,
@@ -77,14 +60,6 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
         obs.thanos.receiversService.spec.ports[2].port,
       ],
     },
-    rateLimiter: {
-      grpcAddress: '%s.%s.svc.cluster.local:%d' % [
-        obs.gubernator.service.metadata.name,
-        obs.gubernator.service.metadata.namespace,
-        obs.gubernator.config.ports.grpc,
-      ],
-    },
-  } + if std.objectHas(obs.config, 'loki') && std.length(obs.config.loki) != 0 then {
     logs: {
       readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
         obs.loki.manifests['query-frontend-http-service'].metadata.name,
@@ -102,7 +77,52 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
         obs.loki.manifests['distributor-http-service'].spec.ports[0].port,
       ],
     },
-  } else {}),
+    rateLimiter: {
+      grpcAddress: '%s.%s.svc.cluster.local:%d' % [
+        obs.gubernator.service.metadata.name,
+        obs.gubernator.service.metadata.namespace,
+        obs.gubernator.config.ports.grpc,
+      ],
+    },
+  }),
+
+  loki:: loki({
+    local cfg = self,
+    name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
+    namespace: obs.config.namespace,
+    commonLabels+:: obs.config.commonLabels,
+    version: '2.0.0',
+    image: 'docker.io/grafana/loki:' + cfg.version,
+    replicationFactor: 1,
+    replicas: {
+      compactor: 1,
+      distributor: 1,
+      ingester: 1,
+      querier: 1,
+      query_frontend: 1,
+    },
+    memberlist: {
+      ringName: 'gossip-ring',
+    },
+    volumeClaimTemplate: {
+      spec: {
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '250Mi',
+          },
+        },
+      },
+    },
+    objectStorageConfig: {
+      secretName: 'loki-objectstorage',
+      endpointKey: 'endpoint',
+      bucketsKey: 'buckets',
+      regionKey: 'region',
+      accessKeyIdKey: 'aws_access_key_id',
+      secretAccessKeyKey: 'aws_secret_access_key',
+    },
+  }),
 } + {
   local obs = self,
 
@@ -118,9 +138,8 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     } + {
       ['thanos-' + name]: obs.thanos.manifests[name]
       for name in std.objectFields(obs.thanos.manifests)
-    } + if std.length(obs.config.loki) != 0 then {
+    } + {
       ['loki-' + name]: obs.loki.manifests[name]
       for name in std.objectFields(obs.loki.manifests)
-    }
-    else {},
+    },
 }

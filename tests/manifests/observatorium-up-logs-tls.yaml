@@ -20,8 +20,8 @@ spec:
       containers:
       - args:
         - --endpoint-type=logs
-        - --endpoint-write=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/api/v1/push
-        - --endpoint-read=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/api/v1/query
+        - --endpoint-write=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/loki/api/v1/push
+        - --endpoint-read=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/logs/v1/test/loki/api/v1/query
         - --period=1s
         - --duration=2m
         - --name=foo

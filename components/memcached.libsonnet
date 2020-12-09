@@ -62,7 +62,7 @@ function(params) {
   config:: defaults + params,
   // Safety checks for combined config of defaults and params
   assert std.isNumber(mc.config.replicas) && mc.config.replicas >= 0 : 'memcached replicas has to be number >= 0',
-  assert std.isObject(mc.config.resources),
+  assert std.isObject(mc.config.resources) : 'memcached resources has to be an object',
   assert std.isBoolean(mc.config.serviceMonitor),
 
   service: {

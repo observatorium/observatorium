@@ -42,7 +42,7 @@ function(params) {
   config:: defaults + params,
 
   // Safety checks for combined config of defaults and params.
-  assert std.isObject(thanos.config.objectStorageConfig),
+  assert std.isObject(thanos.config.objectStorageConfig) : 'objectStorageConfig replicas has to be an object',
   assert std.isArray(thanos.config.hashrings),
   assert std.isObject(thanos.config.stores),
 
