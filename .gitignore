@@ -2,3 +2,5 @@
 /kubectl
 /vendor
 tmp/
+
+.idea
