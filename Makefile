@@ -63,6 +63,9 @@ $(CERT_DIR):
 	mkdir -p $(CERT_DIR)
 
 # Not managed by Bingo directly, as it requires the -tags tools flag
-$(GENERATE_TLS_CERT):
+# TODO(bwplotka): Fix with https://github.com/bwplotka/bingo/issues/46.
+$(GENERATE_TLS_CERT): $(BINGO_DIR)/api.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/generate-tls-cert"
-	@cd .bingo && $(GO) build -modfile=generate-tls-cert.mod -tags tools -o=$(GOBIN)/generate-tls-cert "github.com/observatorium/observatorium/test/tls"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=api.mod -tags=tools -o=$(BIN_DIR)/generate-tls-cert "github.com/observatorium/observatorium/test/tls"
+
