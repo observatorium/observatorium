@@ -138,8 +138,8 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     } + {
       ['thanos-' + name]: obs.thanos.manifests[name]
       for name in std.objectFields(obs.thanos.manifests)
-    } + {
+    } + if std.objectHas(obs.loki, 'manifests') then {
       ['loki-' + name]: obs.loki.manifests[name]
       for name in std.objectFields(obs.loki.manifests)
-    },
+    } else {},
 }
