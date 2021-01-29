@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: api
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: observatorium-api
+    app.kubernetes.io/part-of: observatorium
+    app.kubernetes.io/version: master-2020-11-02-v0.1.1-192-ge324057
+  name: observatorium-xyz-observatorium-api
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: api
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: observatorium-api
+      app.kubernetes.io/part-of: observatorium
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: observatorium-api
+        app.kubernetes.io/part-of: observatorium
+        app.kubernetes.io/version: master-2020-11-02-v0.1.1-192-ge324057
+    spec:
+      containers:
+      - args:
+        - --web.listen=0.0.0.0:8080
+        - --web.internal.listen=0.0.0.0:8081
+        - --metrics.read.endpoint=http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090
+        - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291
+        - --log.level=warn
+        - --logs.read.endpoint=http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100
+        - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
+        - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
+        - --rbac.config=/etc/observatorium/rbac.yaml
+        - --tenants.config=/etc/observatorium/tenants.yaml
+        - --middleware.rate-limiter.grpc-address=observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081
+        image: quay.io/observatorium/observatorium:master-2020-11-02-v0.1.1-192-ge324057
+        livenessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /live
+            port: 8081
+            scheme: HTTP
+          periodSeconds: 30
+        name: observatorium-api
+        ports:
+        - containerPort: 8081
+          name: internal
+        - containerPort: 8080
+          name: public
+        readinessProbe:
+          failureThreshold: 12
+          httpGet:
+            path: /ready
+            port: 8081
+            scheme: HTTP
+          periodSeconds: 5
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/observatorium/rbac.yaml
+          name: rbac
+          readOnly: true
+          subPath: rbac.yaml
+        - mountPath: /etc/observatorium/tenants.yaml
+          name: tenants
+          readOnly: true
+          subPath: tenants.yaml
+      serviceAccountName: observatorium-xyz-observatorium-api
+      volumes:
+      - configMap:
+          name: observatorium-xyz-observatorium-api
+        name: rbac
+      - name: tenants
+        secret:
+          secretName: observatorium-xyz-observatorium-api
