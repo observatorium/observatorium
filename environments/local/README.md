@@ -2,6 +2,8 @@
 
 This tutorial will help you get started with Observatorium. We will be running the whole Observatorium stack in a local Kubernetes cluster. Observatorium uses OIDC (OpenID Connect) for authentication, so we will deploy our own OIDC provider. After we have Observatorium up and running, we will push some metrics as a tenant from outside the cluster using remote write.
 
+If you just want to run Observatroium locally and get started quickly, take a look at the bash script `quickstart.sh`.
+
 ## Prerequisites
 
 - Clone this repo
@@ -12,8 +14,7 @@ This tutorial will help you get started with Observatorium. We will be running t
 
 - Create a temporary folder
   ```bash
-  mkdir -p tmp/{bin,etc}
-  cd tmp
+  mkdir -p tmp/bin
   ```
 
 ### Local K8s cluster - KIND
@@ -30,10 +31,10 @@ kind create cluster
 We need to run our own OIDC provider to handle authentication. We are going to use ORY Hydra for that. First download and extract the binary release from [here](https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_linux_64bit.tar.gz).
 
 ```bash
-curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_linux_64bit.tar.gz" | tar -xzf - -C bin hydra
+curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_linux_64bit.tar.gz" | tar -xzf - -C tmp/bin hydra
 ```
 
-Create a configuration file for `hydra`, `hydra.yaml`.
+The configuration file for `hydra` is present in `configs/hydra.yaml`.
 
 ```yaml
 strategies:
@@ -43,15 +44,6 @@ urls:
     issuer: http://172.17.0.1:4444/ 
 ```
 
-```bash
-cat <<EOF > etc/hydra.yaml
-strategies:
-  access_token: jwt
-urls:
-  self:
-    issuer: http://172.17.0.1:4444/
-EOF
-```
 
 We will be running `hydra` outside the cluster to simulate an external tenant, but we need to access `hydra` from inside the cluster. As our K8s cluster is running inside Docker containers, we can use the ip address of `docker0` interface to access host from inside the containers. In most cases it will be `172.17.0.1` but you can find yours using
 
@@ -64,7 +56,7 @@ If this value is not `172.17.0.1`, you need to update the `issuer` URL in the co
 Next step is to run `hydra`.
 
 ```bash
-DSN=memory ./bin/hydra serve all --dangerous-force-http --config ./etc/hydra.yaml
+DSN=memory ./tmp/bin/hydra serve all --dangerous-force-http --config ./configs/hydra.yaml
 ```
 
 Now that we have our OIDC provider running we need create a client to authenticate as. To create a new client in `hydra` run this
@@ -84,8 +76,6 @@ We will deploy the Observatorium using Kubernetes manifests generated from jsonn
 Let's deploy `minio` first, as Thanos and Loki have a dependency on it.
 
 ```bash
-# Go the the environments/local directory before running this
-
 kubectl create ns observatorium-minio
 kubectl apply -f ./manifests/minio-pvc.yaml
 kubectl apply -f ./manifests/minio-deployment.yaml
@@ -117,12 +107,11 @@ The token issued by the OIDC providers often have a small validity, but it can b
 
 - Clone the repo locally and build the binary using `make build`.
   ```bash
-  cd tmp
-  git clone https://github.com/observatorium/token-refresher
-  cd token-refresher
+  git clone https://github.com/observatorium/token-refresher tmp/token-refresher
+  cd tmp/token-refresher
   make build
   mv ./token-refresher ../bin/
-  cd ..
+  cd -
   ```
 - We need to put up a proxy in front of the Observatorium API so we first need to expose it first. We will use `kubectl port-forward` for that.
   ```bash
@@ -130,7 +119,7 @@ The token issued by the OIDC providers often have a small validity, but it can b
   ```
 - Now that Observatorium API is listening on `localhost:8443`, we will run the token refresher to forward traffic to it. You may have to replace the `--oidc.issuer-url` with appropriate value if the IP of the `docker0` interface is different.
   ```bash
-  ./bin/token-refresher --oidc.issuer-url=http://172.17.0.1:4444/ --oidc.client-id=user --oidc.client-secret=secret --oidc.audience=observatorium --url=http://127.0.0.1:8443
+  ./tmp/bin/token-refresher --oidc.issuer-url=http://172.17.0.1:4444/ --oidc.client-id=user --oidc.client-secret=secret --oidc.audience=observatorium --url=http://127.0.0.1:8443
   ```
 
 ### Push some metrics, shall we?
@@ -140,11 +129,11 @@ Take a look at the [Prometheus first steps](https://prometheus.io/docs/introduct
 Download the Prometheus binary from [here](https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.linux-amd64.tar.gz).
 
 ```bash
-curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.linux-amd64.tar.gz" | tar -xzf - prometheus-2.24.1.linux-amd64/prometheus
-mv prometheus-2.24.1.linux-amd64/prometheus ./bin/
+curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.linux-amd64.tar.gz" | tar -xzf - -C tmp prometheus-2.24.1.linux-amd64/prometheus
+mv ./tmp/prometheus-2.24.1.linux-amd64/prometheus ./tmp/bin/
 ```
 
-The Prometheus config will look like this:
+The Prometheus config file present in `configs/prom.yaml` looks like this:
 
 ```yaml
 global:
@@ -162,28 +151,10 @@ remote_write:
 
 Notice that the remote_write url points to the token refresher, not the Observatorium API directly.
 
-Create the config file:
-
-```bash
-cat <<EOF >etc/prom.yaml
-global:
-  scrape_interval: 15s
-
-scrape_configs:
-- job_name: prom
-  static_configs:
-  - targets:
-    - localhost:9090
-
-remote_write:
-- url: http://localhost:8080/api/metrics/v1/test-oidc/api/v1/receive
-EOF
-```
-
 Next, let's run Prometheus with this config.
 
 ```bash
-./bin/prometheus --config.file=./etc/prom.yaml --log.level=debug
+./tmp/bin/prometheus --config.file=./configs/prom.yaml --storage.tsdb.path=tmp/data/
 ```
 
 ## Querying data from Observatorium

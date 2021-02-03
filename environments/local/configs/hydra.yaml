@@ -1,0 +1,5 @@
+strategies:
+  access_token: jwt
+urls:
+  self:
+    issuer: http://172.17.0.1:4444/
