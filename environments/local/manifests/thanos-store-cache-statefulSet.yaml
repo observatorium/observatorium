@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: store-cache
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: memcached
+    app.kubernetes.io/part-of: observatorium
+    app.kubernetes.io/version: 1.6.3-alpine
+  name: observatorium-xyz-thanos-store-memcached
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: store-cache
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: memcached
+      app.kubernetes.io/part-of: observatorium
+  serviceName: observatorium-xyz-thanos-store-memcached
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: store-cache
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: memcached
+        app.kubernetes.io/part-of: observatorium
+        app.kubernetes.io/version: 1.6.3-alpine
+    spec:
+      containers:
+      - args:
+        - -m 1024
+        - -I 1m
+        - -c 1024
+        - -v
+        image: docker.io/memcached:1.6.3-alpine
+        name: memcached
+        ports:
+        - containerPort: 11211
+          name: client
+        resources:
+          limits:
+            cpu: 50m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
+        terminationMessagePolicy: FallbackToLogsOnError
+      - args:
+        - --memcached.address=localhost:11211
+        - --web.listen-address=0.0.0.0:9150
+        image: prom/memcached-exporter:v0.6.0
+        name: exporter
+        ports:
+        - containerPort: 9150
+          name: metrics
+        resources: {}

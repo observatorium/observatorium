@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: rate-limiter
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: gubernator
+    app.kubernetes.io/part-of: observatorium
+    app.kubernetes.io/version: 1.0.0-rc.1
+  name: observatorium-xyz-gubernator
+  namespace: observatorium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: rate-limiter
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: gubernator
+      app.kubernetes.io/part-of: observatorium
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: rate-limiter
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: gubernator
+        app.kubernetes.io/part-of: observatorium
+        app.kubernetes.io/version: 1.0.0-rc.1
+    spec:
+      containers:
+      - env:
+        - name: GUBER_K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: GUBER_K8S_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: GUBER_HTTP_ADDRESS
+          value: 0.0.0.0:8080
+        - name: GUBER_GRPC_ADDRESS
+          value: 0.0.0.0:8081
+        - name: GUBER_K8S_POD_PORT
+          value: "8081"
+        - name: GUBER_K8S_ENDPOINTS_SELECTOR
+          value: app.kubernetes.io/name=gubernator
+        image: thrawn01/gubernator:1.0.0-rc.1
+        name: gubernator
+        ports:
+        - containerPort: 8081
+          name: grpc
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v1/HealthCheck
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 1
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: observatorium-xyz-gubernator

@@ -24,11 +24,11 @@ lint: $(JSONNET_LINT) vendor
 	echo ${JSONNET_SRC} | xargs -n 1 -- $(JSONNET_LINT) -J vendor
 
 .PHONY: generate
-generate: environments/base/manifests environments/dev/manifests
+generate: environments/base/manifests environments/dev/manifests environments/local/manifests
 
 .PHONY: validate
 validate: $(KUBEVAL) generate
-	$(KUBEVAL) --ignore-missing-schemas environments/base/manifests/*.yaml environments/dev/manifests/*.yaml tests/manifests/*.yaml
+	$(KUBEVAL) --ignore-missing-schemas environments/base/manifests/*.yaml environments/dev/manifests/*.yaml environments/local/manifests/*.yaml tests/manifests/*.yaml
 
 environments/base/manifests: environments/base/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
@@ -43,6 +43,13 @@ environments/dev/manifests: environments/dev/main.jsonnet vendor $(JSONNET_SRC) 
 	-mkdir environments/dev/manifests
 	$(JSONNET) -J vendor -m environments/dev/manifests environments/dev/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find environments/dev/manifests -type f ! -name '*.yaml' -delete
+
+environments/local/manifests: environments/local/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
+	-make fmt
+	-rm -rf environments/local/manifests
+	-mkdir environments/local/manifests
+	$(JSONNET) -J vendor -m environments/local/manifests environments/local/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	find environments/local/manifests -type f ! -name '*.yaml' -delete
 
 tests/manifests: tests/main.jsonnet vendor generate-cert $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt

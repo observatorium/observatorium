@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: compactor
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/part-of: observatorium
+    app.kubernetes.io/version: 2.0.0
+  name: observatorium-xyz-loki-compactor-grpc
+  namespace: observatorium
+spec:
+  clusterIP: None
+  ports:
+  - name: grpc
+    port: 9095
+    targetPort: 9095
+  selector:
+    app.kubernetes.io/component: compactor
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/part-of: observatorium
