@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: 2.0.0
+    app.kubernetes.io/version: 2.1.0
   name: observatorium-xyz-loki-compactor
   namespace: observatorium
 spec:
@@ -41,7 +41,7 @@ spec:
             secretKeyRef:
               key: endpoint
               name: loki-objectstorage
-        image: docker.io/grafana/loki:2.0.0
+        image: docker.io/grafana/loki:2.1.0
         livenessProbe:
           failureThreshold: 10
           httpGet:
