@@ -135,6 +135,7 @@ spec:
         - mountPath: /var/thanos/store
           name: data
           readOnly: false
+      serviceAccountName: observatorium-xyz-thanos-store-shard
       terminationGracePeriodSeconds: 120
       volumes: []
   volumeClaimTemplates:

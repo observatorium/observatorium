@@ -73,6 +73,7 @@ spec:
         - mountPath: /var/thanos/compact
           name: data
           readOnly: false
+      serviceAccountName: observatorium-xyz-thanos-compact
       terminationGracePeriodSeconds: 120
       volumes: []
   volumeClaimTemplates:
