@@ -339,7 +339,7 @@ function(params) {
     for name in std.objectFields(thanos.stores.shards[shard])
     if thanos.stores.shards[shard][name] != null
   } + {
-    'store-service-account': thanos.receivers.serviceAccount,
+    'store-service-account': thanos.stores.serviceAccount,
   } + {
     ['store-cache-' + name]: thanos.storeCache[name]
     for name in std.objectFields(thanos.storeCache)
