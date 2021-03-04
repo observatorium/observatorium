@@ -268,7 +268,7 @@ function(params) {
       for service in
         [thanos.rule.service] +
         [thanos.stores.shards[shard].service for shard in std.objectFields(thanos.stores.shards)] +
-        [thanos.receivers[hashring].service for hashring in std.objectFields(thanos.receivers)]
+        [thanos.receivers.hashrings[hashring].service for hashring in std.objectFields(thanos.receivers.hashrings)]
     ],
     replicaLabels: thanos.config.replicaLabels,
   }),
@@ -322,11 +322,12 @@ function(params) {
     for name in std.objectFields(thanos.queryFrontendCache)
     if thanos.queryFrontendCache[name] != null
   } + {
-    ['receive-' + hashring + '-' + name]: thanos.receivers[hashring][name]
-    for hashring in std.objectFields(thanos.receivers)
-    for name in std.objectFields(thanos.receivers[hashring])
-    if thanos.receivers[hashring][name] != null
+    ['receive-' + hashring + '-' + name]: thanos.receivers.hashrings[hashring][name]
+    for hashring in std.objectFields(thanos.receivers.hashrings)
+    for name in std.objectFields(thanos.receivers.hashrings[hashring])
+    if thanos.receivers.hashrings[hashring][name] != null
   } + {
+    'receive-service-account': thanos.receivers.serviceAccount,
     'receive-service': thanos.receiversService,
   } + {
     ['compact-' + name]: thanos.compact[name]

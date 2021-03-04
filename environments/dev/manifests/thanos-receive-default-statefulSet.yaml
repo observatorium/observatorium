@@ -75,10 +75,10 @@ spec:
         - --receive.replication-factor=1
         - --objstore.config=$(OBJSTORE_CONFIG)
         - --tsdb.path=/var/thanos/receive
-        - --label=replica="$(NAME)"
-        - --label=receive="true"
         - --tsdb.retention=4d
         - --receive.local-endpoint=$(NAME).observatorium-xyz-thanos-receive-default.$(NAMESPACE).svc.cluster.local:10901
+        - --label=replica="$(NAME)"
+        - --label=receive="true"
         - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
         env:
         - name: NAME
@@ -125,6 +125,7 @@ spec:
           readOnly: false
         - mountPath: /var/lib/thanos-receive
           name: hashring-config
+      serviceAccountName: observatorium-xyz-thanos-receive
       terminationGracePeriodSeconds: 900
       volumes:
       - configMap:

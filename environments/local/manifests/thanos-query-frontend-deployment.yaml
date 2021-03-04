@@ -98,4 +98,5 @@ spec:
           periodSeconds: 5
         resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
+      serviceAccountName: observatorium-xyz-thanos-query-frontend
       terminationGracePeriodSeconds: 120
