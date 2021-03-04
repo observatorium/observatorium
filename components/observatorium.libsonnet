@@ -23,7 +23,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
       hashring: 'default',
       tenants: [],
     }],
-    stores: {
+    stores+: {
       shards: 1,
     },
   }),

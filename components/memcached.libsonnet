@@ -40,7 +40,7 @@ local defaults = {
   memoryRequestBytes:: std.ceil((defaults.memoryLimitMb * defaults.overprovisionFactor) + 100) * 1024 * 1024,
   memoryLimitBytes:: defaults.memoryLimitMb * 1.5 * 1024 * 1024,
 
-  component:: 'store-cache',
+  component:: error 'must provide component',
   commonLabels:: {
     'app.kubernetes.io/name': 'memcached',
     'app.kubernetes.io/instance': defaults.name,
