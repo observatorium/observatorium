@@ -162,17 +162,14 @@ function(params) {
     },
   },
 
-  receivers:: t.receiveHashrings({
+  receivers:: t.receiveHashrings(thanos.config.receive {
     hashrings: thanos.config.hashrings,
     name: thanos.config.name + '-thanos-receive',
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
     version: thanos.config.version,
-    replicas: thanos.config.receive.replicas,
     replicaLabels: thanos.config.replicaLabels,
-    replicationFactor: thanos.config.receive.replicationFactor,
-    retention: thanos.config.receive.retention,
     objectStorageConfig: thanos.config.objectStorageConfig,
     volumeClaimTemplate: {
       spec: {
