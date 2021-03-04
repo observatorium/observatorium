@@ -19,9 +19,75 @@ local defaults = {
     hashring: 'default',
     tenants: [],
   }],
-  stores: { shards: 1 },
+  stores+: {
+    shards: 1,
+    storage: '50Gi',
+  },
   replicaLabels: ['prometheus_replica', 'rule_replica', 'replica'],
   deduplicationReplicaLabels: ['replica'],
+
+  receiveController: {
+    local rc = self,
+    namespace: defaults.namespace,
+    commonLabels+:: defaults.commonLabels,
+    replicas: 1,
+    version: 'master-2020-02-06-b66e0c8',
+    image: 'quay.io/observatorium/thanos-receive-controller:' + rc.version,
+    hashrings: defaults.hashrings,
+    serviceMonitor: false,
+  },
+
+  memcached: {
+    local memcached = self,
+    namespace: defaults.namespace,
+    commonLabels+:: defaults.commonLabels,
+    version: '1.6.3-alpine',
+    image: 'docker.io/memcached:' + memcached.version,
+    exporterVersion: 'v0.6.0',
+    exporterImage: 'prom/memcached-exporter:' + memcached.exporterVersion,
+  },
+
+  compact: {
+    storage: '50Gi',
+    disableDownsampling: true,
+    retentionResolutionRaw: '14d',
+    retentionResolution5m: '1s',
+    retentionResolution1h: '1s',
+  },
+
+  receive: {
+    replicas: 1,
+    replicationFactor: 1,
+    retention: '4d',
+    storage: '50Gi',
+  },
+
+  rule: {
+    storage: '50Gi',
+  },
+
+  storeCache: defaults.memcached {
+    replicas: 1,
+    cpuRequest:: '50m',
+    cpuLimit:: '50m',
+    memoryLimitMb: 1024,
+    memoryRequestBytes: 128 * 1024 * 1024,
+    memoryLimitBytes: 128 * 1024 * 1024,
+  },
+
+  query: {
+    replicas: 1,
+    queryTimeout: '15m',
+  },
+
+  queryFrontendCache: defaults.memcached {
+    replicas: 1,
+    cpuRequest:: '50m',
+    cpuLimit:: '50m',
+    memoryLimitMb: 1024,
+    memoryRequestBytes: 128 * 1024 * 1024,
+    memoryLimitBytes: 128 * 1024 * 1024,
+  },
 
   commonLabels: {
     'app.kubernetes.io/part-of': 'observatorium',
@@ -55,17 +121,17 @@ function(params) {
     replicas: 1,
     deduplicationReplicaLabels: thanos.config.deduplicationReplicaLabels,
     deleteDelay: '48h',
-    disableDownsampling: true,
-    retentionResolutionRaw: '14d',
-    retentionResolution5m: '1s',
-    retentionResolution1h: '1s',
+    disableDownsampling: thanos.config.compact.disableDownsampling,
+    retentionResolutionRaw: thanos.config.compact.retentionResolutionRaw,
+    retentionResolution5m: thanos.config.compact.retentionResolution5m,
+    retentionResolution1h: thanos.config.compact.retentionResolution1h,
     objectStorageConfig: thanos.config.objectStorageConfig,
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],
         resources: {
           requests: {
-            storage: '50Gi',
+            storage: thanos.config.compact.storage,
           },
         },
       },
@@ -73,16 +139,9 @@ function(params) {
     logLevel: 'info',
   }),
 
-  receiveController:: rc({
+  receiveController:: rc(thanos.config.receiveController {
     local cfg = self,
-    commonLabels+:: thanos.config.commonLabels,
     name: thanos.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
-    namespace: thanos.config.namespace,
-    replicas: 1,
-    version: 'master-2020-02-06-b66e0c8',
-    image: 'quay.io/observatorium/thanos-receive-controller:' + cfg.version,
-    hashrings: thanos.config.hashrings,
-    serviceMonitor: false,
   }),
 
   receiversService:: {
@@ -110,17 +169,17 @@ function(params) {
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
     version: thanos.config.version,
-    replicas: 1,
+    replicas: thanos.config.receive.replicas,
     replicaLabels: thanos.config.replicaLabels,
-    replicationFactor: 1,
-    retention: '4d',
+    replicationFactor: thanos.config.receive.replicationFactor,
+    retention: thanos.config.receive.retention,
     objectStorageConfig: thanos.config.objectStorageConfig,
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],
         resources: {
           requests: {
-            storage: '50Gi',
+            storage: thanos.config.receive.storage,
           },
         },
       },
@@ -143,7 +202,7 @@ function(params) {
         accessModes: ['ReadWriteOnce'],
         resources: {
           requests: {
-            storage: '50Gi',
+            storage: thanos.config.rule.storage,
           },
         },
       },
@@ -165,7 +224,7 @@ function(params) {
         accessModes: ['ReadWriteOnce'],
         resources: {
           requests: {
-            storage: '50Gi',
+            storage: thanos.config.stores.storage,
           },
         },
       },
@@ -193,21 +252,10 @@ function(params) {
     },
   }),
 
-  storeCache:: memcached({
+  storeCache:: memcached(thanos.config.storeCache {
     local cfg = self,
     name: thanos.config.name + '-thanos-store-' + cfg.commonLabels['app.kubernetes.io/name'],
-    namespace: thanos.config.namespace,
-    commonLabels+:: thanos.config.commonLabels,
-    version: '1.6.3-alpine',
-    image: 'docker.io/memcached:' + cfg.version,
-    exporterVersion: 'v0.6.0',
-    exporterImage: 'prom/memcached-exporter:' + cfg.exporterVersion,
-    replicas: 1,
-    cpuRequest:: '50m',
-    cpuLimit:: '50m',
-    memoryLimitMb: 1024,
-    memoryRequestBytes: 128 * 1024 * 1024,
-    memoryLimitBytes: 128 * 1024 * 1024,
+    component: 'store-cache',
   }),
 
   query:: t.query({
@@ -216,13 +264,13 @@ function(params) {
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
     version: thanos.config.version,
-    replicas: 1,
-    queryTimeout: '15m',
+    replicas: thanos.config.query.replicas,
+    queryTimeout: thanos.config.query.queryTimeout,
     stores: [
       'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
       for service in
         [thanos.rule.service] +
-        [thanos.stores[shard].service for shard in std.objectFields(thanos.stores)] +
+        [thanos.stores.shards[shard].service for shard in std.objectFields(thanos.stores.shards)] +
         [thanos.receivers[hashring].service for hashring in std.objectFields(thanos.receivers)]
     ],
     replicaLabels: thanos.config.replicaLabels,
@@ -258,22 +306,10 @@ function(params) {
     },
   }),
 
-  queryFrontendCache:: memcached({
+  queryFrontendCache:: memcached(thanos.config.queryFrontendCache {
     local cfg = self,
     name: thanos.config.name + '-thanos-query-frontend-' + cfg.commonLabels['app.kubernetes.io/name'],
-    namespace: thanos.config.namespace,
-    commonLabels+:: thanos.config.commonLabels,
     component: 'query-frontend-cache',
-    version: '1.6.3-alpine',
-    image: 'docker.io/memcached:' + cfg.version,
-    exporterVersion: 'v0.6.0',
-    exporterImage: 'prom/memcached-exporter:' + cfg.exporterVersion,
-    replicas: 1,
-    cpuRequest:: '50m',
-    cpuLimit:: '50m',
-    memoryLimitMb: 1024,
-    memoryRequestBytes: 128 * 1024 * 1024,
-    memoryLimitBytes: 128 * 1024 * 1024,
   }),
 
   manifests:: {
@@ -300,10 +336,10 @@ function(params) {
     for name in std.objectFields(thanos.compact)
     if thanos.compact[name] != null
   } + {
-    ['store-' + shard + '-' + name]: thanos.stores[shard][name]
-    for shard in std.objectFields(thanos.stores)
-    for name in std.objectFields(thanos.stores[shard])
-    if thanos.stores[shard][name] != null
+    ['store-' + shard + '-' + name]: thanos.stores.shards[shard][name]
+    for shard in std.objectFields(thanos.stores.shards)
+    for name in std.objectFields(thanos.stores.shards[shard])
+    if thanos.stores.shards[shard][name] != null
   } + {
     ['store-cache-' + name]: thanos.storeCache[name]
     for name in std.objectFields(thanos.storeCache)
