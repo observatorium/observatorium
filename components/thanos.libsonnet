@@ -22,6 +22,7 @@ local defaults = {
   stores+: {
     shards: 1,
     storage: '50Gi',
+    serviceMonitor: false,
   },
   replicaLabels: ['prometheus_replica', 'rule_replica', 'replica'],
   deduplicationReplicaLabels: ['replica'],
@@ -34,7 +35,6 @@ local defaults = {
     version: 'master-2020-02-06-b66e0c8',
     image: 'quay.io/observatorium/thanos-receive-controller:' + rc.version,
     hashrings: defaults.hashrings,
-    serviceMonitor: false,
   },
 
   memcached: {
@@ -60,6 +60,7 @@ local defaults = {
     replicationFactor: 1,
     retention: '4d',
     storage: '50Gi',
+    serviceMonitor: false,
   },
 
   rule: {
@@ -80,6 +81,8 @@ local defaults = {
     queryTimeout: '15m',
   },
 
+  queryFrontend: {},
+
   queryFrontendCache: defaults.memcached {
     replicas: 1,
     cpuRequest:: '50m',
@@ -90,7 +93,6 @@ local defaults = {
   },
 
   commonLabels: {
-    'app.kubernetes.io/part-of': 'observatorium',
     'app.kubernetes.io/instance': defaults.name,
   },
 
@@ -112,7 +114,7 @@ function(params) {
   assert std.isArray(thanos.config.hashrings),
   assert std.isObject(thanos.config.stores),
 
-  compact:: t.compact({
+  compact:: t.compact(thanos.config.compact {
     name: '%s-thanos-compact' % thanos.config.name,
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
@@ -121,10 +123,6 @@ function(params) {
     replicas: 1,
     deduplicationReplicaLabels: thanos.config.deduplicationReplicaLabels,
     deleteDelay: '48h',
-    disableDownsampling: thanos.config.compact.disableDownsampling,
-    retentionResolutionRaw: thanos.config.compact.retentionResolutionRaw,
-    retentionResolution5m: thanos.config.compact.retentionResolution5m,
-    retentionResolution1h: thanos.config.compact.retentionResolution1h,
     objectStorageConfig: thanos.config.objectStorageConfig,
     volumeClaimTemplate: {
       spec: {
@@ -185,7 +183,7 @@ function(params) {
     logLevel: 'info',
   }),
 
-  rule:: t.rule({
+  rule:: t.rule(thanos.config.rule {
     name: thanos.config.name + '-' + 'thanos-rule',
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
@@ -206,8 +204,7 @@ function(params) {
     },
   }),
 
-  stores:: t.storeShards({
-    shards: thanos.config.stores.shards,
+  stores:: t.storeShards(thanos.config.stores {
     name: thanos.config.name + '-thanos-store-shard',
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
@@ -255,14 +252,12 @@ function(params) {
     component: 'store-cache',
   }),
 
-  query:: t.query({
+  query:: t.query(thanos.config.query {
     name: '%s-thanos-query' % thanos.config.name,
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
     version: thanos.config.version,
-    replicas: thanos.config.query.replicas,
-    queryTimeout: thanos.config.query.queryTimeout,
     stores: [
       'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
       for service in
@@ -273,7 +268,7 @@ function(params) {
     replicaLabels: thanos.config.replicaLabels,
   }),
 
-  queryFrontend:: t.queryFrontend({
+  queryFrontend:: t.queryFrontend(thanos.config.queryFrontend {
     name: '%s-thanos-query-frontend' % thanos.config.name,
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
@@ -288,7 +283,6 @@ function(params) {
     splitInterval: '24h',
     maxRetries: 0,
     logQueriesLongerThan: '5s',
-    serviceMonitor: false,
     queryRangeCache: {
       type: 'memcached',
       config+: {
@@ -327,6 +321,7 @@ function(params) {
     for name in std.objectFields(thanos.receivers.hashrings[hashring])
     if thanos.receivers.hashrings[hashring][name] != null
   } + {
+    [if thanos.config.receive.serviceMonitor == true && thanos.receivers.serviceMonitor != null then 'receive-service-monitor']: thanos.receivers.serviceMonitor,
     'receive-service-account': thanos.receivers.serviceAccount,
     'receive-service': thanos.receiversService,
   } + {
@@ -339,6 +334,7 @@ function(params) {
     for name in std.objectFields(thanos.stores.shards[shard])
     if thanos.stores.shards[shard][name] != null
   } + {
+    [if thanos.config.stores.serviceMonitor == true && thanos.stores.serviceMonitor != null then 'store-service-monitor']: thanos.stores.serviceMonitor,
     'store-service-account': thanos.stores.serviceAccount,
   } + {
     ['store-cache-' + name]: thanos.storeCache[name]
