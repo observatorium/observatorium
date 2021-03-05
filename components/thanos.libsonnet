@@ -92,7 +92,6 @@ local defaults = {
   },
 
   commonLabels: {
-    'app.kubernetes.io/part-of': 'observatorium',
     'app.kubernetes.io/instance': defaults.name,
   },
 
