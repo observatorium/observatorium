@@ -22,6 +22,7 @@ local defaults = {
   stores+: {
     shards: 1,
     storage: '50Gi',
+    serviceMonitor: false,
   },
   replicaLabels: ['prometheus_replica', 'rule_replica', 'replica'],
   deduplicationReplicaLabels: ['replica'],
@@ -34,7 +35,6 @@ local defaults = {
     version: 'master-2020-02-06-b66e0c8',
     image: 'quay.io/observatorium/thanos-receive-controller:' + rc.version,
     hashrings: defaults.hashrings,
-    serviceMonitor: false,
   },
 
   memcached: {
@@ -60,6 +60,7 @@ local defaults = {
     replicationFactor: 1,
     retention: '4d',
     storage: '50Gi',
+    serviceMonitor: false,
   },
 
   rule: {
@@ -282,7 +283,6 @@ function(params) {
     splitInterval: '24h',
     maxRetries: 0,
     logQueriesLongerThan: '5s',
-    serviceMonitor: false,
     queryRangeCache: {
       type: 'memcached',
       config+: {
@@ -321,6 +321,7 @@ function(params) {
     for name in std.objectFields(thanos.receivers.hashrings[hashring])
     if thanos.receivers.hashrings[hashring][name] != null
   } + {
+    [if thanos.config.receive.serviceMonitor == true && thanos.receivers.serviceMonitor != null then 'receive-service-monitor']: thanos.receivers.serviceMonitor,
     'receive-service-account': thanos.receivers.serviceAccount,
     'receive-service': thanos.receiversService,
   } + {
@@ -333,6 +334,7 @@ function(params) {
     for name in std.objectFields(thanos.stores.shards[shard])
     if thanos.stores.shards[shard][name] != null
   } + {
+    [if thanos.config.stores.serviceMonitor == true && thanos.stores.serviceMonitor != null then 'store-service-monitor']: thanos.stores.serviceMonitor,
     'store-service-account': thanos.stores.serviceAccount,
   } + {
     ['store-cache-' + name]: thanos.storeCache[name]
