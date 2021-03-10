@@ -321,7 +321,7 @@ function(params) {
     for name in std.objectFields(thanos.receivers.hashrings[hashring])
     if thanos.receivers.hashrings[hashring][name] != null
   } + {
-    [if thanos.config.receive.serviceMonitor == true && thanos.receivers.serviceMonitor != null then 'receive-service-monitor']: thanos.receivers.serviceMonitor,
+    [if thanos.receivers.serviceMonitor != null then 'receive-service-monitor']: thanos.receivers.serviceMonitor,
     'receive-service-account': thanos.receivers.serviceAccount,
     'receive-service': thanos.receiversService,
   } + {
@@ -334,7 +334,7 @@ function(params) {
     for name in std.objectFields(thanos.stores.shards[shard])
     if thanos.stores.shards[shard][name] != null
   } + {
-    [if thanos.config.stores.serviceMonitor == true && thanos.stores.serviceMonitor != null then 'store-service-monitor']: thanos.stores.serviceMonitor,
+    [if thanos.stores.serviceMonitor != null then 'store-service-monitor']: thanos.stores.serviceMonitor,
     'store-service-account': thanos.stores.serviceAccount,
   } + {
     ['store-cache-' + name]: thanos.storeCache[name]
