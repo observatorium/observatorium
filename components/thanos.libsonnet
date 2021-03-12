@@ -21,8 +21,18 @@ local defaults = {
   }],
   stores+: {
     shards: 1,
-    storage: '50Gi',
+    volumeClaimTemplate: {
+      spec: {
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '50Gi',
+          },
+        },
+      },
+    },
     serviceMonitor: false,
+    ignoreDeletionMarksDelay: '24h',
   },
   replicaLabels: ['prometheus_replica', 'rule_replica', 'replica'],
   deduplicationReplicaLabels: ['replica'],
@@ -48,23 +58,54 @@ local defaults = {
   },
 
   compact: {
-    storage: '50Gi',
+    replicas: 1,
+    volumeClaimTemplate: {
+      spec: {
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '50Gi',
+          },
+        },
+      },
+    },
     disableDownsampling: true,
+    deleteDelay: '48h',
     retentionResolutionRaw: '14d',
     retentionResolution5m: '1s',
     retentionResolution1h: '1s',
   },
 
-  receive: {
+  receivers: {
     replicas: 1,
     replicationFactor: 1,
     retention: '4d',
     storage: '50Gi',
     serviceMonitor: false,
+    volumeClaimTemplate: {
+      spec: {
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '50Gi',
+          },
+        },
+      },
+    },
   },
 
   rule: {
-    storage: '50Gi',
+    replicas: 1,
+    volumeClaimTemplate: {
+      spec: {
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '50Gi',
+          },
+        },
+      },
+    },
   },
 
   storeCache: defaults.memcached {
@@ -81,7 +122,9 @@ local defaults = {
     queryTimeout: '15m',
   },
 
-  queryFrontend: {},
+  queryFrontend: {
+    replicas: 1,
+  },
 
   queryFrontendCache: defaults.memcached {
     replicas: 1,
@@ -120,20 +163,8 @@ function(params) {
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
     version: thanos.config.version,
-    replicas: 1,
     deduplicationReplicaLabels: thanos.config.deduplicationReplicaLabels,
-    deleteDelay: '48h',
     objectStorageConfig: thanos.config.objectStorageConfig,
-    volumeClaimTemplate: {
-      spec: {
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: thanos.config.compact.storage,
-          },
-        },
-      },
-    },
     logLevel: 'info',
   }),
 
@@ -160,7 +191,7 @@ function(params) {
     },
   },
 
-  receivers:: t.receiveHashrings(thanos.config.receive {
+  receivers:: t.receiveHashrings(thanos.config.receivers {
     hashrings: thanos.config.hashrings,
     name: thanos.config.name + '-thanos-receive',
     namespace: thanos.config.namespace,
@@ -169,16 +200,6 @@ function(params) {
     version: thanos.config.version,
     replicaLabels: thanos.config.replicaLabels,
     objectStorageConfig: thanos.config.objectStorageConfig,
-    volumeClaimTemplate: {
-      spec: {
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: thanos.config.receive.storage,
-          },
-        },
-      },
-    },
     hashringConfigMapName: '%s-generated' % thanos.receiveController.configmap.metadata.name,
     logLevel: 'info',
   }),
@@ -187,21 +208,10 @@ function(params) {
     name: thanos.config.name + '-' + 'thanos-rule',
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
-    replicas: 1,
     image: thanos.config.image,
     version: thanos.config.version,
     objectStorageConfig: thanos.config.objectStorageConfig,
     queriers: ['dnssrv+_http._tcp.%s.%s.svc.cluster.local' % [thanos.query.service.metadata.name, thanos.query.service.metadata.namespace]],
-    volumeClaimTemplate: {
-      spec: {
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: thanos.config.rule.storage,
-          },
-        },
-      },
-    },
   }),
 
   stores:: t.storeShards(thanos.config.stores {
@@ -212,17 +222,6 @@ function(params) {
     version: thanos.config.version,
     objectStorageConfig: thanos.config.objectStorageConfig,
     replicas: 1,
-    ignoreDeletionMarksDelay: '24h',
-    volumeClaimTemplate: {
-      spec: {
-        accessModes: ['ReadWriteOnce'],
-        resources: {
-          requests: {
-            storage: thanos.config.stores.storage,
-          },
-        },
-      },
-    },
     logLevel: 'info',
     local memcachedDefaults = {
       timeout: '2s',
@@ -274,7 +273,6 @@ function(params) {
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
     version: thanos.config.version,
-    replicas: 1,
     downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
       thanos.query.service.metadata.name,
       thanos.query.service.metadata.namespace,
@@ -321,7 +319,7 @@ function(params) {
     for name in std.objectFields(thanos.receivers.hashrings[hashring])
     if thanos.receivers.hashrings[hashring][name] != null
   } + {
-    [if thanos.config.receive.serviceMonitor == true && thanos.receivers.serviceMonitor != null then 'receive-service-monitor']: thanos.receivers.serviceMonitor,
+    [if thanos.config.receivers.serviceMonitor == true && thanos.receivers.serviceMonitor != null then 'receive-service-monitor']: thanos.receivers.serviceMonitor,
     'receive-service-account': thanos.receivers.serviceAccount,
     'receive-service': thanos.receiversService,
   } + {
