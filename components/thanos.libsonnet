@@ -7,7 +7,7 @@ local memcached = (import 'memcached.libsonnet');
 // you can pass an object structured like the default to overwrite default values.
 local defaults = {
   local defaults = self,
-  name: 'observatorum-xyz',
+  name: 'observatorium-xyz',
   namespace: 'observatorium',
   version: 'v0.17.1',
   image: 'quay.io/thanos/thanos:' + defaults.version,
