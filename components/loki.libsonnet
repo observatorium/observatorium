@@ -4,7 +4,7 @@
 local defaults = {
   local defaults = self,
 
-  name: 'observatorum-xyz',
+  name: 'observatorium-xyz',
   namespace: error 'must provide namespace',
   version: error 'must provide version',
   image: error 'must provide image',
