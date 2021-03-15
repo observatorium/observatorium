@@ -38,6 +38,9 @@ spec:
           limits:
             cpu: 500m
             memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
         volumeMounts:
         - mountPath: /mnt/tls
           name: tls
