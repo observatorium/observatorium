@@ -70,6 +70,11 @@ local metricsConfig = {
       memory: '128Mi',
       cpu: '500m',
     },
+    requests: {
+      memory: '128Mi',
+      cpu: '50m',
+    },
+
   },
   endpointType: 'metrics',
   writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
@@ -132,6 +137,10 @@ local logsConfig = {
     limits: {
       memory: '128Mi',
       cpu: '500m',
+    },
+    requests: {
+      memory: '128Mi',
+      cpu: '50m',
     },
   },
   endpointType: 'logs',
