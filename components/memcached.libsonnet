@@ -53,6 +53,12 @@ local defaults = {
     for labelName in std.objectFields(defaults.commonLabels)
     if !std.setMember(labelName, ['app.kubernetes.io/version'])
   },
+
+  securityContext: {
+    fsGroup: 65534,
+    runAsUser: 65534,
+  },
+
 };
 
 function(params) {
@@ -103,9 +109,6 @@ function(params) {
         '-c %(connectionLimit)s' % mc.config,
         '-v',
       ],
-      securityContext: {
-        runAsUser: 65534,
-      },
       ports: [
         { name: 'client', containerPort: mc.service.spec.ports[0].port },
       ],
@@ -129,9 +132,6 @@ function(params) {
         '--memcached.address=localhost:%d' % mc.service.spec.ports[0].port,
         '--web.listen-address=0.0.0.0:%d' % mc.service.spec.ports[1].port,
       ],
-      securityContext: {
-        runAsUser: 65534,
-      },
       ports: [
         { name: 'metrics', containerPort: mc.service.spec.ports[1].port },
       ],
@@ -156,9 +156,7 @@ function(params) {
           },
           spec: {
             serviceAccountName: mc.serviceAccount.metadata.name,
-            securityContext: {
-              fsGroup: 65534,
-            },
+            securityContext: mc.config.securityContext,
             containers: [memcached, exporter],
             volumeClaimTemplates:: null,
           },

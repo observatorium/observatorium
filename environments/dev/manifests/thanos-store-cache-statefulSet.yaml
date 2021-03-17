@@ -45,8 +45,6 @@ spec:
           requests:
             cpu: 50m
             memory: 128Mi
-        securityContext:
-          runAsUser: 65534
         terminationMessagePolicy: FallbackToLogsOnError
       - args:
         - --memcached.address=localhost:11211
@@ -57,8 +55,7 @@ spec:
         - containerPort: 9150
           name: metrics
         resources: {}
-        securityContext:
-          runAsUser: 65534
       securityContext:
         fsGroup: 65534
+        runAsUser: 65534
       serviceAccountName: observatorium-xyz-thanos-store-memcached
