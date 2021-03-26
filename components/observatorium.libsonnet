@@ -91,7 +91,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
     namespace: obs.config.namespace,
     commonLabels+:: obs.config.commonLabels,
-    version: '2.1.0',
+    version: '2.2.0',
     image: 'docker.io/grafana/loki:' + cfg.version,
     replicationFactor: 1,
     replicas: {
