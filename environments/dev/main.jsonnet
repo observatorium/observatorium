@@ -31,7 +31,7 @@ local dex = (import '../../components/dex.libsonnet')({
   },
 });
 
-local api = (import 'observatorium/observatorium-api.libsonnet');
+local api = (import 'observatorium-api/observatorium-api.libsonnet');
 local obs = (import '../../components/observatorium.libsonnet');
 local dev = obs {
   api: api(

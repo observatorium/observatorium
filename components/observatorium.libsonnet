@@ -1,6 +1,6 @@
 local thanos = (import './thanos.libsonnet');
 local loki = (import './loki.libsonnet');
-local api = (import 'observatorium/observatorium-api.libsonnet');
+local api = (import 'observatorium-api/observatorium-api.libsonnet');
 
 {
   local obs = self,
@@ -43,6 +43,7 @@ local api = (import 'observatorium/observatorium-api.libsonnet');
     // TODO(kakkoyun): Upgrade in a separate PR.
     // version: 	'master-2020-12-04-v0.1.1-194-gb4d2f9e',
     version: 'master-2020-11-02-v0.1.1-192-ge324057',
+    // TODO(onprem): Migrate to quay.io/observatorium/api
     image: 'quay.io/observatorium/observatorium:' + cfg.version,
     name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
     namespace: obs.config.namespace,
