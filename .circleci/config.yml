@@ -1,14 +1,14 @@
 jobs:
   build:
-    working_directory: /go/src/github.com/observatorium/deployments
+    working_directory: /go/src/github.com/observatorium/observatorium
     docker:
       - image: quay.io/coreos/jsonnet-ci
     steps:
       - checkout
       - run: make fmt
       - run: make generate-cert
-      - run: make generate tests/manifests
-      - run: git diff --exit-code -- . ':(exclude)tests/manifests/observatorium-xyz-tls-secret.yaml' ':(exclude)tests/manifests/observatorium-xyz-tls-configmap.yaml' ':(exclude)tests/manifests/observatorium-xyz-tls-dex.yaml' ':(exclude)tests/manifests/test-ca-tls.yaml'
+      - run: make generate deployments/tests/manifests
+      - run: git diff --exit-code -- . ':(exclude)deployments/tests/manifests/observatorium-xyz-tls-secret.yaml' ':(exclude)deployments/tests/manifests/observatorium-xyz-tls-configmap.yaml' ':(exclude)deployments/tests/manifests/observatorium-xyz-tls-dex.yaml' ':(exclude)deployments/tests/manifests/test-ca-tls.yaml'
       - run: make validate
 
   tests:
@@ -19,9 +19,9 @@ jobs:
           name: e2e tests
           no_output_timeout: 30m
           command : |
-            ./tests/e2e.sh kind
-            ./tests/e2e.sh deploy
-            ./tests/e2e.sh test
+            ./deployments/tests/e2e.sh kind
+            ./deployments/tests/e2e.sh deploy
+            ./deployments/tests/e2e.sh test
       - store_artifacts:
           path: /tmp/artifacts
 

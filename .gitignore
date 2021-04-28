@@ -1,6 +1,6 @@
 /kind
 /kubectl
-/vendor
+/deployments/vendor
 tmp/
 
 .idea
