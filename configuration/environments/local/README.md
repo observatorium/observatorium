@@ -8,8 +8,8 @@ If you just want to run Observatroium locally and get started quickly, take a lo
 
 - Clone this repo
   ```bash
-  git clone https://github.com/observatorium/deployments.git
-  cd deployments/environments/local
+  git clone https://github.com/observatorium/observatorium.git
+  cd configuration/environments/local
   ```
 
 - Create a temporary folder

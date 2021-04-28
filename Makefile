@@ -8,12 +8,13 @@ CERT_DIR ?= $(TMP_DIR)/certs
 CONTROLLER_GEN ?= $(BIN_DIR)/controller-gen
 GENERATE_TLS_CERT ?= $(BIN_DIR)/generate-tls-cert
 
+CONFIGURATION_DIR ?= configuration
 JSONNET_SRC = $(shell find . -type f -not -path './*vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \))
 
 all: generate validate
 
 vendor: $(JB)
-	$(JB) install
+	cd $(CONFIGURATION_DIR) && $(JB) install
 
 .PHONY: fmt
 fmt: $(JSONNETFMT) $(JSONNET_SRC)
@@ -21,42 +22,42 @@ fmt: $(JSONNETFMT) $(JSONNET_SRC)
 
 .PHONY: lint
 lint: $(JSONNET_LINT) vendor
-	echo ${JSONNET_SRC} | xargs -n 1 -- $(JSONNET_LINT) -J vendor
+	echo ${JSONNET_SRC} | xargs -n 1 -- $(JSONNET_LINT) -J $(CONFIGURATION_DIR)/vendor
 
 .PHONY: generate
-generate: environments/base/manifests environments/dev/manifests environments/local/manifests
+generate: $(CONFIGURATION_DIR)/environments/base/manifests $(CONFIGURATION_DIR)/environments/dev/manifests $(CONFIGURATION_DIR)/environments/local/manifests
 
 .PHONY: validate
 validate: $(KUBEVAL) generate
-	$(KUBEVAL) --ignore-missing-schemas environments/base/manifests/*.yaml environments/dev/manifests/*.yaml environments/local/manifests/*.yaml tests/manifests/*.yaml
+	$(KUBEVAL) --ignore-missing-schemas $(CONFIGURATION_DIR)/environments/base/manifests/*.yaml $(CONFIGURATION_DIR)/environments/dev/manifests/*.yaml $(CONFIGURATION_DIR)/environments/local/manifests/*.yaml $(CONFIGURATION_DIR)/tests/manifests/*.yaml
 
-environments/base/manifests: environments/base/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
+$(CONFIGURATION_DIR)/environments/base/manifests: $(CONFIGURATION_DIR)/environments/base/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
-	-rm -rf environments/base/manifests
-	-mkdir environments/base/manifests
-	$(JSONNET) -J vendor -m environments/base/manifests environments/base/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
-	find environments/base/manifests -type f ! -name '*.yaml' -delete
+	-rm -rf $(CONFIGURATION_DIR)/environments/base/manifests
+	-mkdir $(CONFIGURATION_DIR)/environments/base/manifests
+	cd $(CONFIGURATION_DIR) && $(JSONNET) -J vendor -m environments/base/manifests environments/base/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	find $(CONFIGURATION_DIR)/environments/base/manifests -type f ! -name '*.yaml' -delete
 
-environments/dev/manifests: environments/dev/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
+$(CONFIGURATION_DIR)/environments/dev/manifests: $(CONFIGURATION_DIR)/environments/dev/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
-	-rm -rf environments/dev/manifests
-	-mkdir environments/dev/manifests
-	$(JSONNET) -J vendor -m environments/dev/manifests environments/dev/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
-	find environments/dev/manifests -type f ! -name '*.yaml' -delete
+	-rm -rf $(CONFIGURATION_DIR)/environments/dev/manifests
+	-mkdir $(CONFIGURATION_DIR)/environments/dev/manifests
+	cd $(CONFIGURATION_DIR) && $(JSONNET) -J vendor -m environments/dev/manifests environments/dev/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	find $(CONFIGURATION_DIR)/environments/dev/manifests -type f ! -name '*.yaml' -delete
 
-environments/local/manifests: environments/local/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
+$(CONFIGURATION_DIR)/environments/local/manifests: $(CONFIGURATION_DIR)/environments/local/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
-	-rm -rf environments/local/manifests
-	-mkdir environments/local/manifests
-	$(JSONNET) -J vendor -m environments/local/manifests environments/local/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
-	find environments/local/manifests -type f ! -name '*.yaml' -delete
+	-rm -rf $(CONFIGURATION_DIR)/environments/local/manifests
+	-mkdir $(CONFIGURATION_DIR)/environments/local/manifests
+	cd $(CONFIGURATION_DIR) && $(JSONNET) -J vendor -m environments/local/manifests environments/local/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	find $(CONFIGURATION_DIR)/environments/local/manifests -type f ! -name '*.yaml' -delete
 
-tests/manifests: tests/main.jsonnet vendor generate-cert $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
+$(CONFIGURATION_DIR)/tests/manifests: $(CONFIGURATION_DIR)/tests/main.jsonnet vendor generate-cert $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
-	-rm -rf tests/manifests
-	-mkdir tests/manifests
-	$(JSONNET) -J vendor -m tests/manifests tests/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
-	find tests/manifests -type f ! -name '*.yaml' -delete
+	-rm -rf $(CONFIGURATION_DIR)/tests/manifests
+	-mkdir $(CONFIGURATION_DIR)/tests/manifests
+	cd $(CONFIGURATION_DIR) && $(JSONNET) -J vendor -m tests/manifests tests/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	find $(CONFIGURATION_DIR)/tests/manifests -type f ! -name '*.yaml' -delete
 
 .PHONY: generate-cert
 # Generate TLS certificates for local development.
