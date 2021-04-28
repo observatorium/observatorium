@@ -1,5 +1,5 @@
 # Observatorium Deployments
-[![Build Status](https://circleci.com/gh/observatorium/deployments.svg?style=svg)](https://circleci.com/gh/observatorium/deployments)
+[![Build Status](https://circleci.com/gh/observatorium/observatorium.svg?style=svg)](https://circleci.com/gh/observatorium/observatorium)
 
 This repository contains configuration for deploying the Observatorium platform.
 Currently, this includes:

@@ -7,8 +7,8 @@ jobs:
       - checkout
       - run: make fmt
       - run: make generate-cert
-      - run: make generate deployments/tests/manifests
-      - run: git diff --exit-code -- . ':(exclude)deployments/tests/manifests/observatorium-xyz-tls-secret.yaml' ':(exclude)deployments/tests/manifests/observatorium-xyz-tls-configmap.yaml' ':(exclude)deployments/tests/manifests/observatorium-xyz-tls-dex.yaml' ':(exclude)deployments/tests/manifests/test-ca-tls.yaml'
+      - run: make generate configuration/tests/manifests
+      - run: git diff --exit-code -- . ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-secret.yaml' ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-configmap.yaml' ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-dex.yaml' ':(exclude)configuration/tests/manifests/test-ca-tls.yaml'
       - run: make validate
 
   tests:
@@ -19,9 +19,9 @@ jobs:
           name: e2e tests
           no_output_timeout: 30m
           command : |
-            ./deployments/tests/e2e.sh kind
-            ./deployments/tests/e2e.sh deploy
-            ./deployments/tests/e2e.sh test
+            ./configuration/tests/e2e.sh kind
+            ./configuration/tests/e2e.sh deploy
+            ./configuration/tests/e2e.sh test
       - store_artifacts:
           path: /tmp/artifacts
 
