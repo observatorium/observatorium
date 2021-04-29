@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: thanos-store
     app.kubernetes.io/part-of: observatorium
     app.kubernetes.io/version: v0.17.1
-    store.observatorium.io/shard: shard-0
+    store.thanos.io/shard: shard-0
   name: observatorium-xyz-thanos-store-shard-0
   namespace: observatorium
 spec:
@@ -18,7 +18,7 @@ spec:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: thanos-store
       app.kubernetes.io/part-of: observatorium
-      store.observatorium.io/shard: shard-0
+      store.thanos.io/shard: shard-0
   serviceName: observatorium-xyz-thanos-store-shard-0
   template:
     metadata:
@@ -28,7 +28,7 @@ spec:
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
         app.kubernetes.io/version: v0.17.1
-        store.observatorium.io/shard: shard-0
+        store.thanos.io/shard: shard-0
     spec:
       affinity:
         podAntiAffinity:
@@ -108,6 +108,10 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
+        - name: HOST_IP_ADDRESS
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         image: quay.io/thanos/thanos:v0.17.1
         livenessProbe:
           failureThreshold: 8
@@ -135,6 +139,9 @@ spec:
         - mountPath: /var/thanos/store
           name: data
           readOnly: false
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
       serviceAccountName: observatorium-xyz-thanos-store-shard
       terminationGracePeriodSeconds: 120
       volumes: []
@@ -145,7 +152,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: thanos-store
         app.kubernetes.io/part-of: observatorium
-        store.observatorium.io/shard: shard-0
+        store.thanos.io/shard: shard-0
       name: data
     spec:
       accessModes:
