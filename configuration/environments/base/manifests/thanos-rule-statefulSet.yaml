@@ -38,6 +38,8 @@ spec:
         - --data-dir=/var/thanos/rule
         - --label=rule_replica="$(NAME)"
         - --alert.label-drop=rule_replica
+        - --tsdb.retention=48h
+        - --tsdb.block-duration=2h
         - --query=dnssrv+_http._tcp.observatorium-xyz-thanos-query.observatorium.svc.cluster.local
         env:
         - name: NAME
@@ -49,6 +51,10 @@ spec:
             secretKeyRef:
               key: thanos.yaml
               name: thanos-objectstorage
+        - name: HOST_IP_ADDRESS
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         image: quay.io/thanos/thanos:v0.17.1
         livenessProbe:
           failureThreshold: 24
@@ -77,6 +83,9 @@ spec:
         - mountPath: /var/thanos/rule
           name: data
           readOnly: false
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
       serviceAccountName: observatorium-xyz-thanos-rule
       volumes: []
   volumeClaimTemplates:

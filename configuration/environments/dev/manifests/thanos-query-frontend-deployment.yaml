@@ -77,6 +77,11 @@ spec:
             "max_idle_connections": 100
             "timeout": "500ms"
           "type": "memcached"
+        env:
+        - name: HOST_IP_ADDRESS
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         image: quay.io/thanos/thanos:v0.17.1
         livenessProbe:
           failureThreshold: 4
@@ -98,5 +103,8 @@ spec:
           periodSeconds: 5
         resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
       serviceAccountName: observatorium-xyz-thanos-query-frontend
       terminationGracePeriodSeconds: 120
