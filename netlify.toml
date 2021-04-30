@@ -1,0 +1,17 @@
+[build]
+  publish = "website/public"
+  functions = "functions"
+
+[build.environment]
+  HUGO_VERSION = "0.81.0"
+  NODE_VERSION = "15.5.1"
+  NPM_VERSION = "7.3.0"
+
+[context.production]
+  command = "make web-theme && make web WEBSITE_BASE_URL=${URL}"
+
+[context.deploy-preview]
+  command = "make web-theme && make web WEBSITE_BASE_URL=${DEPLOY_PRIME_URL}"
+
+[context.branch-deploy]
+  command = "make web-theme && make web WEBSITE_BASE_URL=${DEPLOY_PRIME_URL}"
