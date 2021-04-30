@@ -1,0 +1,5 @@
+baseURL = "https://observatorium.io/"
+languageCode = "en-us"
+title = "Observatorium"
+
+theme = "doks"

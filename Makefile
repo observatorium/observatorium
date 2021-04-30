@@ -77,3 +77,9 @@ $(GENERATE_TLS_CERT): $(BINGO_DIR)/api.mod
 	@echo "(re)installing $(GOBIN)/generate-tls-cert"
 	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=api.mod -tags=tools -o=$(BIN_DIR)/generate-tls-cert "github.com/observatorium/observatorium/test/tls"
 
+
+.PHONY: website-theme
+website-theme:
+	cd website/themes/doks/ && \
+	npm install && \
+	rm -rf content
