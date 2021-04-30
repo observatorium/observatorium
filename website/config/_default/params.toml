@@ -33,7 +33,7 @@ footer = "Powered by <a href=\"https://www.netlify.com/\">Netlify</a>, <a href=\
 
 # Edit Page
 docsRepo = "https://github.com/observatorium/observatorium"
-editPage = true
+editPage = false
 
 [options]
   lazySizes = false

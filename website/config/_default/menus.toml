@@ -1,18 +1,18 @@
 [[docs]]
-  name = "Prologue"
+  name = "Architecture"
   weight = 10
-  identifier = "prologue"
-  url = "/docs/prologue/"
+  identifier = "architecture"
+  url = "/docs/architecture/"
 
 [[docs]]
-  name = "Help"
+  name = "Design"
   weight = 60
-  identifier = "help"
-  url = "/docs/help/"
+  identifier = "design"
+  url = "/docs/design/"
 
 [[main]]
   name = "Docs"
-  url = "/docs/prologue/introduction/"
+  url = "/docs/architecture/architecture.md/"
   weight = 10
 
 # [[main]]

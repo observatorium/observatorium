@@ -1,3 +1,18 @@
+---
+title: "Correlation"
+description: "Correlation between metrics, logs, and traces."
+lead: ""
+date: 2021-04-30T10:40:00+00:00
+lastmod: 2021-04-30T10:40:00+00:00
+draft: false
+images: []
+menu:
+  docs:
+    parent: "design"
+weight: 100
+toc: true
+---
+
 # Correlation of signals
 
 There needs to be a suggestion engine to suggest potential queries to compose links between signals.
