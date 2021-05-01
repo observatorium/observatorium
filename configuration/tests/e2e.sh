@@ -17,10 +17,10 @@ kind() {
 dex() {
     $KUBECTL create ns dex || true
     $KUBECTL apply -f configuration/tests/manifests/observatorium-xyz-tls-dex.yaml
-    $KUBECTL apply -f configuration/environments/dev/manifests/dex-secret.yaml
-    $KUBECTL apply -f configuration/environments/dev/manifests/dex-pvc.yaml
-    $KUBECTL apply -f configuration/environments/dev/manifests/dex-deployment.yaml
-    $KUBECTL apply -f configuration/environments/dev/manifests/dex-service.yaml
+    $KUBECTL apply -f configuration/examples/dev/manifests/dex-secret.yaml
+    $KUBECTL apply -f configuration/examples/dev/manifests/dex-pvc.yaml
+    $KUBECTL apply -f configuration/examples/dev/manifests/dex-deployment.yaml
+    $KUBECTL apply -f configuration/examples/dev/manifests/dex-service.yaml
     # Observatorium needs the Dex API to be ready for authentication to work and thus for the tests to pass.
     $KUBECTL wait --for=condition=available --timeout=10m -n dex deploy/dex || (must_gather "$ARTIFACT_DIR" && exit 1)
 }
@@ -35,7 +35,7 @@ deploy() {
     # service CA for the first tenant, "test"
     $KUBECTL apply -f configuration/tests/manifests/test-ca-tls.yaml
 
-    $KUBECTL apply -f configuration/environments/dev/manifests/
+    $KUBECTL apply -f configuration/examples/dev/manifests/
 }
 
 run_test() {
