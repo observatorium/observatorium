@@ -1,0 +1,8 @@
+baseURL = "https://observatorium.io/"
+languageCode = "en-us"
+title = "Observatorium"
+
+theme = "doks"
+
+[permalinks]
+  docs = "/:sections/:filename.md"

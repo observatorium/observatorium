@@ -10,6 +10,8 @@ GENERATE_TLS_CERT ?= $(BIN_DIR)/generate-tls-cert
 
 CONFIGURATION_DIR ?= configuration
 JSONNET_SRC = $(shell find . -type f -not -path './*vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \))
+WEBSITE_DIR ?= website
+WEBSITE_BASE_URL ?= https://observatorium.io
 
 all: generate validate
 
@@ -77,3 +79,19 @@ $(GENERATE_TLS_CERT): $(BINGO_DIR)/api.mod
 	@echo "(re)installing $(GOBIN)/generate-tls-cert"
 	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=api.mod -tags=tools -o=$(BIN_DIR)/generate-tls-cert "github.com/observatorium/observatorium/test/tls"
 
+
+.PHONY: web-theme
+web-theme:
+	cd $(WEBSITE_DIR)/themes/doks/ && \
+	npm install && \
+	rm -rf content
+
+.PHONY: web
+web:
+	cd $(WEBSITE_DIR) && \
+	hugo -b $(WEBSITE_BASE_URL)
+
+.PHONY: web-serve
+web-serve:
+	cd $(WEBSITE_DIR) && \
+	hugo serve

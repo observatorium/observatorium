@@ -1,0 +1,47 @@
+# Meta Data for SEO
+
+## Homepage
+title = "Observatorium"
+titleSeparator = "-"
+titleAddition = "Observability distribitution"
+description = "Observatorium is multi-tenant, easy to operate, scalable open source observability \"distribution\", allowing you to ingest, store and use common observability signals like metrics, logs and traces."
+
+## Open Graph + Twitter Cards
+images = ["observatorium.png"]
+twitterSite = ""
+twitterCreator = ""
+#facebookAuthor = ""
+#facebookPublisher = ""
+ogLocale = "en_US"
+
+## JSON-LD
+schemaType = "Organization"
+schemaLogo = "observatorium.png"
+schemaTwitter = ""
+schemaLinkedIn = ""
+schemaGitHub = "https://github.com/observatorium"
+schemaSection = "blog"
+
+## Sitelinks Search Box
+siteLinksSearchBox = false
+
+## Chrome Browser
+themeColor = "#fff"
+
+# Footer
+footer = "Powered by <a href=\"https://www.netlify.com/\">Netlify</a>, <a href=\"https://gohugo.io/\">Hugo</a>, and based on <a href=\"https://getdoks.org/\">Doks</a>"
+
+# Edit Page
+docsRepo = "https://github.com/observatorium/observatorium"
+editPage = false
+
+[options]
+  lazySizes = false
+  clipBoard = false
+  instantPage = false
+  flexSearch = false
+  darkMode = true
+  bootStrapJs = false
+  breadCrumb = false
+  highLight = false
+  kaTex = false
