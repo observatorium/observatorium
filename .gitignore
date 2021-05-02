@@ -1,6 +1,7 @@
 /kind
 /kubectl
 /configuration/vendor
+/configuration/tests/.gen
 tmp/
 
 .idea

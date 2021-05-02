@@ -1,12 +1,11 @@
+version: 2.1
 jobs:
   build:
-    working_directory: /go/src/github.com/observatorium/observatorium
     docker:
-      - image: quay.io/coreos/jsonnet-ci
+      - image: cimg/go:1.16
     steps:
       - checkout
       - run: make fmt
-      - run: make generate-cert
       - run: make generate configuration/tests/manifests
       - run: git diff --exit-code -- . ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-secret.yaml' ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-configmap.yaml' ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-dex.yaml' ':(exclude)configuration/tests/manifests/test-ca-tls.yaml'
       - run: make validate
