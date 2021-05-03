@@ -28,8 +28,7 @@ From the very beginning our teams were leveraging Open Source to accomplish all 
 
 > NOTE: Observatorium is set of cloud native, mostly stateless components that mostly does not special operating logic. For those operations that required automation, specialized controllers were designed. Use Operator only if this is your primary installation logic or if you don't have CI pipeline.
 
-> NOTE2: Operator is in heavy progress. There are already plans to streamline its usage and redesign current CustomResourceDefinition in next version. Yet, it's currently used in production by many bigger users, so any changes
-> will be done with care.
+> NOTE2: Operator is in heavy progress. There are already plans to streamline its usage and redesign current CustomResourceDefinition in next version. Yet, it's currently used in production by many bigger users, so any changes will be done with care.
 
 * The [Thanos Receive Controller](https://github.com/observatorium/thanos-receive-controller) is a Kubernetes controller written in Go that distributes essential tenancy configuration to the desired pods.
 
