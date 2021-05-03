@@ -1,10 +1,4 @@
 [[docs]]
-  name = "Architecture"
-  weight = 10
-  identifier = "architecture"
-  url = "/docs/architecture/"
-
-[[docs]]
   name = "Design"
   weight = 60
   identifier = "design"
@@ -12,7 +6,7 @@
 
 [[main]]
   name = "Docs"
-  url = "/docs/architecture/architecture.md/"
+  url = "/docs/usage/getting-started.md/"
   weight = 10
 
 # [[main]]
