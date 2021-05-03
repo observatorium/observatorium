@@ -37,11 +37,11 @@ editPage = false
 
 [options]
   lazySizes = false
-  clipBoard = false
+  clipBoard = true
   instantPage = false
   flexSearch = false
   darkMode = true
   bootStrapJs = false
-  breadCrumb = false
-  highLight = false
+  breadCrumb = true
+  highLight = true
   kaTex = false

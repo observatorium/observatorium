@@ -8,7 +8,7 @@ draft: false
 images: []
 menu:
   docs:
-    parent: "design"
+    parent: "usage"
 weight: 1
 toc: true
 ---
