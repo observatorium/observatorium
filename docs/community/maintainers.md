@@ -12,7 +12,7 @@ title: "Maintainers"
 | Kemal Akkoyun         | kakkoyun@gmail.com     | `@kakkoyun`              | [@kakkoyun](https://github.com/kakkoyun)    | Red Hat           |
 | Lucas Servén Marín    | lserven@gmail.com      | `@squat`                 | [@squat](https://github.com/squat)          | Red Hat           |
 | Matthias Loibl        | mail@matthiasloibl.com | `@metalmatze`            | [@metalmatze](https://github.com/metalmatze)| Polar Signals     |
-| Periklis Tsirakidis   | periklis@nefeli.eu     | `@Periklis Tsirakidis`   | [@periklis](https://github.com/periklis)    | Red Hat           |
+| Periklis Tsirakidis   | periklis@nefeli.eu     | `@periklis`              | [@periklis](https://github.com/periklis)    | Red Hat           |
 | Prem Saraswat         | prmsrswt@gmail.com     | `@Prem Saraswat`         | [@onprem](https://github.com/onprem)        | Red Hat           |
 
 
