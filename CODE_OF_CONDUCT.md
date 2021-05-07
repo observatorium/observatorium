@@ -1,6 +1,6 @@
 # Observatorium Community Code of Conduct
 
-Observatorium follows the [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md). Additionally, our team members can be contacted directly for code of conduct abuse, as described below.
+Observatorium follows the [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md). Additionally, our team members can be contacted directly concerning code of conduct abuse, as described below.
 
 # Enforcement
 
