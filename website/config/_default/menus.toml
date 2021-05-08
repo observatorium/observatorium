@@ -1,4 +1,10 @@
 [[docs]]
+  name = "Community"
+  weight = 10
+  identifier = "community"
+  url = "/docs/community/"
+
+[[docs]]
   name = "Usage"
   weight = 10
   identifier = "usage"
