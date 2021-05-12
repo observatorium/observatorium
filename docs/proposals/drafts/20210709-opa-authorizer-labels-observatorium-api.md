@@ -1,7 +1,4 @@
----
-toc: true
-title: 2021-07 Authz Matchers API
----
+# Authz Matchers API
 
 ## Implement Authz Matchers API for OPA authorizers
 
