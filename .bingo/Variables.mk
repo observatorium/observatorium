@@ -1,11 +1,11 @@
-# Auto generated binary variables helper managed by https://github.com/bwplotka/bingo v0.3.0. DO NOT EDIT.
+# Auto generated binary variables helper managed by https://github.com/bwplotka/bingo v0.4.2. DO NOT EDIT.
 # All tools are designed to be build inside $GOBIN.
 BINGO_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 GOPATH ?= $(shell go env GOPATH)
 GOBIN  ?= $(firstword $(subst :, ,${GOPATH}))/bin
 GO     ?= $(shell which go)
 
-# Bellow generated variables ensure that every time a tool under each variable is invoked, the correct version
+# Below generated variables ensure that every time a tool under each variable is invoked, the correct version
 # will be used; reinstalling only if needed.
 # For example for api variable:
 #
@@ -17,23 +17,29 @@ GO     ?= $(shell which go)
 #	@echo "Running api"
 #	@$(API) <flags/args..>
 #
-API := $(GOBIN)/api-v0.1.1
+API := $(GOBIN)/api-v0.1.2
 $(API): $(BINGO_DIR)/api.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/api-v0.1.1"
-	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=api.mod -o=$(GOBIN)/api-v0.1.1 "github.com/observatorium/observatorium"
+	@echo "(re)installing $(GOBIN)/api-v0.1.2"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=api.mod -o=$(GOBIN)/api-v0.1.2 "github.com/observatorium/api"
 
-BINGO := $(GOBIN)/bingo-v0.3.0
+BINGO := $(GOBIN)/bingo-v0.4.2
 $(BINGO): $(BINGO_DIR)/bingo.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/bingo-v0.3.0"
-	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=bingo.mod -o=$(GOBIN)/bingo-v0.3.0 "github.com/bwplotka/bingo"
+	@echo "(re)installing $(GOBIN)/bingo-v0.4.2"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=bingo.mod -o=$(GOBIN)/bingo-v0.4.2 "github.com/bwplotka/bingo"
 
 GOJSONTOYAML := $(GOBIN)/gojsontoyaml-v0.0.0-20200602132005-3697ded27e8c
 $(GOJSONTOYAML): $(BINGO_DIR)/gojsontoyaml.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/gojsontoyaml-v0.0.0-20200602132005-3697ded27e8c"
 	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=gojsontoyaml.mod -o=$(GOBIN)/gojsontoyaml-v0.0.0-20200602132005-3697ded27e8c "github.com/brancz/gojsontoyaml"
+
+HUGO := $(GOBIN)/hugo-v0.80.0
+$(HUGO): $(BINGO_DIR)/hugo.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/hugo-v0.80.0"
+	@cd $(BINGO_DIR) && CGO_ENABLED=1 $(GO) build -tags=extended -mod=mod -modfile=hugo.mod -o=$(GOBIN)/hugo-v0.80.0 "github.com/gohugoio/hugo"
 
 JB := $(GOBIN)/jb-v0.4.0
 $(JB): $(BINGO_DIR)/jb.mod
