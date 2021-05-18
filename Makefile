@@ -1,3 +1,5 @@
+include .bingo/Variables.mk
+
 CONFIGURATION_DIR ?= ./configuration
 WEBSITE_DIR ?= website
 WEBSITE_BASE_URL ?= https://observatorium.io
@@ -27,18 +29,17 @@ validate:
 vendor:
 	@$(MAKE) -C $(CONFIGURATION_DIR) vendor
 
-.PHONY: web-theme
+# TODO(bwplotka): This is no longer needed, remove when netlify job will be updated.
 web-theme:
-	cd $(WEBSITE_DIR)/themes/doks/ && \
-	npm install && \
-	rm -rf content
+
+$(WEBSITE_DIR)/node_modules:
+	@git submodule update --init --recursive
+	cd $(WEBSITE_DIR)/themes/doks/ && npm install && rm -rf content
 
 .PHONY: web
-web:
-	cd $(WEBSITE_DIR) && \
-	hugo -b $(WEBSITE_BASE_URL)
+web: $(WEBSITE_DIR)/node_modules $(HUGO)
+	cd $(WEBSITE_DIR) && $(HUGO) -b $(WEBSITE_BASE_URL)
 
 .PHONY: web-serve
-web-serve:
-	cd $(WEBSITE_DIR) && \
-	hugo serve
+web-serve: $(WEBSITE_DIR)/node_modules $(HUGO)
+	@cd $(WEBSITE_DIR) && $(HUGO) serve
