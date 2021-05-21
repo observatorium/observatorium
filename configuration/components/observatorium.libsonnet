@@ -102,6 +102,58 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
       querier: 1,
       query_frontend: 1,
     },
+    resources: {
+      compactor: {
+        requests: {
+          memory: '100Mi',
+          cpu: '100m',
+        },
+        limits: {
+          memory: '200Mi',
+          cpu: '200m',
+        },
+      },
+      distributor: {
+        requests: {
+          memory: '100Mi',
+          cpu: '100m',
+        },
+        limits: {
+          memory: '200Mi',
+          cpu: '200m',
+        },
+      },
+      ingester: {
+        requests: {
+          memory: '100Mi',
+          cpu: '100m',
+        },
+        limits: {
+          memory: '200Mi',
+          cpu: '200m',
+        },
+      },
+      querier: {
+        requests: {
+          memory: '100Mi',
+          cpu: '100m',
+        },
+        limits: {
+          memory: '200Mi',
+          cpu: '200m',
+        },
+      },
+      query_frontend: {
+        requests: {
+          memory: '100Mi',
+          cpu: '100m',
+        },
+        limits: {
+          memory: '200Mi',
+          cpu: '200m',
+        },
+      },
+    },
     memberlist: {
       ringName: 'gossip-ring',
     },
