@@ -33,7 +33,7 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
 * We are aware that not everybody speaks jsonnet, and not everybody have it's own GitOps pipeline, so we designed alternative deployments based on the main jsonnet resources. [Operator](https://github.com/observatorium/operator) project delivers Kubernetes plain Operator that operates Observatorium.
 
-> NOTE: Observatorium is set of cloud native, mostly stateless components that mostly does not special operating logic. For those operations that required automation, specialized controllers were designed. Use Operator only if this is your primary installation logic or if you don't have CI pipeline.
+> NOTE: Observatorium is a set of cloud native, mostly stateless components that mostly does not require special operating logic. For those operations that required automation, specialized controllers were designed. Use Operator only if this is your primary installation logic or if you don't have CI pipeline.
 
 > NOTE2: Operator is in heavy progress. There are already plans to streamline its usage and redesign current CustomResourceDefinition in next version. Yet, it's currently used in production by many bigger users, so any changes
 > will be done with care.
