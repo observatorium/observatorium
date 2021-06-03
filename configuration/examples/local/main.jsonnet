@@ -6,6 +6,13 @@ local tenant = {
   user: 'user',
 };
 
+local minio = (import '../../components/minio.libsonnet')({
+  namespace: 'observatorium-minio',
+  buckets: ['thanos', 'loki'],
+  accessKey: 'minio',
+  secretKey: 'minio123',
+});
+
 local api = (import 'observatorium-api/observatorium-api.libsonnet');
 local obs = (import '../../components/observatorium.libsonnet');
 local dev = obs {
@@ -71,16 +78,41 @@ local dev = obs {
   ),
 };
 
-local minio = (import '../../components/minio.libsonnet')({
-  namespace: 'observatorium-minio',
-  bucketSecretNamespace: dev.config.namespace,
-});
-
 dev.manifests
 {
   'minio-deployment': minio.deployment,
   'minio-pvc': minio.pvc,
-  'minio-secret-thanos': minio.secretThanos,
-  'minio-secret-loki': minio.secretLoki,
+  'minio-secret-thanos': {
+    apiVersion: 'v1',
+    kind: 'Secret',
+    metadata: {
+      name: 'thanos-objectstorage',
+      namespace: dev.config.namespace,
+    },
+    stringData: {
+      'thanos.yaml': |||
+        type: s3
+        config:
+          bucket: thanos
+          endpoint: %s.%s.svc.cluster.local:9000
+          insecure: true
+          access_key: minio
+          secret_key: minio123
+      ||| % [minio.service.metadata.name, minio.config.namespace],
+    },
+    type: 'Opaque',
+  },
+  'minio-secret-loki': {
+    apiVersion: 'v1',
+    kind: 'Secret',
+    metadata: {
+      name: 'loki-objectstorage',
+      namespace: dev.config.namespace,
+    },
+    stringData: {
+      endpoint: 'http://minio:minio123@%s.%s.svc.cluster.local.:9000/loki' % [minio.service.metadata.name, minio.config.namespace],
+    },
+    type: 'Opaque',
+  },
   'minio-service': minio.service,
 }

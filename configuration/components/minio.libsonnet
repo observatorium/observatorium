@@ -3,7 +3,11 @@
 // you can pass an object structured like the default to overwrite default values.
 local defaults = {
   local defaults = self,
+
   namespace: error 'must provide namespace',
+  buckets: error 'must provide buckets',
+  accessKey: error 'must provide accessKey',
+  secretKey: error 'must provide secretKey',
 
   commonLabels:: { 'app.kubernetes.io/name': 'minio' },
 };
@@ -37,19 +41,18 @@ function(params) {
                 '/bin/sh',
                 '-c',
                 |||
-                  mkdir -p /storage/thanos && \
-                  mkdir -p /storage/loki && \
+                  mkdir -p %s && \
                   /usr/bin/minio server /storage
-                |||,
+                ||| % std.join(' ', ['/storage/%s' % bucket for bucket in minio.config.buckets]),
               ],
               env: [
                 {
                   name: 'MINIO_ACCESS_KEY',
-                  value: 'minio',
+                  value: minio.config.accessKey,
                 },
                 {
                   name: 'MINIO_SECRET_KEY',
-                  value: 'minio123',
+                  value: minio.config.secretKey,
                 },
               ],
               image: 'minio/minio',
@@ -85,40 +88,6 @@ function(params) {
         requests: { storage: '10Gi' },
       },
     },
-  },
-
-  secretThanos: {
-    apiVersion: 'v1',
-    kind: 'Secret',
-    metadata: {
-      name: 'thanos-objectstorage',
-      namespace: minio.config.bucketSecretNamespace,
-    },
-    stringData: {
-      'thanos.yaml': |||
-        type: s3
-        config:
-          bucket: thanos
-          endpoint: %s.%s.svc.cluster.local:9000
-          insecure: true
-          access_key: minio
-          secret_key: minio123
-      ||| % [minio.service.metadata.name, minio.config.namespace],
-    },
-    type: 'Opaque',
-  },
-
-  secretLoki: {
-    apiVersion: 'v1',
-    kind: 'Secret',
-    metadata: {
-      name: 'loki-objectstorage',
-      namespace: minio.config.bucketSecretNamespace,
-    },
-    stringData: {
-      endpoint: 'http://minio:minio123@%s.%s.svc.cluster.local.:9000/loki' % [minio.service.metadata.name, minio.config.namespace],
-    },
-    type: 'Opaque',
   },
 
   service: {
