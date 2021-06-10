@@ -3,7 +3,7 @@
 ## Homepage
 title = "Observatorium"
 titleSeparator = "-"
-titleAddition = "Observability distribitution"
+titleAddition = "Observability distribution"
 description = "Observatorium is multi-tenant, easy to operate, scalable open source observability \"distribution\", allowing you to ingest, store and use common observability signals like metrics, logs and traces."
 
 ## Open Graph + Twitter Cards
