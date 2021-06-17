@@ -11,7 +11,7 @@ This website uses Hugo static-site generator (https://gohugo.io/).
 
 ### Usage
 
-- Run `make web-serve` to serve webiste with hot-reloading.
+- Run `make web-serve` to serve website with hot-reloading.
 
 ## Production build
 - Use `make web` to create a production build.
