@@ -1,20 +1,20 @@
 ---
-title : "Architecture"
-description: "Architecture of Observatorium."
-lead: ""
-date: 2021-04-30T10:40:00+00:00
-lastmod: 2021-04-30T10:40:00+00:00
-draft: false
-images: []
-menu:
-  docs:
-    parent: "design"
 weight: 100
 toc: true
+title: Architecture
+menu:
+    docs:
+        parent: design
+lead: ""
+lastmod: "2021-04-30T10:40:00+00:00"
+images: []
+draft: false
+description: Architecture of Observatorium.
+date: "2021-04-30T10:40:00+00:00"
 ---
 
 This document explains the concrete architecture and deployment of Observatorium within a single cluster and scaled out to multiple clusters.
- 
+
 TBD.
 
 ![](/docs/design/Observatorium-High-Level.png)

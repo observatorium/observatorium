@@ -3,6 +3,8 @@ include .bingo/Variables.mk
 CONFIGURATION_DIR ?= ./configuration
 WEBSITE_DIR ?= website
 WEBSITE_BASE_URL ?= https://observatorium.io
+MD_FILES_TO_FORMAT = $(shell find docs -name "*.md") $(shell ls *.md)
+MDOX_CONFIG ?= .mdox.validate.yaml
 
 all: generate validate
 
@@ -35,6 +37,16 @@ web-theme:
 $(WEBSITE_DIR)/node_modules:
 	@git submodule update --init --recursive
 	cd $(WEBSITE_DIR)/themes/doks/ && npm install && rm -rf content
+
+.PHONY: docs
+docs: $(MDOX)
+	@echo ">> formatting docs with examples"
+	$(MDOX) fmt -l --links.validate.config-file=$(MDOX_CONFIG) $(MD_FILES_TO_FORMAT)
+
+.PHONY: check-docs
+check-docs: $(MDOX)
+	@echo ">> checking formatting and links"
+	$(MDOX) fmt --check -l --links.validate.config-file=$(MDOX_CONFIG) $(MD_FILES_TO_FORMAT)
 
 .PHONY: web
 web: $(WEBSITE_DIR)/node_modules $(HUGO)

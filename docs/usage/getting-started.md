@@ -1,16 +1,16 @@
 ---
-title: "Getting Started"
-description: ""
-lead: ""
-date: 2021-04-30T10:40:00+00:00
-lastmod: 2021-04-30T10:40:00+00:00
-draft: false
-images: []
-menu:
-  docs:
-    parent: "usage"
 weight: 1
 toc: true
+title: Getting Started
+menu:
+    docs:
+        parent: usage
+lead: ""
+lastmod: "2021-04-30T10:40:00+00:00"
+images: []
+draft: false
+description: ""
+date: "2021-04-30T10:40:00+00:00"
 ---
 
 This document explains basics about Observatorium and how to start using and operating it on your environments.
@@ -23,7 +23,7 @@ As active maintainers and contributors to the underlying projects, we created a 
 
 ![](/docs/design/Observatorium-High-Level.png)
 
-Read more on [High Level Architecture](/docs/design/architecture.md) docs. 
+Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
 ## What's Included
 
@@ -35,8 +35,7 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
 > NOTE: Observatorium is a set of cloud native, mostly stateless components that mostly does not require special operating logic. For those operations that required automation, specialized controllers were designed. Use Operator only if this is your primary installation logic or if you don't have CI pipeline.
 
-> NOTE2: Operator is in heavy progress. There are already plans to streamline its usage and redesign current CustomResourceDefinition in next version. Yet, it's currently used in production by many bigger users, so any changes
-> will be done with care.
+> NOTE2: Operator is in heavy progress. There are already plans to streamline its usage and redesign current CustomResourceDefinition in next version. Yet, it's currently used in production by many bigger users, so any changes will be done with care.
 
 * The [Thanos Receive Controller](https://github.com/observatorium/thanos-receive-controller) is a Kubernetes controller written in Go that distributes essential tenancy configuration to the desired pods.
 
@@ -44,14 +43,13 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
 * [OPA-AMS](https://github.com/observatorium/opa-ams) is our Go library for integrating Open Policy Agent with Red Hat authorization service for smooth Openshift experience.
 
-* [up](https://github.com/observatorium/up) is a useful Go service that periodically queries Observatorium and outputs vital metrics on the
-  Observatorium read path healthiness and performance over time.
+* [up](https://github.com/observatorium/up) is a useful Go service that periodically queries Observatorium and outputs vital metrics on the Observatorium read path healthiness and performance over time.
 
 * [token-refresher](https://github.com/observatorium/token-refresher) is a simple Go CLI allowing to perform OIDC refresh flow.
 
 ## Tutorials
 
-* [Quick Observatorium spinup on local cluster](#Local)
+* [Quick Observatorium spinup on local cluster](#local)
 * Various Tutorials on Katacoda: https://katacoda.com/observatorium
 
 ### Local
@@ -63,12 +61,14 @@ If you just want to run Observatroium locally and get started quickly, take a lo
 #### Prerequisites
 
 - Clone this repo
+
   ```bash
   git clone https://github.com/observatorium/observatorium.git
   cd configuration/examples/local
   ```
 
 - Create a temporary folder
+
   ```bash
   mkdir -p tmp/bin
   ```
@@ -78,6 +78,7 @@ If you just want to run Observatroium locally and get started quickly, take a lo
 We need to run a local Kubernetes cluster to run our stack in. We are going to use KIND (Kubernetes in Docker) for that. You can follow the [Getting Started](https://kind.sigs.k8s.io/docs/user/quick-start/) guide to install it.
 
 Let's create a new cluster in kind.
+
 ```bash
 kind create cluster
 ```
@@ -92,12 +93,12 @@ curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlit
 
 The configuration file for `hydra` is present in [`configs/hydra.yaml`](/configuration/examples/local/configs/hydra.yaml).
 
-```yaml
+```yaml mdox-exec="cat configuration/examples/local/configs/hydra.yaml"
 strategies:
   access_token: jwt
 urls:
   self:
-    issuer: http://172.17.0.1:4444/ 
+    issuer: http://172.17.0.1:4444/
 ```
 
 We will be running `hydra` outside the cluster to simulate an external tenant, but we need to access `hydra` from inside the cluster. As our K8s cluster is running inside Docker containers, we can use the ip address of `docker0` interface to access host from inside the containers. In most cases it will be `172.17.0.1` but you can find yours using
@@ -143,7 +144,7 @@ Wait for `minio` to come up.
 kubectl wait --for=condition=available -n observatorium-minio deploy/minio
 ```
 
-Afetr `minio` starts running, deploy everything else.
+After `minio` starts running, deploy everything else.
 
 ```bash
 kubectl create ns observatorium
@@ -161,6 +162,7 @@ The Observatorium API allows you to push timeseries data using Prometheus remote
 The token issued by the OIDC providers often have a small validity, but it can be automatically refreshed using a refresh token. As Prometheus doesn't natively support refresh token flow, we use a proxy in-between to do exactly that for us. Take a look at the [GitHub repo](https://github.com/observatorium/token-refresher) to read more about it.
 
 - Clone the repo locally and build the binary using `make build`.
+
   ```bash
   git clone https://github.com/observatorium/token-refresher tmp/token-refresher
   cd tmp/token-refresher
@@ -169,10 +171,12 @@ The token issued by the OIDC providers often have a small validity, but it can b
   cd -
   ```
 - We need to put up a proxy in front of the Observatorium API so we first need to expose it first. We will use `kubectl port-forward` for that.
+
   ```bash
   kubectl port-forward -n observatorium svc/observatorium-xyz-observatorium-api 8443:8080
   ```
 - Now that Observatorium API is listening on `localhost:8443`, we will run the token refresher to forward traffic to it. You may have to replace the `--oidc.issuer-url` with appropriate value if the IP of the `docker0` interface is different.
+
   ```bash
   ./tmp/bin/token-refresher --oidc.issuer-url=http://172.17.0.1:4444/ --oidc.client-id=user --oidc.client-secret=secret --oidc.audience=observatorium --url=http://127.0.0.1:8443
   ```
@@ -190,7 +194,7 @@ mv ./tmp/prometheus-2.24.1.linux-amd64/prometheus ./tmp/bin/
 
 The Prometheus config file present in `configs/prom.yaml` looks like this:
 
-```yaml
+```yaml mdox-exec="cat configuration/examples/local/configs/prom.yaml"
 global:
   scrape_interval: 15s
 

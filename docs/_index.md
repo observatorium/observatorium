@@ -1,11 +1,11 @@
 ---
-title : "Observatorium Docs"
-description: "Documentation for Observatorium."
+title: Observatorium Docs
 lead: ""
-date: 2021-04-30T10:40:00+00:00
-lastmod: 2021-04-30T10:40:00+00:00
-draft: false
+lastmod: "2021-04-30T10:40:00+00:00"
 images: []
+draft: false
+description: Documentation for Observatorium.
+date: "2021-04-30T10:40:00+00:00"
 ---
 
 # Observatorium

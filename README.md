@@ -4,7 +4,7 @@
 
 ### Configuration for Multi-Tenant, Flexible, Scalable, Observability Backend
 
-Observatorium allows you to run and operate effectively a multi-tenant, easy to operate, scalable open source observability system on Kubernetes. This system will allow you to ingest, store and use common observability signals like metrics, logging and tracing. Observatorium is a "meta project" allows you to manage, integrate and combine multiple well-established existing projects like [Thanos](https://thanos.io), Loki, Tempo/Jaeger, Open Policy Agent etc under a single consistent system with well-defined tenancy APIs and signal correlation capabilities. 
+Observatorium allows you to run and operate effectively a multi-tenant, easy to operate, scalable open source observability system on Kubernetes. This system will allow you to ingest, store and use common observability signals like metrics, logging and tracing. Observatorium is a "meta project" allows you to manage, integrate and combine multiple well-established existing projects like [Thanos](https://thanos.io), Loki, Tempo/Jaeger, Open Policy Agent etc under a single consistent system with well-defined tenancy APIs and signal correlation capabilities.
 
 As active maintainers and contributors to the underlying projects, we created a reference configuration, with extra software that connects those open source solutions into one unified and easy to use service. It adds missing gaps between those projects like consistency, multi-tenancy, security and resiliency pieces that are needed for a robust backend.
 
@@ -12,7 +12,7 @@ As active maintainers and contributors to the underlying projects, we created a 
 
 Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
-### Context 
+### Context
 
 As the Red Hat Monitoring Team, we were focusing on the Observability software and concepts since the CoreOS acquisition. From the beginning, one of our main goals was to establish a stable in-cluster metric collection, querying, and alerting for OpenShift clusters. With the growth of managed Openshift (OSD) clusters, the scope of the team goal has extended: we had to develop a scalable, global, metric stack that can be run in local as well as a central location for monitoring and telemetry purposes. We also worked together with Red Hat Logging and Tracing teams to implement something similar for logging and tracing. We’re also working on Continuous Profiling aspects.
 
@@ -36,11 +36,10 @@ From the very beginning our teams were leveraging Open Source to accomplish all 
 
 * [OPA-AMS](https://github.com/observatorium/opa-ams) is our Go library for integrating Open Policy Agent with Red Hat authorization service for smooth Openshift experience.
 
-* [up](https://github.com/observatorium/up) is a useful Go service that periodically queries Observatorium and outputs vital metrics on the 
-Observatorium read path healthiness and performance over time.
+* [up](https://github.com/observatorium/up) is a useful Go service that periodically queries Observatorium and outputs vital metrics on the Observatorium read path healthiness and performance over time.
 
 * [token-refresher](https://github.com/observatorium/token-refresher) is a simple Go CLI allowing to perform OIDC refresh flow.
-  
+
 ### Getting Started
 
 See [Getting Started](docs/usage/getting-started.md) and our Katacoda Tutorials: https://katacoda.com/observatorium
