@@ -17,7 +17,7 @@ Observatorium makes extensive use of [Thanos](https://thanos.io/) to provide sup
 
 ## Ingestion
 
-Observatorium exposes an endpoint that supports the Prometheus [remote-write protocol](https://prometheus.io/docs/prometheus/latest/storage/#remote-storage-integrations). This is primarily implemented using the [Thanos receive](https://thanos.io/tip/proposals/201812_thanos-remote-receive.md/) component.
+Observatorium exposes an endpoint that supports the Prometheus [remote-write protocol](https://prometheus.io/docs/prometheus/latest/storage/#remote-storage-integrations). This is primarily implemented using the [Thanos receive](https://thanos.io/tip/proposals-done/201812-thanos-remote-receive.md/) component.
 
 The Thanos receive component supports multi-tenancy out of the box: for each request it must be told the tenant of data being written through the use of the `THANOS-TENANT` HTTP header. In Observatorium, this is made possible by [the API aggregator](https://github.com/observatorium/api): after authenticating and authorizing a write request, the API aggregator sets the tenant identifier in the `THANOS-TENANT` HTTP header for the request. Depending on the tenant's configuration, the setup routes the write request to the appropriate hashring of Thanos receive instances, which then attaches the value of the `THANOS-TENANT` HTTP header as an external label to the metrics using the `tenant_id` label.
 
