@@ -21,7 +21,7 @@ The single biggest source of frustration from internal Red Hat users of Observat
 
 #### Implicit deploy cycle dependency
 
-Currently, the recording rules deployed into Observatorium are configured in the same repository as the configuration for the service itself. This implicitly ties the deploy-cycle of Prometheus rules to the deploy-cycle of Observatorium itself. If a new set of rules needs to be deployed, our team is required to roll-out our production infrastructure.
+Currently, the only method of modifying Prometheus rules in Observatorium is via the jsonnet definition in our repository. This implicitly ties an update of the rule configuration to a rollout of the entire infrastructure. This implicitly ties the deploy-cycle of Prometheus rules to the deploy-cycle of Observatorium itself. If a new set of rules needs to be deployed, our team is required to roll-out our production infrastructure.
 
 As the number of tenants we support and users we serve increases, the team responsible for the Observatorium installation is required to roll out production more frequently in order to satisfy user requests. This becomes an increasing impediment to user experience as the size of Observatorium increases.
 
