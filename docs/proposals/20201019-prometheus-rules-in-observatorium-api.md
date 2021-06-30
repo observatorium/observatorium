@@ -11,7 +11,7 @@
 
 ## TL;DR
 
-We propose implementing an API that allows multi-tenant users to create, read, update and delete Prometheus alerting and recording rules.
+We propose implementing a multi-tenant API that allows users to create, read, update and delete Prometheus alerting and recording rules.
 
 ## Why
 
@@ -27,7 +27,7 @@ As the number of tenants we support and users we serve increases, the team respo
 
 #### Shared configuration repositories
 
-For rules to be rolled out, users need the ability to raise pull requests against the Observatorium repositories that contain our source configuration. This works fine when the two team co-exist within the same organisation, but this becomes a blocking issue when the two teams share a much more restricted (i.e. inter-company) trust boundary.
+For rules to be rolled out, users need the ability to raise pull requests against the Observatorium repositories that contain our source configuration. This works fine when the two teams co-exist within the same organisation, but it becomes a blocking issue when the two teams share a much more restricted (e.g. inter-company) trust boundary.
 
 This is not a blocker for Red Hat's internal offering, however this is not inline with Observatorium's stated goal (TODO: insert link) of offering a SaaS-like monitoring solution.
 
@@ -42,7 +42,7 @@ This is not a blocker for Red Hat's internal offering, however this is not inlin
 
 ## How
 
-We propose to solve the above problem by implementing an API that allows multi-tenant users to create, read, update and delete Prometheus alerting and recording rules.
+We propose to solve the above problem by implementing a multi-tenant API that allows users to create, read, update and delete Prometheus alerting and recording rules.
 
 Thanos Ruler operates on the rule configuration provided by users, this is consumed from a file in local file defined by Ruler's `--rule.file` flag. Therefore, this configuration that we ingest via the API needs to be replicated into the local data directory of the Thanos Ruler instances. This is achieved with the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer), an application that calls the API above and writes the results into a location that Thanos Rule can access.
 
