@@ -27,7 +27,7 @@ As the number of tenants we support and users we serve increases, the team respo
 
 #### Shared configuration repositories
 
-For rules to be rolled out, users need the ability to raise pull requests against the Observatorium repositories that contain our source configuration. This works fine when the two team co-exist within the same organisation, but this becomes a blocking issue when the two teams share a much more restricted (i.e. inter-company) trust boundary.
+For rules to be rolled out, users need the ability to raise pull requests against the Observatorium repositories that contain our source configuration. This works fine when the two teams co-exist within the same organisation, but it becomes a blocking issue when the two teams share a much more restricted (e.g. inter-company) trust boundary.
 
 This is not a blocker for Red Hat's internal offering, however this is not inline with Observatorium's stated goal (TODO: insert link) of offering a SaaS-like monitoring solution.
 
