@@ -11,7 +11,7 @@
 
 ## TL;DR
 
-We propose implementing an API that allows multi-tenant users to create, read, update and delete Prometheus alerting and recording rules.
+We propose implementing a multi-tenant API that allows users to create, read, update and delete Prometheus alerting and recording rules.
 
 ## Why
 
