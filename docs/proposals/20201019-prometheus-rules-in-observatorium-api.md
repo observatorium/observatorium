@@ -44,7 +44,7 @@ This is not a blocker for Red Hat's internal offering, however this is not inlin
 
 We propose to solve the above problem by implementing an API that allows multi-tenant users to create, read, update and delete Prometheus alerting and recording rules.
 
-Thanos Ruler operates on the rule configuration provided by users, this is consumed from a file in Ruler's local data directory. Therefore, this configuration that we ingest via the API needs to be replicated into the local data directory of the Thanos Ruler instances. This is achieved with the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer), an application that calls the API above and writes the results into a location that Thanos Rule can access.
+Thanos Ruler operates on the rule configuration provided by users, this is consumed from a file in local file defined by Ruler's `--rule.file` flag. Therefore, this configuration that we ingest via the API needs to be replicated into the local data directory of the Thanos Ruler instances. This is achieved with the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer), an application that calls the API above and writes the results into a location that Thanos Rule can access.
 
 This solution must be backwards compatible with rule configuration currently defined in our repository. That is to say, to ease the transition from our current setup to this new API, Thanos Ruler should be able to operate on Rules both from the API and Supplied as configuration.
 
