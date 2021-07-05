@@ -1,4 +1,4 @@
-## Implement API for managing Prometheus Rules
+## Implement API for managing Prometheus Recording Rules
 
 * **Owners:**:
   * `@squat` / `@ianbillett`
@@ -7,21 +7,21 @@
   * `<JIRA, GH Issues>`
 
 * **Other docs:**
-  * `<Links…>`
+  *  Original [Prometheus Rules in Observatorium API design doc](https://docs.google.com/document/d/1F9Cw6I4qFs__0Dcm19xvxJqRBCAGQBBggYg_PQSV_-g/edit#heading=h.cp0jmcyfj3) (internal Red Hat link)
 
 ## TL;DR
 
-We propose implementing a multi-tenant API that allows users to create, read, update and delete Prometheus alerting and recording rules.
+We propose implementing a multi-tenant API that allows users to create, read, update and delete Prometheus recording rules.
 
 ## Why
 
-The single biggest source of frustration from internal Red Hat users of Observatorium right now is the time it takes for changes to their rules to appear in our production infrastructure.
+The single biggest source of frustration from internal Red Hat users of Observatorium right now is the time it takes for changes to their recording rules to appear in our production infrastructure.
 
 ### Pitfalls of the current solution
 
 #### Implicit deploy cycle dependency
 
-Currently, the only method of modifying Prometheus rules in Observatorium is via the jsonnet definition in our repository. This implicitly ties an update of the rule configuration to a rollout of the entire infrastructure. This implicitly ties the deploy-cycle of Prometheus rules to the deploy-cycle of Observatorium itself. If a new set of rules needs to be deployed, our team is required to roll-out our production infrastructure.
+Currently, the only method of modifying Prometheus recording rules in Observatorium is via the jsonnet definition in our repository. This implicitly ties an update of the rule configuration to a rollout of the entire infrastructure. This implicitly ties the deploy-cycle of Prometheus rules to the deploy-cycle of Observatorium itself. If a new set of rules needs to be deployed, our team is required to roll-out our production infrastructure.
 
 As the number of tenants we support and users we serve increases, the team responsible for the Observatorium installation is required to roll out production more frequently in order to satisfy user requests. This becomes an increasing impediment to user experience as the size of Observatorium increases.
 
@@ -33,26 +33,32 @@ This is not a blocker for Red Hat's internal offering, however this is not inlin
 
 ## Goals
 
-* Users can update their Prometheus rules without intervention from the operating team.
+* Users can update their Prometheus recording rules without intervention from the operating team.
+* The Observatorium API must be able to scale horizontally scale with the number of users.
 
 ## Non-Goals
 
 * Rate-limiting or accounting of user resources.
-* Define or implement the underlying database technology.
+* Define or implement the underlying storage technology.
 
 ## How
 
 We propose to solve the above problem by implementing a multi-tenant API that allows users to create, read, update and delete Prometheus alerting and recording rules.
 
-Thanos Ruler operates on the rule configuration provided by users, this is consumed from a file in local file defined by Ruler's `--rule.file` flag. Therefore, this configuration that we ingest via the API needs to be replicated into the local data directory of the Thanos Ruler instances. This is achieved with the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer), an application that calls the API above and writes the results into a location that Thanos Rule can access.
-
-This solution must be backwards compatible with rule configuration currently defined in our repository. That is to say, to ease the transition from our current setup to this new API, Thanos Ruler should be able to operate on Rules both from the API and Supplied as configuration.
+Thanos Ruler operates on the rule configuration provided by users, which is consumed from a file defined by Ruler's `--rule.file` flag. Therefore, this configuration that we ingest via the API needs to be replicated into the local data directory of the Thanos Ruler instances. This is achieved with the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer), an application that will call the API above and write the results into a location that Thanos Rule can access.
 
 ### How should we persist user's rule configuration?
 
-In the first iteration of this API, we will persist the rule configuration to a local directory that is backed by a `PersistentVolumeClaim`.
+For the Observatorium API to satisfy our requirement of scaling horizontally with the number of user requests, we need to use a persistent storage layer for our user's recording rules.
 
-In the future, we may consider a different persistence mechanism (RDBMS / object), but we will consider that proposal as and when the need arises.
+TODO
+* Object storage is already used in Thanos. Users will already have this infrastructure provisioned.
+
+### How will users perform authentication and authorization?
+
+TODO
+* Probably the same way that Telemeter client and server authentication works?
+* How will users provision new API keys / secret material?
 
 ## Alternatives
 
