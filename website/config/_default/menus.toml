@@ -16,6 +16,30 @@
   identifier = "design"
   url = "/docs/design/"
 
+[[docs]]
+  name = "Proposals"
+  url = "/docs/proposals/"
+  identifier = "proposals"
+  weight = 30
+
+[[proposals]]
+  name = "Drafts"
+  url = "/docs/proposals/drafts/"
+  identifier = "draft-proposals"
+  weight = 10
+
+[[proposals]]
+  name = "Accepted"
+  url = "/docs/proposals/accepted/"
+  identifier = "accepted-proposals"
+  weight = 11
+
+[[proposals]]
+  name = "Rejected"
+  url = "/docs/proposals/rejected/"
+  identifier = "rejected-proposals"
+  weight = 12
+
 [[main]]
   name = "Docs"
   url = "/docs/usage/getting-started.md/"
