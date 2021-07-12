@@ -7,7 +7,7 @@
   * `<JIRA, GH Issues>`
 
 * **Other docs:**
-  *  Original [Prometheus Rules in Observatorium API design doc](https://docs.google.com/document/d/1F9Cw6I4qFs__0Dcm19xvxJqRBCAGQBBggYg_PQSV_-g/edit#heading=h.cp0jmcyfj3) (internal Red Hat link)
+  * Original [Prometheus Rules in Observatorium API design doc](https://docs.google.com/document/d/1F9Cw6I4qFs__0Dcm19xvxJqRBCAGQBBggYg_PQSV_-g/edit#heading=h.cp0jmcyfj3) (internal Red Hat link)
 
 ## TL;DR
 
