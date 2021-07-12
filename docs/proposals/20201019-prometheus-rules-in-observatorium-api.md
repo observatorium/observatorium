@@ -39,7 +39,6 @@ This is not a blocker for Red Hat's internal offering, however this is not inlin
 ## Non-Goals
 
 * Rate-limiting or accounting of user resources.
-* Define or implement the underlying storage technology.
 
 ## How
 
