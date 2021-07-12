@@ -51,8 +51,49 @@ Thanos Ruler operates on the rule configuration provided by users, which is cons
 
 For the Observatorium API to satisfy our requirement of scaling horizontally with the number of user requests, we need to use a persistent storage layer for our user's recording rules.
 
-TODO
-* Object storage is already used in Thanos. Users will already have this infrastructure provisioned.
+For this decision we have a number of options:
+
+#### 1. ETCD
+
+One option would be to use the Kubernetes' control plane as the backing data store for user's recording rules.
+
+Pros:
+* Lowest possible overhead. No external storage is required to be orchestrated.
+* ETCD data model well suited for recording rules i.e. YAML.  
+* Storage permissions are managed in Kubernetes objects.
+* We could leverage Recording Rules CRDs and get validation for free (?) 
+
+Cons:
+* Implicitly ties Observatorium's implementation into a Kubernetes environment. Hard to back out.
+* Large blast radius. With a large number of users and recording rules, we could un-intentionally impact the Kubernetes control plane's performance.
+* ETCD has a limit of 1.5MB per key / value pair so we can't store large files (but Prometheus operator seems to do this ok?).
+
+#### 2. Object Storage
+
+Pros:
+* Users of Thanos project are likely to already have object storage configured and ready to use.
+* Recording rule data model is a good fit for object storage i.e. YAML.
+
+Cons:
+* Unclear consistency semantics depending on object storage provider i.e. in the case of lots of writes, who wins?
+* Requires users to manage another set of secret credentials.
+
+#### 3. RDBMS
+
+Another option we have considered is to provision and use a relational database i.e. Postgres.
+
+Pros:
+* Strong isolation and update semantics.
+* Enables us to use multi-dimensional
+
+Cons:
+* We don't currently run RDBMS, and don't have any experience doing so.
+* Significant infrastructure overhead - users required to BYO database.   
+* Requires users to manage another set of secret credentials.
+
+#### Decision
+
+TODO - What are we going to use as the storage mechanism?
 
 ### How will users perform authentication and authorization?
 
@@ -71,16 +112,6 @@ As it stands, any rollout to production requires coordination and management fro
 Our goal here is to remove our team entirely from the control loop of updating Prometheus rules. We are trading off immediate term technical complexity against longer-term scalability and happier multi-tenancy operation.
 
 This option also does not address the trust-boundary issue identified above (but that is not a pain point we currently experience internally at Red Hat ¯\_(ツ)_/¯).
-
-### Store Rules in Kubernetes API
-
-One option would be to store user's rule configuration in the Kubernetes API server, perhaps using a 'native' resource like `PrometheusRule`.
-
-This is certainly attractive as we could leverage Kubernetes' in-built storage mechanisms to serve user's needs, and also leverage an operator to synchronise the rules into the right place.
-
-This becomes problematic with a large number of users. The stress placed on the kubernetes api-server, and by extension the happy operation of our cluster, should not depend on the user's configuration. This option is a non-starter on operational grounds.
-
-The backing etcd datastore imposes a limit of 1MB per file, so we could not support large rule files provided by the user.
 
 ### Per-tenant GitOps
 
