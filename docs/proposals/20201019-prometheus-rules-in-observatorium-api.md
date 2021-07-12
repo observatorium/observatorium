@@ -59,9 +59,9 @@ One option would be to use the Kubernetes' control plane as the backing data sto
 
 Pros:
 * Lowest possible overhead. No external storage is required to be orchestrated.
-* ETCD data model well suited for recording rules i.e. YAML.  
-* Storage permissions are managed in Kubernetes objects.
-* We could leverage Recording Rules CRDs and get validation for free (?) 
+* ETCD data model well suited for recording rules i.e. YAML.
+* Storage permissions are managed as Kubernetes objects.
+* We could leverage Recording Rules CRDs and get validation for free (?)
 
 Cons:
 * Implicitly ties Observatorium's implementation into a Kubernetes environment. Hard to back out.
@@ -88,7 +88,7 @@ Pros:
 
 Cons:
 * We don't currently run RDBMS, and don't have any experience doing so.
-* Significant infrastructure overhead - users required to BYO database.   
+* Significant infrastructure overhead - users required to BYO database.
 * Requires users to manage another set of secret credentials.
 
 #### Decision
