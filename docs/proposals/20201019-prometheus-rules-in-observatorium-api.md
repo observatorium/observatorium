@@ -11,7 +11,7 @@
 
 ## Table of Contents
 
-- [TL;DR](#tl-dr)
+- [TLDR](#tldr)
 - [Why](#why)
   * [Pitfalls of the current solution](#pitfalls-of-the-current-solution)
     + [Implicit deploy cycle dependency](#implicit-deploy-cycle-dependency)
@@ -19,8 +19,8 @@
 - [Goals](#goals)
 - [Non-Goals](#non-goals)
 - [How](#how)
-  * [How does Rule get tenant recording rules?](#how-does-rule-get-tenant-recording-rules-)
-  * [How do we store tenant rules?](#how-do-we-store-tenant-rules-)
+  * [How does Rule get tenant recording rules](#how-does-rule-get-tenant-recording-rules)
+  * [How do we store tenant rules](#how-do-we-store-tenant-rules)
     + [Service](#service)
     + [Storage layer](#storage-layer)
       - [1. ETCD](#1-etcd)
@@ -28,15 +28,27 @@
       - [3. RDBMS](#3-rdbms)
       - [Decision](#decision)
   * [Sequence Diagram](#sequence-diagram)
+    + [1. Store Tenant Rules](#1-store-tenant-rules)
+    + [2. Sync Rules to Rule](#2-sync-rules-to-rule)
+    + [3. Recording Rule Query](#3-recording-rule-query)
 - [Alternatives](#alternatives)
   * [More frequent deploys](#more-frequent-deploys)
   * [Per-tenant GitOps](#per-tenant-gitops)
 - [Action Plan](#action-plan)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+<small>
 
+<i>
 
-## TL;DR
+<a href="http://ecotrust-canada.github.io/markdown-toc/">
+Table of contents generated with markdown-toc
+</a>
+
+</i>
+
+</small>
+
+## TLDR
 
 We propose implementing a multi-tenant API that allows tenants to create, read, update and delete Prometheus recording rules.
 
@@ -77,29 +89,28 @@ In Observatorium, [Thanos Rule](https://thanos.io/tip/components/rule.md/) evalu
 
 This leads to two problems we need to solve:
 1. How does `Rule` obtain tenant recording rules?
-1. How do we store tenant recording rules?
+2. How do we store tenant recording rules?
 
-### How does Rule get tenant recording rules?
+### How does Rule get tenant recording rules
 
-For this step, we will leverage the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer). 
+For this step, we will leverage the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer).
 
 Periodically, this application does three things:
 1. Calls the Observatorium API to retrieve tenant recording rules.
-1. Writes these rules to a location defined by the `-file` flag.
-1. Asks Rule to reload its rules by calling the `/-/reload` endpoint.
+2. Writes these rules to a location defined by the `-file` flag.
+3. Asks Rule to reload its rules by calling the `/-/reload` endpoint.
 
 This will run as a sidecar to `Rule` and `-file` will be shared between the two containers.
 
-### How do we store tenant rules?
+### How do we store tenant rules
 
 #### Service
 
 We will implement the rule storage backend as a separate service within Observatorium (i.e. not part of the API). This follows the established pattern of specifying backends in the API configuration and also maintains desirable properties of the API:
-* The API stays as a super-performant gateway that handles authentication and authorization but no application-specific logic. 
+* The API stays as a super-performant gateway that handles authentication and authorization but no application-specific logic.
 * Observatorium users are free to specify different storage backends, or no rule backend at all.
 
-The rule backend will be specified via the `--metrics.rules.endpoint` flag, and will route requests via the
-`/api/metrics/v1/{tenant}/rules` endpoint.
+The rule backend will be specified via the `--metrics.rules.endpoint` flag, and will route requests via the `/api/metrics/v1/{tenant}/rules` endpoint.
 
 NB: By scoping rules to the `/metrics` endpoint we are consciously creating room for future logging rules.
 
@@ -169,33 +180,33 @@ How will this all work in practice?
 
 #### 1. Store Tenant Rules
 1. Tenant sends request to the API using the path `/api/metrics/v1/{tenant}/rules` containing their rules data.
-1. API performs authentication and authorization of the tenant then forwards the request to the rules storage backend.
-1. Rules storage backend performs validation of the payload, rejecting any requests found to contain `alert` rules, then stores the rule file in object storage at the path `metrics/rules/{tenant}/{file_name}.yaml`.
-1. Object storage returns success to the Rule Backend.
-1. Rule backend returns success to the API.
-1. API returns success to the Tenant.
+2. API performs authentication and authorization of the tenant then forwards the request to the rules storage backend.
+3. Rules storage backend performs validation of the payload, rejecting any requests found to contain `alert` rules, then stores the rule file in object storage at the path `metrics/rules/{tenant}/{file_name}.yaml`.
+4. Object storage returns success to the Rule Backend.
+5. Rule backend returns success to the API.
+6. API returns success to the Tenant.
 
 #### 2. Sync Rules to Rule
 1. Periodically, thanos-ruler-syncer queries the API for all rules for all tenants.
    * Do we need to expose an endpoint to return all of the rules? Unclear at the moment.
    * NB: We can definitely make some optimisations here. Suggestions welcome.
-1. API requests data from the rule storage backend.
-1. Rule storage backend requests data from Object storage.
-1. Object storage returns data to the Rule storage backend.
-1. Rule storage backend returns data to the API.
-1. API returns data to thanos-ruler-syncer.
-1. Thanos-ruler-syncer combines all of the data into one file, and writes this file to a directory that is shared with Thanos Rule.
-1. Thanos-ruler-syncer calls Thanos Rule's `/-/reload` endpoint to reload newly created configuration.
-1. Thanos Rule begins to evaluate the recording rules and stores the results in its local TSDB instace.
+2. API requests data from the rule storage backend.
+3. Rule storage backend requests data from Object storage.
+4. Object storage returns data to the Rule storage backend.
+5. Rule storage backend returns data to the API.
+6. API returns data to thanos-ruler-syncer.
+7. Thanos-ruler-syncer combines all of the data into one file, and writes this file to a directory that is shared with Thanos Rule.
+8. Thanos-ruler-syncer calls Thanos Rule's `/-/reload` endpoint to reload newly created configuration.
+9. Thanos Rule begins to evaluate the recording rules and stores the results in its local TSDB instace.
 
 #### 3. Recording Rule Query
 
 1. Tenant makes a query request to the API containing a recording rule metric
-1. API performs authentication and authorization of the request then queries the data from Thanos Query.
-1. Query has Rule configured as one of its Stores, and thus requests the data from Rule.
-1. Rule returns the metric value of the recording rule to Query.
-1. Query returns the result to API.
-1. API returns the result to the tenant.
+2. API performs authentication and authorization of the request then queries the data from Thanos Query.
+3. Query has Rule configured as one of its Stores, and thus requests the data from Rule.
+4. Rule returns the metric value of the recording rule to Query.
+5. Query returns the result to API.
+6. API returns the result to the tenant.
 
 ## Alternatives
 
