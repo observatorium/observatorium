@@ -1,4 +1,4 @@
-## Implement API for managing Prometheus Recording Rules
+# Recording Rules API Proposal
 
 * **Owners:**:
   * `@squat` / `@ianbillett`
@@ -9,52 +9,115 @@
 * **Other docs:**
   * Original [Prometheus Rules in Observatorium API design doc](https://docs.google.com/document/d/1F9Cw6I4qFs__0Dcm19xvxJqRBCAGQBBggYg_PQSV_-g/edit#heading=h.cp0jmcyfj3) (internal Red Hat link)
 
+## Table of Contents
+
+- [TL;DR](#tl-dr)
+- [Why](#why)
+  * [Pitfalls of the current solution](#pitfalls-of-the-current-solution)
+    + [Implicit deploy cycle dependency](#implicit-deploy-cycle-dependency)
+    + [Shared configuration repositories](#shared-configuration-repositories)
+- [Goals](#goals)
+- [Non-Goals](#non-goals)
+- [How](#how)
+  * [How does Rule get tenant recording rules?](#how-does-rule-get-tenant-recording-rules-)
+  * [How do we store tenant rules?](#how-do-we-store-tenant-rules-)
+    + [Service](#service)
+    + [Storage layer](#storage-layer)
+      - [1. ETCD](#1-etcd)
+      - [2. Object Storage](#2-object-storage)
+      - [3. RDBMS](#3-rdbms)
+      - [Decision](#decision)
+  * [Sequence Diagram](#sequence-diagram)
+- [Alternatives](#alternatives)
+  * [More frequent deploys](#more-frequent-deploys)
+  * [Per-tenant GitOps](#per-tenant-gitops)
+- [Action Plan](#action-plan)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+
 ## TL;DR
 
-We propose implementing a multi-tenant API that allows users to create, read, update and delete Prometheus recording rules.
+We propose implementing a multi-tenant API that allows tenants to create, read, update and delete Prometheus recording rules.
 
 ## Why
 
-The single biggest source of frustration from internal Red Hat users of Observatorium right now is the time it takes for changes to their recording rules to appear in our production infrastructure.
+The single biggest source of frustration from internal Red Hat tenants of Observatorium is the time it takes for changes to their recording rules to appear in our production infrastructure.
 
 ### Pitfalls of the current solution
 
 #### Implicit deploy cycle dependency
 
-Currently, the only method of modifying Prometheus recording rules in Observatorium is via the jsonnet definition in our repository. This implicitly ties an update of the rule configuration to a rollout of the entire infrastructure. This implicitly ties the deploy-cycle of Prometheus rules to the deploy-cycle of Observatorium itself. If a new set of rules needs to be deployed, our team is required to roll-out our production infrastructure.
+Currently, the only method of modifying Prometheus recording rules in Observatorium is via the jsonnet definition in our repository. This implicitly ties an update of the rule configuration to a rollout of the service. This implicitly ties the deploy-cycle of Prometheus rules to the deploy-cycle of Observatorium itself. If a new set of rules needs to be deployed, our team is required to roll-out our production infrastructure.
 
-As the number of tenants we support and users we serve increases, the team responsible for the Observatorium installation is required to roll out production more frequently in order to satisfy user requests. This becomes an increasing impediment to user experience as the size of Observatorium increases.
+As the number of tenants we support and tenants we serve increases, the team responsible for the Observatorium installation is required to roll out production more frequently in order to satisfy tenant requests. This becomes an increasing impediment to tenant experience as the size of Observatorium increases.
 
 #### Shared configuration repositories
 
-For rules to be rolled out, users need the ability to raise pull requests against the Observatorium repositories that contain our source configuration. This works fine when the two teams co-exist within the same organisation, but it becomes a blocking issue when the two teams share a much more restricted (e.g. inter-company) trust boundary.
+For rules to be rolled out, tenants need the ability to raise pull requests against the Observatorium repositories that contain our source configuration. This works fine when the two teams co-exist within the same organisation, but it becomes a blocking issue when the two teams share a much more restricted (e.g. inter-company) trust boundary.
 
 This is not a blocker for Red Hat's internal offering, however this is not inline with Observatorium's stated goal (TODO: insert link) of offering a SaaS-like monitoring solution.
 
 ## Goals
 
-* Users can update their Prometheus recording rules without intervention from the operating team.
-* The Observatorium API must be able to scale horizontally scale with the number of users.
+* Tenants can update their Prometheus recording rules without intervention from the operating team.
+* Observatorium must be able to scale horizontally scale with the number of tenants.
 
 ## Non-Goals
 
-* Rate-limiting or accounting of user resources.
+* Rate-limiting or tenant resource accounting.
+* Alerting rules. Although Prometheus `rule_files` can freely mix Recording and Alerting rules, alerting rules also require us to manage tenant-supplied routing and/or alerting configuration. This is out of scope for this design doc.
+* Logging rules. While Loki supports the same format rules as Prometheus, we will explicitly not consider supporting these in this proposal.
 
 ## How
 
-We propose to solve the above problem by implementing a multi-tenant API that allows users to create, read, update and delete Prometheus alerting and recording rules.
+We propose to solve the above problem by implementing a multi-tenant API that allows tenants to create, read, update and delete Prometheus recording rules.
 
-Thanos Ruler operates on the rule configuration provided by users, which is consumed from a file defined by Ruler's `--rule.file` flag. Therefore, this configuration that we ingest via the API needs to be replicated into the local data directory of the Thanos Ruler instances. This is achieved with the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer), an application that will call the API above and write the results into a location that Thanos Rule can access.
+In Observatorium, [Thanos Rule](https://thanos.io/tip/components/rule.md/) evaluates recording rules. These are configured using a local file defined by Rule's `--rule.file` flag. `Rule` is configured as one of `Query`'s stores, so when rules are evaluated they are available to be queried.
 
-### How should we persist user's rule configuration?
+This leads to two problems we need to solve:
+1. How does `Rule` obtain tenant recording rules?
+1. How do we store tenant recording rules?
 
-For the Observatorium API to satisfy our requirement of scaling horizontally with the number of user requests, we need to use a persistent storage layer for our user's recording rules.
+### How does Rule get tenant recording rules?
 
-For this decision we have a number of options:
+For this step, we will leverage the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer). 
 
-#### 1. ETCD
+Periodically, this application does three things:
+1. Calls the Observatorium API to retrieve tenant recording rules.
+1. Writes these rules to a location defined by the `-file` flag.
+1. Asks Rule to reload its rules by calling the `/-/reload` endpoint.
 
-One option would be to use the Kubernetes' control plane as the backing data store for user's recording rules.
+This will run as a sidecar to `Rule` and `-file` will be shared between the two containers.
+
+### How do we store tenant rules?
+
+#### Service
+
+We will implement the rule storage backend as a separate service within Observatorium (i.e. not part of the API). This follows the established pattern of specifying backends in the API configuration and also maintains desirable properties of the API:
+* The API stays as a super-performant gateway that handles authentication and authorization but no application-specific logic. 
+* Observatorium users are free to specify different storage backends, or no rule backend at all.
+
+The rule backend will be specified via the `--metrics.rules.endpoint` flag, and will route requests via the
+`/api/metrics/v1/{tenant}/rules` endpoint.
+
+NB: By scoping rules to the `/metrics` endpoint we are consciously creating room for future logging rules.
+
+Since we have explicitly de-scoped alerting rules from this proposal, the service will need to inspect the rules payload. If any rules are found to contain an `alert` field, this request should be rejected and the user returned a `400 Bad Request` error with a helpful message.
+
+Ideally, we would define the rule storage backend API in OpenAPI format, so that it can easily be consumed by downstream services.
+
+#### Storage layer
+
+We will use a persistent storage mechanism that is external to the api deployment (i.e. no local storage). This enables us to satisfy our requirement of horizontally scaling the rule storage backend.
+
+While we have explicitly de-coupled the rule storage backend from the API, we require a concrete implementaion.
+
+We have a number of options for the storage layer backing the rules storage backend service.
+
+##### 1. ETCD
+
+One option would be to use the Kubernetes' control plane as the backing data store for tenant's recording rules.
 
 Pros:
 * Lowest possible overhead. No external storage is required to be orchestrated.
@@ -64,10 +127,10 @@ Pros:
 
 Cons:
 * Implicitly ties Observatorium's implementation into a Kubernetes environment. Hard to back out.
-* Large blast radius. With a large number of users and recording rules, we could un-intentionally impact the Kubernetes control plane's performance.
+* Large blast radius. With a large number of tenants and recording rules, we could un-intentionally impact the Kubernetes control plane's performance.
 * ETCD has a limit of 1.5MB per key / value pair so we can't store large files (but Prometheus operator seems to do this ok?).
 
-#### 2. Object Storage
+##### 2. Object Storage
 
 Pros:
 * Users of Thanos project are likely to already have object storage configured and ready to use.
@@ -75,9 +138,9 @@ Pros:
 
 Cons:
 * Unclear consistency semantics depending on object storage provider i.e. in the case of lots of writes, who wins?
-* Requires users to manage another set of secret credentials.
+* Requires tenants to manage another set of secret credentials.
 
-#### 3. RDBMS
+##### 3. RDBMS
 
 Another option we have considered is to provision and use a relational database i.e. Postgres.
 
@@ -87,44 +150,78 @@ Pros:
 
 Cons:
 * We don't currently run RDBMS, and don't have any experience doing so.
-* Significant infrastructure overhead - users required to BYO database.
-* Requires users to manage another set of secret credentials.
+* Significant infrastructure overhead - tenants required to BYO database.
+* Requires tenants to manage another set of secret credentials.
 
-#### Decision
+##### Decision
 
-TODO - What are we going to use as the storage mechanism?
+This was discussed in the [Observatorium Community Meeting](https://docs.google.com/document/d/1jLvOH0Lllt-ShXVgWeeHBGPb3ZuagirabD_hbq41EKs/edit#heading=h.wxenjcrf4iee) on 2021-07-31.
 
-### How will users perform authentication and authorization?
+The consensus among the group was that object storage offered us the best combination of ease of use, familiarity for existing users, and also compatability with the required operations against tenants rules.
 
-TODO
-* Probably the same way that Telemeter client and server authentication works?
-* How will users provision new API keys / secret material?
+We discussed that we will be likely to employ a RDBMS relatively soon for other features (i.e. RBAC), but we decided to cross that bridge when we came to it.
+
+### Sequence Diagram
+
+How will this all work in practice?
+
+![sequence-diagram](../assets/recording-rules-api.svg)
+
+#### 1. Store Tenant Rules
+1. Tenant sends request to the API using the path `/api/metrics/v1/{tenant}/rules` containing their rules data.
+1. API performs authentication and authorization of the tenant then forwards the request to the rules storage backend.
+1. Rules storage backend performs validation of the payload, rejecting any requests found to contain `alert` rules, then stores the rule file in object storage at the path `metrics/rules/{tenant}/{file_name}.yaml`.
+1. Object storage returns success to the Rule Backend.
+1. Rule backend returns success to the API.
+1. API returns success to the Tenant.
+
+#### 2. Sync Rules to Rule
+1. Periodically, thanos-ruler-syncer queries the API for all rules for all tenants.
+   * Do we need to expose an endpoint to return all of the rules? Unclear at the moment.
+   * NB: We can definitely make some optimisations here. Suggestions welcome.
+1. API requests data from the rule storage backend.
+1. Rule storage backend requests data from Object storage.
+1. Object storage returns data to the Rule storage backend.
+1. Rule storage backend returns data to the API.
+1. API returns data to thanos-ruler-syncer.
+1. Thanos-ruler-syncer combines all of the data into one file, and writes this file to a directory that is shared with Thanos Rule.
+1. Thanos-ruler-syncer calls Thanos Rule's `/-/reload` endpoint to reload newly created configuration.
+1. Thanos Rule begins to evaluate the recording rules and stores the results in its local TSDB instace.
+
+#### 3. Recording Rule Query
+
+1. Tenant makes a query request to the API containing a recording rule metric
+1. API performs authentication and authorization of the request then queries the data from Thanos Query.
+1. Query has Rule configured as one of its Stores, and thus requests the data from Rule.
+1. Rule returns the metric value of the recording rule to Query.
+1. Query returns the result to API.
+1. API returns the result to the tenant.
 
 ## Alternatives
 
 ### More frequent deploys
 
-The above problem has manifested because our deploys are too infrequent for our users. Could we not use this as an opportunity to optimize the velocity at which we deploy to production? That way we have the benefit of solving the near-term problems of our users, and also rolling things out more frequently.
+The above problem has manifested because our deploys are too infrequent for our tenants. Could we not use this as an opportunity to optimize the velocity at which we deploy to production? That way we have the benefit of solving the near-term problems of our tenants, and also rolling things out more frequently.
 
-As it stands, any rollout to production requires coordination and management from a member of the operating team. As the number of tenants and users becomes larger, the operating team becomes more of a bottleneck to common user operations.
+As it stands, any rollout to production requires coordination and management from a member of the operating team. As the number of tenants and tenants becomes larger, the operating team becomes more of a bottleneck to common tenant operations.
 
 Our goal here is to remove our team entirely from the control loop of updating Prometheus rules. We are trading off immediate term technical complexity against longer-term scalability and happier multi-tenancy operation.
 
-This option also does not address the trust-boundary issue identified above (but that is not a pain point we currently experience internally at Red Hat ¯\_(ツ)_/¯).
+This option also does not address the trust-boundary issue identified above.
 
 ### Per-tenant GitOps
 
 Another option would be for each tenant to commit their rule configuration into a git repository they control, and then we synchronise that into the right place in our infrastructure based on a URL they provide. This would eliminate the need for us to manage state on their behalf.
 
 This is a neat idea that avoids deploy dependencies, but has some drawbacks:
-* Validation - The user's rules would only be validated by us in the Ruler itself, meaning mis-configured rules do not get surfaced to users. We could encourage users to validate
-* Secrets - We can assume that users may not want their production rules and alerts exposed to the world, this would then require us to exchange and store secrets with them to access their repository.
+* Validation - The tenant's rules would only be validated by us in the Ruler itself, meaning mis-configured rules do not get surfaced to tenants. We could encourage tenants to validate
+* Secrets - We can assume that tenants may not want their production rules and alerts exposed to the world, this would then require us to exchange and store secrets with them to access their repository.
 
-The overhead and complexity of managing sensitive user secrets is out-of-scope for this project.
+The overhead and complexity of managing sensitive tenant secrets is out-of-scope for this project.
 
 ## Action Plan
 
 * Iterate and finalise this design document.
 * Implement proof-of-concept Rules API [#138](https://github.com/observatorium/api/pull/138).
-* Make the API available to users in staging.
+* Make the API available to tenants in staging.
 * Promote API to production after ~1 month of running in staging.
