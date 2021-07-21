@@ -22,11 +22,15 @@
   * [How does Rule get tenant recording rules](#how-does-rule-get-tenant-recording-rules)
   * [How do we store tenant rules](#how-do-we-store-tenant-rules)
     + [Service](#service)
+      - [What if a user gives us an alerting rule](#what-if-a-user-gives-us-an-alerting-rule)
+        * [1. Reject Request](#1-reject-request)
+        * [2. Accept Request With Warning](#2-accept-request-with-warning)
+        * [Alert Decision](#alert-decision)
     + [Storage layer](#storage-layer)
       - [1. ETCD](#1-etcd)
       - [2. Object Storage](#2-object-storage)
       - [3. RDBMS](#3-rdbms)
-      - [Decision](#decision)
+      - [Storage Decision](#storage-decision)
   * [Sequence Diagram](#sequence-diagram)
     + [1. Store Tenant Rules](#1-store-tenant-rules)
     + [2. Sync Rules to Rule](#2-sync-rules-to-rule)
@@ -68,12 +72,12 @@ As the number of tenants we support and tenants we serve increases, the team res
 
 For rules to be rolled out, tenants need the ability to raise pull requests against the Observatorium repositories that contain our source configuration. This works fine when the two teams co-exist within the same organisation, but it becomes a blocking issue when the two teams share a much more restricted (e.g. inter-company) trust boundary.
 
-This is not a blocker for Red Hat's internal offering, however this is not inline with Observatorium's stated goal (TODO: insert link) of offering a SaaS-like monitoring solution.
+This is not a blocker for Red Hat's internal offering, however this is not inline with Observatorium's [stated goal](https://observatorium.io/docs/usage/getting-started.md/#whats-observatorium) of offering a SaaS-like monitoring solution.
 
 ## Goals
 
 * Tenants can update their Prometheus recording rules without intervention from the operating team.
-* Observatorium must be able to scale horizontally scale with the number of tenants.
+* Observatorium must be able to scale horizontally with the number of tenants.
 
 ## Non-Goals
 
@@ -106,21 +110,48 @@ This will run as a sidecar to `Rule` and `-file` will be shared between the two 
 
 #### Service
 
-We will implement the rule storage backend as a separate service within Observatorium (i.e. not part of the API). This follows the established pattern of specifying backends in the API configuration and also maintains desirable properties of the API:
-* The API stays as a super-performant gateway that handles authentication and authorization but no application-specific logic.
+We will implement the rule storage backend as a separate service within Observatorium (i.e. not part of the API):
+* This follows the established pattern of specifying separate functional backends in the API.
+* The API stays as a super-performant gateway that handles authentication and authorization but no application-specific logic (in the spirit of the [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy))
 * Observatorium users are free to specify different storage backends, or no rule backend at all.
 
 The rule backend will be specified via the `--metrics.rules.endpoint` flag, and will route requests via the `/api/metrics/v1/{tenant}/rules` endpoint.
 
 NB: By scoping rules to the `/metrics` endpoint we are consciously creating room for future logging rules.
 
-Since we have explicitly de-scoped alerting rules from this proposal, the service will need to inspect the rules payload. If any rules are found to contain an `alert` field, this request should be rejected and the user returned a `400 Bad Request` error with a helpful message.
-
 Ideally, we would define the rule storage backend API in OpenAPI format, so that it can easily be consumed by downstream services.
+
+##### What if a user gives us an alerting rule
+
+Alerting rules have been explicitly de-scoped from this proposal as they require a story for managing alerting configuration and routing tenant alerts.
+
+However, Prometheus rules files permit recording and alerting rules to be freely mixed within the same file. The question arises - what do we do if a user provides us a file with mixed recording and alerting rules?
+
+###### 1. Reject Request
+
+One option would be to explicitly reject any requests that contains any `alert` rules in the payload. The user would be returned a `400 Bad Request` status code with a helpful warning like `Rules file rejected as it contains one or more alerting rules - alerting rules are not yet supported - please see the roadmap.`
+
+The downside here is that users may already have 'mixed' rules files, which they would need to split out in order to be accepted into the API.
+
+###### 2. Accept Request With Warning
+
+The other option would be to accept the rules request, store the recording rules and alerting rules alongside one another, but return a warning to saying `Warning: alerting rules are not currently support in Observatorium - please see the roadmap.`
+
+Under this option, we would also have to decide whether alerting rules are loaded into Rule and evaluated or only stored?
+
+###### Alert Decision
+
+My opinion is that the [least surprising](https://en.wikipedia.org/wiki/Principle_of_least_astonishment) option for tenants is for their requests to be explicitly rejected with a clear error message.
+
+While this may impose some file splitting costs on the user's side, we avoid ambiguity such as valid questions such as:
+* Did all of my rules get stored or just some?
+* Are my alerting rules being evaluated or just the recording rules?
+
+Finally, warnings are easy to ignore especially if users are using automated process to interact with the API.
 
 #### Storage layer
 
-We will use a persistent storage mechanism that is external to the api deployment (i.e. no local storage). This enables us to satisfy our requirement of horizontally scaling the rule storage backend.
+We will use a persistent storage mechanism that is external to the API deployment (i.e. no local storage). This enables us to satisfy our requirement of horizontally scaling the rule storage backend.
 
 While we have explicitly de-coupled the rule storage backend from the API, we require a concrete implementaion.
 
@@ -164,7 +195,7 @@ Cons:
 * Significant infrastructure overhead - tenants required to BYO database.
 * Requires tenants to manage another set of secret credentials.
 
-##### Decision
+##### Storage Decision
 
 This was discussed in the [Observatorium Community Meeting](https://docs.google.com/document/d/1jLvOH0Lllt-ShXVgWeeHBGPb3ZuagirabD_hbq41EKs/edit#heading=h.wxenjcrf4iee) on 2021-07-31.
 
@@ -188,6 +219,7 @@ How will this all work in practice?
 
 #### 2. Sync Rules to Rule
 1. Periodically, thanos-ruler-syncer queries the API for all rules for all tenants.
+   * In a trusted environment (i.e. with a kubernetes cluster) thanos-ruler-syncer could call the rule-storage-backend directly. Here we demonstrate the lower-trust environment and force thanos-ruler-syncer to authenticate via the API.
    * Do we need to expose an endpoint to return all of the rules? Unclear at the moment.
    * NB: We can definitely make some optimisations here. Suggestions welcome.
 2. API requests data from the rule storage backend.
@@ -227,6 +259,7 @@ Another option would be for each tenant to commit their rule configuration into 
 This is a neat idea that avoids deploy dependencies, but has some drawbacks:
 * Validation - The tenant's rules would only be validated by us in the Ruler itself, meaning mis-configured rules do not get surfaced to tenants. We could encourage tenants to validate
 * Secrets - We can assume that tenants may not want their production rules and alerts exposed to the world, this would then require us to exchange and store secrets with them to access their repository.
+* Overheads - Managing an additional git repo & associated secrets imposes extra overheads on the tenants.
 
 The overhead and complexity of managing sensitive tenant secrets is out-of-scope for this project.
 
