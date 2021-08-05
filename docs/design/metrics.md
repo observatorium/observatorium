@@ -1,17 +1,4 @@
----
-weight: 10
-toc: true
-title: Metrics
-menu:
-    docs:
-        parent: design
-lead: ""
-lastmod: "2021-04-30T10:40:00+00:00"
-images: []
-draft: false
-description: Metrics in Observatorium
-date: "2021-04-30T10:40:00+00:00"
----
+# Metrics
 
 Observatorium makes extensive use of [Thanos](https://thanos.io/) to provide support for ingesting and querying metrics.
 

@@ -1,8 +1,6 @@
----
-title: Maintainers
----
+# Maintainers
 
-# Core Maintainers of this Project
+## Core Maintainers of this Project
 
 | Name                   | Email                      | Slack                     | GitHub                                       | Company       |
 |------------------------|----------------------------|---------------------------|----------------------------------------------|---------------|
