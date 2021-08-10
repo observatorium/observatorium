@@ -12,16 +12,14 @@ transformations:
 
   - glob: "README.md"
     path: _index.md
-    popHeader: false
+    popHeader: true
     frontMatter:
       template: | 
         title: "{{ .Origin.FirstHeader }}"
-        lead: ""
         lastmod: "{{ .Origin.LastMod }}"
         images: []
         draft: false
         description: Documentation for Observatorium.
-        date: "2021-04-30T10:40:00+00:00"
 
   - glob: "**/README.md"
     path: _index.md
@@ -29,11 +27,9 @@ transformations:
     frontMatter:
       template: |
         title: "{{ .Origin.FirstHeader }}"
-        lead: ""
         lastmod: "{{ .Origin.LastMod }}"
         images: []
         draft: false
-        date: "2021-04-30T10:40:00+00:00"
 
   - glob: "usage/*.md"
     path: /usage/*
@@ -46,12 +42,9 @@ transformations:
         menu:
             docs:
                 parent: usage
-        lead: ""
         lastmod: "{{ .Origin.LastMod }}"
         images: []
         draft: false
-        description: ""
-        date: "2021-04-30T10:40:00+00:00"
 
   - glob: "design/*.md"
     path: /design/*
@@ -64,12 +57,9 @@ transformations:
         menu:
             docs:
                 parent: design
-        lead: ""
         lastmod: "{{ .Origin.LastMod }}"
         images: []
         draft: false
-        description: ""
-        date: "2021-04-30T10:40:00+00:00"
 
   - glob: "community/*.md"
     path: /community/*
@@ -82,9 +72,6 @@ transformations:
         menu:
             docs:
                 parent: community
-        lead: ""
         lastmod: "{{ .Origin.LastMod }}"
         images: []
         draft: false
-        description: ""
-        date: "2021-04-30T10:40:00+00:00"
