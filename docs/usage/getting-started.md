@@ -1,17 +1,4 @@
----
-weight: 1
-toc: true
-title: Getting Started
-menu:
-    docs:
-        parent: usage
-lead: ""
-lastmod: "2021-04-30T10:40:00+00:00"
-images: []
-draft: false
-description: ""
-date: "2021-04-30T10:40:00+00:00"
----
+# Getting Started
 
 This document explains basics about Observatorium and how to start using and operating it on your environments.
 

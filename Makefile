@@ -5,6 +5,7 @@ WEBSITE_DIR ?= website
 WEBSITE_BASE_URL ?= https://observatorium.io
 MD_FILES_TO_FORMAT = $(shell find docs -name "*.md") $(shell ls *.md)
 MDOX_CONFIG ?= .mdox.validate.yaml
+MDOX_TRANSFORM_CONFIG ?= .mdox.yaml
 
 all: generate validate
 
@@ -31,13 +32,6 @@ validate:
 vendor:
 	@$(MAKE) -C $(CONFIGURATION_DIR) vendor
 
-# TODO(bwplotka): This is no longer needed, remove when netlify job will be updated.
-web-theme:
-
-$(WEBSITE_DIR)/node_modules:
-	@git submodule update --init --recursive
-	cd $(WEBSITE_DIR)/themes/doks/ && npm install && rm -rf content
-
 .PHONY: docs
 docs: $(MDOX)
 	@echo ">> formatting docs with examples"
@@ -48,10 +42,19 @@ check-docs: $(MDOX)
 	@echo ">> checking formatting and links"
 	$(MDOX) fmt --check -l --links.validate.config-file=$(MDOX_CONFIG) $(MD_FILES_TO_FORMAT)
 
+.PHONY: web-pre
+web-pre: $(MDOX)
+	@echo ">> preprocessing docs for website"
+	$(MDOX) transform --log.level=debug --config-file=$(MDOX_TRANSFORM_CONFIG)
+	@git submodule update --init --recursive
+	cd $(WEBSITE_DIR)/themes/doks/ && npm install && rm -rf content
+
 .PHONY: web
+web: web-pre
 web: $(WEBSITE_DIR)/node_modules $(HUGO)
 	cd $(WEBSITE_DIR) && $(HUGO) -b $(WEBSITE_BASE_URL)
 
 .PHONY: web-serve
+web-serve: web-pre
 web-serve: $(WEBSITE_DIR)/node_modules $(HUGO)
 	@cd $(WEBSITE_DIR) && $(HUGO) serve

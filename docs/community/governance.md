@@ -1,7 +1,3 @@
----
-title: Governance
----
-
 # Governance
 
 This document describes the rules and governance of the project. It is a slightly modified version of the [Prometheus Governance](https://prometheus.io/governance/#governance-changes) and similar to the [Thanos Governance](https://thanos.io/tip/thanos/governance.md/)

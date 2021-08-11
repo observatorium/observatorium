@@ -1,0 +1,77 @@
+version: 1
+
+inputDir: "docs"
+outputDir: "website/content/docs"
+
+gitIgnored: true
+localLinksStyle:
+  hugo:
+    indexFileName: "_index.md"
+
+transformations:
+
+  - glob: "README.md"
+    path: _index.md
+    popHeader: true
+    frontMatter:
+      template: | 
+        title: "{{ .Origin.FirstHeader }}"
+        lastmod: "{{ .Origin.LastMod }}"
+        images: []
+        draft: false
+        description: Documentation for Observatorium.
+
+  - glob: "**/README.md"
+    path: _index.md
+    popHeader: true
+    frontMatter:
+      template: |
+        title: "{{ .Origin.FirstHeader }}"
+        lastmod: "{{ .Origin.LastMod }}"
+        images: []
+        draft: false
+
+  - glob: "usage/*.md"
+    path: /usage/*
+    popHeader: true
+    frontMatter:
+      template: |
+        weight: 1
+        toc: true
+        title: "{{ .Origin.FirstHeader }}"
+        menu:
+            docs:
+                parent: usage
+        lastmod: "{{ .Origin.LastMod }}"
+        images: []
+        draft: false
+
+  - glob: "design/*.md"
+    path: /design/*
+    popHeader: true
+    frontMatter:
+      template: |
+        weight: 10
+        toc: true
+        title: "{{ .Origin.FirstHeader }}"
+        menu:
+            docs:
+                parent: design
+        lastmod: "{{ .Origin.LastMod }}"
+        images: []
+        draft: false
+
+  - glob: "community/*.md"
+    path: /community/*
+    popHeader: true
+    frontMatter:
+      template: |
+        weight: 10
+        toc: true
+        title: "{{ .Origin.FirstHeader }}"
+        menu:
+            docs:
+                parent: community
+        lastmod: "{{ .Origin.LastMod }}"
+        images: []
+        draft: false
