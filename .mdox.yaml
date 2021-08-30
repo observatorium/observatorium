@@ -75,3 +75,18 @@ transformations:
         lastmod: "{{ .Origin.LastMod }}"
         images: []
         draft: false
+  
+  - glob: "proposals/*.md"
+    path: /proposals/*
+    popHeader: true
+    frontMatter:
+      template: |
+        weight: 1
+        toc: true
+        title: "{{ .Origin.FirstHeader }}"
+        menu:
+            docs:
+                parent: proposals
+        lastmod: "{{ .Origin.LastMod }}"
+        images: []
+        draft: false
