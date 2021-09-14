@@ -42,20 +42,20 @@ function(params) {
                 '-c',
                 |||
                   mkdir -p %s && \
-                  /usr/bin/minio server /storage
+                  /usr/bin/docker-entrypoint.sh minio server /storage
                 ||| % std.join(' ', ['/storage/%s' % bucket for bucket in minio.config.buckets]),
               ],
               env: [
                 {
-                  name: 'MINIO_ACCESS_KEY',
+                  name: 'MINIO_ROOT_USER',
                   value: minio.config.accessKey,
                 },
                 {
-                  name: 'MINIO_SECRET_KEY',
+                  name: 'MINIO_ROOT_PASSWORD',
                   value: minio.config.secretKey,
                 },
               ],
-              image: 'minio/minio',
+              image: 'minio/minio:RELEASE.2021-09-09T21-37-07Z',
               name: 'minio',
               ports: [
                 { containerPort: 9000 },
