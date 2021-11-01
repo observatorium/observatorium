@@ -19,13 +19,9 @@
 - [Goals](#goals)
 - [Non-Goals](#non-goals)
 - [How](#how)
-  * [How does Rule get tenant recording rules](#how-does-rule-get-tenant-recording-rules)
+  * [How does Rule get tenant recording and alerting rules](#how-does-rule-get-tenant-recording-and-alerting-rules)
   * [How do we store tenant rules](#how-do-we-store-tenant-rules)
     + [Service](#service)
-      - [What if a user gives us an alerting rule](#what-if-a-user-gives-us-an-alerting-rule)
-        * [1. Reject Request](#1-reject-request)
-        * [2. Accept Request With Warning](#2-accept-request-with-warning)
-        * [Alert Decision](#alert-decision)
     + [Storage layer](#storage-layer)
       - [1. ETCD](#1-etcd)
       - [2. Object Storage](#2-object-storage)
@@ -54,17 +50,17 @@ Table of contents generated with markdown-toc
 
 ## TLDR
 
-We propose implementing a multi-tenant API that allows tenants to create, read, update and delete Prometheus recording rules.
+We propose implementing a multi-tenant API that allows tenants to create, read, update and delete Prometheus recording and alerting rules.
 
 ## Why
 
-The single biggest source of frustration from internal Red Hat tenants of Observatorium is the time it takes for changes to their recording rules to appear in our production infrastructure.
+The single biggest source of frustration from internal Red Hat tenants of Observatorium is the time it takes for changes to their recording and/or alerting rules to appear in our production infrastructure.
 
 ### Pitfalls of the current solution
 
 #### Implicit deploy cycle dependency
 
-Currently, the only method of modifying Prometheus recording rules in Observatorium is via the jsonnet definition in our repository. This implicitly ties an update of the rule configuration to a rollout of the service. This implicitly ties the deploy-cycle of Prometheus rules to the deploy-cycle of Observatorium itself. If a new set of rules needs to be deployed, our team is required to roll-out our production infrastructure.
+Currently, the only method of modifying Prometheus recording and/or alerting rules in Observatorium is via the jsonnet definition in our repository. This implicitly ties an update of the rule configuration to a rollout of the service. This implicitly ties the deploy-cycle of Prometheus rules to the deploy-cycle of Observatorium itself. If a new set of rules needs to be deployed, our team is required to roll-out our production infrastructure.
 
 As the number of tenants we support and tenants we serve increases, the team responsible for the Observatorium installation is required to roll out production more frequently in order to satisfy tenant requests. This becomes an increasing impediment to tenant experience as the size of Observatorium increases.
 
@@ -76,31 +72,30 @@ This is not a blocker for Red Hat's internal offering, however this is not inlin
 
 ## Goals
 
-* Tenants can update their Prometheus recording rules without intervention from the operating team.
+* Tenants can update their Prometheus recording/alerting rules without intervention from the operating team.
 * Observatorium must be able to scale horizontally with the number of tenants.
 
 ## Non-Goals
 
 * Rate-limiting or tenant resource accounting.
-* Alerting rules. Although Prometheus `rule_files` can freely mix Recording and Alerting rules, alerting rules also require us to manage tenant-supplied routing and/or alerting configuration. This is out of scope for this design doc.
 * Logging rules. While Loki supports the same format rules as Prometheus, we will explicitly not consider supporting these in this proposal.
 
 ## How
 
-We propose to solve the above problem by implementing a multi-tenant API that allows tenants to create, read, update and delete Prometheus recording rules.
+We propose to solve the above problem by implementing a multi-tenant API that allows tenants to create, read, update and delete Prometheus recording and alerting rules.
 
-In Observatorium, [Thanos Rule](https://thanos.io/tip/components/rule.md/) evaluates recording rules. These are configured using a local file defined by Rule's `--rule.file` flag. `Rule` is configured as one of `Query`'s stores, so when rules are evaluated they are available to be queried.
+In Observatorium, [Thanos Rule](https://thanos.io/tip/components/rule.md/) evaluates recording and alerting rules. These are configured using a local file defined by Rule's `--rule.file` flag. `Rule` is configured as one of `Query`'s stores, so when rules are evaluated they are available to be queried.
 
 This leads to two problems we need to solve:
-1. How does `Rule` obtain tenant recording rules?
-2. How do we store tenant recording rules?
+1. How does `Rule` obtain tenant recording and alerting rules?
+2. How do we store tenant recording and alerting rules?
 
-### How does Rule get tenant recording rules
+### How does Rule get tenant recording and alerting rules
 
 For this step, we will leverage the [thanos-ruler-syncer](https://github.com/observatorium/thanos-rule-syncer).
 
 Periodically, this application does three things:
-1. Calls the Observatorium API to retrieve tenant recording rules.
+1. Calls the Observatorium API to retrieve tenant rules.
 2. Writes these rules to a location defined by the `-file` flag.
 3. Asks Rule to reload its rules by calling the `/-/reload` endpoint.
 
@@ -121,34 +116,6 @@ NB: By scoping rules to the `/metrics` endpoint we are consciously creating room
 
 Ideally, we would define the rule storage backend API in OpenAPI format, so that it can easily be consumed by downstream services.
 
-##### What if a user gives us an alerting rule
-
-Alerting rules have been explicitly de-scoped from this proposal as they require a story for managing alerting configuration and routing tenant alerts.
-
-However, Prometheus rules files permit recording and alerting rules to be freely mixed within the same file. The question arises - what do we do if a user provides us a file with mixed recording and alerting rules?
-
-###### 1. Reject Request
-
-One option would be to explicitly reject any requests that contains any `alert` rules in the payload. The user would be returned a `400 Bad Request` status code with a helpful warning like `Rules file rejected as it contains one or more alerting rules - alerting rules are not yet supported - please see the roadmap.`
-
-The downside here is that users may already have 'mixed' rules files, which they would need to split out in order to be accepted into the API.
-
-###### 2. Accept Request With Warning
-
-The other option would be to accept the rules request, store the recording rules and alerting rules alongside one another, but return a warning to saying `Warning: alerting rules are not currently support in Observatorium - please see the roadmap.`
-
-Under this option, we would also have to decide whether alerting rules are loaded into Rule and evaluated or only stored?
-
-###### Alert Decision
-
-My opinion is that the [least surprising](https://en.wikipedia.org/wiki/Principle_of_least_astonishment) option for tenants is for their requests to be explicitly rejected with a clear error message.
-
-While this may impose some file splitting costs on the user's side, we avoid ambiguity such as valid questions such as:
-* Did all of my rules get stored or just some?
-* Are my alerting rules being evaluated or just the recording rules?
-
-Finally, warnings are easy to ignore especially if users are using automated process to interact with the API.
-
 #### Storage layer
 
 We will use a persistent storage mechanism that is external to the API deployment (i.e. no local storage). This enables us to satisfy our requirement of horizontally scaling the rule storage backend.
@@ -159,24 +126,24 @@ We have a number of options for the storage layer backing the rules storage back
 
 ##### 1. ETCD
 
-One option would be to use the Kubernetes' control plane as the backing data store for tenant's recording rules.
+One option would be to use the Kubernetes' control plane as the backing data store for tenant's recording and alerting rules.
 
 Pros:
 * Lowest possible overhead. No external storage is required to be orchestrated.
-* ETCD data model well suited for recording rules i.e. YAML.
+* ETCD data model well suited for recording and alerting rules i.e. YAML.
 * Storage permissions are managed as Kubernetes objects.
 * We could leverage Recording Rules CRDs and get validation for free (?)
 
 Cons:
 * Implicitly ties Observatorium's implementation into a Kubernetes environment. Hard to back out.
-* Large blast radius. With a large number of tenants and recording rules, we could un-intentionally impact the Kubernetes control plane's performance.
+* Large blast radius. With a large number of tenants and recording and alerting rules, we could un-intentionally impact the Kubernetes control plane's performance.
 * ETCD has a limit of 1.5MB per key / value pair so we can't store large files (but Prometheus operator seems to do this ok?).
 
 ##### 2. Object Storage
 
 Pros:
 * Users of Thanos project are likely to already have object storage configured and ready to use.
-* Recording rule data model is a good fit for object storage i.e. YAML.
+* Recording and alerting rule data model is a good fit for object storage i.e. YAML.
 
 Cons:
 * Unclear consistency semantics depending on object storage provider i.e. in the case of lots of writes, who wins?
@@ -212,7 +179,7 @@ How will this all work in practice?
 #### 1. Store Tenant Rules
 1. Tenant sends request to the API using the path `/api/metrics/v1/{tenant}/rules` containing their rules data.
 2. API performs authentication and authorization of the tenant then forwards the request to the rules storage backend.
-3. Rules storage backend performs validation of the payload, rejecting any requests found to contain `alert` rules, then stores the rule file in object storage at the path `metrics/rules/{tenant}/{file_name}.yaml`.
+3. Rules storage backend performs validation of the payload and stores the rule file in object storage at the path `metrics/rules/{tenant}/{file_name}.yaml`.
 4. Object storage returns success to the Rule Backend.
 5. Rule backend returns success to the API.
 6. API returns success to the Tenant.
@@ -229,14 +196,14 @@ How will this all work in practice?
 6. API returns data to thanos-ruler-syncer.
 7. Thanos-ruler-syncer combines all of the data into one file, and writes this file to a directory that is shared with Thanos Rule.
 8. Thanos-ruler-syncer calls Thanos Rule's `/-/reload` endpoint to reload newly created configuration.
-9. Thanos Rule begins to evaluate the recording rules and stores the results in its local TSDB instace.
+9. Thanos Rule begins to evaluate the recording and alerting rules and stores the results in its local TSDB instance.
 
 #### 3. Recording Rule Query
 
-1. Tenant makes a query request to the API containing a recording rule metric
+1. Tenant makes a query request to the API containing a recording or alerting rule metric
 2. API performs authentication and authorization of the request then queries the data from Thanos Query.
 3. Query has Rule configured as one of its Stores, and thus requests the data from Rule.
-4. Rule returns the metric value of the recording rule to Query.
+4. Rule returns the metric value of the recording or alerting rule to Query.
 5. Query returns the result to API.
 6. API returns the result to the tenant.
 
