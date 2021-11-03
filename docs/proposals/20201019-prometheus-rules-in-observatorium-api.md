@@ -1,4 +1,4 @@
-# Recording Rules API Proposal
+# Rules API Proposal
 
 * **Owners:**:
   * `@squat` / `@ianbillett`
