@@ -99,7 +99,7 @@ We will be running `hydra` outside the cluster to simulate an external tenant, b
 
 **Linux**
 
-As our K8s cluster is running inside Docker containers, we can use the ip address of `docker0` interface to access host from inside the containers. In most cases it will be `172.17.0.1` but you can find yours using:
+As our K8s cluster is running inside Docker containers, we can use the IP address of the `docker0` interface to access the host from inside the containers. In most cases this IP address will be `172.17.0.1` but you can find yours using:
 ```bash
 ip -o -4 addr list docker0 | awk '{print $4}' | cut -d/ -f1
 ```
@@ -110,7 +110,7 @@ If you are using Kind with Docker Desktop on Mac, there is no `docker0` IP inter
 
 
 If this value is not `172.17.0.1`, you need to update: 
-* The `issuerURL` the `tenant` configuration in [`configs/main.jsonnet`](/configuration/examples/local/main.jsonnet)
+* The `issuerURL` in the `tenant` section of the configuration in [`configs/main.jsonnet`](/configuration/examples/local/main.jsonnet)
 * Run `make generate` in the root of the [`configurations`](/configuration/Makefile) to regenerate our K8s manifests with the new `issuerURL`
 * Update the `issuer` URL in the Hydra config in [`configs/hydra.yaml`](/configuration/examples/local/configs/hydra.yaml)
 
@@ -236,8 +236,8 @@ We are going to use Grafana to query the data we wrote into Observatorium. To st
 docker run -p 3000:3000 grafana/grafana:7.3.7
 ```
 
-* Now open your web browser and go to `http://localhost:3000`. the default username:password is `admin:admin`.
-* Add a new Prometheus data source with url `http://172.17.0.1:8080/api/metrics/v1/test-oidc`. 
-  * We are using `172.17.0.1`(linux) or `host.docker.internal`(mac) as the host because we are trying to access the `token-refresher`; running on the host, from Grafana; which is running inside a docker container.
+* Now open your web browser and go to `http://localhost:3000`. The default username is `admin` and the default password is `admin`.
+* Add a new Prometheus data source with the URL set to `http://172.17.0.1:8080/api/metrics/v1/test-oidc`.
+  * We are using `172.17.0.1`(linux) or `host.docker.internal`(mac) as the host because we are trying to access the `token-refresher` running on the host, from Grafana which is running inside a docker container.
 
 You can now go the the `Explore` tab to run queries against the Observatorium API.
