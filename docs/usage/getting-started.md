@@ -93,8 +93,7 @@ strategies:
   access_token: jwt
 urls:
   self:
-    issuer: http://docker.for.mac.localhost:4444/
-
+    issuer: http://172.17.0.1:4444/
 ```
 
 #### Accessing Hydra from inside our cluster
