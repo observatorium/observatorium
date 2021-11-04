@@ -110,7 +110,7 @@ If you are using Kind with Docker Desktop on Mac, there is no `docker0` IP inter
 
 
 If this value is not `172.17.0.1`, you need to update: 
-* The `issuerURL` the `tenant` configuration in [`configs/main.jsonnet`](/configuration/examples/local/main.jsonnet#L5)
+* The `issuerURL` the `tenant` configuration in [`configs/main.jsonnet`](/configuration/examples/local/main.jsonnet)
 * Run `make generate` in the root of the [`configurations`](/configuration/Makefile) to regenerate our K8s manifests with the new `issuerURL`
 * Update the `issuer` URL in the Hydra config in [`configs/hydra.yaml`](/configuration/examples/local/configs/hydra.yaml)
 
