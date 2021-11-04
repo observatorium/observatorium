@@ -75,11 +75,13 @@ kind create cluster
 [OIDC (OpenID Connect)](https://openid.net/connect/) is a popular authentication often available in your company or major cloud providers. For local purposes we will run our own OIDC provider to handle authentication. We are going to use ORY Hydra for that. First download and extract the binary release from [here](https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_linux_64bit.tar.gz).
 
 **Linux**
+
 ```bash
 curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_linux_64bit.tar.gz" | tar -xzf - -C tmp/bin hydra
 ```
 
 **MacOS**
+
 ```bash
 curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_macos_64bit.tar.gz" | tar -xzf - -C /tmp/bin hydra
 ```
@@ -91,25 +93,27 @@ strategies:
   access_token: jwt
 urls:
   self:
-    issuer: http://172.17.0.1:4444/
+    issuer: http://docker.for.mac.localhost:4444/
+
 ```
 
 #### Accessing Hydra from inside our cluster
-We will be running `hydra` outside the cluster to simulate an external tenant, but we need to access `hydra`(running on the host) from inside the cluster(running inside docker). 
+
+We will be running `hydra` outside the cluster to simulate an external tenant, but we need to access `hydra`(running on the host) from inside the cluster(running inside docker).
 
 **Linux**
 
 As our K8s cluster is running inside Docker containers, we can use the IP address of the `docker0` interface to access the host from inside the containers. In most cases this IP address will be `172.17.0.1` but you can find yours using:
+
 ```bash
 ip -o -4 addr list docker0 | awk '{print $4}' | cut -d/ -f1
 ```
 
-**MacOS** 
+**MacOS**
 
-If you are using Kind with Docker Desktop on Mac, there is no `docker0` IP interface accessible on the host; this is because Docker-for-mac [containers run via a Virtual Machine (HyperKit)](https://docs.docker.com/desktop/mac/install/). As a workaround, Docker provides a special DNS entry  [`host.docker.internal`](https://docs.docker.com/desktop/mac/networking/#use-cases-and-workarounds).
+If you are using Kind with Docker Desktop on Mac, there is no `docker0` IP interface accessible on the host; this is because Docker-for-mac [containers run via a Virtual Machine (HyperKit)](https://docs.docker.com/desktop/mac/install/). As a workaround, Docker provides a special DNS entry [`host.docker.internal`](https://docs.docker.com/desktop/mac/networking/#use-cases-and-workarounds).
 
-
-If this value is not `172.17.0.1`, you need to update: 
+If this value is not `172.17.0.1`, you need to update:
 * The `issuerURL` in the `tenant` section of the configuration in [`configs/main.jsonnet`](/configuration/examples/local/main.jsonnet)
 * Run `make generate` in the root of the [`configurations`](/configuration/Makefile) to regenerate our K8s manifests with the new `issuerURL`
 * Update the `issuer` URL in the Hydra config in [`configs/hydra.yaml`](/configuration/examples/local/configs/hydra.yaml)
@@ -193,12 +197,14 @@ Take a look at the [Prometheus first steps](https://prometheus.io/docs/introduct
 Download the Prometheus binary for [Linux](https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.linux-amd64.tar.gz) [MacOS](https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.darwin-amd64.tar.gz).
 
 **Linux**
+
 ```bash
 curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.linux-amd64.tar.gz" | tar -xzf - -C tmp prometheus-2.24.1.linux-amd64/prometheus
 mv ./tmp/prometheus-2.24.1.linux-amd64/prometheus ./tmp/bin/
 ```
 
 **MacOS**
+
 ```bash
 curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.darwin-amd64.tar.gz" | tar -xzf - -C tmp prometheus-2.24.1.linux-amd64/prometheus
 mv ./tmp/prometheus-2.24.1.linux-amd64/prometheus ./tmp/bin/
