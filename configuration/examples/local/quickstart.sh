@@ -18,12 +18,29 @@ if [ ! $(command -v "$KUBECTL") ]; then
   exit 1
 fi
 
+OS="$(uname)"
+case $OS in
+'Linux')
+    PROM_OS='linux'
+    HYDRA_OS='linux'
+    ;;
+'Darwin')
+    PROM_OS='darwin'
+    HYDRA_OS='macos'
+    ;;
+*)
+    echo "Unsupported OS for this script: $OS"
+    exit 1
+    ;;
+esac
+
 setup() {
+  echo "Make sure to update your Docker IP according to https://observatorium.io/docs/usage/getting-started.md/#accessing-hydra-from-inside-our-cluster."
   mkdir -p tmp/bin
   echo "-------------------------------------------"
   echo "- Downloading ORY Hydra...  -"
   echo "-------------------------------------------"
-  curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_linux_64bit.tar.gz" | tar -xzf - -C tmp/bin hydra
+  curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_${HYDRA_OS}_64bit.tar.gz" | tar -xzf - -C tmp/bin hydra
 
   echo "-------------------------------------------"
   echo "- Cloning observatorium/token-refresher and building...  -"
@@ -37,8 +54,8 @@ setup() {
   echo "-------------------------------------------"
   echo "- Downloading Prometheus...  -"
   echo "-------------------------------------------"
-  curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.linux-amd64.tar.gz" | tar -xzf - -C tmp prometheus-2.24.1.linux-amd64/prometheus
-  mv ./tmp/prometheus-2.24.1.linux-amd64/prometheus ./tmp/bin/
+  curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.${PROM_OS}-amd64.tar.gz" | tar -xzf - -C tmp prometheus-2.24.1.${PROM_OS}-amd64/prometheus
+  mv ./tmp/prometheus-2.24.1.${PROM_OS}-amd64/prometheus ./tmp/bin/
 
   echo "-------------------------------------------"
   echo "- Pulling docker image for Grafana...  -"
