@@ -8,6 +8,8 @@ localLinksStyle:
   hugo:
     indexFileName: "_index.md"
 
+linkPrefixForNonMarkdownResources: "https://github.com/observatorium/observatorium/blob/main"
+
 transformations:
 
   - glob: "README.md"

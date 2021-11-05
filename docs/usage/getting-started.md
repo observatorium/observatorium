@@ -43,7 +43,7 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
 This tutorial will help you get started with Observatorium. We will be running the whole Observatorium stack in a local Kubernetes cluster. Observatorium uses OIDC (OpenID Connect) for authentication, so we will deploy our own OIDC provider. After we have Observatorium up and running, we will push some metrics as a tenant from outside the cluster using remote write.
 
-If you just want to run Observatroium locally and get started quickly, take a look at the bash script [`quickstart.sh`](/configuration/examples/local/quickstart.sh).
+If you just want to run Observatroium locally and get started quickly, take a look at the bash script [`quickstart.sh`](../../configuration/examples/local/quickstart.sh).
 
 #### Prerequisites
 
@@ -86,7 +86,7 @@ curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlit
 curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_macos_64bit.tar.gz" | tar -xzf - -C /tmp/bin hydra
 ```
 
-The configuration file for `hydra` is present in [`configs/hydra.yaml`](/configuration/examples/local/configs/hydra.yaml).
+The configuration file for `hydra` is present in [`configs/hydra.yaml`](../../configuration/examples/local/configs/hydra.yaml).
 
 ```yaml mdox-exec="cat configuration/examples/local/configs/hydra.yaml"
 strategies:
@@ -113,9 +113,9 @@ ip -o -4 addr list docker0 | awk '{print $4}' | cut -d/ -f1
 If you are using Kind with Docker Desktop on Mac, there is no `docker0` IP interface accessible on the host; this is because Docker-for-mac [containers run via a Virtual Machine (HyperKit)](https://docs.docker.com/desktop/mac/install/). As a workaround, Docker provides a special DNS entry [`host.docker.internal`](https://docs.docker.com/desktop/mac/networking/#use-cases-and-workarounds).
 
 If this value is not `172.17.0.1`, you need to update:
-* The `issuerURL` in the `tenant` section of the configuration in [`configs/main.jsonnet`](/configuration/examples/local/main.jsonnet)
-* Run `make generate` in the root of the [`configurations`](/configuration/Makefile) to regenerate our K8s manifests with the new `issuerURL`
-* Update the `issuer` URL in the Hydra config in [`configs/hydra.yaml`](/configuration/examples/local/configs/hydra.yaml)
+* The `issuerURL` in the `tenant` section of the configuration in [`configs/main.jsonnet`](../../configuration/examples/local/main.jsonnet)
+* Run `make generate` in the root of the [`configurations`](../../configuration/Makefile) to regenerate our K8s manifests with the new `issuerURL`
+* Update the `issuer` URL in the Hydra config in [`configs/hydra.yaml`](../../configuration/examples/local/configs/hydra.yaml)
 
 Next step is to run `hydra`.
 
