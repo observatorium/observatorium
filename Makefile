@@ -50,9 +50,9 @@ web-pre: $(MDOX)
 	cd $(WEBSITE_DIR)/themes/doks/ && npm install && rm -rf content
 
 .PHONY: web
-web: | web-pre $(WEBSITE_DIR)/node_modules $(HUGO)
+web: $(HUGO) | web-pre 
 	cd $(WEBSITE_DIR) && $(HUGO) -b $(WEBSITE_BASE_URL)
 
 .PHONY: web-serve
-web-serve: | web-pre $(WEBSITE_DIR)/node_modules $(HUGO)
+web-serve: $(HUGO) | web-pre 
 	@cd $(WEBSITE_DIR) && $(HUGO) serve

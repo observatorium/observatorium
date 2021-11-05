@@ -71,9 +71,9 @@ $(KUBEVAL): $(BINGO_DIR)/kubeval.mod
 	@echo "(re)installing $(GOBIN)/kubeval-v0.0.0-20201005082916-38668c6c5b23"
 	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=kubeval.mod -o=$(GOBIN)/kubeval-v0.0.0-20201005082916-38668c6c5b23 "github.com/instrumenta/kubeval"
 
-MDOX := $(GOBIN)/mdox-v0.2.2-0.20210824101358-db5c37357320
+MDOX := $(GOBIN)/mdox-v0.9.0
 $(MDOX): $(BINGO_DIR)/mdox.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/mdox-v0.2.2-0.20210824101358-db5c37357320"
-	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=mdox.mod -o=$(GOBIN)/mdox-v0.2.2-0.20210824101358-db5c37357320 "github.com/bwplotka/mdox"
+	@echo "(re)installing $(GOBIN)/mdox-v0.9.0"
+	@cd $(BINGO_DIR) && $(GO) build -mod=mod -modfile=mdox.mod -o=$(GOBIN)/mdox-v0.9.0 "github.com/bwplotka/mdox"
 
