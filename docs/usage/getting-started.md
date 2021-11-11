@@ -205,8 +205,8 @@ mv ./tmp/prometheus-2.24.1.linux-amd64/prometheus ./tmp/bin/
 **MacOS**
 
 ```bash
-curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.darwin-amd64.tar.gz" | tar -xzf - -C tmp prometheus-2.24.1.linux-amd64/prometheus
-mv ./tmp/prometheus-2.24.1.linux-amd64/prometheus ./tmp/bin/
+curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.darwin-amd64.tar.gz" | tar -xzf - -C tmp prometheus-2.24.1.darwin-amd64/prometheus
+mv ./tmp/prometheus-2.24.1.darwin-amd64/prometheus ./tmp/bin/
 ```
 
 The Prometheus config file present in `configs/prom.yaml` looks like this:
