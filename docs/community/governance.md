@@ -1,8 +1,6 @@
 # Governance
 
-This document describes the rules and governance of the project. It is a slightly modified version of the [Prometheus Governance](https://prometheus.io/governance/#governance-changes) and similar to the [Thanos Governance](https://thanos.io/tip/thanos/governance.md/)
-
-It is meant to be followed by all the developers of the Observatorium project and the Observatorium community. Common terminology used in this governance document are listed below:
+This document describes the rules and governance of the project. It is a slightly modified version of the [Prometheus Governance](https://prometheus.io/governance/#governance-changes) and similar to the [Thanos Governance](https://thanos.io/tip/thanos/governance.md/) it is meant to be followed by all the developers of the Observatorium project and the Observatorium community. Common terminology used in this governance document are listed below:
 
 * **Maintainers Team**: A core Observatorium team that have owner access to the https://github.com/observatorium organization and all projects within it. Current list is available [here](https://observatorium.io/docs/community/maintainers.md/).
 
