@@ -1,4 +1,4 @@
-# Rules API Proposal
+# Add traces ingestion API and OpenTelemetry collector
 
 * **Owners:**:
     * `@pavolloffay`
