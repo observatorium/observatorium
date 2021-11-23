@@ -1,4 +1,4 @@
-# Add traces ingestion API and OpenTelemetry collector
+# Traces ingestion API and OpenTelemetry collector
 
 * **Owners:**:
     * `@pavolloffay`
