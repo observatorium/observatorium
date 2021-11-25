@@ -48,7 +48,7 @@ At the moment Observatorium does not expose API to ingest distributed tracing da
 
 ## Non-Goals
 
-* Storage data in a persistent storage.
+* Store data in a persistent storage.
 * Provide read API for tracing data.
 
 ## How
