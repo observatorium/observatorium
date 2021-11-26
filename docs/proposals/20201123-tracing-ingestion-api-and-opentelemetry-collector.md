@@ -43,7 +43,7 @@ At the moment Observatorium does not expose API to ingest distributed tracing da
 
 ## Goals
 
-* Expose API to ingest tracing data.
+* Expose API in the Observatorium API service to ingest tracing data.
 * Deploy a component that receives tracing data and is able to forward it to tracing platforms with storage.
 
 ## Non-Goals
@@ -75,7 +75,7 @@ The OpenTelemetry collector community already support deploying the collector vi
 
 * Iterate and finalise this design document.
 * Add deployment manifests for OpenTelemetry collector.
-* Add OTLP HTTP support to the Observatorium API.
+* Add OTLP HTTP with binary encoding to the Observatorium API.
 * Add OTLP gRPC support to the Observatorium API.
 
 ## References
