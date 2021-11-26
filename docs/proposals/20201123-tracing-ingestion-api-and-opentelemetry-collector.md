@@ -59,7 +59,7 @@ The how is split into two sections:
 
 ### Expose tracing ingestion API in the Observatorium API service
 
-There are a couple of open-source tracing protocols out there - Zipkin, Jaeger and OpenTelemetry. At the moment the OpenTelemetry seems to be the most popular, and it is projected to have the biggest adoption in the future. Hence, using OpenTelemetry protocol seems to be the most appropriate choice.
+There are a couple of open-source tracing protocols out there - Zipkin, Jaeger and OpenTelemetry. At the moment the OpenTelemetry seems to be the [most popular](https://opentelemetry.io/vendors/), and it is projected to have the biggest adoption in the future. Hence, using OpenTelemetry protocol seems to be the most appropriate choice.
 
 The OpenTelemetry protocol primarily supports gRPC for sending traces (OTLP gRPC) with proto encoding. The HTTP protocol with protobuf encoding is supported as well, but the JSON encoding is still in experimental mode. The majority of users use OTLP gRPC and the HTTP is used in environments where gRPC cannot be used (e.g. mobile clients). Because the Observatorium already supports HTTP and the final state is to support both OTLP HTTP and gRPC, the Observatorium could initially support HTTP and in parallel start working on gRPC.
 
@@ -84,3 +84,6 @@ The OpenTelemetry collector community already support deploying the collector vi
 * OTEL operator: https://github.com/open-telemetry/opentelemetry-operator
 * OTEL Helm chart: https://github.com/open-telemetry/opentelemetry-helm-charts
 * OTLP proto: https://github.com/open-telemetry/opentelemetry-proto/tree/main/opentelemetry/proto/trace/v1
+* OpenTelemetry vendors: https://opentelemetry.io/vendors/
+* OpenTelemetry adopters: https://github.com/open-telemetry/community/blob/main/ADOPTERS.md
+* OpenTelemetry is the second most active CNCF project: https://twitter.com/smflanders/status/1262401649248739331
