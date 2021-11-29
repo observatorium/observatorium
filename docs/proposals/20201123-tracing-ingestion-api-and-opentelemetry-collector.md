@@ -6,8 +6,6 @@
 * **Related Tickets:**
     * [observatorium/issues/442](https://github.com/observatorium/observatorium/issues/442)
 
-* **Other docs:**
-
 ## Table of Contents
 
 - [TLDR](#tldr)
