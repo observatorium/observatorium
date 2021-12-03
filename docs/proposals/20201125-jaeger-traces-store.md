@@ -7,8 +7,6 @@
     * [observatorium/issues/442](https://github.com/observatorium/observatorium/issues/442)
     * Depends on: [Traces ingestion API and OpenTelemetry collector](https://github.com/observatorium/observatorium/pull/443)
 
-* **Other docs:**
-
 ## Table of Contents
 
 - [TLDR](#tldr)
@@ -22,7 +20,7 @@
         + [Jaeger instance per tenant](#jaeger-instance-per-tenant)
             - [OpenTelemetry collector configuration](#opentelemetry-collector-configuration)
     * [Jaeger Query](#jaeger-query)
-        + [Expose Jaeger Query API](#expose-jaeger-query-api)
+        + [Expose only Jaeger Query API](#expose-only-jaeger-query-api)
         + [Expose Jaeger Query UI](#expose-jaeger-ui)
 - [Action Plan](#action-plan)
 - [References](#references)
@@ -93,22 +91,22 @@ The OpenTelemetry collector is configured with an exporter per tenant that expor
 ### Jaeger Query
 
 There are two ways users could access data stored in Jaeger:
-1. Expose Jaeger Query API in the Observatorium API.
+1. Expose only Jaeger Query API in the Observatorium API.
 2. Expose Jaeger UI outside the cluster.
 
-#### Expose Jaeger Query API
+#### Expose only Jaeger Query API
 
-Jaeger query API would be exposed in the Observatorium API. The users would have to deploy Jaeger UI externally and use Observatorium API as a data source.
+Jaeger query API would be exposed in the Observatorium API and users would have to deploy Jaeger UI and use Observatorium API as a data source.
 
-There are multiple Jaeger query APIs, in this case we propose to expose [api_v3](https://github.com/jaegertracing/jaeger-idl/tree/master/proto/api_v3). This API returns OpenTelemetry compatible payload.
+Jaeger query exposes multiple HTTP and gRPC APIs. The Jaeger UI uses HTTP API. This API does not have OpenAPI schema, and it is only defined in [http_handler.go](https://github.com/jaegertracing/jaeger/blob/0dd3e2da0579caed9e24ad2782a1f638ad63214d/cmd/query/app/http_handler.go#L119). The API uses this [data model](https://github.com/jaegertracing/jaeger/blob/9cd7a7ec1aa43b24a8a970eb5b393ca2ffd98a5d/model/json/model.go#L52).
 
 #### Expose Jaeger UI
 
-Jaeger Query with UI would be deployed in the Observatorium cluster and exposed outside the cluster. Each tenant would get a unique URL to access Jaeger Query UI.
+In addition to exposing Jaeger query API the Observatorium could deploy Jaeger UI as well.
 
 ## Action Plan
 
-Given the issues with the single Jaeger instance topology, the best approach is to deploy a Jaeger instance per tenant that separates tenant's data by using different indices. This approach will require adding a configuration if a new tenant is added to the system.
+Given the issues with the single Jaeger instance topology, the best approach is to deploy a Jaeger instance per tenant that separates tenant's data by using different indices. This approach requires adding new Jaeger instance if a new tenant is added to the system.
 
 * Iterate and finalise this design document.
 * Change deployment manifests for OpenTelemetry collector.
