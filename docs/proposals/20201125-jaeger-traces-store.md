@@ -102,7 +102,7 @@ Jaeger query exposes multiple HTTP and gRPC APIs. The Jaeger UI uses HTTP API. T
 
 #### Expose Jaeger UI
 
-In addition to exposing Jaeger query API the Observatorium could deploy Jaeger UI as well.
+In addition to exposing Jaeger query API the Observatorium could deploy Jaeger UI as well. At the moment Observatorium does not expose any UI and it is expected that users deploy UI locally.
 
 ## Action Plan
 
