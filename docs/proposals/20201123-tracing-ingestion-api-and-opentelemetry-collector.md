@@ -67,6 +67,10 @@ Multitenancy could be handled the same way as it is handled for metrics and logs
 
 ### Add deployments manifests for OpenTelemetry collector
 
+OpenTelemetry collector allows receiving, transforming and forwarding data to multiple systems. For instance, it can receive tracing data in Jaeger, Zipkin and OpenTelemetry formats. The transformation allows changing attributes, remove personally identifiable information, derive metrics from traces, perform tail-based sampling and more. After the processing the data can be sent to a single or multiple systems. These set of features allows users to solve variety of use-cases. The Observatorium users deploying on premise would be able to easily forward data to an observability vendor and the same time keep part of the data locally in e.g. Jaeger with low retention or without removing PII data.
+
+The OpenTelemetry collector deployment will be as well needed for sending data to Jaeger. The Jaeger collector does not support receiving OTLP protocol.
+
 The OpenTelemetry collector community already support deploying the collector via [OpenTelemetry operator](https://github.com/open-telemetry/opentelemetry-operator) or [HELM chart](https://github.com/open-telemetry/opentelemetry-helm-charts). A plain Kubernetes manifests could be as well used given the stateless nature and low complexity of the collector.
 
 ## Action Plan
