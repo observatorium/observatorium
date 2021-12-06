@@ -53,7 +53,7 @@ Traces store adds a crucial capability to Observatorium to persist and query tra
 
 ## Non-Goals
 
-* Define trace ingestion api - it is done in [Traces ingestion API and OpenTelemetry collector](https://github.com/observatorium/observatorium/pull/443) proposal.
+* Define trace ingestion API - it is done in [Traces ingestion API and OpenTelemetry collector](https://github.com/observatorium/observatorium/pull/443) proposal.
 
 ## How
 
@@ -69,9 +69,9 @@ Follows possible multitenant Jaeger deployment topologies. All deployment topolo
 
 #### Single Jaeger instance
 
-This deployment topology deploys a single Jaeger instance for all tenants with a single Elasticsearch instance. The data for each tenant would contain a unique label identifying a tenant. The label would be dynamically injected in the Observatorium API service or in the OpenTelemetry collector.
+This deployment topology deploys a single Jaeger instance for all tenants with a single Elasticsearch instance. The data for each tenant would contain a unique attribute to identify a tenant. The label would be dynamically injected in the Observatorium API service or in the OpenTelemetry collector.
 
-This deployment strategy will not work with the current Jaeger components. Here are few issues. The list might not be complete:
+This deployment strategy will not work with the current Jaeger components. Here are few issues, and the list might not be complete:
 * Service and operation name API. The service query API nor storage does not expose/store labels.
 * Dependency/service architecture diagram. To support this feature dependency schema, query, collector and Spark aggregation would have to change.
 * Data retention/TTL configurable pre tenant. The data retention in Elasticsearch is configurable per index.
