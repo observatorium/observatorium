@@ -48,7 +48,7 @@ Traces store adds a crucial capability to Observatorium to persist and query tra
 ## Goals
 
 * Configure OpenTelemetry collector to export data to Jaeger collector.
-* Deploy Jaeger with a persistent storage.
+* Allow Observatorium to store and retrieve traces.
 * Define query API for trace data.
 
 ## Non-Goals
@@ -75,6 +75,8 @@ This deployment strategy will not work with the current Jaeger components. Here 
 * Service and operation name API. The service query API nor storage does not expose/store labels.
 * Dependency/service architecture diagram. To support this feature dependency schema, query, collector and Spark aggregation would have to change.
 * Data retention/TTL configurable pre tenant. The data retention in Elasticsearch is configurable per index.
+
+Proposal to add soft multitenancy to Jaeger - [jaegertracing/jaeger/3427](https://github.com/jaegertracing/jaeger/issues/3427)
 
 ##### OpenTelemetry collector configuration
 
