@@ -36,6 +36,7 @@ We propose to refactor the current way of initializing the authenticators to int
 3. OAuth2 Providers
 
 ## 1. Importing for Side-Effects
+
 In this approach, importing for Go's side-effects is used to enable each authenticator to register itself through a map of authenticator types and their factories.
 
 To onboard a new authenticator, the following is needed:
@@ -77,7 +78,7 @@ This approach is easy to implement, very flexible in terms of adding more authen
 
 ## 3. OAuth2 Providers
 
-Similar to the [generic OAuth2 providers in grafana](https://github.com/grafana/grafana/blob/main/pkg/login/social/social.go), OAuth2 providers can be introduced and added to the list of supported OAuth2 alongside the current implementation of OIDC and mTLS to prevent any disruption for the current adopters. While this approach provides flexibility and can be considered to be an elegant and clean way of introducing more authenticators support, it requires a lot of changes in the Observatorium API.
+Similar to the [generic OAuth2 providers in grafana](https://github.com/grafana/grafana/blob/main/pkg/login/social/social.go), OAuth2 providers are [pre-registered in a static list of supported providers](https://github.com/grafana/grafana/blob/e73cd2fdeb3a08db32139f5ce4da4accf162737e/pkg/login/social/social.go#L254) alongside the current implementation of OIDC and mTLS. While this approach provides flexibility and can be considered to be an elegant and clean way of introducing more authenticators support, it requires a lot of changes in the Observatorium API.
 
 However, introducing a new authenticator with private or custom implementation would require changing/patching existing Go source files in the Observatorium API. As a result, adopters need to re-apply their patch whenever migrating to a new Observatorium API release with risk of being affected by merge conflicts that must be resolved manually.
 
