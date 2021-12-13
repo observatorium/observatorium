@@ -22,6 +22,8 @@
     * [Jaeger Query](#jaeger-query)
         + [Expose only Jaeger Query API](#expose-only-jaeger-query-api)
         + [Expose Jaeger Query UI](#expose-jaeger-ui)
+- [Alternatives](#alternatives)
+    * [Grafana tempo](#grafana-tempo)
 - [Action Plan](#action-plan)
 - [References](#references)
 
@@ -106,6 +108,14 @@ Jaeger query exposes multiple HTTP and gRPC APIs. The Jaeger UI uses HTTP API. T
 
 In addition to exposing Jaeger query API the Observatorium could deploy Jaeger UI as well. At the moment Observatorium does not expose any UI and it is expected that users deploy UI locally.
 
+## Alternatives
+
+### Grafana Tempo
+
+[Grafana Tempo](https://github.com/grafana/tempo) is an alternative storage that Observatorium project could use to store traces. The project is inspired and similar to the Prometheus TSDB, Thanos and Grafana Loki, therefore could it could be a good fit for Obeservatorium. The storage is split into two parts: 1. low retention requiring fast local disk (e.g. SSD) to store recent data and 2. object store (S3 compatible) to store historical data. Tempo is a distributed system with [multiple components](https://grafana.com/docs/tempo/latest/operations/architecture/): distributor, ingester, compactor, storage, querier. Distributor uses parts of the OpenTelemetry collector codebase to receive data in multiple formats (OTLP, Jaeger, Zipkin).
+
+The project at the moment supports [search](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#tempo-search) only for recent data held in memory with retention about 15 minutes, therefore it is not suitable as a storage for Jaeger that exposes richer search API that supports search by attributes, time range and service name.
+
 ## Action Plan
 
 Given the issues with the single Jaeger instance topology, the best approach is to deploy a Jaeger instance per tenant that separates tenant's data by using different indices. This approach requires adding new Jaeger instance if a new tenant is added to the system.
@@ -117,8 +127,9 @@ Given the issues with the single Jaeger instance topology, the best approach is 
 
 ## References
 
-* Jaeger https://github.com/jaegertracing/jaeger
+* Jaeger: https://github.com/jaegertracing/jaeger
 * Jaeger operator: https://github.com/jaegertracing/jaeger-operator
 * Jaeger Query proto: https://github.com/jaegertracing/jaeger-idl/tree/master/proto
 * Strimzi Kafka operator: https://operatorhub.io/operator/strimzi-kafka-operator
 * OpenShift Elasticsearch operator: https://github.com/openshift/elasticsearch-operator
+* Grafana Tempo: https://github.com/grafana/tempo
