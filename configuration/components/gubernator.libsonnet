@@ -7,6 +7,7 @@ local defaults = {
   namespace: error 'must provide namespace',
   version: error 'must provide version',
   image: error 'must provide image',
+  imagePullPolicy: 'IfNotPresent',
   ports: {
     http: 8080,
     grpc: 8081,
@@ -113,6 +114,7 @@ function(params) {
     local c = {
       name: 'gubernator',
       image: gubernator.config.image,
+      imagePullPolicy: gubernator.config.imagePullPolicy,
       env: [
         { name: 'GUBER_K8S_NAMESPACE', valueFrom: { fieldRef: { fieldPath: 'metadata.namespace' } } },
         { name: 'GUBER_K8S_POD_IP', valueFrom: { fieldRef: { fieldPath: 'status.podIP' } } },

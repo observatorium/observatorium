@@ -5,6 +5,7 @@ local defaults = {
   local defaults = self,
   name: error 'must provide name',
   image: error 'must provide image',
+  imagePullPolicy: 'IfNotPresent',
   version: error 'must provide version',
   namespace: error 'must provide namespace',
   tlsSecret: '%s-tls' % [defaults.name],
@@ -114,6 +115,7 @@ function(params) {
           containers: [
             {
               image: dex.config.image,
+              imagePullPolicy: dex.config.imagePullPolicy,
               name: 'dex',
               command: ['/usr/local/bin/dex', 'serve', '/etc/dex/cfg/config.yaml'],
               ports: [
