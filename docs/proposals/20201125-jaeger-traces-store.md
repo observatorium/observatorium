@@ -118,7 +118,7 @@ The project at the moment supports [search](https://grafana.com/docs/tempo/lates
 
 ## Action Plan
 
-Given the issues with the single Jaeger instance topology, the best approach is to deploy a Jaeger instance per tenant that separates tenant's data by using different indices. This approach requires adding new Jaeger instance if a new tenant is added to the system.
+Given the issues with the single Jaeger instance topology, the best approach is to deploy a Jaeger instance per tenant. At the moment this is not an issue due to low number (2-3) of tenants used in deployed instances of Observatorium (e.g. RHOBS). Once the [soft-multitenancy](https://github.com/jaegertracing/jaeger/issues/3427) is implemented in Jaeger the Observatorium should make use of it.
 
 * Iterate and finalise this design document.
 * Change deployment manifests for OpenTelemetry collector.
