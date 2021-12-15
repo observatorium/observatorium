@@ -26,8 +26,8 @@ dex() {
 }
 
 deploy() {
-    $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0servicemonitorCustomResourceDefinition.yaml
-    $KUBECTL apply -f https://raw.githubusercontent.com/coreos/kube-prometheus/master/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
+    $KUBECTL apply -f https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/06fd109ebc305b605ee11e62995205d96611d255/manifests/setup/0servicemonitorCustomResourceDefinition.yaml
+    $KUBECTL apply -f https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/06fd109ebc305b605ee11e62995205d96611d255/manifests/setup/0prometheusruleCustomResourceDefinition.yaml
     $KUBECTL create ns observatorium-minio || true
     $KUBECTL create ns observatorium || true
     dex
