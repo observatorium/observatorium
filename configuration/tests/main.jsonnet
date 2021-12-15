@@ -11,7 +11,7 @@ local tls = {
     [self.name + '-configmap']: {
       apiVersion: 'v1',
       data: {
-        'ca.pem': importstr '../../tmp/certs/ca.pem',
+        'ca.pem': importstr '../tmp/certs/ca.pem',
       },
       kind: 'ConfigMap',
       metadata: {
@@ -21,7 +21,7 @@ local tls = {
     'test-ca-tls': {  // similar to OpenShift's service-ca injection
       apiVersion: 'v1',
       data: {
-        'service-ca.crt': importstr '../../tmp/certs/ca.pem',
+        'service-ca.crt': importstr '../tmp/certs/ca.pem',
       },
       kind: 'ConfigMap',
       metadata: {
@@ -32,8 +32,8 @@ local tls = {
     [self.name + '-secret']: {
       apiVersion: 'v1',
       stringData: {
-        'cert.pem': importstr '../../tmp/certs/server.pem',
-        'key.pem': importstr '../../tmp/certs/server.key',
+        'cert.pem': importstr '../tmp/certs/server.pem',
+        'key.pem': importstr '../tmp/certs/server.key',
       },
       kind: 'Secret',
       metadata: {
@@ -43,8 +43,8 @@ local tls = {
     [self.name + '-dex']: {
       apiVersion: 'v1',
       stringData: {
-        'tls.crt': importstr '../../tmp/certs/server.pem',
-        'tls.key': importstr '../../tmp/certs/server.key',
+        'tls.crt': importstr '../tmp/certs/server.pem',
+        'tls.key': importstr '../tmp/certs/server.key',
       },
       kind: 'Secret',
       metadata: {
