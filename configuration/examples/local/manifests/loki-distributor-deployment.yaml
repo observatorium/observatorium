@@ -43,6 +43,7 @@ spec:
               key: endpoint
               name: loki-objectstorage
         image: docker.io/grafana/loki:2.2.0
+        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 10
           httpGet:
