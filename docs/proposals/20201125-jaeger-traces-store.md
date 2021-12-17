@@ -106,6 +106,9 @@ Follows an architecture diagram showing Observatorium API with Jaeger deployment
                                                                         |     tenant2    |
                                                                         +----------------+
 
+[comment]: <> (
+https://asciiflow.com/#/share/eJzdV71OwzAQfhXLcxcqpIpsDAywFCRGLyY6QSXHRY6DGlWVUGeGDFGV52BEfZo8CSm0UgLxj2wHtVg3OOfk7rv%2FeIk5TQBHPGNshBnNQeAILwleEBxdnE9GBOfNbjzZ7SQsZPNAMAqy6vKtLl89qCCEh4KyVrAdVNTl1os2H19wbig8gkDxnDGI5Vx4wFHwDzZL4JTLs7bNvja0KJhf9PLrsjTly1Z7Wnnj%2FPabRRjUbylPrZltHNOHFMQLbZJnliXo8vbaYN0u85rvps%2FA74FBAlLk3QTsB%2BGc6AhdMZrKWZwCFfFTF%2F1RePHkqsDYU%2FVVUNjg3Lzrq8DocrvAIF1jVoTMSbUX6dp1MJAq6N0WPv7JHk6xsdnqqeoRGRKgtR1hlXr2hkGBWbBUik%2BM9mNsX5F3GTRTzNeMQaLR%2BvH6szQ4zvy0RR%2FYGw4XkKJXUGhgvxp4%2FyD8L9W6HrZafdbB8Z1adbmHqRU4zNKK4BVefQLY0WxI)
+
 #### Single Jaeger instance - soft multitenancy
 
 Soft multitenancy in Jaeger is not supported at the moment. The progress is tracked in [jaegertracing/jaeger/3427](https://github.com/jaegertracing/jaeger/issues/3427).
