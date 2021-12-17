@@ -56,6 +56,7 @@ function(params) {
                 },
               ],
               image: 'minio/minio:RELEASE.2021-09-09T21-37-07Z',
+              imagePullPolicy: 'IfNotPresent',
               name: 'minio',
               ports: [
                 { containerPort: 9000 },
