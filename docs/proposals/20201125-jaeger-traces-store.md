@@ -15,10 +15,9 @@
 - [Non-Goals](#non-goals)
 - [How](#how)
     * [Jaeger configuration](#jaeger-configuration)
-        + [Single Jaeger instance](#single-jaeger-instance)
-            - [OpenTelemetry collector configuration](#opentelemetry-collector-configuration)
         + [Jaeger instance per tenant](#jaeger-instance-per-tenant)
-            - [OpenTelemetry collector configuration](#opentelemetry-collector-configuration)
+            - [Architecture](#architecture)
+      + [Single Jaeger instance - soft multitenancy](#single-jaeger-instance---soft-multitenancy)
     * [Jaeger Query](#jaeger-query)
         + [Expose only Jaeger Query API](#expose-only-jaeger-query-api)
         + [Expose Jaeger Query UI](#expose-jaeger-ui)
@@ -41,17 +40,16 @@ Table of contents generated with markdown-toc
 
 ## TLDR
 
-This proposal adds Jaeger deployment with a persistent storage (e.g. Elasticsearch) to store trace data and it as well defines a query API to search for traces.
+This proposal adds Jaeger deployment with a persistent storage (e.g. Elasticsearch) to store trace data and it as well defines query API to search for traces.
 
 ## Why
 
-Traces store adds a crucial capability to Observatorium to persist and query tracing data.
+Trace store adds a crucial capability to Observatorium to persist and query tracing data.
 
 ## Goals
 
-* Configure OpenTelemetry collector to export data to Jaeger collector.
 * Allow Observatorium to store and retrieve traces.
-* Define query API for trace data.
+* Expose Jaeger query API for query trace data.
 
 ## Non-Goals
 
@@ -67,30 +65,55 @@ The how is split into the following sections:
 
 Currently, the most adopted and supported storage in Jaeger is Elasticsearch. Red Hat also supports Jaeger with Elasticsearch (6.x) as part of the OpenShift product. Therefore, this proposal assumes Elasticsearch will be used as a storage backend. Distributed tracing team at Red Hat is looking at alternative storages hence the storage technology can change in the future.
 
-Follows possible multitenant Jaeger deployment topologies. All deployment topologies assume that Jaeger will be deployed by the [Jaeger Operator](https://github.com/jaegertracing/jaeger-operator) which depends on [OpenShift Elasticserach operator](https://github.com/openshift/elasticsearch-operator) and [Strimzi operator](https://operatorhub.io/operator/strimzi-kafka-operator) if Kafka is used. Jaeger can be as well configured to use externally managed Elasticsearch or Kafka instances.
-
-#### Single Jaeger instance
-
-This deployment topology deploys a single Jaeger instance for all tenants with a single Elasticsearch instance. The data for each tenant would contain a unique attribute to identify a tenant. The label would be dynamically injected in the Observatorium API service or in the OpenTelemetry collector.
-
-This deployment strategy will not work with the current Jaeger components. Here are few issues, and the list might not be complete:
-* Service and operation name API. The service query API nor storage does not expose/store labels.
-* Dependency/service architecture diagram. To support this feature dependency schema, query, collector and Spark aggregation would have to change.
-* Data retention/TTL configurable pre tenant. The data retention in Elasticsearch is configurable per index.
-
-Proposal to add soft multitenancy to Jaeger - [jaegertracing/jaeger/3427](https://github.com/jaegertracing/jaeger/issues/3427)
-
-##### OpenTelemetry collector configuration
-
-The OpenTelemetry collector is configured with a single exporter to export data to a single Jaeger collector.
+ All deployment topologies assume that Jaeger will be deployed by the [Jaeger Operator](https://github.com/jaegertracing/jaeger-operator) which depends on [OpenShift Elasticserach operator](https://github.com/openshift/elasticsearch-operator) and [Strimzi operator](https://operatorhub.io/operator/strimzi-kafka-operator) if Kafka is used. Jaeger can be as well configured to use externally managed Elasticsearch or Kafka instances.
 
 #### Jaeger instance per tenant
 
-This deployment topology deploys a Jaeger instance per tenant and all Jaeger instances use a single Elasticsearch instance. The data for each tenant is stored in a separate Elasticsearch index. Jaeger was designed to separate tenant data per index. Therefore, all Jaeger functionality works well with this deployment strategy.
+At the moment Jaeger supports only hard multitenancy. It means that each tenant uses a dedicated collector and query component. The data itself can be stored in a single storage. In Elasticsearch tenant data is isolated by using dedicated set of indices e.g. `tenant1-jaeger-*` for `tenant1` and `tenant2-jaeger-*` for `tenant2`.
 
-##### OpenTelemetry collector configuration
+Deploying dedicated set of components per tenant is not ideal from cost and operational standpoint, however at the moment it is the only possible solution. There are plans to add soft multitenancy to Jaeger to overcome this issue. See the next section for more details.
 
-The OpenTelemetry collector is configured with an exporter per tenant that exports data to Jaeger collector allocated per a single tenant.
+##### Architecture
+
+Follows an architecture diagram showing Observatorium API with Jaeger deployment. A couple of high level notes:
+* OpenTelemetry collector is used to translate OTLP to Jaeger gRCP and route the data to an appropriate Jaeger collector.
+* The routing of data in OpenTelemetry collector is done by the [routing processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/routingprocessor#routing-processor). It can use HTTP header or attribute to make the decision. The HTTP header or attribute will be set in the Observatorium API. 
+* Routing to the Query service is done directly in the Observatorium API. For instance, it can be done by using tenant ID in Kubernetes service name `tenan1-jaeger-query.observatorium.svc.cluster.local`.
+
+                                                                      +--------------------+
+                                                                      |                    |
+                                                +-------------------->|  Jaeger collector  |
+                                                |                     |       tenant1      |
++-----------------------+         +-------------+-------------+       +----------+---------+        +-----------------+
+|                       |         |                           |                  |                  |                 |
+|   Observatorium API   +-------->|  OpenTelemetry collector  |                  +------------------>  Elasticsearch  |
+|                       |         |                           |                  |                  |                 |
++-----------+-----------+         +-------------+-------------+       +----------+---------+        +--------^--------+
+            |                                   |                     |                    |                 |
+            |                                   +-------------------->|  Jaeger collector  |                 |
+            |                                                         |       tenant2      |                 |
+            |                                                         +--------------------+                 |
+            |                                                                                                |
+            |                                                           +----------------+                   |
+            |                                                           |                |                   |
+            +---------------------------------------------------------->|  Jaeger Query  +-------------------+
+            |                                                           |     tenant1    |                   |
+            |                                                           +----------------+                   |
+            |                                                                                                |
+            |                                                           +----------------+                   |
+            |                                                           |                |                   |
+            +---------------------------------------------------------->|  Jaeger Query  +-------------------+
+                                                                        |     tenant2    |
+                                                                        +----------------+
+
+#### Single Jaeger instance - soft multitenancy
+
+Soft multitenancy in Jaeger is not supported at the moment. The progress is tracked in [jaegertracing/jaeger/3427](https://github.com/jaegertracing/jaeger/issues/3427).
+
+Here are few issues that needs to be addressed. The list might not be complete:
+* Service and operation name API. The service query API nor storage does not expose/store labels.
+* Dependency/service architecture diagram. To support this feature dependency schema, query, collector and Spark aggregation would have to change.
+* Data retention/TTL configurable pre tenant. The data retention in Elasticsearch is configurable per index.
 
 ### Jaeger Query
 
