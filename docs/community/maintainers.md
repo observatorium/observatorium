@@ -12,3 +12,4 @@
 | Matthias Loibl         | mail@matthiasloibl.com     | `@metalmatze`             | [@metalmatze](https://github.com/metalmatze) | Polar Signals |
 | Periklis Tsirakidis    | periklis@nefeli.eu         | `@periklis`               | [@periklis](https://github.com/periklis)     | Red Hat       |
 | Prem Saraswat          | prmsrswt@gmail.com         | `@Prem Saraswat`          | [@onprem](https://github.com/onprem)         | Red Hat       |
+| Matej Gera             | matejgera@gmail.com        | `@Matej Gera`             | [@matej-g](https://github.com/matej-g)       | Red Hat       |
