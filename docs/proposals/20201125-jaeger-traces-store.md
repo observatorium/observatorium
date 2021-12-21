@@ -1,11 +1,11 @@
 # Jaeger traces store
 
 * **Owners:**:
-    * `@pavolloffay`
+  * `@pavolloffay`
 
 * **Related Tickets:**
-    * [observatorium/issues/442](https://github.com/observatorium/observatorium/issues/442)
-    * Depends on: [Traces ingestion API and OpenTelemetry collector](https://github.com/observatorium/observatorium/pull/443)
+  * [observatorium/issues/442](https://github.com/observatorium/observatorium/issues/442)
+  * Depends on: [Traces ingestion API and OpenTelemetry collector](https://github.com/observatorium/observatorium/pull/443)
 
 ## Table of Contents
 
@@ -14,15 +14,15 @@
 - [Goals](#goals)
 - [Non-Goals](#non-goals)
 - [How](#how)
-    * [Jaeger configuration](#jaeger-configuration)
-        + [Jaeger instance per tenant](#jaeger-instance-per-tenant)
-            - [Architecture](#architecture)
-      + [Single Jaeger instance - soft multitenancy](#single-jaeger-instance---soft-multitenancy)
-    * [Jaeger Query](#jaeger-query)
-        + [Expose only Jaeger Query API](#expose-only-jaeger-query-api)
-        + [Expose Jaeger Query UI](#expose-jaeger-ui)
+  * [Jaeger configuration](#jaeger-configuration)
+    + [Jaeger instance per tenant](#jaeger-instance-per-tenant)
+      - [Architecture](#architecture)
+    + [Single Jaeger instance - soft multitenancy](#single-jaeger-instance---soft-multitenancy)
+  * [Jaeger Query](#jaeger-query)
+    + [Expose only Jaeger Query API](#expose-only-jaeger-query-api)
+    + [Expose Jaeger Query UI](#expose-jaeger-ui)
 - [Alternatives](#alternatives)
-    * [Grafana tempo](#grafana-tempo)
+  * [Grafana tempo](#grafana-tempo)
 - [Action Plan](#action-plan)
 - [References](#references)
 
@@ -65,7 +65,7 @@ The how is split into the following sections:
 
 Currently, the most adopted and supported storage in Jaeger is Elasticsearch. Red Hat also supports Jaeger with Elasticsearch (6.x) as part of the OpenShift product. Therefore, this proposal assumes Elasticsearch will be used as a storage backend. Distributed tracing team at Red Hat is looking at alternative storages hence the storage technology can change in the future.
 
- All deployment topologies assume that Jaeger will be deployed by the [Jaeger Operator](https://github.com/jaegertracing/jaeger-operator) which depends on [OpenShift Elasticserach operator](https://github.com/openshift/elasticsearch-operator) and [Strimzi operator](https://operatorhub.io/operator/strimzi-kafka-operator) if Kafka is used. Jaeger can be as well configured to use externally managed Elasticsearch or Kafka instances.
+All deployment topologies assume that Jaeger will be deployed by the [Jaeger Operator](https://github.com/jaegertracing/jaeger-operator) which depends on [OpenShift Elasticserach operator](https://github.com/openshift/elasticsearch-operator) and [Strimzi operator](https://operatorhub.io/operator/strimzi-kafka-operator) if Kafka is used. Jaeger can be as well configured to use externally managed Elasticsearch or Kafka instances.
 
 #### Jaeger instance per tenant
 
@@ -77,9 +77,10 @@ Deploying dedicated set of components per tenant is not ideal from cost and oper
 
 Follows an architecture diagram showing Observatorium API with Jaeger deployment. A couple of high level notes:
 * OpenTelemetry collector is used to translate OTLP to Jaeger gRCP and route the data to an appropriate Jaeger collector.
-* The routing of data in OpenTelemetry collector is done by the [routing processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/routingprocessor#routing-processor). It can use HTTP header or attribute to make the decision. The HTTP header or attribute will be set in the Observatorium API. 
+* The routing of data in OpenTelemetry collector is done by the [routing processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/routingprocessor#routing-processor). It can use HTTP header or attribute to make the decision. The HTTP header or attribute will be set in the Observatorium API.
 * Routing to the Query service is done directly in the Observatorium API. For instance, it can be done by using tenant ID in Kubernetes service name `tenan1-jaeger-query.observatorium.svc.cluster.local`.
 
+```
                                                                       +--------------------+
                                                                       |                    |
                                                 +-------------------->|  Jaeger collector  |
@@ -105,9 +106,7 @@ Follows an architecture diagram showing Observatorium API with Jaeger deployment
             +---------------------------------------------------------->|  Jaeger Query  +-------------------+
                                                                         |     tenant2    |
                                                                         +----------------+
-
-[comment]: <> (
-https://asciiflow.com/#/share/eJzdV71OwzAQfhXLcxcqpIpsDAywFCRGLyY6QSXHRY6DGlWVUGeGDFGV52BEfZo8CSm0UgLxj2wHtVg3OOfk7rv%2FeIk5TQBHPGNshBnNQeAILwleEBxdnE9GBOfNbjzZ7SQsZPNAMAqy6vKtLl89qCCEh4KyVrAdVNTl1os2H19wbig8gkDxnDGI5Vx4wFHwDzZL4JTLs7bNvja0KJhf9PLrsjTly1Z7Wnnj%2FPabRRjUbylPrZltHNOHFMQLbZJnliXo8vbaYN0u85rvps%2FA74FBAlLk3QTsB%2BGc6AhdMZrKWZwCFfFTF%2F1RePHkqsDYU%2FVVUNjg3Lzrq8DocrvAIF1jVoTMSbUX6dp1MJAq6N0WPv7JHk6xsdnqqeoRGRKgtR1hlXr2hkGBWbBUik%2BM9mNsX5F3GTRTzNeMQaLR%2BvH6szQ4zvy0RR%2FYGw4XkKJXUGhgvxp4%2FyD8L9W6HrZafdbB8Z1adbmHqRU4zNKK4BVefQLY0WxI)
+```
 
 #### Single Jaeger instance - soft multitenancy
 
@@ -140,7 +139,9 @@ In addition to exposing Jaeger query API the Observatorium could deploy Jaeger U
 
 [Grafana Tempo](https://github.com/grafana/tempo) is an alternative multitenant storage that Observatorium project could use to store traces. The project is inspired and similar to the Prometheus TSDB, Thanos and Grafana Loki, therefore could it could be a good fit for Obeservatorium. The storage is split into two parts: 1. low retention requiring fast local disk (e.g. SSD) to store recent data and 2. object store (S3 compatible) to store historical data. Tempo is a distributed system with [multiple components](https://grafana.com/docs/tempo/latest/operations/architecture/): distributor, ingester, compactor, storage, querier. Distributor uses parts of the OpenTelemetry collector codebase to receive data in multiple formats (OTLP, Jaeger, Zipkin).
 
-The project at the moment supports [search](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#tempo-search) only for recent data held in memory with retention about 15 minutes, therefore it is not suitable as a storage for Jaeger that exposes richer search API that supports search by attributes, time range and service name.
+The project at the moment supports [search](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#tempo-search) only for recent data held in memory with retention about 15 minutes, therefore it is not suitable as a storage for Jaeger that exposes richer search API that supports search by attributes, time range and service name. Pull request [search feature](https://github.com/grafana/tempo/pull/1174) adds search capability for data in the storage, therefore the statement in this paragraph will be revisited once the feature is production ready.
+
+On top of the above, the current tracing team proficiency is around Elasticsearch and Jaeger development. Given that it makes sense to postpone this alternative and revisit it later once there are more arguments supporting this case.
 
 ## Action Plan
 
