@@ -1,10 +1,10 @@
 # Traces ingestion API and OpenTelemetry collector
 
 * **Owners:**:
-    * `@pavolloffay`
+  * `@pavolloffay`
 
 * **Related Tickets:**
-    * [observatorium/issues/442](https://github.com/observatorium/observatorium/issues/442)
+  * [observatorium/issues/442](https://github.com/observatorium/observatorium/issues/442)
 
 ## Table of Contents
 
