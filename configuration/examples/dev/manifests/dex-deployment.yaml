@@ -29,6 +29,7 @@ spec:
         - serve
         - /etc/dex/cfg/config.yaml
         image: quay.io/dexidp/dex:v2.24.0
+        imagePullPolicy: IfNotPresent
         name: dex
         ports:
         - containerPort: 5556

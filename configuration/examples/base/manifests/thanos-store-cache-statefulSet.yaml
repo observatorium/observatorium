@@ -34,6 +34,7 @@ spec:
         - -c 1024
         - -v
         image: docker.io/memcached:1.6.3-alpine
+        imagePullPolicy: IfNotPresent
         name: memcached
         ports:
         - containerPort: 11211
@@ -50,6 +51,7 @@ spec:
         - --memcached.address=localhost:11211
         - --web.listen-address=0.0.0.0:9150
         image: prom/memcached-exporter:v0.6.0
+        imagePullPolicy: IfNotPresent
         name: exporter
         ports:
         - containerPort: 9150

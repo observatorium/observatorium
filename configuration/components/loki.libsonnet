@@ -8,6 +8,7 @@ local defaults = {
   namespace: error 'must provide namespace',
   version: error 'must provide version',
   image: error 'must provide image',
+  imagePullPolicy: 'IfNotPresent',
   replicas: error 'must provide replicas',
   objectStorageConfig: error 'must provide object storage config',
   queryConcurrency: 32,
@@ -389,6 +390,7 @@ function(params) {
     {
       name: name,
       image: loki.config.image,
+      imagePullPolicy: loki.config.imagePullPolicy,
       args: [
         '-target=' + normalizedName(component),
         '-config.file=/etc/loki/config/config.yaml',

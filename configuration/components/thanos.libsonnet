@@ -11,6 +11,7 @@ local defaults = {
   namespace: 'observatorium',
   version: 'v0.20.1',
   image: 'quay.io/thanos/thanos:' + defaults.version,
+  imagePullPolicy: 'IfNotPresent',
   objectStorageConfig: {
     name: 'thanos-objectstorage',
     key: 'thanos.yaml',
@@ -44,6 +45,7 @@ local defaults = {
     replicas: 1,
     version: 'master-2020-02-06-b66e0c8',
     image: 'quay.io/observatorium/thanos-receive-controller:' + rc.version,
+    imagePullPolicy: 'IfNotPresent',
     hashrings: defaults.hashrings,
   },
 
@@ -53,6 +55,7 @@ local defaults = {
     commonLabels+:: defaults.commonLabels,
     version: '1.6.3-alpine',
     image: 'docker.io/memcached:' + memcached.version,
+    imagePullPolicy: 'IfNotPresent',
     exporterVersion: 'v0.6.0',
     exporterImage: 'prom/memcached-exporter:' + memcached.exporterVersion,
   },

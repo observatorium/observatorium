@@ -23,6 +23,7 @@ local defaults = {
   namespace: error 'must provide namespace',
   version: error 'must provide version',
   image: error 'must provide image',
+  imagePullPolicy: 'IfNotPresent',
   exporterVersion: error 'must provide exporter version',
   exporterImage: error 'must provide exporter image',
   replicas: error 'must provide replicas',
@@ -103,6 +104,7 @@ function(params) {
     local memcached = {
       name: 'memcached',
       image: mc.config.image,
+      imagePullPolicy: mc.config.imagePullPolicy,
       args: [
         '-m %(memoryLimitMb)s' % mc.config,
         '-I %(maxItemSize)s' % mc.config,
@@ -128,6 +130,7 @@ function(params) {
     local exporter = {
       name: 'exporter',
       image: mc.config.exporterImage,
+      imagePullPolicy: mc.config.imagePullPolicy,
       args: [
         '--memcached.address=localhost:%d' % mc.service.spec.ports[0].port,
         '--web.listen-address=0.0.0.0:%d' % mc.service.spec.ports[1].port,
