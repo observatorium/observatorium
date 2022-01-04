@@ -41,11 +41,8 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
 
   api:: api({
     local cfg = self,
-    // TODO(kakkoyun): Upgrade in a separate PR.
-    // version: 	'master-2020-12-04-v0.1.1-194-gb4d2f9e',
-    version: 'master-2020-11-02-v0.1.1-192-ge324057',
-    // TODO(onprem): Migrate to quay.io/observatorium/api
-    image: 'quay.io/observatorium/observatorium:' + cfg.version,
+    version: 'main-2021-11-30-v0.1.2-106-g2adff5f',
+    image: 'quay.io/observatorium/api:' + cfg.version,
     imagePullPolicy: 'IfNotPresent',
     name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
     namespace: obs.config.namespace,
