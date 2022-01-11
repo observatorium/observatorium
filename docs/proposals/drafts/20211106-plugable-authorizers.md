@@ -81,7 +81,7 @@ In this approach, the generic interface for authorization providers (Authorizers
 
 This approach is easy to implement, very flexible in terms of adding more Authorizers without any additional implementation and integration complexity. However, there are few concerns when it comes to trust and security, since Observatorium API would consume a pre-built plugin binary as an authorizer.
 
-**Reference**: [Writing Modular Go Programs with Plugins](https://medium.com/learning-the-go-programming-language/writing-modular-go-programs-with-plugins-ec46381ee1a9)
+**Reference**: [Go Plugin Package](https://pkg.go.dev/plugin)
 
 ## Conclusion
 

@@ -74,7 +74,7 @@ In this approach, a generic interface for authentication providers (authenticato
 
 This approach is easy to implement, very flexible in terms of adding more authenticators without any additional implementation and integration complexity. However, there are few concerns when it comes to trust and security, since the Observatorium API would consume a pre-built plugin binary as an authenticator.
 
-**Reference**: [Writing Modular Go Programs with Plugins](https://medium.com/learning-the-go-programming-language/writing-modular-go-programs-with-plugins-ec46381ee1a9)
+**Reference**: [Go Plugin Package](https://pkg.go.dev/plugin)
 
 ## 3. OAuth2 Providers
 
