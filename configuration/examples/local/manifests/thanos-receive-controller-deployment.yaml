@@ -38,9 +38,13 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         image: quay.io/observatorium/thanos-receive-controller:master-2021-04-28-ee165b6
+        imagePullPolicy: IfNotPresent
         name: thanos-receive-controller
         ports:
         - containerPort: 8080
           name: http
         resources: {}
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
       serviceAccount: observatorium-xyz-thanos-receive-controller

@@ -99,6 +99,8 @@ local defaults = {
 
   rule: {
     replicas: 1,
+    reloaderImage: 'jimmidyson/configmap-reload:v0.5.0',
+    reloaderImagePullPolicy: 'IfNotPresent',
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],
@@ -165,6 +167,7 @@ function(params) {
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
+    imagePullPolicy: thanos.config.imagePullPolicy,
     version: thanos.config.version,
     deduplicationReplicaLabels: thanos.config.deduplicationReplicaLabels,
     objectStorageConfig: thanos.config.objectStorageConfig,
@@ -200,6 +203,7 @@ function(params) {
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
+    imagePullPolicy: thanos.config.imagePullPolicy,
     version: thanos.config.version,
     replicaLabels: thanos.config.replicaLabels,
     objectStorageConfig: thanos.config.objectStorageConfig,
@@ -212,6 +216,9 @@ function(params) {
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
+    imagePullPolicy: thanos.config.imagePullPolicy,
+    reloaderImage: thanos.config.rule.reloaderImage,
+    reloaderImagePullPolicy: thanos.config.rule.reloaderImagePullPolicy,
     version: thanos.config.version,
     objectStorageConfig: thanos.config.objectStorageConfig,
     queriers: ['dnssrv+_http._tcp.%s.%s.svc.cluster.local' % [thanos.query.service.metadata.name, thanos.query.service.metadata.namespace]],
@@ -222,6 +229,7 @@ function(params) {
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
+    imagePullPolicy: thanos.config.imagePullPolicy,
     version: thanos.config.version,
     objectStorageConfig: thanos.config.objectStorageConfig,
     replicas: 1,
@@ -259,6 +267,7 @@ function(params) {
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
+    imagePullPolicy: thanos.config.imagePullPolicy,
     version: thanos.config.version,
     stores: [
       'dnssrv+_grpc._tcp.%s.%s.svc.cluster.local' % [service.metadata.name, service.metadata.namespace]
@@ -275,6 +284,7 @@ function(params) {
     namespace: thanos.config.namespace,
     commonLabels+:: thanos.config.commonLabels,
     image: thanos.config.image,
+    imagePullPolicy: thanos.config.imagePullPolicy,
     version: thanos.config.version,
     downstreamURL: 'http://%s.%s.svc.cluster.local.:%d' % [
       thanos.query.service.metadata.name,

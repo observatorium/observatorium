@@ -34,9 +34,9 @@ spec:
       - args:
         - --web.listen=0.0.0.0:8080
         - --web.internal.listen=0.0.0.0:8081
+        - --log.level=warn
         - --metrics.read.endpoint=http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090
         - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291
-        - --log.level=warn
         - --logs.read.endpoint=http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100
         - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
         - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
@@ -44,6 +44,7 @@ spec:
         - --tenants.config=/etc/observatorium/tenants.yaml
         - --middleware.rate-limiter.grpc-address=observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081
         image: quay.io/observatorium/api:main-2021-11-30-v0.1.2-106-g2adff5f
+        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 10
           httpGet:

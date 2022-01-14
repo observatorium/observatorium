@@ -27,6 +27,24 @@ spec:
         app.kubernetes.io/part-of: observatorium
         app.kubernetes.io/version: v0.24.0
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - thanos-compact
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - observatorium-xyz
+              namespaces:
+              - observatorium
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - compact
@@ -53,6 +71,7 @@ spec:
             fieldRef:
               fieldPath: status.hostIP
         image: quay.io/thanos/thanos:v0.24.0
+        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 4
           httpGet:
@@ -77,6 +96,8 @@ spec:
         - mountPath: /var/thanos/compact
           name: data
           readOnly: false
+      nodeSelector:
+        kubernetes.io/os: linux
       securityContext:
         fsGroup: 65534
         runAsUser: 65534
