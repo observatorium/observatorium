@@ -99,8 +99,6 @@ local defaults = {
 
   rule: {
     replicas: 1,
-    reloaderImage: 'jimmidyson/configmap-reload:v0.5.0',
-    reloaderImagePullPolicy: 'IfNotPresent',
     volumeClaimTemplate: {
       spec: {
         accessModes: ['ReadWriteOnce'],
