@@ -26,6 +26,7 @@ local defaults = {
   imagePullPolicy: 'IfNotPresent',
   exporterVersion: error 'must provide exporter version',
   exporterImage: error 'must provide exporter image',
+  exporterImagePullPolicy: 'IfNotPresent',
   replicas: error 'must provide replicas',
   resources: {},
   serviceMonitor: false,
@@ -130,7 +131,7 @@ function(params) {
     local exporter = {
       name: 'exporter',
       image: mc.config.exporterImage,
-      imagePullPolicy: mc.config.imagePullPolicy,
+      imagePullPolicy: mc.config.exporterImagePullPolicy,
       args: [
         '--memcached.address=localhost:%d' % mc.service.spec.ports[0].port,
         '--web.listen-address=0.0.0.0:%d' % mc.service.spec.ports[1].port,

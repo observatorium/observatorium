@@ -22,6 +22,9 @@ render:
 vendor: $(JB)
 	$(JB) install
 
+jsonnet-update: $(JB)
+	$(JB) update
+
 .PHONY: fmt
 fmt: $(JSONNETFMT) $(JSONNET_SRC)
 	$(JSONNETFMT) -n 2 --max-blank-lines 2 --string-style s --comment-style s -i $(JSONNET_SRC)

@@ -8,8 +8,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "d7b6867af17766826540ef9f7b06c84210d0481d",
-      "sum": "Z86CgnoTybhpdQKWc2ptURmps1d9Qxhec0/IK6v71kY=",
+      "version": "1852b0f706ad7e5db340421977ab5b5b8c8e2087",
+      "sum": "PeiropwPLWC8g7o0xaH0clwLoYHTngNJKtaTaEh+hc0=",
       "name": "observatorium-api"
     },
     {
@@ -19,8 +19,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "c4e7a4a2371b8297d3c8ebccdd247e2a0b5214d4",
-      "sum": "sqF9titAn3N2HHKY9mCzbZ+d/xL5ZBQ/ej/t190jY6o=",
+      "version": "cd12a419fc00eeb354d1f48e3077648222b16c07",
+      "sum": "0yZzNAcHQER0vE90d4iur3mYSitIhe8DhIFBeWdlb6k=",
       "name": "thanos-receive-controller"
     },
     {
@@ -30,7 +30,7 @@
           "subdir": "jsonnet"
         }
       },
-      "version": "03ef2f2bb89be1dbf45078fef371441d162df679",
+      "version": "21b9125fa700ce2f2472caef720086179329b33e",
       "sum": "0FKabnXd0rMeu8YpkkopEOknqBf5PLq/DIIDd0ve7cU=",
       "name": "up"
     },
@@ -41,8 +41,8 @@
           "subdir": "jsonnet/kube-thanos"
         }
       },
-      "version": "f53ad9856c6f765989ea76ba8eff8dd1e77186b7",
-      "sum": "1wMHM/+NvluUAxS5cBW2c6APEKQNQYLYnv1ZCE1R3/A="
+      "version": "7e8fc8c8b3129c7a822e61e7fb109596f410e8c5",
+      "sum": "K3y2JG3FCgXv3zuiaUl2BIfwODpahnb9wphykDreoyI="
     }
   ],
   "legacyImports": false
