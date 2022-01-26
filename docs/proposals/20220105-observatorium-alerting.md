@@ -9,7 +9,7 @@
 * **Other docs:*
   * None 
 
-> TL;DR: For monitoring use cases, especially tenants of the metric signal of Observatorium, users want to be able to configure Prometheus-based alerts that will be evaluated for a given interval. If triggered they should notify the desired target (receiver) (e.g PagerDuty using Alertmanager Configuration). Users should also be able to see the status of all alerts through Prometheus-like alerts HTTP API. This proposal specifies how such a system can be deployed within Observatorium.
+> TL;DR: For monitoring use cases, especially tenants of the metric signal of Observatorium, users want to be able to configure Prometheus-based alerts that will be evaluated for a given interval. If triggered they should notify the desired target (receiver) (e.g PagerDuty) using Alerting Routing Configuration API. User secrets stored in Vault. Users should also be able to see the status of all alerts through Prometheus Rules HTTP API. This proposal specifies how such a system can be deployed within Observatorium.
 
 ## Why
 
@@ -27,14 +27,17 @@ Definition:
 Goals:
 
 * Tenants should be able to read the status of active alerts 
-  * via ([Prometheus Alert API GET](https://prometheus.io/docs/prometheus/latest/querying/api/#alerts))
+  * via ([Prometheus Rules API GET](https://prometheus.io/docs/prometheus/latest/querying/api/#rules))
 * Tenants are able to configure alert routing:
   * via new GET, DELETE and PUT HTTP API
   * Potentially work with Alertmanager Team on upstream API.
-* Both alerts and alerting rules should be multi-tenant.
+* Both Rules API and AM routing API should be multi-tenant.
+* Tenant's alerts will be evaluated and triggering proper receivers in AM.
 
 ## Non-Goals
 
+* Adding [Alerts API](https://prometheus.io/docs/prometheus/latest/querying/api/#alerts)
+  * See [rationales](#alert-evaluation-status)
 * Tenant should be able to create and edit alerting rules:
   * Alerting Rules via GET and PUT via HTTP (Rules API)
   * This is not the goal, because it should be done when Rules API is done.
@@ -55,6 +58,8 @@ Observatorium Devs and Users.
 
 ## How
 
+### Current Solution
+
 Within work for [Rules API proposal](https://observatorium.io/docs/proposals/20201019-prometheus-rules-in-observatorium-api.md/) we already added Rules APIs for reading and configuring rules which include both recording and alerting rules.
 
 For example, to save alerts we can already PUT the following object to `/api/metrics/v1/{tenant}/api/v1/rules/raw`
@@ -71,17 +76,17 @@ groups:
           team: alpha
 ```
 
-Such a rule will be saved through Observatorium API, via Rule-Store to object storage for the specified tenant. It can be then listed through a similar endpoint and GET. Such configuration will be then eventually synchronized with tenant’s Rulers using RuleSync (1m poll by default). This is what was agreed so far and is being tested in downstream RHOBS (Red Hat Observability Service) deployment of Observatorium. 
+Such a rule will be saved through Observatorium API, via [rule-objstore](https://github.com/observatorium/rules-objstore) to object storage for the specified tenant. It can be then listed through a similar endpoint and GET. Such configuration will be then eventually synchronized with tenant’s Rulers using [rule-syncer](https://github.com/observatorium/thanos-rule-syncer) (1m poll by default). This is what was agreed so far and is being tested in downstream RHOBS (Red Hat Observability Service) deployment of Observatorium. 
 
 ### ConfigSync
 
-The first decision we propose is to move https://github.com/observatorium/rules-objstore to be a generic configuration library, potentially in new https://github.com/observatorium/config-client repo. Such library would need to support not only saving and retrieving Rules but also Alerting Routing configuration (and potentially silencer, inhibits and other user configuration in the future). Since alerting routing requires secrets we might need to implement various backends in this client (that's why no `objstore` suffix. ). See [chapter about secrets](#managing-user-secrets) for more details. 
+We propose to move https://github.com/observatorium/thanos-rule-syncer to https://github.com/observatorium/config-sync (related ticket: https://issues.redhat.com/browse/MON-2129) that will understand Prometheus Rules configuration, Prometheus Alert Routing configuration and in future silences, inhibitors tpp etc. Similarly we propose to move https://github.com/observatorium/rules-objstore to be a generic configuration library, potentially in new https://github.com/observatorium/config-sync repo. It could be called a `config-client` module. Such library would need to support not only saving and retrieving Rules but also Alerting Routing configuration (and potentially silencer, inhibits and other user configuration in the future). Since alerting routing requires secrets we might need to implement various backends in this client (that's why no `objstore` suffix. ). See [chapter about secrets](#managing-user-secrets) for more details.
 
-Similarly, we propose to move https://github.com/observatorium/thanos-rule-syncer to https://github.com/observatorium/config-sync (related ticket: https://issues.redhat.com/browse/MON-2129) that will understand Prometheus Rules configuration, Prometheus Alert Routing configuration and in future silences, inhibitors tpp etc. ConfigSync would then import https://github.com/observatorium/config-client. This will allow us to have single focused codebase for all different user configurations we will need. This will allow us to maintain consistency around using it, monitoring, debugging, using secrets etc.
+ConfigSync would then import such config-client library internally. This will allow us to have single focused codebase for all different user configurations we will need. This will allow us to maintain consistency around using it, monitoring, debugging, using secrets etc.
 
 We propose potential https://github.com/observatorium/config-sync to be deployed as a sidecar to each component needing configuration to be present and reloaded dynamically.
 
-As a consequence of this decision I propose Observatorium API to also import https://github.com/observatorium/config-client directly to allow User APIs to manage those items (Rules and Alert routing configuration so far).
+As a consequence of this decision I propose Observatorium API to also import https://github.com/observatorium/config-sync config-client library directly to allow User APIs to manage those items (Rules and Alert routing configuration so far).
 
 ### Alert Evaluation
 
@@ -91,7 +96,7 @@ The Ruler itself has to communicate on 4 levels. All connections are presented i
 
 1. Alerts will be evaluated based on periodic requests to any replica of HTTP Query API, potentially through Query-frontend. 
 2. Ruler evaluates Alerts that can be triggered. Triggered alerts will be pushed to all replicas of the Alertmanager (discussed later) through AM HTTP API.
-3. It exposes gRPC Rules API which is consumed by Queriers. Querier than can show this API via it's HTTP Rule API.
+3. Ruler exposes gRPC Rules API which is consumed by Queriers. Querier than can expose multi-tenant HTTP Rules API that can be consumed by Observatorium API.
 4. It saves samples to any replica of Receiver. 
 
 ### Rules API (non raw one)
@@ -134,10 +139,6 @@ We propose adding different backends depending on user preference to https://git
 
 ### Alertmanager per tenant
 
-### Having ConfigClient in ConfigSync repo
-
-Since config-client is a dependency for config-sync service, we could simplify development by keeping it in one place. While making sense, this is awkward with Observatorium API having to import config-client code from config-sync repo. Still this might be something we could consider to simplify release and build process.
-
 ### Different Backend for Secrets
 
 In theory Vault is a heavy dependency. Since we run on Kubernetes, we could just write Kubernetes secrets and store it there. There are some disadvantages:
@@ -160,8 +161,8 @@ The tasks to do in order to migrate to the new idea.
 
 * [ ] Start using stateless Ruler in Observatorium
 * [ ] Implement matching / filtering by label/tenant on Rules HTTP API of Querier.
-* [ ] Move https://github.com/observatorium/rules-objstore to be a library called https://github.com/observatorium/config-client
-* [ ] Add ability to talk to Vault in https://github.com/observatorium/config-client
+* [ ] Move https://github.com/observatorium/rules-objstore to be a library in repo https://github.com/observatorium/config-sync called config-client or so.
+* [ ] Add ability to talk to Vault in `config-client`
 * [ ] Develop https://github.com/observatorium/config-sync based on https://github.com/observatorium/config-sync
 * [ ] Add Alertmanager deployment
 * [ ] Add Alertmanager Routing configuration support to config-client and config-sync
