@@ -9,6 +9,61 @@ The goal is to enable tenants to create, modify and access their own rules.
 
 ## Usage
 
+### Create rules
+
+```bash
+PUT /api/v1/rules/raw
+```
+
+Set rules for a tenant.
+
+#### Example request
+
+```bash
+curl -X PUT --data-binary @alerting-rule.yaml --header "Content-Type: application/yaml" http://<observatorium-api-url>/api/metrics/v1/<tenant>/api/v1/rules/raw
+```
+
+Where:
+
+* `rule.yaml` is a YAML file containing the desired rule definition. It can contain recording rules, alerting rules or both.
+  * _Note: For every `PUT` request, the content of the YAML file will be overwritten with the current content being sent._
+* `<observatorium-api-url>` is the URL where the Observatorium API is hosted.
+* `<tenant>` is the tenant name
+
+
+#### Example of a rule.yaml file
+
+The `rule.yaml` should be defined following the [Observatorium OpenAPI specification](https://github.com/observatorium/api/blob/main/rules/spec.yaml). The syntax is based on the Prometheus
+[recording](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/) and [alerting](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) rules syntax.
+
+Example of a `rule.yaml` file containing an alerting rule:
+
+```yaml
+groups:
+  - name: test-alerting-rule
+    interval: 30s
+    rules:
+    - alert: HighRequestLatency
+      expr: job:request_latency_seconds:mean5m{job="myjob"} > 0.5
+      for: 10m
+      labels:
+        severity: page
+      annotations:
+        summary: High request latency
+```
+
+#### Example response
+
+```bash
+successfully updated rules file
+```
+
+| Status Code | Description                                                                                           |
+|-------------|-------------------------------------------------------------------------------------------------------|
+| 200         | Successfully listed rules.                                                                            |
+| 401         | Error finding tenant/tenant ID.                                                                       |
+| 500         | A server side error happened while trying to create rules or while trying to write the response body. |
+
 ### List rules
 
 ```bash
@@ -31,54 +86,31 @@ Where:
 
 #### Example response
 
+```yaml
+groups:
+- interval: 30s
+  name: test-alerting-rule
+  rules:
+  - alert: HighRequestLatency
+    annotations:
+      summary: High request latency
+    expr: job:request_latency_seconds:mean5m{job="myjob",tenant_id="1234"}
+      > 0.5
+    for: 10m
+    labels:
+      severity: page
+      tenant_id: 1234
+```
+
 The response format is in `application/yaml`.
+
+_Note: In the current implementation from the Rules OpenAPI specification in Observatorium API, to better validate tenant rules, the label `tenant_id`
+was enforced in the read path:_
+* _In the `labels` field and_
+* _In the metrics that are present in the expression defined in the `expr` field._
 
 | Status Code | Description                                              |
 |-------------|----------------------------------------------------------|
-| 200         | Successfully listed rules                                |
-| 401         | Error finding tenant/tenant ID                           |
+| 200         | Successfully listed rules.                               |
+| 401         | Error finding tenant/tenant ID.                          |
 | 500         | A server side error happened while trying to list rules. |
-
-### Create rules
-
-```bash
-PUT /api/v1/rules/raw
-```
-
-Set rules for a tenant.
-
-#### Example request
-
-```bash
-curl -X PUT --data-binary @alerting-rule.yaml --header "Content-Type: application/yaml" http://<observatorium-api-url>/api/metrics/v1/<tenant>/api/v1/rules/raw
-```
-
-Where:
-
-* `rule.yaml` is a YAML file containing the desired rule definition.
-* `<observatorium-api-url>` is the URL where the Observatorium API is hosted.
-* `<tenant>` is the tenant name
-
-
-#### Example of a rule.yaml file
-
-The `rule.yaml` should be defined following the [Observatorium OpenAPI specification](https://github.com/observatorium/api/blob/main/rules/spec.yaml). The syntax is based on the Prometheus
-[recording](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/) and [alerting](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/).
-
-Example of a `rule.yaml` file containing an alerting rule:
-
-```yaml
-groups:
-  - name: test-alerting-rule
-    interval: 30s
-    rules:
-    - alert: HighRequestLatency
-      expr: job:request_latency_seconds:mean5m{job="myjob"} > 0.5
-      for: 10m
-      labels:
-        severity: page
-      annotations:
-        summary: High request latency
-```
-
-#### Example response
