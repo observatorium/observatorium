@@ -2,8 +2,7 @@
 
 Observatorium is featured with a multi-tenant API that enables tenants to write and read Prometheus recording and alerting rules.
 
-The API is [defined](https://github.com/observatorium/api/blob/main/rules/spec.yaml) using the [OpenAPI](https://swagger.io/specification/)
-specification format.
+The API is [defined](https://github.com/observatorium/api/blob/main/rules/spec.yaml) using the [OpenAPI](https://swagger.io/specification/) specification format.
 
 The goal is to enable tenants to create, modify and access their own rules.
 
@@ -26,15 +25,13 @@ curl -X PUT --data-binary @alerting-rule.yaml --header "Content-Type: applicatio
 Where:
 
 * `rule.yaml` is a YAML file containing the desired rule definition. It can contain recording rules, alerting rules or both.
-  * _Note: For every `PUT` request, the content of the YAML file will be overwritten with the current content being sent._
+  * *Note: For every `PUT` request, the content of the YAML file will be overwritten with the current content being sent.*
 * `<observatorium-api-url>` is the URL where the Observatorium API is hosted.
 * `<tenant>` is the tenant name
 
-
 #### Example of a rule.yaml file
 
-The `rule.yaml` should be defined following the [Observatorium OpenAPI specification](https://github.com/observatorium/api/blob/main/rules/spec.yaml). The syntax is based on the Prometheus
-[recording](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/) and [alerting](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) rules syntax.
+The `rule.yaml` should be defined following the [Observatorium OpenAPI specification](https://github.com/observatorium/api/blob/main/rules/spec.yaml). The syntax is based on the Prometheus [recording](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/) and [alerting](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) rules syntax.
 
 Example of a `rule.yaml` file containing an alerting rule:
 
@@ -83,7 +80,6 @@ Where:
 * `<observatorium-api-url>` is the URL where Observatorium API is hosted.
 * `<tenant>` is the tenant name
 
-
 #### Example response
 
 ```yaml
@@ -104,10 +100,9 @@ groups:
 
 The response format is in `application/yaml`.
 
-_Note: In the current implementation from the Rules OpenAPI specification in Observatorium API, to better validate tenant rules, the label `tenant_id`
-was enforced in the read path:_
-* _In the `labels` field and_
-* _In the metrics that are present in the expression defined in the `expr` field._
+*Note: In the current implementation from the Rules OpenAPI specification in Observatorium API, to better validate tenant rules, the label `tenant_id` was enforced in the read path:*
+* *In the `labels` field and*
+* *In the metrics that are present in the expression defined in the `expr` field.*
 
 | Status Code | Description                                              |
 |-------------|----------------------------------------------------------|
