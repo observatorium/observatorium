@@ -100,7 +100,7 @@ groups:
 
 The response format is in `application/yaml`.
 
-*Note: In the current implementation from the Rules OpenAPI specification in Observatorium API, to better validate tenant rules, the label `tenant_id` was enforced in the read path:*
+*Note: In the current implementation from the Rules OpenAPI specification in the Observatorium API, to better validate tenant rules, the label `tenant_id` is enforced in the read path:*
 
 * *In the `labels` field and*
 * *In the metrics that are present in the expression defined in the `expr` field.*
