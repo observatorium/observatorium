@@ -10,7 +10,7 @@ The goal is to enable tenants to create, modify and access their own rules.
 
 ### Create rules
 
-```bash
+```
 PUT /api/v1/rules/raw
 ```
 
@@ -24,8 +24,8 @@ curl -X PUT --data-binary @alerting-rule.yaml --header "Content-Type: applicatio
 
 Where:
 
-* `rule.yaml` is a YAML file containing the desired rule definition. It can contain recording rules, alerting rules or both.
-  * *Note: For every `PUT` request, the content of the YAML file will be overwritten with the current content being sent.*
+* `alerting-rule.yaml` is a YAML file containing the desired rule definition. It can contain recording rules, alerting rules or both.
+  * *Note: Each time a PUT request is made to the `/api/v1/rules/raw` endpoint, the rules contained in the request will overwrite all other rules for that tenant.*
 * `<observatorium-api-url>` is the URL where the Observatorium API is hosted.
 * `<tenant>` is the tenant name
 
@@ -51,7 +51,7 @@ groups:
 
 #### Example response
 
-```bash
+```
 successfully updated rules file
 ```
 
@@ -63,7 +63,7 @@ successfully updated rules file
 
 ### List rules
 
-```bash
+```
 GET /api/v1/rules/raw
 ```
 
@@ -101,6 +101,7 @@ groups:
 The response format is in `application/yaml`.
 
 *Note: In the current implementation from the Rules OpenAPI specification in Observatorium API, to better validate tenant rules, the label `tenant_id` was enforced in the read path:*
+
 * *In the `labels` field and*
 * *In the metrics that are present in the expression defined in the `expr` field.*
 
