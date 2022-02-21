@@ -110,3 +110,10 @@ The response format is in `application/yaml`.
 | 200         | Successfully listed rules.                               |
 | 401         | Error finding tenant/tenant ID.                          |
 | 500         | A server side error happened while trying to list rules. |
+
+## Difference between /api/v1/rules/raw and /api/v1/rules endpoints
+
+Note that the `/api/v1/rules/raw` endpoint differs from `/api/v1/rules` endpoint:
+
+* `/api/v1/rules/raw` supports `GET` and `PUT` requests, as described above. It refers only to the rules that were defined by the tenant that was authorized to use the endpoint.
+* `/api/v1/rules` supports `GET` requests and is the endpoint that is proxied by the Observatorium API to the read endpoint (in this case, Thanos Querier). It contains all rules from all tenants.
