@@ -116,4 +116,4 @@ The response format is in `application/yaml`.
 Note that the `/api/v1/rules/raw` endpoint differs from `/api/v1/rules` endpoint:
 
 * `/api/v1/rules/raw` supports `GET` and `PUT` requests, as described above. It refers only to the rules that were defined by the tenant that was authorized to use the endpoint.
-* `/api/v1/rules` supports `GET` requests and is the endpoint that is proxied by the Observatorium API to the read endpoint (in this case, Thanos Querier). It contains all rules from all tenants.
+* `/api/v1/rules` supports `GET` requests and is the endpoint that is proxied by the Observatorium API to the read endpoint (in this case, Thanos Querier). It lists rules that are currently being evaluated for the tenant.
