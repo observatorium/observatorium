@@ -8,6 +8,8 @@ The goal is to enable tenants to create, modify and access their own rules.
 
 ## Usage
 
+*Note: All requests to the endpoints below are **tenant scoped**; this means that each request requires a valid authentication token in the `Authorization` header.*
+
 ### Create rules
 
 ```
@@ -57,7 +59,7 @@ successfully updated rules file
 
 | Status Code | Description                                                                                           |
 |-------------|-------------------------------------------------------------------------------------------------------|
-| 200         | Successfully listed rules.                                                                            |
+| 200         | Successfully updated rules file                                                                       |
 | 401         | Error finding tenant/tenant ID.                                                                       |
 | 500         | A server side error happened while trying to create rules or while trying to write the response body. |
 
