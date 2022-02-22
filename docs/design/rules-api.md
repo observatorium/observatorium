@@ -59,7 +59,7 @@ successfully updated rules file
 
 | Status Code | Description                                                                                           |
 |-------------|-------------------------------------------------------------------------------------------------------|
-| 200         | Successfully updated rules file                                                                       |
+| 200         | Successfully updated rules file.                                                                       |
 | 401         | Error finding tenant/tenant ID.                                                                       |
 | 500         | A server side error happened while trying to create rules or while trying to write the response body. |
 
