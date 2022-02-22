@@ -102,7 +102,7 @@ groups:
 
 The response format is in `application/yaml`.
 
-*Note: In the current implementation from the Rules OpenAPI specification in Observatorium API, to better validate tenant rules, the label `tenant_id` was enforced in the read path:*
+*Note: In the current implementation from the Rules OpenAPI specification in the Observatorium API, to better validate tenant rules, the label `tenant_id` is enforced in the read path:*
 
 * *In the `labels` field and*
 * *In the metrics that are present in the expression defined in the `expr` field.*
@@ -118,4 +118,4 @@ The response format is in `application/yaml`.
 Note that the `/api/v1/rules/raw` endpoint differs from `/api/v1/rules` endpoint:
 
 * `/api/v1/rules/raw` supports `GET` and `PUT` requests, as described above. It refers only to the rules that were defined by the tenant that was authorized to use the endpoint.
-* `/api/v1/rules` supports `GET` requests and is the endpoint that is proxied by the Observatorium API to the read endpoint (in this case, Thanos Querier). It contains all rules from all tenants.
+* `/api/v1/rules` supports `GET` requests and is the endpoint that is proxied by the Observatorium API to the read endpoint (in this case, Thanos Querier). It lists rules that are currently being evaluated for the tenant.
