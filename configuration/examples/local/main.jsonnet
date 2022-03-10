@@ -15,7 +15,14 @@ local minio = (import '../../components/minio.libsonnet')({
 
 local api = (import 'observatorium-api/observatorium-api.libsonnet');
 local obs = (import '../../components/observatorium.libsonnet');
+local tracing = (import '../../components/tracing.libsonnet');
 local dev = obs {
+  tracing: tracing(
+    obs.tracing.config {
+      tenants: [tenant.name],
+      enabled: true,
+    },
+  ),
   api: api(
     obs.api.config {
       rbac: {

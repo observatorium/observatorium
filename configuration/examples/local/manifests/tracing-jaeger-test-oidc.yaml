@@ -1,0 +1,12 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  labels:
+    app.kubernetes.io/component: test-oidc
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: otelcol
+    app.kubernetes.io/part-of: observatorium
+  name: observatorium-xyz-jaeger-test-oidc
+  namespace: observatorium
+spec:
+  strategy: allinone
