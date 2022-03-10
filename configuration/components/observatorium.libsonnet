@@ -41,7 +41,7 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
 
   api:: api({
     local cfg = self,
-    version: 'main-2021-11-30-v0.1.2-106-g2adff5f',
+    version: 'main-2022-03-03-v0.1.2-139-gb3a1918',
     image: 'quay.io/observatorium/api:' + cfg.version,
     imagePullPolicy: 'IfNotPresent',
     name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
