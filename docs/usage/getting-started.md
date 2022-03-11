@@ -135,7 +135,7 @@ curl \
 
 #### Distributed tracing requirements
 
-The installation of distributed tracing system requires several dependencies. T
+The installation of distributed tracing system requires following operators to be installed in the cluster.
 
 #### Cert manager
 
