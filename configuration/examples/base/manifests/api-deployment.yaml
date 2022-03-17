@@ -54,12 +54,12 @@ spec:
           periodSeconds: 30
         name: observatorium-api
         ports:
+        - containerPort: 8090
+          name: grpc-public
         - containerPort: 8081
           name: internal
         - containerPort: 8080
           name: public
-        - containerPort: 8090
-          name: publicGrpc
         readinessProbe:
           failureThreshold: 12
           httpGet:

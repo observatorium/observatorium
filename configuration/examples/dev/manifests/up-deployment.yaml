@@ -31,8 +31,8 @@ spec:
         - --duration=0
         - --log.level=debug
         - --endpoint-type=metrics
-        - --endpoint-read=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/query
-        - --endpoint-write=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/receive
+        - --endpoint-read=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8081/api/metrics/v1/test/api/v1/query
+        - --endpoint-write=http://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8081/api/metrics/v1/test/api/v1/receive
         image: quay.io/observatorium/up:master-2020-11-04-0c6ece8
         name: observatorium-up
         ports:
