@@ -79,7 +79,7 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
       ],
     },
     traces: {
-      writeEndpoint: 'http://' + obs.config.name + '-otel-collector-headless:4317',
+      writeEndpoint: 'http://' + obs.tracing.manifests.otelcollector.metadata.name + '-collector-headless:4317',
     },
     rateLimiter: {
       grpcAddress: '%s.%s.svc.cluster.local:%d' % [
