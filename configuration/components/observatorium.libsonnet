@@ -78,6 +78,9 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
         obs.loki.manifests['distributor-http-service'].spec.ports[0].port,
       ],
     },
+    traces: {
+      writeEndpoint: 'http://' + obs.config.name + '-otel-collector-headless:4317',
+    },
     rateLimiter: {
       grpcAddress: '%s.%s.svc.cluster.local:%d' % [
         obs.gubernator.service.metadata.name,

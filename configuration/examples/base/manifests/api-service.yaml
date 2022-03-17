@@ -17,6 +17,9 @@ spec:
   - name: public
     port: 8080
     targetPort: 8080
+  - name: publicGrpc
+    port: 8090
+    targetPort: 8090
   selector:
     app.kubernetes.io/component: api
     app.kubernetes.io/instance: observatorium-xyz
