@@ -40,7 +40,7 @@ spec:
         - --logs.read.endpoint=http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100
         - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
         - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
-        - --traces.write.endpoint=http://observatorium-xyz-otel-collector-headless:4317
+        - --traces.write.endpoint=observatorium-xyz-otel-collector:4317
         - --grpc.listen=8090
         - --rbac.config=/etc/observatorium/rbac.yaml
         - --tenants.config=/etc/observatorium/tenants.yaml

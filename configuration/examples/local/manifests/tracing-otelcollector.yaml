@@ -12,7 +12,7 @@ spec:
   config: |-
     exporters:
       jaeger/test-oidc:
-        endpoint: "observatorium-xyz-jaeger-test-oidc-collector-headless:14250"
+        endpoint: "observatorium-xyz-jaeger-test-oidc-collector:14250"
     processors:
       routing:
         from_attribute: "X-Tenant"

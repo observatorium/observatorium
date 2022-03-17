@@ -35,7 +35,7 @@ function(params) {
       },
     },
     exporters: {
-      ['jaeger/' + tenant]: { endpoint: normalizedName(tracing.config.name + '-jaeger-' + tenant + '-collector-headless:14250') }
+      ['jaeger/' + tenant]: { endpoint: normalizedName(tracing.config.name + '-jaeger-' + tenant + '-collector:14250') }
       for tenant in tracing.config.tenants
     },
     processors: {
