@@ -13,6 +13,8 @@ spec:
     exporters:
       jaeger/test-oidc:
         endpoint: "observatorium-xyz-jaeger-test-oidc-collector:14250"
+        tls:
+          insecure: true
     processors:
       routing:
         from_attribute: "X-Tenant"

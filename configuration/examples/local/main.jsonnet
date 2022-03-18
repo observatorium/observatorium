@@ -32,6 +32,7 @@ local dev = obs {
             resources: [
               'logs',
               'metrics',
+              'traces',
             ],
             tenants: [
               tenant.name,

@@ -16,6 +16,7 @@ data:
       "resources":
       - "logs"
       - "metrics"
+      - "traces"
       "tenants":
       - "test-oidc"
 kind: ConfigMap
