@@ -41,7 +41,7 @@ spec:
         - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
         - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
         - --traces.write.endpoint=observatorium-xyz-otel-collector:4317
-        - --grpc.listen=8090
+        - --grpc.listen=0.0.0.0:8090
         - --rbac.config=/etc/observatorium/rbac.yaml
         - --tenants.config=/etc/observatorium/tenants.yaml
         - --middleware.rate-limiter.grpc-address=observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081

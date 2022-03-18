@@ -8,8 +8,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "c9f240fe6a1ecce36f0b5c096baabf51562b04d7",
-      "sum": "V4ueyOYXcUw1XkPjMFj+Eam8j6R7Prn86FO/oOYDAYI=",
+      "version": "41d37e5b0ee2a8184186a20cbfbb579101619872",
+      "sum": "3Vy5ShPtlABhjhl9xZoo7bKlzWg9Ow6Skt56Gody2JM=",
       "name": "observatorium-api"
     },
     {
