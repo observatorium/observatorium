@@ -1,0 +1,39 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  labels:
+    app.kubernetes.io/component: jaeger
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: otelcol
+    app.kubernetes.io/part-of: observatorium
+  name: observatorium-xyz-otel
+  namespace: observatorium
+spec:
+  config: |-
+    exporters:
+      jaeger/test-oidc:
+        endpoint: "observatorium-xyz-jaeger-test-oidc-collector:14250"
+        tls:
+          insecure: true
+    processors:
+      routing:
+        from_attribute: "X-Tenant"
+        table:
+        - exporters:
+          - "jaeger/test-oidc"
+          value: "test-oidc"
+    receivers:
+      otlp:
+        protocols:
+          grpc: {}
+    service:
+      pipelines:
+        traces:
+          exporters:
+          - "jaeger/test-oidc"
+          processors:
+          - "routing"
+          receivers:
+          - "otlp"
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.46.0
+  mode: deployment

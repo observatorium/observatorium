@@ -1,5 +1,6 @@
 local thanos = (import './thanos.libsonnet');
 local loki = (import './loki.libsonnet');
+local tracing = (import './tracing.libsonnet');
 local api = (import 'observatorium-api/observatorium-api.libsonnet');
 
 {
@@ -77,6 +78,9 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
         obs.loki.manifests['distributor-http-service'].spec.ports[0].port,
       ],
     },
+    traces: {
+      writeEndpoint: obs.tracing.manifests.otelcollector.metadata.name + '-collector:4317',
+    },
     rateLimiter: {
       grpcAddress: '%s.%s.svc.cluster.local:%d' % [
         obs.gubernator.service.metadata.name,
@@ -124,6 +128,12 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
       secretAccessKeyKey: 'aws_secret_access_key',
     },
   }),
+
+  tracing:: tracing({
+    local cfg = self,
+    namespace: 'observatorium',
+    commonLabels+:: obs.config.commonLabels,
+  }),
 } + {
   local obs = self,
 
@@ -142,5 +152,8 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
     } + if std.objectHas(obs.loki, 'manifests') then {
       ['loki-' + name]: obs.loki.manifests[name]
       for name in std.objectFields(obs.loki.manifests)
+    } + if obs.tracing.config.enabled then {
+      ['tracing-' + name]: obs.tracing.manifests[name]
+      for name in std.objectFields(obs.tracing.manifests)
     } else {},
 }

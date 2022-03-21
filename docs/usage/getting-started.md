@@ -133,6 +133,39 @@ curl \
     http://127.0.0.1:4445/clients
 ```
 
+#### Distributed tracing requirements
+
+The installation of distributed tracing system requires following operators to be installed in the cluster.
+
+#### Cert manager
+
+Jaeger and OpenTelemetry operators require [cert manager](https://cert-manager.io/docs/) to be installed in the cluster.
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
+```
+
+##### Jaeger Operator
+
+Jaeger operator can be installed by running the following command:
+
+```bash
+kubectl create namespace observability
+kubectl create -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.32.0/jaeger-operator.yaml -n observability
+```
+
+The operator should be installed into `observability` namespace. See [Jaeger documentation](https://www.jaegertracing.io/docs/latest/operator/) for more information.
+
+##### OpenTelemetry Operator
+
+OpenTelemetry operator can be installed by running the following command:
+
+```bash
+kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+```
+
+The operator should be installed into `opentelemetry-operator-system` namespace. See [open-telemetry/opentelemetry-operator](https://github.com/open-telemetry/opentelemetry-operator) for more information.
+
 #### Deploying Observatorium
 
 We will deploy the Observatorium using Kubernetes manifests generated from jsonnet. If the IP of `docker0` interface was different then the default in the above steps, you will need to update the `tenant.issuerURL` with correct IP address and run `make generate` to recreate the manifests.
