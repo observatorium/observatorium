@@ -95,7 +95,7 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
     name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
     namespace: obs.config.namespace,
     commonLabels+:: obs.config.commonLabels,
-    version: '2.2.0',
+    version: '2.4.2',
     image: 'docker.io/grafana/loki:' + cfg.version,
     imagePullPolicy: 'IfNotPresent',
     replicationFactor: 1,
@@ -108,6 +108,9 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
     },
     memberlist: {
       ringName: 'gossip-ring',
+    },
+    wal: {
+      replayMemoryCeiling: '100MB',
     },
     volumeClaimTemplate: {
       spec: {

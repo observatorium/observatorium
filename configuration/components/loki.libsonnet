@@ -23,6 +23,9 @@ local defaults = {
   volumeClaimTemplates: {},
   memberlist: {},
   etcd: {},
+  wal: {
+    replayMemoryCeiling: error 'must provide replay memory ceiling',
+  },
 
   indexQueryCache: '',
   storeChunkCache: '',
@@ -191,6 +194,11 @@ local defaults = {
         },
       },
       max_transfer_retries: 0,
+      wal: {
+        enabled: true,
+        dir: '/data/loki/wal',
+        replay_memory_ceiling: defaults.wal.replayMemoryCeiling,
+      },
     },
     ingester_client: {
       grpc_client_config: {
