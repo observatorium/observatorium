@@ -19,7 +19,7 @@ data:
       "frontend_address": "observatorium-xyz-loki-query-frontend-grpc.observatorium.svc.cluster.local:9095"
       "grpc_client_config":
         "max_send_msg_size": 104857600
-      "parallelism": 32
+      "match_max_concurrent": true
     "ingester":
       "chunk_block_size": 262144
       "chunk_encoding": "snappy"
@@ -37,6 +37,10 @@ data:
           "kvstore":
             "store": "memberlist"
       "max_transfer_retries": 0
+      "wal":
+        "dir": "/data/loki/wal"
+        "enabled": true
+        "replay_memory_ceiling": "100MB"
     "ingester_client":
       "grpc_client_config":
         "max_recv_msg_size": 67108864
@@ -66,6 +70,7 @@ data:
         "max_look_back_period": "5m"
         "timeout": "3m"
       "extra_query_delay": "0s"
+      "max_concurrent": 2
       "query_ingesters_within": "2h"
       "query_timeout": "1h"
       "tail_max_duration": "1h"
@@ -105,6 +110,6 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: 2.2.0
+    app.kubernetes.io/version: 2.4.2
   name: observatorium-xyz-loki
   namespace: observatorium

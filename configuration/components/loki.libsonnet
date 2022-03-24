@@ -11,8 +11,7 @@ local defaults = {
   imagePullPolicy: 'IfNotPresent',
   replicas: error 'must provide replicas',
   objectStorageConfig: error 'must provide object storage config',
-  queryConcurrency: 32,
-  queryParallelism: 32,  // Defaults to queryConcurrency because single query-frontend replica
+  queryConcurrency: error 'must provide max concurrent setting for querier config',
   ports: {
     gossip: 7946,
   },
@@ -23,6 +22,9 @@ local defaults = {
   volumeClaimTemplates: {},
   memberlist: {},
   etcd: {},
+  wal: {
+    replayMemoryCeiling: error 'must provide replay memory ceiling',
+  },
 
   indexQueryCache: '',
   storeChunkCache: '',
@@ -168,7 +170,7 @@ local defaults = {
       grpc_client_config: {
         max_send_msg_size: grpcServerMaxMsgSize,
       },
-      parallelism: defaults.queryParallelism,
+      match_max_concurrent: true,
     },
     ingester: {
       chunk_block_size: 262144,
@@ -191,6 +193,11 @@ local defaults = {
         },
       },
       max_transfer_retries: 0,
+      wal: {
+        enabled: true,
+        dir: '/data/loki/wal',
+        replay_memory_ceiling: defaults.wal.replayMemoryCeiling,
+      },
     },
     ingester_client: {
       grpc_client_config: {
@@ -220,6 +227,7 @@ local defaults = {
         timeout: '3m',
         max_look_back_period: '5m',
       },
+      max_concurrent: defaults.queryConcurrency,
     },
     query_range: {
       align_queries_with_step: true,
@@ -316,7 +324,6 @@ function(params) {
   config:: defaults + params,
   // Safety checks for combined config of defaults and params.
   assert std.isNumber(loki.config.queryConcurrency),
-  assert std.isNumber(loki.config.queryParallelism),
   assert std.isNumber(loki.config.replicationFactor),
   assert std.isObject(loki.config.replicas) : 'replicas has to be an object',
   assert std.isObject(loki.config.resources) : 'replicas has to be an object',
