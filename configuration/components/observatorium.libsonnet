@@ -99,6 +99,7 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
     image: 'docker.io/grafana/loki:' + cfg.version,
     imagePullPolicy: 'IfNotPresent',
     replicationFactor: 1,
+    queryConcurrency: 2,
     replicas: {
       compactor: 1,
       distributor: 1,
