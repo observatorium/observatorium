@@ -9,7 +9,7 @@ OS_TYPE=$(echo `uname -s` | tr '[:upper:]' '[:lower:]')
 
 kind() {
     curl -LO https://storage.googleapis.com/kubernetes-release/release/"$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"/bin/$OS_TYPE/amd64/kubectl
-    curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/v0.8.1/kind-$OS_TYPE-amd64
+    curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/v0.12.0/kind-$OS_TYPE-amd64
     chmod +x kind kubectl
     ./kind create cluster
 }

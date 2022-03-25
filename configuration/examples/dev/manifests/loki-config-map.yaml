@@ -83,7 +83,7 @@ data:
       "min_join_backoff": "1s"
     "querier":
       "engine":
-        "max_look_back_period": "30s"
+        "max_look_back_period": "5m"
         "timeout": "3m"
       "extra_query_delay": "0s"
       "max_concurrent": 2
