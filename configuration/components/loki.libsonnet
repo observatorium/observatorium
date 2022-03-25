@@ -11,13 +11,18 @@ local defaults = {
   imagePullPolicy: 'IfNotPresent',
   replicas: error 'must provide replicas',
   objectStorageConfig: error 'must provide object storage config',
-  queryConcurrency: error 'must provide max concurrent setting for querier config',
+  query: {
+    concurrency: error 'must provide max concurrent setting for querier config',
+    shardFactor: 16,
+    enableSharedQueries: false,
+  },
   ports: {
     gossip: 7946,
   },
   replicationFactor: 1,
+  shardFactor: 16,
   limits: {
-    maxOutstandingPerTenant: 100,
+    maxOutstandingPerTenant: 256,
   },
 
   // TODO(kakkoyun): Is it duplicated with components?
@@ -208,7 +213,10 @@ local defaults = {
       match_max_concurrent: true,
     },
     query_scheduler: {
-      max_outstanding_per_tenant: defaults.limits.maxOutstandingPerTenant,
+      max_outstanding_requests_per_tenant:
+        if defaults.query.enableSharedQueries
+        then 1024
+        else defaults.limits.maxOutstandingPerTenant,
     },
     ingester: {
       chunk_block_size: 262144,
@@ -259,7 +267,10 @@ local defaults = {
       max_entries_limit_per_query: 5000,
       max_chunks_per_query: 2000000,
       max_query_length: '721h',
-      max_query_parallelism: 32,
+      max_query_parallelism:
+        if defaults.query.enableSharedQueries
+        then defaults.shardFactor * 16
+        else 16,
       max_query_series: 500,
       cardinality_limit: 100000,
       max_global_streams_per_user: 10000,
@@ -276,14 +287,14 @@ local defaults = {
         timeout: '3m',
         max_look_back_period: '30s',
       },
-      max_concurrent: defaults.queryConcurrency,
+      max_concurrent: defaults.query.concurrency,
     },
     query_range: {
       align_queries_with_step: true,
       cache_results: true,
       max_retries: 5,
       split_queries_by_interval: '30m',
-      parallelise_shardable_queries: true,
+      parallelise_shardable_queries: defaults.query.enableSharedQueries,
     } + (
       if defaults.resultsCache != '' then {
         results_cache: {
@@ -387,8 +398,8 @@ function(params) {
   // Combine the defaults and the passed params to make the component's config.
   config:: defaults + params,
   // Safety checks for combined config of defaults and params.
-  assert std.isNumber(loki.config.queryConcurrency),
   assert std.isNumber(loki.config.replicationFactor),
+  assert std.isNumber(loki.config.query.concurrency),
   assert std.isObject(loki.config.limits) : 'limits has to be an object',
   assert std.isObject(loki.config.replicas) : 'replicas has to be an object',
   assert std.isObject(loki.config.resources) : 'replicas has to be an object',

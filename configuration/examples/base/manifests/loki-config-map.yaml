@@ -66,7 +66,7 @@ data:
       "max_label_value_length": 2048
       "max_line_size": 256000
       "max_query_length": "721h"
-      "max_query_parallelism": 32
+      "max_query_parallelism": 16
       "max_query_series": 500
       "max_streams_per_user": 0
       "per_stream_rate_limit": "3MB"
@@ -94,7 +94,7 @@ data:
       "align_queries_with_step": true
       "cache_results": true
       "max_retries": 5
-      "parallelise_shardable_queries": true
+      "parallelise_shardable_queries": false
       "results_cache":
         "cache":
           "enable_fifocache": true
@@ -102,7 +102,7 @@ data:
             "max_size_bytes": "500MB"
       "split_queries_by_interval": "30m"
     "query_scheduler":
-      "max_outstanding_per_tenant": 100
+      "max_outstanding_requests_per_tenant": 256
     "schema_config":
       "configs":
       - "from": "2020-10-01"
