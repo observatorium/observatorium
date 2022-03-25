@@ -299,9 +299,11 @@ local defaults = {
         },
       } else {
         results_cache: {
-          enable_fifocache: true,
-          fifocache: {
-            max_size_bytes: '500MB',
+          cache: {
+            enable_fifocache: true,
+            fifocache: {
+              max_size_bytes: '500MB',
+            },
           },
         },
       }

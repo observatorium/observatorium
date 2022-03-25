@@ -96,9 +96,10 @@ data:
       "max_retries": 5
       "parallelise_shardable_queries": true
       "results_cache":
-        "enable_fifocache": true
-        "fifocache":
-          "max_size_bytes": "500MB"
+        "cache":
+          "enable_fifocache": true
+          "fifocache":
+            "max_size_bytes": "500MB"
       "split_queries_by_interval": "30m"
     "query_scheduler":
       "max_outstanding_per_tenant": 100
