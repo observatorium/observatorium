@@ -16,6 +16,9 @@ local defaults = {
     gossip: 7946,
   },
   replicationFactor: 1,
+  limits: {
+    maxOutstandingPerTenant: 100,
+  },
 
   // TODO(kakkoyun): Is it duplicated with components?
   resources: {},
@@ -84,6 +87,15 @@ local defaults = {
         },
       } else {}
     ),
+    index_gateway: {
+      withLivenessProbe: true,
+      withReadinessProbe: true,
+      resources: {
+        requests: { cpu: '100m', memory: '100Mi' },
+        limits: { cpu: '200m', memory: '200Mi' },
+      },
+      withServiceMonitor: false,
+    },
     querier: {
       withLivenessProbe: true,
       withReadinessProbe: true,
@@ -96,6 +108,15 @@ local defaults = {
     query_frontend: {
       withLivenessProbe: true,
       withReadinessProbe: false,
+      resources: {
+        requests: { cpu: '100m', memory: '100Mi' },
+        limits: { cpu: '200m', memory: '200Mi' },
+      },
+      withServiceMonitor: false,
+    },
+    query_scheduler: {
+      withLivenessProbe: true,
+      withReadinessProbe: true,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -128,7 +149,14 @@ local defaults = {
             consistent_hash: true,
           },
         },
-      } else {}
+      } else {
+        chunk_cache_config: {
+          enable_fifocache: true,
+          fifocache: {
+            max_size_bytes: '500MB',
+          },
+        },
+      }
     ),
 
     memberlist+: if defaults.memberlist != {} then {
@@ -159,12 +187,19 @@ local defaults = {
       },
     },
     frontend: {
+      scheduler_address: '%s.%s.svc.cluster.local:9095' % [
+        defaults.name + '-query-scheduler-grpc',
+        defaults.namespace,
+      ],
+      tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [
+        defaults.name + '-querier-http',
+        defaults.namespace,
+      ],
       compress_responses: true,
-      max_outstanding_per_tenant: 200,
     },
     frontend_worker: {
-      frontend_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-query-frontend-grpc',
+      scheduler_address: '%s.%s.svc.cluster.local:9095' % [
+        defaults.name + '-query-scheduler-grpc',
         defaults.namespace,
       ],
       grpc_client_config: {
@@ -172,12 +207,15 @@ local defaults = {
       },
       match_max_concurrent: true,
     },
+    query_scheduler: {
+      max_outstanding_per_tenant: defaults.limits.maxOutstandingPerTenant,
+    },
     ingester: {
       chunk_block_size: 262144,
       chunk_encoding: 'snappy',
-      chunk_idle_period: '2h',
-      chunk_retain_period: '1m',
-      chunk_target_size: 1.572864e+06,
+      chunk_idle_period: '1h',
+      chunk_retain_period: '5m',
+      chunk_target_size: 2097152,
       lifecycler: {
         heartbeat_period: '5s',
         interface_names: [
@@ -206,26 +244,37 @@ local defaults = {
       remote_timeout: '1s',
     },
     limits_config: {
-      enforce_metric_name: false,
+      ingestion_rate_strategy: 'global',
       ingestion_burst_size_mb: 20,
       ingestion_rate_mb: 10,
-      ingestion_rate_strategy: 'global',
-      max_cache_freshness_per_query: '10m',
-      max_global_streams_per_user: 10000,
-      max_query_length: '12000h',
-      max_query_parallelism: 32,
-      max_streams_per_user: 0,
+      max_label_name_length: 1024,
+      max_label_value_length: 2048,
+      max_label_names_per_series: 30,
       reject_old_samples: true,
       reject_old_samples_max_age: '%dh' % indexPeriodHours,
+      creation_grace_period: '10m',
+      enforce_metric_name: false,
+      max_streams_per_user: 0,
+      max_line_size: 256000,
+      max_entries_limit_per_query: 5000,
+      max_chunks_per_query: 2000000,
+      max_query_length: '721h',
+      max_query_parallelism: 32,
+      max_query_series: 500,
+      cardinality_limit: 100000,
+      max_global_streams_per_user: 10000,
+      max_cache_freshness_per_query: '10m',
+      per_stream_rate_limit: '3MB',
+      per_stream_rate_limit_burst: '15MB',
     },
     querier: {
       query_timeout: '1h',
       tail_max_duration: '1h',
       extra_query_delay: '0s',
-      query_ingesters_within: '2h',
+      query_ingesters_within: '3h',
       engine: {
         timeout: '3m',
-        max_look_back_period: '5m',
+        max_look_back_period: '30s',
       },
       max_concurrent: defaults.queryConcurrency,
     },
@@ -234,12 +283,9 @@ local defaults = {
       cache_results: true,
       max_retries: 5,
       split_queries_by_interval: '30m',
+      parallelise_shardable_queries: true,
     } + (
       if defaults.resultsCache != '' then {
-        split_queries_by_interval: '30m',
-        align_queries_with_step: true,
-        cache_results: true,
-        max_retries: 5,
         results_cache: {
           cache: {
             memcached_client: {
@@ -251,7 +297,14 @@ local defaults = {
             },
           },
         },
-      } else {}
+      } else {
+        results_cache: {
+          enable_fifocache: true,
+          fifocache: {
+            max_size_bytes: '500MB',
+          },
+        },
+      }
     ),
     schema_config: {
       configs: [
@@ -269,15 +322,24 @@ local defaults = {
     },
     server: {
       graceful_shutdown_timeout: '5s',
+      grpc_server_min_time_between_pings: '10s',
+      grpc_server_ping_without_stream_allowed: true,
       grpc_server_max_concurrent_streams: 1000,
       grpc_server_max_recv_msg_size: grpcServerMaxMsgSize,
       grpc_server_max_send_msg_size: grpcServerMaxMsgSize,
       http_listen_port: 3100,
       http_server_idle_timeout: '120s',
       http_server_write_timeout: '1m',
+      log_level: 'error',
     },
     storage_config: {
       boltdb_shipper: {
+        index_gateway_client+: {
+          server_address: '%s.%s.svc.cluster.local:9095' % [
+            defaults.name + '-index-gateway-grpc',
+            defaults.namespace,
+          ],
+        },
         active_index_directory: '/data/loki/index',
         cache_location: '/data/loki/index_cache',
         cache_ttl: '24h',
@@ -325,6 +387,7 @@ function(params) {
   // Safety checks for combined config of defaults and params.
   assert std.isNumber(loki.config.queryConcurrency),
   assert std.isNumber(loki.config.replicationFactor),
+  assert std.isObject(loki.config.limits) : 'limits has to be an object',
   assert std.isObject(loki.config.replicas) : 'replicas has to be an object',
   assert std.isObject(loki.config.resources) : 'replicas has to be an object',
   assert std.isObject(loki.config.volumeClaimTemplates) : 'volumeClaimTemplates has to be an object',
@@ -365,7 +428,7 @@ function(params) {
     std.member(['distributor', 'ingester', 'querier'], component),
 
   local isStatefulSet(component) =
-    std.member(['compactor', 'ingester', 'querier'], component),
+    std.member(['compactor', 'ingester', 'index_gateway'], component),
 
   local newLokiContainer(name, component, config) =
     local osc = loki.config.objectStorageConfig;
@@ -618,7 +681,7 @@ function(params) {
   } + {
     [normalizedName(name) + '-http-service']: newHttpService(name)
     for name in std.objectFields(loki.config.components)
-    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'ingester'], name)
+    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'query_scheduler', 'ingester', 'index_gateway'], name)
   } + (
     if std.length(loki.config.resources) != {} then {
       [normalizedName(name) + '-deployment']+: {

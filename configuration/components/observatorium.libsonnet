@@ -104,8 +104,10 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
       compactor: 1,
       distributor: 1,
       ingester: 1,
+      index_gateway: 1,
       querier: 1,
       query_frontend: 1,
+      query_scheduler: 1,
     },
     memberlist: {
       ringName: 'gossip-ring',
