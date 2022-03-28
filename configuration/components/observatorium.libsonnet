@@ -99,13 +99,17 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
     image: 'docker.io/grafana/loki:' + cfg.version,
     imagePullPolicy: 'IfNotPresent',
     replicationFactor: 1,
-    queryConcurrency: 2,
+    query+: {
+      concurrency: 2,
+    },
     replicas: {
       compactor: 1,
       distributor: 1,
       ingester: 1,
+      index_gateway: 1,
       querier: 1,
       query_frontend: 1,
+      query_scheduler: 1,
     },
     memberlist: {
       ringName: 'gossip-ring',

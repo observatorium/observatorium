@@ -39,8 +39,22 @@ local minio = (import '../../components/minio.libsonnet')({
 });
 
 local api = (import 'observatorium-api/observatorium-api.libsonnet');
+local loki = (import '../../components/loki.libsonnet');
 local obs = (import '../../components/observatorium.libsonnet');
 local dev = obs {
+  loki: loki(
+    obs.loki.config {
+      config+: {
+        querier+: {
+          engine+: {
+            max_look_back_period: '5m',
+          },
+        },
+      },
+    },
+  ),
+
+
   api: api(
     obs.api.config {
       rbac: {

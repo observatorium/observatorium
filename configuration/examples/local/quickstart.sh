@@ -140,7 +140,7 @@ deploy() {
   echo "-------------------------------------------"
   mkdir -p tmp/grafana
   (docker run -p 3000:3000 --user $(id -u) --volume "$PWD/tmp/grafana:/var/lib/grafana" grafana/grafana:7.3.7 &> /dev/null) &
-  echo "Open http://localhost:3000 in your browser. Add Prometheus datasource with endpoint http://172.17.0.1:8080/api/metrics/v1/test-oidc."
+  echo -e "Open http://localhost:3000 in your browser. \nAdd Prometheus datasource with endpoint http://172.17.0.1:8080/api/metrics/v1/test-oidc. \nAdd Loki datasource with endpoint http://172.17.0.1:8080/api/logs/v1/test-oidc."
 }
 
 case $1 in
