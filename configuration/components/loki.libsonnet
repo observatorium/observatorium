@@ -675,7 +675,7 @@ function(params) {
       },
     }
     for name in std.objectFields(loki.config.components)
-    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'ingester'], name)
+    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'query_scheduler', 'ingester', 'index_gateway'], name)
   },
 
   manifests: {
