@@ -14,11 +14,11 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
 ## What's Included
 
-* [Observatorium](https://github.com/observatorium/observatorium) is primarily defined in [jsonnet](https://jsonnet.org/), which allows great flexibility and reusability. The main configuration resources are stored in [components](https://github.com/observatorium/observatorium/tree/main/configuration/components) directory, and they import further official resources like [kube-thanos](https://github.com/thanos-io/kube-thanos). Some Examples:
+* [Observatorium](https://github.com/observatorium/observatorium) is primarily defined in [Jsonnet](https://jsonnet.org/), which allows great flexibility and reusability. The main configuration resources are stored in [components](https://github.com/observatorium/observatorium/tree/main/configuration/components) directory, and they import further official resources like [kube-thanos](https://github.com/thanos-io/kube-thanos). Some Examples:
   * You can see examples of how it can be used in different variations/environments [here](https://github.com/observatorium/observatorium/tree/main/configuration/examples).
   * Our [Red Hat Observability Service](https://github.com/rhobs/configuration) is also build on Observatorium.
 
-* We are aware that not everybody speaks jsonnet, and not everybody have it's own GitOps pipeline, so we designed alternative deployments based on the main jsonnet resources. [Operator](https://github.com/observatorium/operator) project delivers Kubernetes plain Operator that operates Observatorium.
+* We are aware that not everybody speaks Jsonnet, and not everybody have it's own GitOps pipeline, so we designed alternative deployments based on the main Jsonnet resources. [Operator](https://github.com/observatorium/operator) project delivers Kubernetes plain Operator that operates Observatorium.
 
 > NOTE: Observatorium is a set of cloud native, mostly stateless components that mostly does not require special operating logic. For those operations that required automation, specialized controllers were designed. Use Operator only if this is your primary installation logic or if you don't have CI pipeline.
 
@@ -28,7 +28,7 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
 * [The `API`](https://github.com/observatorium/api) is the facet of Observatorium service. It's a lightweight proxy written in Go that helps with multi-tenancy, tenancy (isolation, cross tenancy requests, rate-limiting, roles, tracing). This proxy should be used for all external traffic with Observatorium.
 
-* [OPA-AMS](https://github.com/observatorium/opa-ams) is our Go library for integrating Open Policy Agent with Red Hat authorization service for smooth Openshift experience.
+* [OPA-AMS](https://github.com/observatorium/opa-ams) is our Go library for integrating Open Policy Agent with Red Hat authorization service for smooth OpenShift experience.
 
 * [up](https://github.com/observatorium/up) is a useful Go service that periodically queries Observatorium and outputs vital metrics on the Observatorium read path healthiness and performance over time.
 
@@ -43,7 +43,7 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
 This tutorial will help you get started with Observatorium. We will be running the whole Observatorium stack in a local Kubernetes cluster. Observatorium uses OIDC (OpenID Connect) for authentication, so we will deploy our own OIDC provider. After we have Observatorium up and running, we will push some metrics as a tenant from outside the cluster using remote write.
 
-If you just want to run Observatroium locally and get started quickly, take a look at the bash script [`quickstart.sh`](../../configuration/examples/local/quickstart.sh).
+If you just want to run Observatorium locally and get started quickly, take a look at the bash script [`quickstart.sh`](../../configuration/examples/local/quickstart.sh).
 
 #### Prerequisites
 
@@ -168,7 +168,7 @@ The operator should be installed into `opentelemetry-operator-system` namespace.
 
 #### Deploying Observatorium
 
-We will deploy the Observatorium using Kubernetes manifests generated from jsonnet. If the IP of `docker0` interface was different then the default in the above steps, you will need to update the `tenant.issuerURL` with correct IP address and run `make generate` to recreate the manifests.
+We will deploy the Observatorium using Kubernetes manifests generated from Jsonnet. If the IP of `docker0` interface was different then the default in the above steps, you will need to update the `tenant.issuerURL` with correct IP address and run `make generate` to recreate the manifests.
 
 Let's deploy `minio` first, as Thanos and Loki have a dependency on it.
 
