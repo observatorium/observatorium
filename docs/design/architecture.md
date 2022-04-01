@@ -20,6 +20,6 @@ When reading, a user accesses the Observatorium API, which exposes the Prometheu
 
 ## Multi-cluster
 
-In order to allow any cluster to make use of regional clusters to get the above described benefits, mutiple clusters have to be deployed. When writing and reading Geo DNS determines which Observatorium endpoint is used. Internally the Observatorium components perform cross cluster communication, should data be necessary to be read from the other regional clusters. If data governance allows, then for latency reasons the regional storage can optionally be replicated to other regions.
+In order to allow any cluster to make use of regional clusters to get the above described benefits, multiple clusters have to be deployed. When writing and reading Geo DNS determines which Observatorium endpoint is used. Internally the Observatorium components perform cross cluster communication, should data be necessary to be read from the other regional clusters. If data governance allows, then for latency reasons the regional storage can optionally be replicated to other regions.
 
 ![Multi Cluster Architecture](/docs/design/multi-cluster.svg)

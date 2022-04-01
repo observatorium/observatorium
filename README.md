@@ -14,7 +14,7 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 
 ### Context
 
-As the Red Hat Monitoring Team, we were focusing on the Observability software and concepts since the CoreOS acquisition. From the beginning, one of our main goals was to establish a stable in-cluster metric collection, querying, and alerting for OpenShift clusters. With the growth of managed Openshift (OSD) clusters, the scope of the team goal has extended: we had to develop a scalable, global, metric stack that can be run in local as well as a central location for monitoring and telemetry purposes. We also worked together with Red Hat Logging and Tracing teams to implement something similar for logging and tracing. We’re also working on Continuous Profiling aspects.
+As the Red Hat Monitoring Team, we were focusing on the Observability software and concepts since the CoreOS acquisition. From the beginning, one of our main goals was to establish a stable in-cluster metric collection, querying, and alerting for OpenShift clusters. With the growth of managed OpenShift (OSD) clusters, the scope of the team goal has extended: we had to develop a scalable, global, metric stack that can be run in local as well as a central location for monitoring and telemetry purposes. We also worked together with Red Hat Logging and Tracing teams to implement something similar for logging and tracing. We’re also working on Continuous Profiling aspects.
 
 From the very beginning our teams were leveraging Open Source to accomplish all those goals. We believe that working with the communities is the best way to have long term, successful systems, share knowledge and establish solid APIs. You might have not seen us, but members of our teams have been actively maintaining and contributing to major Open Source standards and projects like Prometheus, Thanos, Loki, Grafana, kube-state-metrics (KSM), prometheus-operator, kube-prometheus, Alertmanager, cluster-monitoring-operator (CMO), OpenMetrics, Jaeger, ConProf, Cortex, SIG CNCF Observability, SIG K8s Instrumentation and more.
 
@@ -34,7 +34,7 @@ From the very beginning our teams were leveraging Open Source to accomplish all 
 
 * [The `API`](https://github.com/observatorium/api) is the facet of Observatorium service. It's a lightweight proxy written in Go that helps with multi-tenancy, tenancy (isolation, cross tenancy requests, rate-limiting, roles, tracing). This proxy should be used for all external traffic with Observatorium.
 
-* [OPA-AMS](https://github.com/observatorium/opa-ams) is our Go library for integrating Open Policy Agent with Red Hat authorization service for smooth Openshift experience.
+* [OPA-AMS](https://github.com/observatorium/opa-ams) is our Go library for integrating Open Policy Agent with Red Hat authorization service for smooth OpenShift experience.
 
 * [up](https://github.com/observatorium/up) is a useful Go service that periodically queries Observatorium and outputs vital metrics on the Observatorium read path healthiness and performance over time.
 
