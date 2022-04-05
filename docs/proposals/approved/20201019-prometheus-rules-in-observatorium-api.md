@@ -174,7 +174,7 @@ We discussed that we will be likely to employ a RDBMS relatively soon for other 
 
 How will this all work in practice?
 
-![sequence-diagram](../assets/recording-rules-api.svg)
+![sequence-diagram](../../assets/recording-rules-api.svg)
 
 #### 1. Store Tenant Rules
 1. Tenant sends request to the API using the path `/api/metrics/v1/{tenant}/rules` containing their rules data.
