@@ -6,7 +6,6 @@
 |------------------------|----------------------------|---------------------------|----------------------------------------------|---------------|
 | Bartłomiej Płotka      | bwplotka@gmail.com         | `@bwplotka`               | [@bwplotka](https://github.com/bwplotka)     | Red Hat       |
 | Frederic Branczyk      | fbranczyk@gmail.com        | `@brancz`                 | [@brancz](https://github.com/brancz)         | Polar Signals |
-| Juraci Paixão Kröhling | juraci.github@kroehling.de | `@Juraci Paixão Kröhling` | [@jpkrohling](https://github.com/jpkrohling) | Grafana       |
 | Kemal Akkoyun          | kakkoyun@gmail.com         | `@kakkoyun`               | [@kakkoyun](https://github.com/kakkoyun)     | Polar Signals |
 | Lucas Servén Marín     | lserven@gmail.com          | `@squat`                  | [@squat](https://github.com/squat)           | Unaffiliated  |
 | Matthias Loibl         | mail@matthiasloibl.com     | `@metalmatze`             | [@metalmatze](https://github.com/metalmatze) | Polar Signals |
