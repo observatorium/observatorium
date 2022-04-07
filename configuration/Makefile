@@ -11,6 +11,12 @@ RNDR ?= ../../rndr/.bin/rndr # DEBUG
 
 JSONNET_SRC = $(shell find . -type f -not -path './*vendor/*' \( -name '*.libsonnet' -o -name '*.jsonnet' \))
 
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+   # Overcome Mac default limiting xargs -I replace size.
+   XARGS_FLAGS ?= -S 4096
+endif
+
 all: generate validate
 
 render:
@@ -41,31 +47,34 @@ validate: $(KUBEVAL) generate
 	$(KUBEVAL) --ignore-missing-schemas examples/base/manifests/*.yaml examples/dev/manifests/*.yaml examples/local/manifests/*.yaml tests/manifests/*.yaml
 
 examples/base/manifests: examples/base/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
+	echo ecs "$OS"
 	-make fmt
 	-rm -rf examples/base/manifests
 	-mkdir examples/base/manifests
-	$(JSONNET) -J vendor -m examples/base/manifests examples/base/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	$(JSONNET) -J vendor -m examples/base/manifests examples/base/main.jsonnet | xargs -I{} $(XARGS_FLAGS) sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find examples/base/manifests -type f ! -name '*.yaml' -delete
 
 examples/dev/manifests: examples/dev/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
 	-rm -rf examples/dev/manifests
 	-mkdir examples/dev/manifests
-	$(JSONNET) -J vendor -m examples/dev/manifests examples/dev/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	$(JSONNET) -J vendor -m examples/dev/manifests examples/dev/main.jsonnet | xargs -I{} $(XARGS_FLAGS) sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find examples/dev/manifests -type f ! -name '*.yaml' -delete
 
+# Use Jsonnet to generate JSON versions of K8s manifests without .json extensions,
+# then send all the JSON through xargs to be converted into YAML and given .yaml extension
 examples/local/manifests: examples/local/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
 	-rm -rf examples/local/manifests
 	-mkdir examples/local/manifests
-	$(JSONNET) -J vendor -m examples/local/manifests examples/local/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	$(JSONNET) -J vendor -m examples/local/manifests examples/local/main.jsonnet | xargs -I{} $(XARGS_FLAGS) sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find examples/local/manifests -type f ! -name '*.yaml' -delete
 
 tests/manifests: tests/main.jsonnet vendor generate-cert $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
 	-rm -rf tests/manifests
 	-mkdir tests/manifests
-	$(JSONNET) -J vendor -m tests/manifests tests/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	$(JSONNET) -J vendor -m tests/manifests tests/main.jsonnet | xargs -I{} $(XARGS_FLAGS) sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find tests/manifests -type f ! -name '*.yaml' -delete
 
 .PHONY: generate-cert
