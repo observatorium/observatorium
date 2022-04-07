@@ -4,3 +4,6 @@ validators:
   # ignore links for release tarballs
   - regex: 'releases\/download'
     type: 'ignore'
+  # Always returns 403.
+  - regex: 'cloudflare\.com'
+    type: 'ignore'
