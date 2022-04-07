@@ -46,6 +46,8 @@ generate: examples/base/manifests examples/dev/manifests examples/local/manifest
 validate: $(KUBEVAL) generate
 	$(KUBEVAL) --ignore-missing-schemas examples/base/manifests/*.yaml examples/dev/manifests/*.yaml examples/local/manifests/*.yaml tests/manifests/*.yaml
 
+# Use Jsonnet to generate JSON versions of K8s manifests without .json extensions,
+# then send all the JSON through xargs to be converted into YAML and given .yaml extension.
 examples/base/manifests: examples/base/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	echo ecs "$OS"
 	-make fmt
@@ -61,8 +63,6 @@ examples/dev/manifests: examples/dev/main.jsonnet vendor $(JSONNET_SRC) $(JSONNE
 	$(JSONNET) -J vendor -m examples/dev/manifests examples/dev/main.jsonnet | xargs -I{} $(XARGS_FLAGS) sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find examples/dev/manifests -type f ! -name '*.yaml' -delete
 
-# Use Jsonnet to generate JSON versions of K8s manifests without .json extensions,
-# then send all the JSON through xargs to be converted into YAML and given .yaml extension
 examples/local/manifests: examples/local/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
 	-rm -rf examples/local/manifests
