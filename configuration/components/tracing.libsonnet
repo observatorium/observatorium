@@ -92,6 +92,23 @@ function(params) {
         labels: newCommonLabels(component),
       },
       spec: tracing.config.jaegerSpec,
+    } + {
+      spec+: {
+        ui+: {
+          options+: {
+            menu+: [
+              {
+                anchorTarget: '_self',
+                label: 'Log Out',
+                url: './login',
+              },
+            ],
+            dependencies: {
+              menuEnabled: false,
+            },
+          },
+        },
+      },
     },
   manifests: {
     otelcollector: tracing.otelcolcr,

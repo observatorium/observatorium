@@ -25,9 +25,6 @@ local dev = obs {
         strategy: 'allinone',
         ui: {
           options: {
-            dependencies: {
-              menuEnabled: false,
-            },
             menu: [
               {
                 items: [
@@ -37,11 +34,6 @@ local dev = obs {
                   },
                 ],
                 label: 'About',
-              },
-              {
-                anchorTarget: '_self',
-                label: 'Log Out',
-                url: './login',
               },
             ],
           },
