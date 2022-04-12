@@ -91,10 +91,7 @@ function(params) {
         namespace: tracing.config.namespace,
         labels: newCommonLabels(component),
       },
-      spec: {
-        strategy: tracing.config.jaeger.strategy,
-        ui: tracing.config.jaeger.ui,
-      },
+      spec: tracing.config.jaegerSpec,
     },
   manifests: {
     otelcollector: tracing.otelcolcr,
