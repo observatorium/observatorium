@@ -21,27 +21,30 @@ local dev = obs {
     obs.tracing.config {
       tenants: [tenant.name],
       enabled: true,
-      jaegerUI: {
-        options: {
-          dependencies: {
-            menuEnabled: false,
+      jaeger: {
+        strategy: 'allinone',
+        ui: {
+          options: {
+            dependencies: {
+              menuEnabled: false,
+            },
+            menu: [
+              {
+                items: [
+                  {
+                    label: 'Documentation',
+                    url: 'https://access.redhat.com/documentation/en-us/openshift_container_platform/4.9/html/distributed_tracing/index',
+                  },
+                ],
+                label: 'About',
+              },
+              {
+                anchorTarget: '_self',
+                label: 'Log Out',
+                url: './login',
+              },
+            ],
           },
-          menu: [
-            {
-              items: [
-                {
-                  label: 'Documentation',
-                  url: 'https://access.redhat.com/documentation/en-us/openshift_container_platform/4.9/html/distributed_tracing/index',
-                },
-              ],
-              label: 'About',
-            },
-            {
-              anchorTarget: '_self',
-              label: 'Log Out',
-              url: './login',
-            },
-          ],
         },
       },
     },

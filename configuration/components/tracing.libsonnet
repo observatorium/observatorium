@@ -92,8 +92,8 @@ function(params) {
         labels: newCommonLabels(component),
       },
       spec: {
-        strategy: 'allinone',
-        ui: tracing.config.jaegerUI,
+        strategy: tracing.config.jaeger.strategy,
+        ui: tracing.config.jaeger.ui,
       },
     },
   manifests: {
