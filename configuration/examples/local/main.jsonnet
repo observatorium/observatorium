@@ -25,6 +25,11 @@ local dev = obs {
   ),
   api: api(
     obs.api.config {
+      traces: {
+        writeEndpoint: obs.api.config.traces.writeEndpoint,
+        templateEndpoint: obs.api.config.traces.templateEndpoint,
+        enabled: true,
+      },
       rbac: {
         roles: [
           {

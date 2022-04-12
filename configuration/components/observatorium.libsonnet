@@ -79,7 +79,13 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
       ],
     },
     traces: {
+      // gRPC OpenTelemetry collector for traces endpoint
       writeEndpoint: obs.tracing.manifests.otelcollector.metadata.name + '-collector:4317',
+
+      // Jaeger V2 HTTP query for traces using Observatorium tenancy pattern
+      templateEndpoint: 'http://jaeger-{tenant}-collector:16686',
+
+      enabled: false,
     },
     rateLimiter: {
       grpcAddress: '%s.%s.svc.cluster.local:%d' % [
