@@ -1,0 +1,40 @@
+apiVersion: v1
+stringData:
+  datasources.yaml: |-
+    {
+        "apiVersion": 1,
+        "datasources": [
+            {
+                "access": "proxy",
+                "editable": false,
+                "name": "prometheus",
+                "orgId": 1,
+                "type": "prometheus",
+                "url": "http://prometheus-k8s.monitoring.svc:9090",
+                "version": 1
+            },
+            {
+                "access": "proxy",
+                "editable": false,
+                "name": "Observatorium",
+                "orgId": 1,
+                "type": "prometheus",
+                "url": "http://token-refresher.observatorium.svc.cluster.local:8080/api/metrics/v1/test-oidc/",
+                "version": 1
+            },
+            {
+                "access": "proxy",
+                "editable": false,
+                "name": "Thanos Query",
+                "orgId": 1,
+                "type": "prometheus",
+                "url": "http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090/",
+                "version": 1
+            }
+        ]
+    }
+kind: Secret
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+type: Opaque
