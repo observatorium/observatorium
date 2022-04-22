@@ -27,7 +27,6 @@ If they choose to accept, the following steps are taken:
 * Maintainer is added to the [GitHub organization](https://github.com/observatorium) as an *Owner*.
 * Maintainer is added to the [Observatorium](https://groups.google.com/forum/#!forum/observatorium-team).
 * Maintainer is added to the list of team members [here](https://observatorium.io/docs/community/maintainers.md/)
-* New maintainer is announced on the [Observatorium Twitter](https://twitter.com/0bservatorium) by an existing team member.
 
 Team members may retire at any time by emailing the [observatorium-team@googlegroups.com](https://groups.google.com/forum/#!forum/observatorium-team) mailing list.
 
@@ -125,8 +124,6 @@ See [Contributor doc]()
 ### How do I become a team member?
 
 To become an official member of the Maintainers Team, you should make ongoing contributions to one or more project(s) for at least three months. At that point, a team member (typically a maintainer of the project) may propose you for membership. The discussion about this will be held in private, and you will be informed privately when a decision has been made. A possible, but not required, graduation path is to become a triage member first.
-
-Should the decision be in favor, your new membership will also be announced on the [Observatorium Twitter](https://twitter.com/0bservatorium).
 
 ### How do I add a project?
 
