@@ -7,3 +7,6 @@ validators:
   # Always returns 403.
   - regex: 'cloudflare\.com'
     type: 'ignore'
+  # May return a 404 in some environments
+  - regex: 'twitter\.com'
+    type: 'ignore'
