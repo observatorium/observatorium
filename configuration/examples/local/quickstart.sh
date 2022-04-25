@@ -60,7 +60,6 @@ deploy() {
   echo "- Deploying Hydra...  -"
   echo "-------------------------------------------"
   $KUBECTL apply -f ./manifests/hydra
-  $KUBECTL wait --for=condition=available --timeout=10m -n hydra deploy/hydra
 
   echo "-------------------------------------------"
   echo "- Deploying kube-prometheus...  -"
@@ -79,17 +78,18 @@ deploy() {
   $KUBECTL wait --for=condition=available --timeout=5m -n cert-manager deploy/cert-manager-cainjector
   $KUBECTL wait --for=condition=available --timeout=5m -n cert-manager deploy/cert-manager-webhook
   $KUBECTL apply -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.32.0/jaeger-operator.yaml -n observability
-  $KUBECTL wait --for=condition=available --timeout=5m -n observability deploy/jaeger-operator
 
   echo "-------------------------------------------"
   echo "- Deploying OpenTelemetry Operator...  -"
   echo "-------------------------------------------"
   $KUBECTL apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
-  $KUBECTL wait --for=condition=available --timeout=5m -n opentelemetry-operator-system deploy/opentelemetry-operator-controller-manager
 
   echo "-------------------------------------------"
   echo "- Deploying Observatorium...  -"
   echo "-------------------------------------------"
+  $KUBECTL wait --for=condition=available --timeout=5m -n observability deploy/jaeger-operator
+  $KUBECTL wait --for=condition=available --timeout=5m -n opentelemetry-operator-system deploy/opentelemetry-operator-controller-manager
+  $KUBECTL wait --for=condition=available --timeout=10m -n hydra deploy/hydra
   $KUBECTL apply -f ./manifests/api
   $KUBECTL apply -f ./manifests/gubernator
   $KUBECTL apply -f ./manifests/loki
