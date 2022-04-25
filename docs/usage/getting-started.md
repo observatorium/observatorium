@@ -54,7 +54,13 @@ If you just want to run Observatorium locally and get started quickly, take a lo
   cd configuration/examples/local
   ```
 
+- **kubectl**: we need to talk to Kubernetes clusters. Check [the official documentation on how to install it](https://kubernetes.io/docs/tasks/tools/#kubectl).
+
+- **git**: we will use `git` download some dependencies from Github repositories. Check the [Installing Git documentation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) for details.
+
 - **kind**: we need to run a local Kubernetes cluster to run our stack in. We are going to use KIND (Kubernetes in Docker) for that. You can follow the [Getting Started](https://kind.sigs.k8s.io/docs/user/quick-start/) guide to install it.
+
+- **kube-prometheus**: installs Prometheus Operator, Grafana, and a few exporters. We will use them to gather and visualize metrics. See [prometheus-operator/kube-prometheus](https://github.com/prometheus-operator/kube-prometheus) for more information.
 
 - **ORY Hydra**: [OIDC (OpenID Connect)](https://openid.net/connect/) is a popular authentication often available in your company or major cloud providers. For local purposes we will run our own OIDC provider to handle authentication. We are going to use ORY Hydra for that.
 
