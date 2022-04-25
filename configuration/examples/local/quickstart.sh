@@ -7,6 +7,7 @@ trap 'kill 0' SIGTERM
 
 KUBECTL="${KUBECTL:-kubectl}"
 KIND="${KIND:-kind}"
+git="${GIT:-git}"
 
 if [ ! $(command -v "$KIND") ]; then
   echo "Cannot find or execute KIND binary $KIND, you can override it by setting the KIND env variable"
@@ -18,21 +19,10 @@ if [ ! $(command -v "$KUBECTL") ]; then
   exit 1
 fi
 
-OS="$(uname)"
-case $OS in
-'Linux')
-    PROM_OS='linux'
-    HYDRA_OS='linux'
-    ;;
-'Darwin')
-    PROM_OS='darwin'
-    HYDRA_OS='macos'
-    ;;
-*)
-    echo "Unsupported OS for this script: $OS"
-    exit 1
-    ;;
-esac
+if [ ! $(command -v "$GIT") ]; then
+  echo "Cannot find or execute Git binary $GIT, you can override it by setting the GIT env variable"
+  exit 1
+fi
 
 setup() {
   echo "-------------------------------------------"
@@ -64,7 +54,7 @@ deploy() {
   echo "-------------------------------------------"
   echo "- Deploying kube-prometheus...  -"
   echo "-------------------------------------------"
-  git clone https://github.com/prometheus-operator/kube-prometheus.git
+  $GIT clone https://github.com/prometheus-operator/kube-prometheus.git
   $KUBECTL apply --server-side -f kube-prometheus/manifests/setup
   until $KUBECTL get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
   $KUBECTL apply -f kube-prometheus/manifests/
