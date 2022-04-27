@@ -64,7 +64,7 @@ If you just want to run Observatorium locally and get started quickly, take a lo
 
 - **ORY Hydra**: [OIDC (OpenID Connect)](https://openid.net/connect/) is a popular authentication often available in your company or major cloud providers. For local purposes we will run our own OIDC provider to handle authentication. We are going to use ORY Hydra for that.
 
-- **Jager Operator**: our tool of choice for tracing. See [Jaeger documentation](https://www.jaegertracing.io/docs/latest/operator/) for more information.
+- **Jaeger Operator**: our tool of choice for tracing. See [Jaeger documentation](https://www.jaegertracing.io/docs/latest/operator/) for more information.
 
 - **OpenTelemetry Operator**: we use the OTel Collector to build the distributed tracing component. See [open-telemetry/opentelemetry-operator](https://github.com/open-telemetry/opentelemetry-operator) for more information.
 
