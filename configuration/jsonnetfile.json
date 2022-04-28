@@ -39,6 +39,15 @@
         }
       },
       "version": "main"
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/prometheus-operator/kube-prometheus",
+          "subdir": "jsonnet"
+        }
+      },
+      "version": "main"
     }
   ],
   "legacyImports": true

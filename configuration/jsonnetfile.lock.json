@@ -8,8 +8,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "41d37e5b0ee2a8184186a20cbfbb579101619872",
-      "sum": "3Vy5ShPtlABhjhl9xZoo7bKlzWg9Ow6Skt56Gody2JM=",
+      "version": "b5bb3f5baef1acbb1ae63a109c7d5a63cd74f8f2",
+      "sum": "CeMR9iJuL2Fip9vPL+2jGmfiwJaWrjGwZ+/1bK7aa0E=",
       "name": "observatorium-api"
     },
     {
@@ -19,8 +19,8 @@
           "subdir": "jsonnet/lib"
         }
       },
-      "version": "929e5752817548374c8a4f3cf0e3adadb3c0fc18",
-      "sum": "0yZzNAcHQER0vE90d4iur3mYSitIhe8DhIFBeWdlb6k=",
+      "version": "b58820fe6cacd0ee48e4dd2121ec0cce515ed88a",
+      "sum": "DjFtgkiaafkhQ3OZYqmw7vuULlqNzhZS60qyClHZeNo=",
       "name": "thanos-receive-controller"
     },
     {
@@ -30,9 +30,19 @@
           "subdir": "jsonnet"
         }
       },
-      "version": "098c31ad09f7eab87796b7f91e5caddc6c41bd60",
+      "version": "5556b6983ef6b1d50fef5fd01054212b3cb15c49",
       "sum": "0FKabnXd0rMeu8YpkkopEOknqBf5PLq/DIIDd0ve7cU=",
       "name": "up"
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/prometheus-operator/kube-prometheus.git",
+          "subdir": "jsonnet"
+        }
+      },
+      "version": "0979ac3df3c82af4b0ea0a636e74a4237be0a2d9",
+      "sum": "518N8oNtaSYBssLbXOci8elt6UwkEp+oFMLqzfRbZq4="
     },
     {
       "source": {
