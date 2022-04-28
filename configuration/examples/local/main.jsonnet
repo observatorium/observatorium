@@ -2,7 +2,7 @@ local tenant = {
   name: 'test-oidc',
   id: '1610b0c3-c509-4592-a256-a1871353dbfa',
   clientID: 'observatorium',
-  issuerURL: 'http://172.17.0.1:4444/',
+  issuerURL: 'http://hydra.hydra.svc.cluster.local:4444/',
   user: 'user',
 };
 
@@ -11,6 +11,10 @@ local minio = (import '../../components/minio.libsonnet')({
   buckets: ['thanos', 'loki'],
   accessKey: 'minio',
   secretKey: 'minio123',
+});
+
+local kube_prometheus = (import '../../components/kube-prometheus.libsonnet')({
+  name: 'observatorium',
 });
 
 local api = (import 'observatorium-api/observatorium-api.libsonnet');
@@ -124,3 +128,5 @@ dev.manifests
   },
   'minio-service': minio.service,
 }
++
+kube_prometheus
