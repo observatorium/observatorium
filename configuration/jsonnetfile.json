@@ -44,7 +44,7 @@
       "source": {
         "git": {
           "remote": "https://github.com/prometheus-operator/kube-prometheus",
-          "subdir": "jsonnet"
+          "subdir": "jsonnet/kube-prometheus"
         }
       },
       "version": "main"

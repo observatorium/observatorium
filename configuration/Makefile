@@ -73,6 +73,13 @@ examples/local/manifests: examples/local/main.jsonnet vendor $(JSONNET_SRC) $(JS
 	$(JSONNET) -J vendor -m examples/local/manifests examples/local/main.jsonnet | $(XARGS) -I{} $(XARGS_FLAGS) sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find examples/local/manifests -type f ! -name '*.yaml' -delete
 
+examples/infra/manifests: examples/infra/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
+	-make fmt
+	-rm -rf examples/infra/manifests
+	-mkdir examples/infra/manifests
+	$(JSONNET) -J vendor -m examples/infra/manifests examples/infra/main.jsonnet | $(XARGS) -I{} $(XARGS_FLAGS) sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+	find examples/infra/manifests -type f ! -name '*.yaml' -delete
+
 tests/manifests: tests/main.jsonnet vendor generate-cert $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
 	-rm -rf tests/manifests

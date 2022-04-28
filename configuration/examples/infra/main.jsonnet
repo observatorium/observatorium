@@ -1,5 +1,5 @@
-local kp = (import 'github.com/kube-prometheus/main.libsonnet') +
-           (import 'github.com/kube-prometheus/addons/all-namespaces.libsonnet') + {
+local kp = (import 'github.com/prometheus-operator/kube-prometheus/jsonnet/kube-prometheus/main.libsonnet') +
+           (import 'github.com/prometheus-operator/kube-prometheus/jsonnet/kube-prometheus/addons/all-namespaces.libsonnet') + {
   values+:: {
     common+: {
       namespace: 'monitoring',
