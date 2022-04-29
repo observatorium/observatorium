@@ -13,9 +13,7 @@ local minio = (import '../../components/minio.libsonnet')({
   secretKey: 'minio123',
 });
 
-local kube_prometheus = (import '../../components/kube-prometheus.libsonnet')({
-  name: 'observatorium',
-});
+local kube_prometheus = (import '../../components/kube-prometheus.libsonnet')({});
 
 local api = (import 'observatorium-api/observatorium-api.libsonnet');
 local obs = (import '../../components/observatorium.libsonnet');

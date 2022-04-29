@@ -10,15 +10,7 @@ local kp = (import 'kube-prometheus/main.libsonnet') +
   },
 };
 
-local defaults = {
-  local defaults = self,
-  name: error 'must provide name',
-};
-
 function(params) {
-  local prom = self,
-  config:: defaults + params,
-
   'kube-prometheus/0prometheus-operator': [
     kp.prometheusOperator[name]
     for name in std.filter(
