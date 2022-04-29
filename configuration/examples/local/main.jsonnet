@@ -96,6 +96,10 @@ local token_refresher = (import '../../components/token-refresher.libsonnet')({
   serviceMonitor: true,
 });
 
+local hydra = (import '../../components/hydra.libsonnet')({
+  namespace: 'hydra',
+});
+
 dev.manifests
 {
   'minio-deployment': minio.deployment,
@@ -135,4 +139,5 @@ dev.manifests
   'minio-service': minio.service,
 } +
 kube_prometheus +
-token_refresher
+token_refresher +
+hydra
