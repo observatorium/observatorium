@@ -88,6 +88,14 @@ local dev = obs {
   ),
 };
 
+local token_refresher = (import '../../components/token-refresher.libsonnet')({
+  namespace: dev.api.config.namespace,
+  version: 'master-2021-03-05-b34376b',
+  url: std.format('http://%s.%s.svc:%d', [dev.api.config.name, dev.api.config.namespace, dev.api.config.ports.public]),
+  secretName: 'token-refresher-oidc',
+  serviceMonitor: true,
+});
+
 dev.manifests
 {
   'minio-deployment': minio.deployment,
@@ -125,6 +133,6 @@ dev.manifests
     type: 'Opaque',
   },
   'minio-service': minio.service,
-}
-+
-kube_prometheus
+} +
+kube_prometheus +
+token_refresher
