@@ -14,6 +14,15 @@ local base_kp = (import 'kube-prometheus/main.libsonnet') +
 
 function(params)
   local kp = base_kp {
+    prometheus+: {
+      prometheus+: {
+        spec+: {
+          remoteWrite: [{
+            url: 'FIX ME',
+          }],
+        },
+      },
+    },
     values+:: {
       grafana+:: {
         datasources+: [
