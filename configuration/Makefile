@@ -56,28 +56,44 @@ examples/base/manifests: examples/base/main.jsonnet vendor $(JSONNET_SRC) $(JSON
 	-make fmt
 	-rm -rf examples/base/manifests
 	-mkdir examples/base/manifests
+<<<<<<< HEAD
 	$(JSONNET) -J vendor -m examples/base/manifests examples/base/main.jsonnet | $(XARGS) -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+=======
+	$(JSONNET) -J vendor -c -m examples/base/manifests examples/base/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+>>>>>>> 53b4959fa2a579a041f964075600fff6c7ac56e4
 	find examples/base/manifests -type f ! -name '*.yaml' -delete
 
 examples/dev/manifests: examples/dev/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
 	-rm -rf examples/dev/manifests
 	-mkdir examples/dev/manifests
+<<<<<<< HEAD
 	$(JSONNET) -J vendor -m examples/dev/manifests examples/dev/main.jsonnet | $(XARGS) -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+=======
+	$(JSONNET) -J vendor -c -m examples/dev/manifests examples/dev/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+>>>>>>> 53b4959fa2a579a041f964075600fff6c7ac56e4
 	find examples/dev/manifests -type f ! -name '*.yaml' -delete
 
 examples/local/manifests: examples/local/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
 	-rm -rf examples/local/manifests
 	-mkdir examples/local/manifests
+<<<<<<< HEAD
 	$(JSONNET) -J vendor -m examples/local/manifests examples/local/main.jsonnet | $(XARGS) -I{} $(XARGS_FLAGS) sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+=======
+	$(JSONNET) -J vendor -c -m examples/local/manifests examples/local/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+>>>>>>> 53b4959fa2a579a041f964075600fff6c7ac56e4
 	find examples/local/manifests -type f ! -name '*.yaml' -delete
 
 tests/manifests: tests/main.jsonnet vendor generate-cert $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
 	-rm -rf tests/manifests
 	-mkdir tests/manifests
+<<<<<<< HEAD
 	$(JSONNET) -J vendor -m tests/manifests tests/main.jsonnet | $(XARGS) -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+=======
+	$(JSONNET) -J vendor -c -m tests/manifests tests/main.jsonnet | xargs -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
+>>>>>>> 53b4959fa2a579a041f964075600fff6c7ac56e4
 	find tests/manifests -type f ! -name '*.yaml' -delete
 
 .PHONY: generate-cert
