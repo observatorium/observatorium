@@ -147,22 +147,22 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
 
   manifests+::
     {
-      ['gubernator-' + name]: obs.gubernator[name]
+      ['observatorium/gubernator-' + name]: obs.gubernator[name]
       for name in std.objectFields(obs.gubernator)
       if obs.gubernator[name] != null
     } + {
-      ['api-' + name]: obs.api[name]
+      ['observatorium/api-' + name]: obs.api[name]
       for name in std.objectFields(obs.api)
       if obs.api[name] != null
     } + {
-      ['thanos-' + name]: obs.thanos.manifests[name]
+      ['observatorium/thanos-' + name]: obs.thanos.manifests[name]
       for name in std.objectFields(obs.thanos.manifests)
     } + (if std.objectHas(obs.loki, 'manifests') then {
-           ['loki-' + name]: obs.loki.manifests[name]
+           ['observatorium/loki-' + name]: obs.loki.manifests[name]
            for name in std.objectFields(obs.loki.manifests)
          } else {})
     + (if obs.tracing.config.enabled then {
-         ['tracing-' + name]: obs.tracing.manifests[name]
+         ['observatorium/tracing-' + name]: obs.tracing.manifests[name]
          for name in std.objectFields(obs.tracing.manifests)
        } else {}),
 }
