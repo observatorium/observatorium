@@ -35,7 +35,7 @@ deploy() {
     # service CA for the first tenant, "test"
     $KUBECTL apply -f configuration/tests/manifests/test-ca-tls.yaml
 
-    $KUBECTL apply -f configuration/examples/dev/manifests/
+    $KUBECTL apply -R -f configuration/examples/dev/manifests/
 }
 
 run_test() {
