@@ -6,7 +6,8 @@ local usercreator = (import './hydra/usercreator.libsonnet');
 local defaults = {
   local defaults = self,
   namespace: error 'must provide namespace',
-  url: 'http://hydra.hydra.svc.cluster.local:4444/',
+  issuerUrl: 'http://hydra.hydra.svc.cluster.local:4444/',
+  clientsUrl: 'http://hydra.hydra.svc.cluster.local:4445/clients',
   audience: 'observatorium',
   clientId: 'user',
   clientSecret: 'secret',
@@ -17,7 +18,7 @@ local defaults = {
     },
     urls: {
       'self': {
-        issuer: defaults.url,
+        issuer: defaults.issuerUrl,
       },
     },
   },
@@ -47,13 +48,13 @@ function(params)
                   'Content-Type: application/json',
                   '--data',
                   std.manifestJsonMinified({
-                    audience: [config.namespace],
+                    audience: [config.audience],
                     client_id: config.clientId,
                     client_secret: config.clientSecret,
                     grant_types: ['client_credentials'],
                     token_endpiont_auth_method: 'client_secret_basic',
                   }),
-                  std.format('%s:4445/clients', config.url),
+                  config.clientsUrl,
                 ],
               },
             ],

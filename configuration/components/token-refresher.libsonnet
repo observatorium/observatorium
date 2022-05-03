@@ -2,6 +2,7 @@ local defaults = {
   namespace: error 'must provide namespace',
   serviceMonitor: true,
   secretName: 'token-refresher-oidc',
+  url: error 'must provide url',
   issuerUrl: error 'must provide issuerUrl',
   clientId: error 'must provide clientId',
   clientSecret: error 'must provide clientSecret',
@@ -16,14 +17,20 @@ function(params)
     name: 'token-refresher',
     namespace: config.namespace,
     version: 'master-2021-03-05-b34376b',
-    url: config.issuerUrl,
+    url: config.url,
     secretName: config.secretName,
     clientIDKey: 'clientId',
     issuerURLKey: 'issuerUrl',
     serviceMonitor: config.serviceMonitor,
   });
 
-  { ['token-refresher/token-refresher-' + name]: tr[name] for name in std.objectFields(tr) } +
+  {
+    config:: config {
+      ports: tr.config.ports,
+      name: tr.config.name,
+    },
+  }
+  { ['token-refresher/token-refresher-' + name]: tr[name] for name in std.objectFields(tr) }
   {
     'token-refresher/token-refrehser-oidc-secret': {
       kind: 'Secret',
