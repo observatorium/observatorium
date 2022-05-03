@@ -49,7 +49,7 @@ generate: examples/base/manifests examples/dev/manifests examples/local/manifest
 
 .PHONY: validate
 validate: $(KUBEVAL) generate
-	$(KUBEVAL) --ignore-missing-schemas examples/base/manifests/*.yaml examples/dev/manifests/*.yaml examples/local/manifests/*.yaml tests/manifests/*.yaml
+	$(KUBEVAL) --ignore-missing-schemas -d examples/base/manifests/,examples/dev/manifests/,examples/local/manifests/,tests/manifests/
 
 # Use Jsonnet to generate JSON versions of K8s manifests without .json extensions,
 # then send all the JSON through xargs to be converted into YAML and given .yaml extension.
