@@ -13,11 +13,13 @@ JSONNET_SRC = $(shell find . -type f -not -path './*vendor/*' \( -name '*.libson
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
-   # macOS/BSD xargs not compatible with this Makefile (because of -S replsize default of 256).
-   # (Use for example `brew install findutils` to get gxargs).
-   XARGS ?= gxargs
+    # macOS/BSD xargs not compatible with this Makefile (because of -S replsize default of 256).
+    XARGS ?= gxargs
+    ifeq ($(shell command -v "$(XARGS)"), "")
+        $(error "Cannot find or execute gxargs binary, you can install it with `brew install findutils`")
+    endif
 else
-   XARGS ?= xargs
+    XARGS ?= xargs
 endif
 
 all: generate validate
