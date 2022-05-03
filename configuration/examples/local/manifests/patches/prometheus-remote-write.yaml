@@ -1,3 +1,0 @@
-spec:
-  remoteWrite:
-  - url: http://token-refresher.observatorium.svc.cluster.local:8080/api/metrics/v1/test-oidc/api/v1/receive

@@ -4,6 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/instance: token-refresher
     app.kubernetes.io/name: token-refresher
+    app.kubernetes.io/version: master-2021-03-05-b34376b
   name: token-refresher
   namespace: observatorium
 spec:

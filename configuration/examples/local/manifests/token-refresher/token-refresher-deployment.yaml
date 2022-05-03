@@ -4,30 +4,24 @@ metadata:
   labels:
     app.kubernetes.io/instance: token-refresher
     app.kubernetes.io/name: token-refresher
+    app.kubernetes.io/version: master-2021-03-05-b34376b
   name: token-refresher
   namespace: observatorium
 spec:
-  progressDeadlineSeconds: 600
-  replicas: 1
-  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app.kubernetes.io/instance: token-refresher
       app.kubernetes.io/name: token-refresher
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
   template:
     metadata:
       labels:
         app.kubernetes.io/instance: token-refresher
         app.kubernetes.io/name: token-refresher
+        app.kubernetes.io/version: master-2021-03-05-b34376b
     spec:
       containers:
       - args:
-        - --log.level=debug
+        - --log.level=info
         - --log.format=logfmt
         - --web.listen=0.0.0.0:8080
         - --web.internal.listen=0.0.0.0:8081
@@ -57,21 +51,10 @@ spec:
             secretKeyRef:
               key: issuerUrl
               name: token-refresher-oidc
-        image: quay.io/observatorium/token-refresher
-        imagePullPolicy: IfNotPresent
+        image: quay.io/observatorium/token-refresher:master-2021-03-05-b34376b
         name: token-refresher
         ports:
         - containerPort: 8081
           name: internal
-          protocol: TCP
         - containerPort: 8080
           name: web
-          protocol: TCP
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      schedulerName: default-scheduler
-      securityContext: {}
-      terminationGracePeriodSeconds: 30

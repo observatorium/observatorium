@@ -7,7 +7,6 @@ trap 'kill 0' SIGTERM
 
 KUBECTL="${KUBECTL:-kubectl}"
 KIND="${KIND:-kind}"
-git="${GIT:-git}"
 
 if [ ! $(command -v "$KIND") ]; then
   echo "Cannot find or execute KIND binary $KIND, you can override it by setting the KIND env variable"
@@ -16,11 +15,6 @@ fi
 
 if [ ! $(command -v "$KUBECTL") ]; then
   echo "Cannot find or execute Kubectl binary $KUBECTL, you can override it by setting the KUBECTL env variable"
-  exit 1
-fi
-
-if [ ! $(command -v "$GIT") ]; then
-  echo "Cannot find or execute Git binary $GIT, you can override it by setting the GIT env variable"
   exit 1
 fi
 
@@ -54,11 +48,9 @@ deploy() {
   echo "-------------------------------------------"
   echo "- Deploying kube-prometheus...  -"
   echo "-------------------------------------------"
-  $GIT clone https://github.com/prometheus-operator/kube-prometheus.git
-  $KUBECTL apply --server-side -f kube-prometheus/manifests/setup
+  $KUBECTL apply --server-side -f ./manifests/kube-prometheus/setup
   until $KUBECTL get servicemonitors --all-namespaces ; do date; sleep 1; echo ""; done
-  $KUBECTL apply -f kube-prometheus/manifests/
-  rm -rf kube-prometheus
+  $KUBECTL apply --server-side -f ./manifests/kube-prometheus/
 
   echo "-------------------------------------------"
   echo "- Deploying Jaeger Operator...  -"
@@ -80,16 +72,8 @@ deploy() {
   $KUBECTL wait --for=condition=available --timeout=5m -n observability deploy/jaeger-operator
   $KUBECTL wait --for=condition=available --timeout=5m -n opentelemetry-operator-system deploy/opentelemetry-operator-controller-manager
   $KUBECTL wait --for=condition=available --timeout=10m -n hydra deploy/hydra
-  $KUBECTL apply -f ./manifests/api
-  $KUBECTL apply -f ./manifests/gubernator
-  $KUBECTL apply -f ./manifests/loki
-  $KUBECTL apply -f ./manifests/thanos
-  $KUBECTL apply -f ./manifests/tracing
   $KUBECTL apply -f ./manifests/token-refresher
-  $KUBECTL apply -f ./manifests/patches/observatorium-grafana-datasource.yaml
-  $KUBECTL rollout -n monitoring restart deploy/grafana
-  $KUBECTL patch -n monitoring prometheus k8s --type merge --patch-file ./manifests/patches/prometheus-remote-write.yaml
-  $KUBECTL rollout -n monitoring restart statefulset/prometheus-k8s
+  $KUBECTL apply -f ./manifests/observatorium
 
   echo "-------------------------------------------"
   echo "- Waiting for Observatorium to come up...  -"

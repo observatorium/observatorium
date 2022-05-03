@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hydra
-  namespace: hydra
   labels:
     app: hydra
+  name: hydra
+  namespace: hydra
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: hydra
-  replicas: 1
   strategy:
     type: RollingUpdate
   template:
@@ -17,39 +17,50 @@ spec:
       labels:
         app: hydra
     spec:
-      volumes:
-        - name: hydra-config
-          configMap:
-            name: hydra-config
-        - name: hydra-sqlite
-          emptyDir: {}
-      initContainers:
-        - name: hydra-sql-migrate
-          image: 'oryd/hydra:v1.11.7'
-          imagePullPolicy: IfNotPresent
-          args: ["migrate", "sql", "-e", "--yes", "--config", "/data/hydra/config.yaml"]
-          volumeMounts:
-            - mountPath: /data/hydra/
-              name: hydra-config
-              readOnly: true
-            - mountPath: /var/lib/sqlite
-              name: hydra-sqlite
       containers:
-        - name: hydra
-          image: 'oryd/hydra:v1.11.7'
-          imagePullPolicy: IfNotPresent
-          args: ["serve", "all", "--dangerous-force-http", "--config", "/data/hydra/config.yaml"]
-          volumeMounts:
-            - mountPath: /data/hydra/
-              name: hydra-config
-              readOnly: true
-            - mountPath: /var/lib/sqlite
-              name: hydra-sqlite
-          ports:
-            - name: token
-              containerPort: 5555
-            - name: public
-              containerPort: 4444
-            - name: admin
-              containerPort: 4445
-          resources: {}
+      - args:
+        - serve
+        - all
+        - --dangerous-force-http
+        - --config
+        - /data/hydra/config.yaml
+        image: oryd/hydra:v1.11.7
+        imagePullPolicy: IfNotPresent
+        name: hydra
+        ports:
+        - containerPort: 5555
+          name: token
+        - containerPort: 4444
+          name: public
+        - containerPort: 4445
+          name: admin
+        resources: {}
+        volumeMounts:
+        - mountPath: /data/hydra/
+          name: hydra-config
+          readOnly: true
+        - mountPath: /var/lib/sqlite
+          name: hydra-sqlite
+      initContainers:
+      - args:
+        - migrate
+        - sql
+        - -e
+        - --yes
+        - --config
+        - /data/hydra/config.yaml
+        image: oryd/hydra:v1.11.7
+        imagePullPolicy: IfNotPresent
+        name: hydra-sql-migrate
+        volumeMounts:
+        - mountPath: /data/hydra/
+          name: hydra-config
+          readOnly: true
+        - mountPath: /var/lib/sqlite
+          name: hydra-sqlite
+      volumes:
+      - configMap:
+          name: hydra-config
+        name: hydra-config
+      - emptyDir: {}
+        name: hydra-sqlite
