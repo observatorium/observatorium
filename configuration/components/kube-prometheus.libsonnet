@@ -12,13 +12,19 @@ local base_kp = (import 'kube-prometheus/main.libsonnet') +
                   },
                 };
 
+local defaults = {
+  observatoriumRemoteWriteUrl: error 'must provide observatoriumRemoteWriteUrl',
+  observatoriumDatasourceUrl: error 'must provide observatoriumDatasourceUrl',
+};
+
 function(params)
+  local config = defaults + params;
   local kp = base_kp {
     prometheus+: {
       prometheus+: {
         spec+: {
           remoteWrite: [{
-            url: 'FIX ME',
+            url: config.observatoriumRemoteWriteUrl,
           }],
         },
       },
@@ -30,7 +36,7 @@ function(params)
             name: 'Observatorium API',
             type: 'prometheus',
             access: 'proxy',
-            url: 'FIX ME',
+            url: config.observatoriumDatasourceUrl,
             version: 1,
             editable: false,
           },
