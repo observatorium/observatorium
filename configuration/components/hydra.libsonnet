@@ -11,7 +11,7 @@ local defaults = {
   audience: 'observatorium',
   clientId: 'user',
   clientSecret: 'secret',
-  hydra_config: {
+  hydraConfig: {
     dsn: 'sqlite:///var/lib/sqlite/hydra.sqlite?_fk=true',
     strategies: {
       access_token: 'jwt',
@@ -52,7 +52,7 @@ function(params)
                     client_id: config.clientId,
                     client_secret: config.clientSecret,
                     grant_types: ['client_credentials'],
-                    token_endpiont_auth_method: 'client_secret_basic',
+                    token_endpoint_auth_method: 'client_secret_basic',
                   }),
                   config.clientsUrl,
                 ],
@@ -64,7 +64,7 @@ function(params)
     },
     'hydra/configmap': configmap + namespacePatch + {
       data: {
-        'config.yaml': std.manifestYamlDoc(config.hydra_config),
+        'config.yaml': std.manifestYamlDoc(config.hydraConfig),
       },
     },
   }
