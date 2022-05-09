@@ -62,7 +62,7 @@ If you just want to run Observatorium locally and get started quickly, take a lo
 
 - **kube-prometheus**: installs Prometheus Operator, Grafana, and a few exporters. We will use them to gather and visualize metrics. See [prometheus-operator/kube-prometheus](https://github.com/prometheus-operator/kube-prometheus) for more information.
 
-- **ORY Hydra**: [OIDC (OpenID Connect)](https://openid.net/connect/) is a popular authentication often available in your company or major cloud providers. For local purposes we will run our own OIDC provider to handle authentication. We are going to use ORY Hydra for that.
+- **ORY Hydra**: [OIDC (OpenID Connect)](https://openid.net/connect/) is a popular authentication method often available in your company or major cloud providers. For local purposes we will run our own OIDC provider to handle authentication. We are going to use ORY Hydra for that.
 
 - **Jaeger Operator**: our tool of choice for tracing. See [Jaeger documentation](https://www.jaegertracing.io/docs/latest/operator/) for more information.
 
@@ -75,18 +75,18 @@ If you just want to run Observatorium locally and get started quickly, take a lo
 We will deploy the Observatorium using Kubernetes manifests generated from Jsonnet. To automate everything, we run the quickstart script:
 
 ```sh
-quickstart.sh
+./quickstart.sh
 ```
 
-The script will take care of setting up everything.
+The script will take care of setting up everything. At the end, we can check that all the pods are ready by running `kubectl get pods -A`.
 
 #### Writing data from outside
 
-The Observatorium API allows you to push timeseries data using Prometheus remote write protocol. The write endpoint is protected, so we need to authenticate as a tenant. The authentication is handled by the OIDC Provider we started earlier. If you take a look at `manifests/api/api-secret.yaml`, you can see that we have configured a single tenant `test-oidc`. The remote write endpoint is `/api/metrics/v1/<tenant-id>/api/v1/receive`.
+The Observatorium API allows you to push timeseries data using Prometheus remote write protocol. The write endpoint is protected, so we need to authenticate as a tenant. The authentication is handled by the OIDC Provider we started earlier. If you take a look at [API secret configuration](../../configuration/examples/local/manifests/observatorium/api-secret.yaml), you can see that we have configured a single tenant `test-oidc`. The remote write endpoint is `/api/metrics/v1/<tenant-id>/api/v1/receive`.
 
-#### Querying data from Observatorium
+#### Visualizing data from Observatorium
 
-We are going to use Grafana to query the data we wrote into Observatorium. One is automatically installed by this script.
+We are going to use Grafana to query the data we wrote into Observatorium. One is automatically installed by the quickstart script.
 Check the Grafana service in the `monitoring` namespace and port-forward into it:
 
 ```sh
@@ -96,4 +96,6 @@ kubectl port-forward -n monitoring svc/grafana 3000:3000
 * Now open your web browser and go to `http://localhost:3000`. The default username is `admin` and the default password is `admin`.
 * A Prometheus datasource for the `test-oidc` tenant should be already created for you.
 
-You can now go the the `Explore` tab to run queries against the Observatorium API.
+You can now go the the `Explore` tab to run queries against the Observatorium API. For example, you can run `sum(rate(process_cpu_seconds_total{job="kube-state-metrics"}[1m])) by (job)` to view the cpu usage (in seconds) of kube-state-metrics.
+
+Alternatively, you can view one of the pre-installed dashboards, like `Prometheus / Overview`, to see metrics about Prometheus.
