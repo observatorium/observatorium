@@ -5,34 +5,33 @@ local usercreator = (import './hydra/usercreator.libsonnet');
 
 local defaults = {
   local defaults = self,
-  namespace: error 'must provide namespace',
-  issuerUrl: 'http://hydra.hydra.svc.cluster.local:4444/',
-  clientsUrl: 'http://hydra.hydra.svc.cluster.local:4445/clients',
+  namespace: 'hydra',
   audience: 'observatorium',
   clientId: 'user',
   clientSecret: 'secret',
-  hydraConfig: {
+};
+
+function(params)
+  local config = defaults + params;
+  local baseUrl = std.format('http://hydra.%s.svc.cluster.local', defaults.namespace);
+  local hydraConfig = {
     dsn: 'sqlite:///var/lib/sqlite/hydra.sqlite?_fk=true',
     strategies: {
       access_token: 'jwt',
     },
     urls: {
       'self': {
-        issuer: defaults.issuerUrl,
+        issuer: std.format('%s:4444/', baseUrl),
       },
     },
-  },
-};
-
-function(params)
-  local config = defaults + params;
+  };
   local namespacePatch = {
     metadata+: {
       namespace: config.namespace,
     },
   };
   {
-    config:: config,
+    config:: config { issuerUrl: hydraConfig.urls['self'].issuer },
     'hydra/service': service + namespacePatch,
     'hydra/deployment': deployment + namespacePatch,
     'hydra/usercreator': usercreator + namespacePatch + {
@@ -54,7 +53,7 @@ function(params)
                     grant_types: ['client_credentials'],
                     token_endpoint_auth_method: 'client_secret_basic',
                   }),
-                  config.clientsUrl,
+                  std.format('%s:4445/clients', baseUrl),
                 ],
               },
             ],
@@ -64,7 +63,7 @@ function(params)
     },
     'hydra/configmap': configmap + namespacePatch + {
       data: {
-        'config.yaml': std.manifestYamlDoc(config.hydraConfig),
+        'config.yaml': std.manifestYamlDoc(hydraConfig),
       },
     },
   }

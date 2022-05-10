@@ -86,9 +86,7 @@ local dev = obs {
   ),
 };
 
-local hydra = (import '../../components/hydra.libsonnet')({
-  namespace: 'hydra',
-});
+local hydra = (import '../../components/hydra.libsonnet')({});
 
 local token_refresher = (import '../../components/token-refresher.libsonnet')({
   namespace: dev.api.config.namespace,
