@@ -1,6 +1,7 @@
 local base_kp = (import 'kube-prometheus/main.libsonnet') +
                 (import 'kube-prometheus/addons/all-namespaces.libsonnet') +
-                (import 'kube-prometheus/addons/strip-limits.libsonnet')
+                (import 'kube-prometheus/addons/strip-limits.libsonnet') +
+                (import 'kube-prometheus/addons/networkpolicies-disabled.libsonnet')
                 + {
                   values+:: {
                     common+: {
