@@ -9,6 +9,7 @@ local defaults = {
   audience: 'observatorium',
   clientId: 'user',
   clientSecret: 'secret',
+  image: 'oryd/hydra:v1.11.7',
 };
 
 function(params)
@@ -33,7 +34,20 @@ function(params)
   {
     config:: config { issuerUrl: hydraConfig.urls['self'].issuer },
     'hydra/service': service + namespacePatch,
-    'hydra/deployment': deployment + namespacePatch,
+    'hydra/deployment': deployment + namespacePatch + {
+      spec+: {
+        template+: {
+          spec+: {
+            containers: [
+              super.containers[0]
+              {
+                image: config.image,
+              },
+            ],
+          },
+        },
+      },
+    },
     'hydra/usercreator': usercreator + namespacePatch + {
       spec+: {
         template+: {
