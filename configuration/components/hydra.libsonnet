@@ -38,6 +38,12 @@ function(params)
       spec+: {
         template+: {
           spec+: {
+            initContainers: [
+              super.initContainers[0]
+              {
+                image: config.image,
+              },
+            ],
             containers: [
               super.containers[0]
               {

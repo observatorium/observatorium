@@ -3,7 +3,6 @@
   kind: 'Deployment',
   metadata: {
     name: 'hydra',
-    namespace: 'hydra',
     labels: {
       app: 'hydra',
     },
@@ -40,7 +39,6 @@
         initContainers: [
           {
             name: 'hydra-sql-migrate',
-            image: 'oryd/hydra:v1.11.7',
             imagePullPolicy: 'IfNotPresent',
             args: [
               'migrate',
@@ -66,7 +64,6 @@
         containers: [
           {
             name: 'hydra',
-            image: 'oryd/hydra:v1.11.7',
             imagePullPolicy: 'IfNotPresent',
             args: [
               'serve',
