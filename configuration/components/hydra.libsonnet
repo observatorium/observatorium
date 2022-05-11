@@ -14,7 +14,7 @@ local defaults = {
 
 function(params)
   local config = defaults + params;
-  local baseUrl = std.format('http://hydra.%s.svc.cluster.local', defaults.namespace);
+  local baseUrl = std.format('http://hydra.%s.svc.cluster.local', config.namespace);
   local hydraConfig = {
     dsn: 'sqlite:///var/lib/sqlite/hydra.sqlite?_fk=true',
     strategies: {
