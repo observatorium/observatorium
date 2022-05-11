@@ -1,12 +1,12 @@
 local defaults = {
   namespace: error 'must provide namespace',
-  serviceMonitor: true,
-  secretName: 'token-refresher-oidc',
   url: error 'must provide url',
   issuerUrl: error 'must provide issuerUrl',
   clientId: error 'must provide clientId',
   clientSecret: error 'must provide clientSecret',
   audience: error 'must provide audience',
+  serviceMonitor: true,
+  secretName: 'token-refresher-oidc',
 };
 
 local refresher = import 'token-refresher/token-refresher.libsonnet';
