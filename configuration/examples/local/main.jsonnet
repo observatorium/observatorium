@@ -1,8 +1,10 @@
+local hydra = (import '../../components/hydra.libsonnet')({});
+
 local tenant = {
   name: 'test-oidc',
   id: '1610b0c3-c509-4592-a256-a1871353dbfa',
   clientID: 'observatorium',
-  issuerURL: 'http://hydra.hydra.svc.cluster.local:4444/',
+  issuerURL: hydra.config.issuerUrl,
   user: 'user',
 };
 
@@ -85,8 +87,6 @@ local dev = obs {
     },
   ),
 };
-
-local hydra = (import '../../components/hydra.libsonnet')({});
 
 local token_refresher = (import '../../components/token-refresher.libsonnet')({
   namespace: dev.api.config.namespace,
