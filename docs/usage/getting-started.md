@@ -96,6 +96,6 @@ kubectl port-forward -n monitoring svc/grafana 3000:3000
 * Now open your web browser and go to `http://localhost:3000`. The default username is `admin` and the default password is `admin`.
 * A Prometheus datasource for the `test-oidc` tenant should be already created for you.
 
-You can now go the the `Explore` tab to run queries against the Observatorium API. For example, you can run `sum(rate(process_cpu_seconds_total{job="kube-state-metrics"}[1m])) by (job)` to view the cpu usage (in seconds) of kube-state-metrics.
+You can now go the the `Explore` tab to run queries against the Observatorium API. For example, you can run `sum(rate(node_cpu_seconds_total{}[5m])) by (instance)` to view the cpu usage (in seconds) of your cluster's nodes.
 
 Alternatively, you can view one of the pre-installed dashboards, like `Prometheus / Overview`, to see metrics about Prometheus.
