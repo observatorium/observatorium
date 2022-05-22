@@ -409,6 +409,10 @@ function(params) {
           key: osc.endpointKey,
         } } },
       ] else [
+        { name: 'S3_URL', valueFrom: { secretKeyRef: {
+          name: osc.secretName,
+          key: osc.endpointKey,
+        } } }, 
         { name: 'S3_BUCKETS', valueFrom: { secretKeyRef: {
           name: osc.secretName,
           key: osc.bucketsKey,
