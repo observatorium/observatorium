@@ -86,8 +86,7 @@ The Observatorium API allows you to push timeseries data using Prometheus remote
 
 #### Visualizing data from Observatorium
 
-We are going to use Grafana to query the data we wrote into Observatorium. One is automatically installed by the quickstart script.
-Check the Grafana service in the `monitoring` namespace and port-forward into it:
+We are going to use Grafana to query the data we wrote into Observatorium. One is automatically installed by the quickstart script. Check the Grafana service in the `monitoring` namespace and port-forward into it:
 
 ```sh
 kubectl port-forward -n monitoring svc/grafana 3000:3000
