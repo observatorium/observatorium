@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hydra
+  name: hydra
+  namespace: hydra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hydra
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: hydra
+    spec:
+      containers:
+      - args:
+        - serve
+        - all
+        - --dangerous-force-http
+        - --config
+        - /data/hydra/config.yaml
+        image: oryd/hydra:v1.11.7
+        imagePullPolicy: IfNotPresent
+        name: hydra
+        ports:
+        - containerPort: 5555
+          name: token
+        - containerPort: 4444
+          name: public
+        - containerPort: 4445
+          name: admin
+        resources: {}
+        volumeMounts:
+        - mountPath: /data/hydra/
+          name: hydra-config
+          readOnly: true
+        - mountPath: /var/lib/sqlite
+          name: hydra-sqlite
+      initContainers:
+      - args:
+        - migrate
+        - sql
+        - -e
+        - --yes
+        - --config
+        - /data/hydra/config.yaml
+        image: oryd/hydra:v1.11.7
+        imagePullPolicy: IfNotPresent
+        name: hydra-sql-migrate
+        volumeMounts:
+        - mountPath: /data/hydra/
+          name: hydra-config
+          readOnly: true
+        - mountPath: /var/lib/sqlite
+          name: hydra-sqlite
+      volumes:
+      - configMap:
+          name: hydra-config
+        name: hydra-config
+      - emptyDir: {}
+        name: hydra-sqlite

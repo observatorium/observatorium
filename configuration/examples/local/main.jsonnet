@@ -1,8 +1,10 @@
+local hydra = (import '../../components/hydra.libsonnet')({});
+
 local tenant = {
   name: 'test-oidc',
   id: '1610b0c3-c509-4592-a256-a1871353dbfa',
   clientID: 'observatorium',
-  issuerURL: 'http://172.17.0.1:4444/',
+  issuerURL: hydra.config.issuerUrl,
   user: 'user',
 };
 
@@ -86,11 +88,38 @@ local dev = obs {
   ),
 };
 
+local token_refresher = (import '../../components/token-refresher.libsonnet')({
+  namespace: dev.api.config.namespace,
+  version: 'master-2021-03-05-b34376b',
+  url: std.format('http://%s.%s.svc.cluster.local:%d', [dev.api.service.metadata.name, dev.api.service.metadata.namespace, dev.api.service.spec.ports[2].port]),
+  issuerUrl: hydra.config.issuerUrl,
+  clientId: hydra.config.clientId,
+  clientSecret: hydra.config.clientSecret,
+  audience: hydra.config.audience,
+});
+
+local kube_prometheus = (import '../../components/kube-prometheus.libsonnet')({
+  observatoriumDatasourceUrl: std.format('http://%s.%s.svc.cluster.local:%d/api/metrics/v1/%s/',
+                                         [
+                                           token_refresher.config.name,
+                                           token_refresher.config.namespace,
+                                           token_refresher.config.ports.web,
+                                           tenant.name,
+                                         ]),
+  observatoriumRemoteWriteUrl: std.format('http://%s.%s.svc.cluster.local:%d/api/metrics/v1/%s/api/v1/receive',
+                                          [
+                                            token_refresher.config.name,
+                                            token_refresher.config.namespace,
+                                            token_refresher.config.ports.web,
+                                            tenant.name,
+                                          ]),
+});
+
 dev.manifests
 {
-  'minio-deployment': minio.deployment,
-  'minio-pvc': minio.pvc,
-  'minio-secret-thanos': {
+  'minio/minio-deployment': minio.deployment,
+  'minio/minio-pvc': minio.pvc,
+  'minio/minio-secret-thanos': {
     apiVersion: 'v1',
     kind: 'Secret',
     metadata: {
@@ -110,7 +139,7 @@ dev.manifests
     },
     type: 'Opaque',
   },
-  'minio-secret-loki': {
+  'minio/minio-secret-loki': {
     apiVersion: 'v1',
     kind: 'Secret',
     metadata: {
@@ -122,5 +151,8 @@ dev.manifests
     },
     type: 'Opaque',
   },
-  'minio-service': minio.service,
-}
+  'minio/minio-service': minio.service,
+} +
+kube_prometheus +
+token_refresher +
+hydra

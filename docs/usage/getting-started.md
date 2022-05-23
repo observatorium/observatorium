@@ -47,235 +47,55 @@ If you just want to run Observatorium locally and get started quickly, take a lo
 
 #### Prerequisites
 
-- Clone this repo
+- Clone this repo and change into the local example directory:
 
   ```bash
   git clone https://github.com/observatorium/observatorium.git
   cd configuration/examples/local
   ```
 
-- Create a temporary folder
+- **kubectl**: we need to talk to Kubernetes clusters. Check [the official documentation on how to install it](https://kubernetes.io/docs/tasks/tools/#kubectl).
 
-  ```bash
-  mkdir -p tmp/bin
-  ```
+- **git**: we will use `git` download some dependencies from Github repositories. Check the [Installing Git documentation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) for details.
 
-#### Local K8s cluster - KIND
+- **kind**: we need to run a local Kubernetes cluster to run our stack in. We are going to use KIND (Kubernetes in Docker) for that. You can follow the [Getting Started](https://kind.sigs.k8s.io/docs/user/quick-start/) guide to install it.
 
-We need to run a local Kubernetes cluster to run our stack in. We are going to use KIND (Kubernetes in Docker) for that. You can follow the [Getting Started](https://kind.sigs.k8s.io/docs/user/quick-start/) guide to install it.
+- **kube-prometheus**: installs Prometheus Operator, Grafana, and a few exporters. We will use them to gather and visualize metrics. See [prometheus-operator/kube-prometheus](https://github.com/prometheus-operator/kube-prometheus) for more information.
 
-Let's create a new cluster in kind.
+- **ORY Hydra**: [OIDC (OpenID Connect)](https://openid.net/connect/) is a popular authentication method often available in your company or major cloud providers. For local purposes we will run our own OIDC provider to handle authentication. We are going to use ORY Hydra for that.
 
-```bash
-kind create cluster
-```
+- **Jaeger Operator**: our tool of choice for tracing. See [Jaeger documentation](https://www.jaegertracing.io/docs/latest/operator/) for more information.
 
-#### OIDC Provider - Hydra
+- **OpenTelemetry Operator**: we use the OTel Collector to build the distributed tracing component. See [open-telemetry/opentelemetry-operator](https://github.com/open-telemetry/opentelemetry-operator) for more information.
 
-[OIDC (OpenID Connect)](https://openid.net/connect/) is a popular authentication often available in your company or major cloud providers. For local purposes we will run our own OIDC provider to handle authentication. We are going to use ORY Hydra for that. First download and extract the binary release from [here](https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_linux_64bit.tar.gz).
-
-**Linux**
-
-```bash
-curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_linux_64bit.tar.gz" | tar -xzf - -C tmp/bin hydra
-```
-
-**MacOS**
-
-```bash
-curl -L "https://github.com/ory/hydra/releases/download/v1.9.1/hydra_1.9.1-sqlite_macos_64bit.tar.gz" | tar -xzf - -C /tmp/bin hydra
-```
-
-The configuration file for `hydra` is present in [`configs/hydra.yaml`](../../configuration/examples/local/configs/hydra.yaml).
-
-```yaml mdox-exec="cat configuration/examples/local/configs/hydra.yaml"
-strategies:
-  access_token: jwt
-urls:
-  self:
-    issuer: http://172.17.0.1:4444/
-```
-
-#### Accessing Hydra from inside our cluster
-
-We will be running `hydra` outside the cluster to simulate an external tenant, but we need to access `hydra`(running on the host) from inside the cluster(running inside docker).
-
-**Linux**
-
-As our K8s cluster is running inside Docker containers, we can use the IP address of the `docker0` interface to access the host from inside the containers. In most cases this IP address will be `172.17.0.1` but you can find yours using:
-
-```bash
-ip -o -4 addr list docker0 | awk '{print $4}' | cut -d/ -f1
-```
-
-**MacOS**
-
-If you are using Kind with Docker Desktop on Mac, there is no `docker0` IP interface accessible on the host; this is because Docker-for-mac [containers run via a Virtual Machine (HyperKit)](https://docs.docker.com/desktop/mac/install/). As a workaround, Docker provides a special DNS entry [`host.docker.internal`](https://docs.docker.com/desktop/mac/networking/#use-cases-and-workarounds).
-
-If this value is not `172.17.0.1`, you need to update:
-* The `issuerURL` in the `tenant` section of the configuration in [`configs/main.jsonnet`](../../configuration/examples/local/main.jsonnet)
-* Run `make generate` in the root of the [`configurations`](../../configuration/Makefile) to regenerate our K8s manifests with the new `issuerURL`
-* Update the `issuer` URL in the Hydra config in [`configs/hydra.yaml`](../../configuration/examples/local/configs/hydra.yaml)
-
-Next step is to run `hydra`.
-
-```bash
-DSN=memory ./tmp/bin/hydra serve all --dangerous-force-http --config ./configs/hydra.yaml
-```
-
-Now that we have our OIDC provider running we need create a client to authenticate as. To create a new client in `hydra` run this:
-
-```bash
-curl \
-    --header "Content-Type: application/json" \
-    --request POST \
-    --data '{"audience": ["observatorium"], "client_id": "user", "client_secret": "secret", "grant_types": ["client_credentials"], "token_endpoint_auth_method": "client_secret_basic"}' \
-    http://127.0.0.1:4445/clients
-```
-
-#### Distributed tracing requirements
-
-The installation of distributed tracing system requires following operators to be installed in the cluster.
-
-#### Cert manager
-
-Jaeger and OpenTelemetry operators require [cert manager](https://cert-manager.io/docs/) to be installed in the cluster.
-
-```bash
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
-```
-
-##### Jaeger Operator
-
-Jaeger operator can be installed by running the following command:
-
-```bash
-kubectl create namespace observability
-kubectl create -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.32.0/jaeger-operator.yaml -n observability
-```
-
-The operator should be installed into `observability` namespace. See [Jaeger documentation](https://www.jaegertracing.io/docs/latest/operator/) for more information.
-
-##### OpenTelemetry Operator
-
-OpenTelemetry operator can be installed by running the following command:
-
-```bash
-kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
-```
-
-The operator should be installed into `opentelemetry-operator-system` namespace. See [open-telemetry/opentelemetry-operator](https://github.com/open-telemetry/opentelemetry-operator) for more information.
+- **Token refresher**: the token issued by the OIDC providers often have a small validity, but it can be automatically refreshed using a refresh token. As Prometheus doesn't natively support refresh token flow, we use a proxy in-between to do exactly that for us. Take a look at the [GitHub repo](https://github.com/observatorium/token-refresher) to read more about it.
 
 #### Deploying Observatorium
 
-We will deploy the Observatorium using Kubernetes manifests generated from Jsonnet. If the IP of `docker0` interface was different then the default in the above steps, you will need to update the `tenant.issuerURL` with correct IP address and run `make generate` to recreate the manifests.
+We will deploy the Observatorium using Kubernetes manifests generated from Jsonnet. To automate everything, we run the quickstart script:
 
-Let's deploy `minio` first, as Thanos and Loki have a dependency on it.
-
-```bash
-kubectl create ns observatorium-minio
-kubectl apply -f ./manifests/minio-pvc.yaml
-kubectl apply -f ./manifests/minio-deployment.yaml
-kubectl apply -f ./manifests/minio-service.yaml
+```sh
+./quickstart.sh
 ```
 
-Wait for `minio` to come up.
-
-```bash
-kubectl wait --for=condition=available -n observatorium-minio deploy/minio
-```
-
-After `minio` starts running, deploy everything else.
-
-```bash
-kubectl create ns observatorium
-kubectl apply -f ./manifests/
-```
-
-Wait for everything in `observatorium` namespace to come up before moving forward.
+The script will take care of setting up everything. At the end, we can check that all the pods are ready by running `kubectl get pods -A`.
 
 #### Writing data from outside
 
-The Observatorium API allows you to push timeseries data using Prometheus remote write protocol. The write endpoint is protected, so we need to authenticate as a tenant. The authentication is handled by the OIDC Provider we started earlier. If you take a look at `manifests/api-secret.yaml`, you can see that we have configured a single tenant `test-oidc`. The remote write endpoint is `/api/metrics/v1/<tenant-id>/api/v1/receive`.
+The Observatorium API allows you to push timeseries data using Prometheus remote write protocol. The write endpoint is protected, so we need to authenticate as a tenant. The authentication is handled by the OIDC Provider we started earlier. If you take a look at [API secret configuration](../../configuration/examples/local/manifests/observatorium/api-secret.yaml), you can see that we have configured a single tenant `test-oidc`. The remote write endpoint is `/api/metrics/v1/<tenant-id>/api/v1/receive`.
 
-#### Token refresher
+#### Visualizing data from Observatorium
 
-The token issued by the OIDC providers often have a small validity, but it can be automatically refreshed using a refresh token. As Prometheus doesn't natively support refresh token flow, we use a proxy in-between to do exactly that for us. Take a look at the [GitHub repo](https://github.com/observatorium/token-refresher) to read more about it.
+We are going to use Grafana to query the data we wrote into Observatorium. One is automatically installed by the quickstart script.
+Check the Grafana service in the `monitoring` namespace and port-forward into it:
 
-- Clone the repo locally and build the binary using `make build`.
-
-  ```bash
-  git clone https://github.com/observatorium/token-refresher tmp/token-refresher
-  cd tmp/token-refresher
-  make build
-  mv ./token-refresher ../bin/
-  cd -
-  ```
-- We need to put up a proxy in front of the Observatorium API so we first need to expose it first. We will use `kubectl port-forward` for that.
-
-  ```bash
-  kubectl port-forward -n observatorium svc/observatorium-xyz-observatorium-api 8443:8080
-  ```
-- Now that Observatorium API is listening on `localhost:8443`, we will run the token refresher to forward traffic to it. You may have to replace the `--oidc.issuer-url` with appropriate value if the IP of the `docker0` interface is different.
-
-  ```bash
-  ./tmp/bin/token-refresher --oidc.issuer-url=http://172.17.0.1:4444/ --oidc.client-id=user --oidc.client-secret=secret --oidc.audience=observatorium --url=http://127.0.0.1:8443
-  ```
-
-#### Push some metrics, shall we?
-
-Take a look at the [Prometheus first steps](https://prometheus.io/docs/introduction/first_steps/) to get a quick overview of how to get started. By default Prometheus stores the data locally in form of TSDB blocks. We will configure it to remote write this data to Observatorium. As we know that the write endpoint is protected, we will write to the token-refresher proxy, and the proxy in turn will forward this data to the Observatorium API with proper tokens.
-
-Download the Prometheus binary for [Linux](https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.linux-amd64.tar.gz) [MacOS](https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.darwin-amd64.tar.gz).
-
-**Linux**
-
-```bash
-curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.linux-amd64.tar.gz" | tar -xzf - -C tmp prometheus-2.24.1.linux-amd64/prometheus
-mv ./tmp/prometheus-2.24.1.linux-amd64/prometheus ./tmp/bin/
-```
-
-**MacOS**
-
-```bash
-curl -L "https://github.com/prometheus/prometheus/releases/download/v2.24.1/prometheus-2.24.1.darwin-amd64.tar.gz" | tar -xzf - -C tmp prometheus-2.24.1.darwin-amd64/prometheus
-mv ./tmp/prometheus-2.24.1.darwin-amd64/prometheus ./tmp/bin/
-```
-
-The Prometheus config file present in `configs/prom.yaml` looks like this:
-
-```yaml mdox-exec="cat configuration/examples/local/configs/prom.yaml"
-global:
-  scrape_interval: 15s
-
-scrape_configs:
-- job_name: prom
-  static_configs:
-  - targets:
-    - localhost:9090
-
-remote_write:
-- url: http://localhost:8080/api/metrics/v1/test-oidc/api/v1/receive
-```
-
-Notice that the remote_write url points to the token refresher, not the Observatorium API directly.
-
-Next, let's run Prometheus with this config.
-
-```bash
-./tmp/bin/prometheus --config.file=./configs/prom.yaml --storage.tsdb.path=tmp/data/
-```
-
-#### Querying data from Observatorium
-
-We are going to use Grafana to query the data we wrote into Observatorium. To start Grafana in a docker container, run
-
-```bash
-docker run -p 3000:3000 grafana/grafana:7.3.7
+```sh
+kubectl port-forward -n monitoring svc/grafana 3000:3000
 ```
 
 * Now open your web browser and go to `http://localhost:3000`. The default username is `admin` and the default password is `admin`.
-* Add a new Prometheus data source with the URL set to `http://172.17.0.1:8080/api/metrics/v1/test-oidc`.
-  * We are using `172.17.0.1`(linux) or `host.docker.internal`(mac) as the host because we are trying to access the `token-refresher` running on the host, from Grafana which is running inside a docker container.
+* A Prometheus datasource for the `test-oidc` tenant should be already created for you.
 
-You can now go the the `Explore` tab to run queries against the Observatorium API.
+You can now go the the `Explore` tab to run queries against the Observatorium API. For example, you can run `sum(rate(node_cpu_seconds_total{}[5m])) by (instance)` to view the cpu usage (in seconds) of your cluster's nodes.
+
+Alternatively, you can view one of the pre-installed dashboards, like `Prometheus / Overview`, to see metrics about Prometheus.

@@ -1,0 +1,13 @@
+apiVersion: v1
+data:
+  config.yaml: |-
+    "dsn": "sqlite:///var/lib/sqlite/hydra.sqlite?_fk=true"
+    "strategies":
+      "access_token": "jwt"
+    "urls":
+      "self":
+        "issuer": "http://hydra.hydra.svc.cluster.local:4444/"
+kind: ConfigMap
+metadata:
+  name: hydra-config
+  namespace: hydra
