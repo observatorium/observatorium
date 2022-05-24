@@ -45,6 +45,11 @@
   url = "/docs/usage/getting-started.md/"
   weight = 10
 
+[[main]]
+  name = "API"
+  url = "/docs/api.html/"
+  weight = 10
+
 # [[main]]
 #   name = "Blog"
 #   url = "/blog/"
