@@ -12,6 +12,9 @@ local defaults = {
   // The core distribution does not contain routing processor, therefore using contrib distribution
   // https://github.com/orgs/open-telemetry/packages?repo_name=opentelemetry-collector-releases
   otelcolImage: 'ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib',
+  otelcolTLS: {
+    insecure: true,
+  },
 
   commonLabels:: {
     'app.kubernetes.io/name': 'otelcol',
@@ -35,7 +38,7 @@ function(params) {
       },
     },
     exporters: {
-      ['jaeger/' + tenant]: { endpoint: normalizedName(tracing.config.name + '-jaeger-' + tenant + '-collector:14250'), tls: { insecure: true } }
+      ['jaeger/' + tenant]: { endpoint: normalizedName(tracing.config.name + '-jaeger-' + tenant + '-collector.' + tracing.config.namespace + '.svc.cluster.local:14250'), tls: tracing.config.otelcolTLS }
       for tenant in tracing.config.tenants
     },
     processors: {

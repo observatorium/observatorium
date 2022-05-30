@@ -12,7 +12,7 @@ spec:
   config: |-
     exporters:
       jaeger/test-oidc:
-        endpoint: "observatorium-xyz-jaeger-test-oidc-collector:14250"
+        endpoint: "observatorium-xyz-jaeger-test-oidc-collector.observatorium.svc.cluster.local:14250"
         tls:
           insecure: true
     processors:
