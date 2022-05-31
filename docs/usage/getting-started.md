@@ -18,7 +18,7 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
   * You can see examples of how it can be used in different variations/environments [here](https://github.com/observatorium/observatorium/tree/main/configuration/examples).
   * Our [Red Hat Observability Service](https://github.com/rhobs/configuration) is also build on Observatorium.
 
-* We are aware that not everybody speaks Jsonnet, and not everybody have it's own GitOps pipeline, so we designed alternative deployments based on the main Jsonnet resources. [Operator](https://github.com/observatorium/operator) project delivers Kubernetes plain Operator that operates Observatorium.
+* We are aware that not everybody speaks Jsonnet, and not everybody has their own GitOps pipeline, so we designed alternative deployments based on the main Jsonnet resources. [Operator](https://github.com/observatorium/operator) project delivers Kubernetes plain Operator that operates Observatorium.
 
 > NOTE: Observatorium is a set of cloud native, mostly stateless components that mostly does not require special operating logic. For those operations that required automation, specialized controllers were designed. Use Operator only if this is your primary installation logic or if you don't have CI pipeline.
 
