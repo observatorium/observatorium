@@ -5493,6 +5493,9 @@ spec:
                   - type
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
               paused:
                 description: Represents whether any actions on the underlying managed objects are being performed. Only delete actions will be performed.
                 type: boolean
@@ -5531,6 +5534,9 @@ spec:
                   - updatedReplicas
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - shardID
+                x-kubernetes-list-type: map
               unavailableReplicas:
                 description: Total number of unavailable pods targeted by this Prometheus deployment.
                 format: int32
