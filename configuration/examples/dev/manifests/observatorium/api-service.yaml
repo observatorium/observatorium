@@ -11,16 +11,13 @@ metadata:
   namespace: observatorium
 spec:
   ports:
-  - appProtocol: h2c
-    name: grpc-public
+  - name: grpc-public
     port: 8090
     targetPort: 8090
-  - appProtocol: http
-    name: internal
+  - name: internal
     port: 8081
     targetPort: 8081
-  - appProtocol: http
-    name: public
+  - name: public
     port: 8080
     targetPort: 8080
   selector:
