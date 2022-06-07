@@ -79,23 +79,31 @@ function(params) {
   local normalizedName(id) =
     std.strReplace(id, '_', '-'),
 
-  local newCommonLabels(component) =
+  local newCommonLabels(tenant) =
     tracing.config.commonLabels {
-      'app.kubernetes.io/component': normalizedName(component),
+      'app.kubernetes.io/component': normalizedName(tenant),
     },
 
-  local newJaeger(component, config) =
-    local name = normalizedName(tracing.config.name + '-jaeger-' + component);
+  local newJaeger(tenant, config) =
+    local name = normalizedName(tracing.config.name + '-jaeger-' + tenant);
     {
       apiVersion: 'jaegertracing.io/v1',
       kind: 'Jaeger',
       metadata: {
         name: name,
         namespace: tracing.config.namespace,
-        labels: newCommonLabels(component),
+        labels: newCommonLabels(tenant),
       },
-      spec: {
-        strategy: 'allinone',
+      spec: tracing.config.jaegerSpec,
+    } + {
+      spec+: {
+        storage+: {
+          options+: {
+            es+: (if tracing.config.jaegerSpec.strategy == 'production' && tracing.config.jaegerSpec.storage.type == 'elasticsearch' then {
+                    'index-prefix'+: tenant,
+                  }),
+          },
+        },
       },
     },
   manifests: {
