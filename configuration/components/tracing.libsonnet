@@ -96,15 +96,16 @@ function(params) {
       },
       spec: tracing.config.jaegerSpec,
     } + {
-      spec+: {
-        storage+: {
-          options+: {
-            es+: (if tracing.config.jaegerSpec.strategy == 'production' && tracing.config.jaegerSpec.storage.type == 'elasticsearch' then {
-                    'index-prefix'+: tenant,
-                  }),
-          },
-        },
-      },
+      spec+: (if tracing.config.jaegerSpec.strategy == 'production' &&
+                 tracing.config.jaegerSpec.storage.type == 'elasticsearch' then {
+                storage+: {
+                  options+: {
+                    es+: {
+                      'index-prefix'+: tenant,
+                    },
+                  },
+                },
+              } else {}),
     },
   manifests: {
     otelcollector: tracing.otelcolcr,
