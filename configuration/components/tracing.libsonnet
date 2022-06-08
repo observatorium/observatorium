@@ -38,15 +38,15 @@ function(params) {
       },
     },
     exporters: {
-      ['jaeger/' + tenant]: { endpoint: normalizedName(tracing.config.name + '-jaeger-' + tenant + '-collector-headless.' + tracing.config.namespace + '.svc.cluster.local:14250'), tls: tracing.config.otelcolTLS }
-      for tenant in tracing.config.tenants
+      ['jaeger/' + tenantName]: { endpoint: normalizedName(tracing.config.name + '-jaeger-' + tenantName + '-collector-headless.' + tracing.config.namespace + '.svc.cluster.local:14250'), tls: tracing.config.otelcolTLS }
+      for tenantName in tracing.config.tenants
     },
     processors: {
       routing: {
         from_attribute: 'X-Tenant',
         table: [
-          { value: tenant, exporters: ['jaeger/' + tenant] }
-          for tenant in tracing.config.tenants
+          { value: tenantName, exporters: ['jaeger/' + tenantName] }
+          for tenantName in tracing.config.tenants
         ],
       },
     },
@@ -55,7 +55,7 @@ function(params) {
         traces: {
           receivers: ['otlp'],
           processors: ['routing'],
-          exporters: ['jaeger/' + tenant for tenant in tracing.config.tenants],
+          exporters: ['jaeger/' + tenantName for tenantName in tracing.config.tenants],
         },
       },
     },
@@ -79,29 +79,38 @@ function(params) {
   local normalizedName(id) =
     std.strReplace(id, '_', '-'),
 
-  local newCommonLabels(component) =
+  local newCommonLabels(tenantName) =
     tracing.config.commonLabels {
-      'app.kubernetes.io/component': normalizedName(component),
+      'app.kubernetes.io/component': normalizedName(tenantName),
     },
 
-  local newJaeger(component, config) =
-    local name = normalizedName(tracing.config.name + '-jaeger-' + component);
+  local newJaeger(tenantName, config) =
+    local name = normalizedName(tracing.config.name + '-jaeger-' + tenantName);
     {
       apiVersion: 'jaegertracing.io/v1',
       kind: 'Jaeger',
       metadata: {
         name: name,
         namespace: tracing.config.namespace,
-        labels: newCommonLabels(component),
+        labels: newCommonLabels(tenantName),
       },
-      spec: {
-        strategy: 'allinone',
-      },
+      spec: tracing.config.jaegerSpec,
+    } + {
+      spec+: (if tracing.config.jaegerSpec.strategy == 'production' &&
+                 tracing.config.jaegerSpec.storage.type == 'elasticsearch' then {
+                storage+: {
+                  options+: {
+                    es+: {
+                      'index-prefix'+: tenantName,
+                    },
+                  },
+                },
+              } else {}),
     },
   manifests: {
     otelcollector: tracing.otelcolcr,
   } + {
-    [normalizedName('jaeger-' + tenant)]: newJaeger(tenant, tracing.config.components[tenant])
-    for tenant in tracing.config.tenants
+    [normalizedName('jaeger-' + tenantName)]: newJaeger(tenantName, tracing.config.components[tenantName])
+    for tenantName in tracing.config.tenants
   },
 }
