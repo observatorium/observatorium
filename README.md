@@ -4,7 +4,7 @@
 
 ### Configuration for Multi-Tenant, Flexible, Scalable, Observability Backend
 
-Observatorium allows you to run and operate effectively a multi-tenant, easy to operate, scalable open source observability system on Kubernetes. This system will allow you to ingest, store and use common observability signals like metrics, logging and tracing. Observatorium is a "meta project" allows you to manage, integrate and combine multiple well-established existing projects like [Thanos](https://thanos.io), Loki, Tempo/Jaeger, Open Policy Agent etc under a single consistent system with well-defined tenancy APIs and signal correlation capabilities.
+Observatorium allows you to run and operate effectively a multi-tenant, easy to operate, scalable open source observability system on Kubernetes. This system will allow you to ingest, store and use common observability signals like metrics, logging and tracing. Observatorium is a "meta project" that allows you to manage, integrate and combine multiple well-established existing projects like [Thanos](https://thanos.io), Loki, Tempo/Jaeger, Open Policy Agent etc under a single consistent system with well-defined tenancy APIs and signal correlation capabilities.
 
 As active maintainers and contributors to the underlying projects, we created a reference configuration, with extra software that connects those open source solutions into one unified and easy to use service. It adds missing gaps between those projects like consistency, multi-tenancy, security and resiliency pieces that are needed for a robust backend.
 
@@ -26,7 +26,7 @@ From the very beginning our teams were leveraging Open Source to accomplish all 
 
 * We are aware that not everybody speaks Jsonnet, and not everybody have it's own GitOps pipeline, so we designed alternative deployments based on the main Jsonnet resources. [Operator](https://github.com/observatorium/operator) project delivers Kubernetes plain Operator that operates Observatorium.
 
-> NOTE: Observatorium is set of cloud native, mostly stateless components that mostly does not special operating logic. For those operations that required automation, specialized controllers were designed. Use Operator only if this is your primary installation logic or if you don't have CI pipeline.
+> NOTE: Observatorium is set of cloud native, mostly stateless components that mostly do not have special operating logic. For those operations that required automation, specialized controllers were designed. Use Operator only if this is your primary installation logic or if you don't have CI pipeline.
 
 > NOTE2: Operator is in heavy progress. There are already plans to streamline its usage and redesign current CustomResourceDefinition in next version. Yet, it's currently used in production by many bigger users, so any changes will be done with care.
 
