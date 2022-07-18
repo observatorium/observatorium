@@ -136,6 +136,9 @@ local defaults = {
     local querierConcurrency = 32,
     local indexPeriodHours = 24,
 
+    analytics: {
+      reporting_enabled: false,
+    },
     auth_enabled: true,
     chunk_store_config: {
       max_look_back_period: '0s',
@@ -277,6 +280,7 @@ local defaults = {
       max_cache_freshness_per_query: '10m',
       per_stream_rate_limit: '3MB',
       per_stream_rate_limit_burst: '15MB',
+      split_queries_by_interval: '30m',
     },
     querier: {
       query_timeout: '1h',
@@ -293,7 +297,6 @@ local defaults = {
       align_queries_with_step: true,
       cache_results: true,
       max_retries: 5,
-      split_queries_by_interval: '30m',
       parallelise_shardable_queries: defaults.query.enableSharedQueries,
     } + (
       if defaults.resultsCache != '' then {
