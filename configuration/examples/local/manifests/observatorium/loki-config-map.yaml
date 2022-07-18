@@ -1,6 +1,8 @@
 apiVersion: v1
 data:
   config.yaml: |-
+    "analytics":
+      "reporting_enabled": false
     "auth_enabled": true
     "chunk_store_config":
       "chunk_cache_config":
@@ -73,6 +75,7 @@ data:
       "per_stream_rate_limit_burst": "15MB"
       "reject_old_samples": true
       "reject_old_samples_max_age": "24h"
+      "split_queries_by_interval": "30m"
     "memberlist":
       "abort_if_cluster_join_fails": false
       "bind_port": 7946
@@ -100,7 +103,6 @@ data:
           "enable_fifocache": true
           "fifocache":
             "max_size_bytes": "500MB"
-      "split_queries_by_interval": "30m"
     "query_scheduler":
       "max_outstanding_requests_per_tenant": 256
     "schema_config":
@@ -139,6 +141,6 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: 2.4.2
+    app.kubernetes.io/version: 2.6.1
   name: observatorium-xyz-loki
   namespace: observatorium
