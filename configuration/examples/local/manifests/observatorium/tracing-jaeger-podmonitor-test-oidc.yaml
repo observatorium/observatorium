@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  labels:
+    app.kubernetes.io/component: test-oidc
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: otelcol
+    app.kubernetes.io/part-of: observatorium
+  name: observatorium-xyz-jaeger-test-oidc-admin
+  namespace: observatorium
+spec:
+  namespaceSelector: {}
+  podMetricsEndpoints:
+  - interval: 2s
+    port: admin-http
+  selector:
+    matchLabels:
+      app: jaeger
+      app.kubernetes.io/instance: observatorium-xyz-jaeger-test-oidc
