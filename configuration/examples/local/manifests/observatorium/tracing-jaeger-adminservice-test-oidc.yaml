@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: test-oidc
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: otelcol
+    app.kubernetes.io/part-of: observatorium
+  name: observatorium-xyz-jaeger-test-oidc-admin
+  namespace: observatorium
+spec:
+  ports:
+  - name: admin
+    port: 14269
+    targetPort: 14269
+  - name: query-metrics
+    port: 16687
+    targetPort: 16687
+  selector:
+    app.kubernetes.io/instance: observatorium-xyz-jaeger-test-oidc
+    app.kubernetes.io/name: observatorium-xyz-jaeger-test-oidc
+    app.kubernetes.io/part-of: jaeger

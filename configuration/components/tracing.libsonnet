@@ -21,6 +21,7 @@ local defaults = {
     'app.kubernetes.io/part-of': 'observatorium',
     'app.kubernetes.io/instance': defaults.name,
   },
+  serviceMonitor: false,
 };
 
 function(params) {
@@ -76,6 +77,71 @@ function(params) {
     },
   },
 
+  serviceMonitor: {
+    apiVersion: 'monitoring.coreos.com/v1',
+    kind: 'ServiceMonitor',
+    metadata+: {
+      name: 'jaeger-' + tracing.config.name,
+      namespace: tracing.config.namespace,
+    },
+    spec: {
+      selector: {
+        matchLabels: tracing.config.commonLabels,
+      },
+      endpoints: [
+        { port: 'admin' },
+      ],
+      targetLabels: [
+        'app.kubernetes.io/component',
+        'app.kubernetes.io/instance',
+      ],
+    },
+  },
+
+  otelServiceMonitor: {
+    apiVersion: 'monitoring.coreos.com/v1',
+    kind: 'ServiceMonitor',
+    metadata+: {
+      name: 'otel-' + tracing.config.name,
+      namespace: tracing.config.namespace,
+    },
+    spec: {
+      selector: {
+        matchLabels: {
+          'app.kubernetes.io/instance': tracing.config.namespace + '.' + normalizedName(tracing.config.name + '-otel'),
+          'app.kubernetes.io/component': 'opentelemetry-collector',
+          'app.kubernetes.io/name': normalizedName(tracing.config.name + '-otel') + '-collector-monitoring',
+        },
+      },
+      endpoints: [
+        { port: 'monitoring' },
+      ],
+    },
+  },
+
+  local newServiceAdmin(tenantName) =
+    local name = normalizedName(tracing.config.name + '-jaeger-' + tenantName);
+    {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: name + '-admin',
+        namespace: tracing.config.namespace,
+        labels: newCommonLabels(tenantName),
+      },
+      spec: {
+        ports: [
+          { name: 'admin', targetPort: 14269, port: 14269 },
+          { name: 'query-metrics', targetPort: 16687, port: 16687 },
+        ],
+        selector: {
+          'app.kubernetes.io/instance': name,
+          'app.kubernetes.io/part-of': 'jaeger',
+          'app.kubernetes.io/name': name,
+        },
+      },
+    },
+
   local normalizedName(id) =
     std.strReplace(id, '_', '-'),
 
@@ -108,9 +174,19 @@ function(params) {
               } else {}),
     },
   manifests: {
-    otelcollector: tracing.otelcolcr,
-  } + {
-    [normalizedName('jaeger-' + tenantName)]: newJaeger(tenantName, tracing.config.components[tenantName])
-    for tenantName in tracing.config.tenants
-  },
+               otelcollector: tracing.otelcolcr,
+             } + {
+               [normalizedName('jaeger-' + tenantName)]: newJaeger(tenantName, tracing.config.components[tenantName])
+               for tenantName in tracing.config.tenants
+             } + (
+               if tracing.config.serviceMonitor == true then {
+                 [normalizedName('jaeger-adminservice-' + tenantName)]: newServiceAdmin(tenantName)
+                 for tenantName in tracing.config.tenants
+               } else {}
+             ) + (if tracing.config.serviceMonitor == true then {
+                    servicemonitor: tracing.serviceMonitor,
+                  } else {})
+             + (if tracing.config.serviceMonitor == true then {
+                  'servicemonitor-otel': tracing.otelServiceMonitor,
+                } else {}),
 }

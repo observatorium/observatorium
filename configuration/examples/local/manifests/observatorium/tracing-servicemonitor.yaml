@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: jaeger-observatorium-xyz
+  namespace: observatorium
+spec:
+  endpoints:
+  - port: admin
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: otelcol
+      app.kubernetes.io/part-of: observatorium
+  targetLabels:
+  - app.kubernetes.io/component
+  - app.kubernetes.io/instance
