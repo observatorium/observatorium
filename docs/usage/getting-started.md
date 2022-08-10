@@ -37,7 +37,6 @@ Read more on [High Level Architecture](/docs/design/architecture.md) docs.
 ## Tutorials
 
 * [Quick Observatorium spinup on local cluster](#local)
-* Various Tutorials on Katacoda: https://katacoda.com/observatorium
 
 ### Local
 
