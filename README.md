@@ -42,7 +42,7 @@ From the very beginning our teams were leveraging Open Source to accomplish all 
 
 ### Getting Started
 
-* See [Getting Started](docs/usage/getting-started.md) and our Katacoda Tutorials: https://katacoda.com/observatorium
+* See [Getting Started](docs/usage/getting-started.md)
 * See [Contributing](docs/community/README.md) on how to start contributing.
 
 ### Status: Work In Progress
