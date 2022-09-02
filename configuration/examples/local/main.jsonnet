@@ -23,6 +23,7 @@ local dev = obs {
     obs.tracing.config {
       tenants: [tenant.name],
       enabled: true,
+      monitoring: true,
       jaegerSpec: {
         strategy: 'allinone',
       },

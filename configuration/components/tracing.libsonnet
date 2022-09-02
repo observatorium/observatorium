@@ -21,6 +21,7 @@ local defaults = {
     'app.kubernetes.io/part-of': 'observatorium',
     'app.kubernetes.io/instance': defaults.name,
   },
+  monitoring: false,
 };
 
 function(params) {
@@ -51,6 +52,11 @@ function(params) {
       },
     },
     service: {
+      telemetry: {
+        metrics: {
+          level: 'basic',
+        },
+      },
       pipelines: {
         traces: {
           receivers: ['otlp'],
@@ -75,6 +81,52 @@ function(params) {
       config: std.manifestYamlDoc(tracing.otelcolcfg, indent_array_in_object=false, quote_keys=false),
     },
   },
+
+  otelServiceMonitor: {
+    apiVersion: 'monitoring.coreos.com/v1',
+    kind: 'ServiceMonitor',
+    metadata+: {
+      name: 'otel-' + tracing.config.name,
+      namespace: tracing.config.namespace,
+    },
+    spec: {
+      selector: {
+        matchLabels: {
+          'app.kubernetes.io/instance': tracing.config.namespace + '.' + normalizedName(tracing.config.name + '-otel'),
+          'app.kubernetes.io/component': 'opentelemetry-collector',
+          'app.kubernetes.io/name': normalizedName(tracing.config.name + '-otel') + '-collector-monitoring',
+        },
+      },
+      endpoints: [
+        { port: 'monitoring' },
+      ],
+    },
+  },
+
+  local newPodMonitor(tenantName) =
+    local name = normalizedName(tracing.config.name + '-jaeger-' + tenantName);
+    {
+      apiVersion: 'monitoring.coreos.com/v1',
+      kind: 'PodMonitor',
+      metadata: {
+        name: name + '-admin',
+        namespace: tracing.config.namespace,
+        labels: newCommonLabels(tenantName),
+      },
+      spec: {
+        namespaceSelector: {},
+        podMetricsEndpoints: [{
+          port: 'admin-http',
+          interval: '2s',
+        }],
+        selector: {
+          matchLabels: {
+            'app.kubernetes.io/instance': name,
+            app: 'jaeger',
+          },
+        },
+      },
+    },
 
   local normalizedName(id) =
     std.strReplace(id, '_', '-'),
@@ -112,5 +164,12 @@ function(params) {
   } + {
     [normalizedName('jaeger-' + tenantName)]: newJaeger(tenantName, tracing.config.components[tenantName])
     for tenantName in tracing.config.tenants
-  },
+  } + (
+    if tracing.config.monitoring == true then {
+      [normalizedName('jaeger-podmonitor-' + tenantName)]: newPodMonitor(tenantName)
+      for tenantName in tracing.config.tenants
+    } else {}
+  ) + (if tracing.config.monitoring == true then {
+         'servicemonitor-otel': tracing.otelServiceMonitor,
+       } else {}),
 }
