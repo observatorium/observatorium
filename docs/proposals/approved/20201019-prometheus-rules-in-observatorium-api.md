@@ -120,7 +120,7 @@ Ideally, we would define the rule storage backend API in OpenAPI format, so that
 
 We will use a persistent storage mechanism that is external to the API deployment (i.e. no local storage). This enables us to satisfy our requirement of horizontally scaling the rule storage backend.
 
-While we have explicitly de-coupled the rule storage backend from the API, we require a concrete implementaion.
+While we have explicitly de-coupled the rule storage backend from the API, we require a concrete implementation.
 
 We have a number of options for the storage layer backing the rules storage backend service.
 
