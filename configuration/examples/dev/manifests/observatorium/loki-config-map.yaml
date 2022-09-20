@@ -105,6 +105,22 @@ data:
             "max_size_bytes": "500MB"
     "query_scheduler":
       "max_outstanding_requests_per_tenant": 256
+    "ruler":
+      "enable_api": true
+      "enable_sharding": true
+      "ring":
+        "kvstore":
+          "store": "memberlist"
+      "rule_path": "/data"
+      "storage":
+        "local":
+          "directory": "/tmp/rules"
+        "type": "local"
+      "wal":
+        "dir": "/data/loki/wal"
+        "max_age": "4h"
+        "min_age": "5m"
+        "truncate_frequency": "60m"
     "schema_config":
       "configs":
       - "from": "2020-10-01"

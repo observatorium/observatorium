@@ -30,6 +30,7 @@ local defaults = {
   volumeClaimTemplates: {},
   memberlist: {},
   etcd: {},
+  rules: {},
   wal: {
     replayMemoryCeiling: error 'must provide replay memory ceiling',
   },
@@ -120,6 +121,15 @@ local defaults = {
       withServiceMonitor: false,
     },
     query_scheduler: {
+      withLivenessProbe: true,
+      withReadinessProbe: true,
+      resources: {
+        requests: { cpu: '100m', memory: '100Mi' },
+        limits: { cpu: '200m', memory: '200Mi' },
+      },
+      withServiceMonitor: false,
+    },
+    ruler: {
       withLivenessProbe: true,
       withReadinessProbe: true,
       resources: {
@@ -322,6 +332,28 @@ local defaults = {
         },
       }
     ),
+    ruler: {
+      enable_api: true,
+      enable_sharding: true,
+      wal: {
+        dir: '/data/loki/wal',
+        truncate_frequency: '60m',
+        min_age: '5m',
+        max_age: '4h',
+      },
+      rule_path: '/data',
+      storage: {
+        type: 'local',
+        'local': {
+          directory: '/tmp/rules',
+        },
+      },
+      ring: {
+        kvstore: {
+          store: if defaults.memberlist != {} then 'memberlist' else 'inmemory',
+        },
+      },
+    },
     schema_config: {
       configs: [
         {
@@ -425,8 +457,26 @@ function(params) {
     },
   },
 
+  rulesConfigMap:: {
+    apiVersion: 'v1',
+    kind: 'ConfigMap',
+    metadata: {
+      name: rulesConfigName(),
+      namespace: loki.config.namespace,
+      labels: loki.config.commonLabels,
+    },
+    data: {
+      [name]: std.manifestYamlDoc(loki.config.rules[name])
+      for name in std.objectFields(loki.config.rules)
+      if std.length(loki.config.rules) != 0
+    },
+  },
+
   local normalizedName(id) =
     std.strReplace(id, '_', '-'),
+
+  local rulesConfigName() =
+    loki.config.name + '-rules',
 
   local newPodLabelsSelector(component) =
     loki.config.podLabelSelector {
@@ -441,10 +491,11 @@ function(params) {
   local joinGossipRing(component) =
     loki.config.config.distributor.ring.kvstore.store == 'memberlist' &&
     loki.config.config.ingester.lifecycler.ring.kvstore.store == 'memberlist' &&
-    std.member(['distributor', 'ingester', 'querier'], component),
+    loki.config.config.ruler.ring.kvstore.store == 'memberlist' &&
+    std.member(['distributor', 'ingester', 'querier', 'ruler'], component),
 
   local isStatefulSet(component) =
-    std.member(['compactor', 'ingester', 'index_gateway'], component),
+    std.member(['compactor', 'ingester', 'index_gateway', 'ruler'], component),
 
   local newLokiContainer(name, component, config) =
     local osc = loki.config.objectStorageConfig;
@@ -471,6 +522,8 @@ function(params) {
         },
       },
     };
+
+    local rulesVolumeMount = { name: 'rules', mountPath: '/tmp/rules', readOnly: false };
 
     local resources = { resources: config.resources };
     {
@@ -523,7 +576,7 @@ function(params) {
       volumeMounts: [
         { name: 'config', mountPath: '/etc/loki/config/', readOnly: false },
         { name: 'storage', mountPath: '/data', readOnly: false },
-      ],
+      ] + if component == 'ruler' then [rulesVolumeMount] else [],
     } + {
       [name]: readinessProbe[name]
       for name in std.objectFields(readinessProbe)
@@ -580,6 +633,8 @@ function(params) {
         { 'loki.grafana.com/gossip': 'true' }
       else {};
 
+    local rulesVolume = { name: 'rules', configMap: { name: rulesConfigName() } };
+
     {
       apiVersion: 'apps/v1',
       kind: 'StatefulSet',
@@ -600,7 +655,7 @@ function(params) {
             containers: [newLokiContainer(name, component, config)],
             volumes: [
               { name: 'config', configMap: { name: loki.configmap.metadata.name } },
-            ],
+            ] + if component == 'ruler' then [rulesVolume] else [],
             volumeClaimTemplates:: null,
           },
         },
@@ -678,11 +733,12 @@ function(params) {
       },
     }
     for name in std.objectFields(loki.config.components)
-    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'query_scheduler', 'ingester', 'index_gateway'], name)
+    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'query_scheduler', 'ingester', 'index_gateway', 'ruler'], name)
   },
 
   manifests: {
     'config-map': loki.configmap,
+    'rules-config-map': loki.rulesConfigMap,
   } + {
     [normalizedName(name) + '-deployment']: newDeployment(name, loki.config.components[name])
     for name in std.objectFields(loki.config.components)
@@ -697,7 +753,7 @@ function(params) {
   } + {
     [normalizedName(name) + '-http-service']: newHttpService(name)
     for name in std.objectFields(loki.config.components)
-    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'query_scheduler', 'ingester', 'index_gateway'], name)
+    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'query_scheduler', 'ingester', 'index_gateway', 'ruler'], name)
   } + (
     if std.length(loki.config.resources) != {} then {
       [normalizedName(name) + '-deployment']+: {
