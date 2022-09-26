@@ -110,6 +110,7 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
       querier: 1,
       query_frontend: 1,
       query_scheduler: 1,
+      ruler: 1,
     },
     memberlist: {
       ringName: 'gossip-ring',
