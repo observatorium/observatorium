@@ -113,9 +113,7 @@ data:
           "store": "memberlist"
       "rule_path": "/data"
       "storage":
-        "local":
-          "directory": "/tmp/rules"
-        "type": "local"
+        "type": "s3"
       "wal":
         "dir": "/data/loki/wal"
         "max_age": "4h"

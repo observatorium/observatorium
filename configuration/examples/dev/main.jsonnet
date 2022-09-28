@@ -33,7 +33,7 @@ local dex = (import '../../components/dex.libsonnet')({
 
 local minio = (import '../../components/minio.libsonnet')({
   namespace: 'observatorium-minio',
-  buckets: ['thanos', 'loki'],
+  buckets: ['thanos', 'loki', 'rules'],
   accessKey: 'minio',
   secretKey: 'minio123',
 });
@@ -181,6 +181,18 @@ dev.manifests +
     },
     stringData: {
       endpoint: 'http://minio:minio123@%s.%s.svc.cluster.local.:9000/loki' % [minio.service.metadata.name, minio.config.namespace],
+    },
+    type: 'Opaque',
+  },
+  'minio-secret-observatorium-rules': {
+    apiVersion: 'v1',
+    kind: 'Secret',
+    metadata: {
+      name: 'obs-rules-objectstorage',
+      namespace: dev.config.namespace,
+    },
+    stringData: {
+      endpoint: 'http://minio:minio123@%s.%s.svc.cluster.local.:9000/rules' % [minio.service.metadata.name, minio.config.namespace],
     },
     type: 'Opaque',
   },

@@ -19,7 +19,7 @@ spec:
         - /bin/sh
         - -c
         - |
-          mkdir -p /storage/thanos /storage/loki && \
+          mkdir -p /storage/thanos /storage/loki /storage/rules && \
           /usr/bin/docker-entrypoint.sh minio server /storage
         env:
         - name: MINIO_ROOT_USER
