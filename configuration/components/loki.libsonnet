@@ -31,6 +31,9 @@ local defaults = {
   memberlist: {},
   etcd: {},
   rules: {},
+  rulesStorageConfig: {
+    type: 'local',
+  },
   wal: {
     replayMemoryCeiling: error 'must provide replay memory ceiling',
   },
@@ -342,12 +345,15 @@ local defaults = {
         max_age: '4h',
       },
       rule_path: '/data',
-      storage: {
-        type: 'local',
-        'local': {
-          directory: '/tmp/rules',
-        },
-      },
+      storage:
+        (if defaults.rulesStorageConfig.type == 'local' then {
+           type: 'local',
+           'local': {
+             directory: '/tmp/rules',
+           },
+         } else {
+           type: defaults.rulesStorageConfig.type,
+         }),
       ring: {
         kvstore: {
           store: if defaults.memberlist != {} then 'memberlist' else 'inmemory',
@@ -499,7 +505,17 @@ function(params) {
 
   local newLokiContainer(name, component, config) =
     local osc = loki.config.objectStorageConfig;
+    local rsc = loki.config.rulesStorageConfig;
     local replicas = loki.config.replicas[component];
+
+    assert rsc.type == 'local' || rsc.type == 's3';
+    assert rsc.type == 's3' &&
+           std.objectHas(rsc, 'secretName') && rsc.secretName != '' &&
+           ((std.objectHas(rsc, 'endpointKey') && rsc.endpointKey != '') ||
+            (std.objectHas(rsc, 'bucketsKey') && rsc.bucketsKey != '' &&
+             std.objectHas(rsc, 'regionKey') && rsc.regionKey != '' &&
+             std.objectHas(rsc, 'accessKeyIdKey') && rsc.accessKeyIdKey != '' &&
+             std.objectHas(rsc, 'secretAccessKeyKey') && rsc.secretAccessKeyKey != ''));
 
     local readinessProbe = { readinessProbe: {
       initialDelaySeconds: 15,
@@ -535,38 +551,76 @@ function(params) {
         '-config.file=/etc/loki/config/config.yaml',
         '-limits.per-user-override-config=/etc/loki/config/overrides.yaml',
         '-log.level=error',
-      ] + if std.objectHas(osc, 'endpointKey') then [
-        '-s3.url=$(S3_URL)',
-        '-s3.force-path-style=true',
-      ] else [
-        '-s3.buckets=$(S3_BUCKETS)',
-        '-s3.region=$(S3_REGION)',
-        '-s3.access-key-id=$(AWS_ACCESS_KEY_ID)',
-        '-s3.secret-access-key=$(AWS_SECRET_ACCESS_KEY)',
-      ],
-      env: if std.objectHas(osc, 'endpointKey') then [
-        { name: 'S3_URL', valueFrom: { secretKeyRef: {
-          name: osc.secretName,
-          key: osc.endpointKey,
-        } } },
-      ] else [
-        { name: 'S3_BUCKETS', valueFrom: { secretKeyRef: {
-          name: osc.secretName,
-          key: osc.bucketsKey,
-        } } },
-        { name: 'S3_REGION', valueFrom: { secretKeyRef: {
-          name: osc.secretName,
-          key: osc.regionKey,
-        } } },
-        { name: 'AWS_ACCESS_KEY_ID', valueFrom: { secretKeyRef: {
-          name: osc.secretName,
-          key: osc.accessKeyIdKey,
-        } } },
-        { name: 'AWS_SECRET_ACCESS_KEY', valueFrom: { secretKeyRef: {
-          name: osc.secretName,
-          key: osc.secretAccessKeyKey,
-        } } },
-      ],
+      ] + (
+        if std.objectHas(osc, 'endpointKey') then [
+          '-s3.url=$(S3_URL)',
+          '-s3.force-path-style=true',
+        ] else [
+          '-s3.buckets=$(S3_BUCKETS)',
+          '-s3.region=$(S3_REGION)',
+          '-s3.access-key-id=$(AWS_ACCESS_KEY_ID)',
+          '-s3.secret-access-key=$(AWS_SECRET_ACCESS_KEY)',
+        ]
+      ) + (
+        if component == 'ruler' && std.objectHas(rsc, 'endpointKey') then [
+          '-ruler.storage.s3.url=$(RULER_S3_URL)',
+          '-ruler.storage.s3.force-path-style=true',
+        ] else if component == 'ruler' then [
+          '-ruler.storage.s3.buckets=$(RULER_S3_BUCKETS)',
+          '-ruler.storage.s3.region=$(RULER_S3_REGION)',
+          '-ruler.storage.s3.access-key-id=$(RULER_AWS_ACCESS_KEY_ID)',
+          '-ruler.storage.s3.secret-access-key=$(RULER_AWS_SECRET_ACCESS_KEY)',
+        ] else []
+      ),
+      env: (
+        if std.objectHas(osc, 'endpointKey') then [
+          { name: 'S3_URL', valueFrom: { secretKeyRef: {
+            name: osc.secretName,
+            key: osc.endpointKey,
+          } } },
+        ] else [
+          { name: 'S3_BUCKETS', valueFrom: { secretKeyRef: {
+            name: osc.secretName,
+            key: osc.bucketsKey,
+          } } },
+          { name: 'S3_REGION', valueFrom: { secretKeyRef: {
+            name: osc.secretName,
+            key: osc.regionKey,
+          } } },
+          { name: 'AWS_ACCESS_KEY_ID', valueFrom: { secretKeyRef: {
+            name: osc.secretName,
+            key: osc.accessKeyIdKey,
+          } } },
+          { name: 'AWS_SECRET_ACCESS_KEY', valueFrom: { secretKeyRef: {
+            name: osc.secretName,
+            key: osc.secretAccessKeyKey,
+          } } },
+        ]
+      ) + (
+        if component == 'ruler' && std.objectHas(rsc, 'endpointKey') then [
+          { name: 'RULER_S3_URL', valueFrom: { secretKeyRef: {
+            name: rsc.secretName,
+            key: rsc.endpointKey,
+          } } },
+        ] else if component == 'ruler' then [
+          { name: 'RULER_S3_BUCKETS', valueFrom: { secretKeyRef: {
+            name: rsc.secretName,
+            key: rsc.bucketsKey,
+          } } },
+          { name: 'RULER_S3_REGION', valueFrom: { secretKeyRef: {
+            name: rsc.secretName,
+            key: rsc.regionKey,
+          } } },
+          { name: 'RULER_AWS_ACCESS_KEY_ID', valueFrom: { secretKeyRef: {
+            name: rsc.secretName,
+            key: rsc.accessKeyIdKey,
+          } } },
+          { name: 'RULER_AWS_SECRET_ACCESS_KEY', valueFrom: { secretKeyRef: {
+            name: rsc.secretName,
+            key: rsc.secretAccessKeyKey,
+          } } },
+        ] else []
+      ),
       ports: [
         { name: 'metrics', containerPort: 3100 },
         { name: 'grpc', containerPort: 9095 },

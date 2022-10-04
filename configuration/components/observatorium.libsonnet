@@ -131,10 +131,11 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
     objectStorageConfig: {
       secretName: 'loki-objectstorage',
       endpointKey: 'endpoint',
-      bucketsKey: 'buckets',
-      regionKey: 'region',
-      accessKeyIdKey: 'aws_access_key_id',
-      secretAccessKeyKey: 'aws_secret_access_key',
+    },
+    rulesStorageConfig: {
+      type: 's3',
+      secretName: 'obs-rules-objectstorage',
+      endpointKey: 'endpoint',
     },
   }),
 
