@@ -88,16 +88,10 @@ spec:
         - mountPath: /data
           name: storage
           readOnly: false
-        - mountPath: /tmp/rules
-          name: rules
-          readOnly: false
       volumes:
       - configMap:
           name: observatorium-xyz-loki
         name: config
-      - configMap:
-          name: observatorium-xyz-loki-rules
-        name: rules
   volumeClaimTemplates:
   - metadata:
       labels:

@@ -630,7 +630,7 @@ function(params) {
       volumeMounts: [
         { name: 'config', mountPath: '/etc/loki/config/', readOnly: false },
         { name: 'storage', mountPath: '/data', readOnly: false },
-      ] + if component == 'ruler' then [rulesVolumeMount] else [],
+      ] + if component == 'ruler' && loki.config.rulesStorageConfig.type == 'local' then [rulesVolumeMount] else [],
     } + {
       [name]: readinessProbe[name]
       for name in std.objectFields(readinessProbe)
@@ -709,7 +709,7 @@ function(params) {
             containers: [newLokiContainer(name, component, config)],
             volumes: [
               { name: 'config', configMap: { name: loki.configmap.metadata.name } },
-            ] + if component == 'ruler' then [rulesVolume] else [],
+            ] + if component == 'ruler' && loki.config.rulesStorageConfig.type == 'local' then [rulesVolume] else [],
             volumeClaimTemplates:: null,
           },
         },
