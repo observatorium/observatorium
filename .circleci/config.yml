@@ -7,7 +7,13 @@ jobs:
       - checkout
       - run: make fmt
       - run: make generate configuration/tests/manifests
-      - run: git diff --exit-code -- . ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-secret.yaml' ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-configmap.yaml' ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-dex.yaml' ':(exclude)configuration/tests/manifests/test-ca-tls.yaml'
+      - run: |
+          git diff --exit-code -- . \
+            ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-secret.yaml' \
+            ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-configmap.yaml' \
+            ':(exclude)configuration/tests/manifests/observatorium-xyz-tls-dex.yaml' \
+            ':(exclude)configuration/tests/manifests/test-ca-tls.yaml' \
+            ':(exclude).bingo/*'
       - run: make validate
 
   tests:
