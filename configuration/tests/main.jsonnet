@@ -80,12 +80,12 @@ local metricsConfig = {
   writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
-    obs.api.service.spec.ports[1].port,
+    obs.api.service.spec.ports[2].port,
   ],
   readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
-    obs.api.service.spec.ports[1].port,
+    obs.api.service.spec.ports[2].port,
   ],
   getToken: {
     image: 'docker.io/curlimages/curl',
@@ -112,12 +112,12 @@ local upMetricsTLS = up(metricsConfig {
   writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
-    obs.api.service.spec.ports[1].port,
+    obs.api.service.spec.ports[2].port,
   ],
   readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
-    obs.api.service.spec.ports[1].port,
+    obs.api.service.spec.ports[2].port,
   ],
   tls: {
     configMapName: tls.name,
@@ -147,12 +147,12 @@ local logsConfig = {
   writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/push' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
-    obs.api.service.spec.ports[1].port,
+    obs.api.service.spec.ports[2].port,
   ],
   readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/query' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
-    obs.api.service.spec.ports[1].port,
+    obs.api.service.spec.ports[2].port,
   ],
   getToken: {
     image: 'docker.io/curlimages/curl',
@@ -184,12 +184,12 @@ local upLogsTLS = up(logsConfig {
   writeEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/push' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
-    obs.api.service.spec.ports[1].port,
+    obs.api.service.spec.ports[2].port,
   ],
   readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/logs/v1/test/loki/api/v1/query' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
-    obs.api.service.spec.ports[1].port,
+    obs.api.service.spec.ports[2].port,
   ],
   tls: {
     configMapName: tls.name,
