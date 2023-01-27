@@ -6,10 +6,12 @@ data:
     "auth_enabled": true
     "chunk_store_config":
       "chunk_cache_config":
-        "enable_fifocache": true
-        "fifocache":
-          "max_size_bytes": "500MB"
+        "embedded_cache":
+          "enabled": true
+          "max_size_mb": 500
       "max_look_back_period": "0s"
+    "common":
+      "compactor_grpc_address": "observatorium-xyz-loki-compactor-grpc.observatorium.svc.cluster.local:9095"
     "compactor":
       "compaction_interval": "2h"
       "shared_store": "s3"
@@ -55,6 +57,7 @@ data:
     "limits_config":
       "cardinality_limit": 100000
       "creation_grace_period": "10m"
+      "deletion_mode": "disabled"
       "enforce_metric_name": false
       "ingestion_burst_size_mb": 20
       "ingestion_rate_mb": 10
@@ -100,9 +103,9 @@ data:
       "parallelise_shardable_queries": false
       "results_cache":
         "cache":
-          "enable_fifocache": true
-          "fifocache":
-            "max_size_bytes": "500MB"
+          "embedded_cache":
+            "enabled": true
+            "max_size_mb": 500
     "query_scheduler":
       "max_outstanding_requests_per_tenant": 256
     "ruler":
@@ -155,6 +158,6 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: 2.6.1
+    app.kubernetes.io/version: 2.7.2
   name: observatorium-xyz-loki
   namespace: observatorium
