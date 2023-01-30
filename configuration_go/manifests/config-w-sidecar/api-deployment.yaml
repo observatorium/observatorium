@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/component: api
+    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/name: observatorium-api
+    app.kubernetes.io/part-of: observatorium
+  name: observatorium-xyz-observatorium-api
+  namespace: observatorium
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: api
+      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/name: observatorium-api
+      app.kubernetes.io/part-of: observatorium
+      app.kubernetes.io/version: main-2023-01-24-v0.1.2-318-g5f4fdf4
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/name: observatorium-api
+        app.kubernetes.io/part-of: observatorium
+      namespace: observatorium
+    spec:
+      containers:
+      - args:
+        - --web.listen=0.0.0.0:8080
+        - --web.internal.listen=0.0.0.0:8081
+        - --grpc.listen=0.0.0.0:8090
+        - --internal.tracing.endpoint=0.0.0.0:6831
+        - --log.level=debug
+        - --rbac.config=/etc/observatorium/rbac.yaml
+        - --tenants.config=/etc/observatorium/tenants.yaml
+        - --middleware.rate-limiter.grpc-address=observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081
+        - --metrics.read.endpoint=http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090
+        - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291
+        - --metrics.rules.endpoint=http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080
+        - --logs.read.endpoint=http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100
+        - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
+        - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
+        - --logs.rules.endpoint=http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100
+        - --traces.write.endpoint=observatorium-xyz-otel-collector:4317
+        - --experimental.traces.read.endpoint-template=http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/
+        image: quay.io/observatorium/api:main-2023-01-24-v0.1.2-318-g5f4fdf4
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /live
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 30
+        name: observatorium-api
+        ports:
+        - containerPort: 8090
+          name: grpc-public
+        - containerPort: 8081
+          name: internal
+        - containerPort: 8080
+          name: public
+        readinessProbe:
+          failureThreshold: 12
+          httpGet:
+            path: /ready
+            port: 8081
+            scheme: HTTP
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: "3"
+            memory: 3000Mi
+          requests:
+            cpu: "2"
+            memory: 2000Mi
+        volumeMounts:
+        - mountPath: /etc/observatorium/rbac.yaml
+          name: rbac
+          readOnly: true
+          subPath: rbac.yaml
+        - mountPath: /etc/observatorium/tenants.yaml
+          name: tenants
+          readOnly: true
+          subPath: tenants.yaml
+      - args:
+        - --start-dummy-sidecar
+        image: docker.io/dummy:latest
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /live
+            port: 7081
+            scheme: HTTP
+          periodSeconds: 30
+        name: dummy-sidecar
+        ports:
+        - containerPort: 7081
+          name: dummy-metrics
+        - containerPort: 7080
+          name: dummy
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/dummy-sidecar/config.yaml
+          name: config
+          readOnly: true
+          subPath: config.yaml
+      serviceAccountName: observatorium-xyz-observatorium-api
+      volumes:
+      - configMap:
+          name: observatorium-xyz-observatorium-api
+        name: rbac
+      - name: tenants
+        secret:
+          secretName: observatorium-xyz-observatorium-api
+      - name: config
+status: {}

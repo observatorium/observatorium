@@ -1,6 +1,7 @@
 include .bingo/Variables.mk
 
 CONFIGURATION_DIR ?= ./configuration
+CONFIGURATION_GO_DIR ?= ./configuration_go
 WEBSITE_DIR ?= website
 WEBSITE_BASE_URL ?= https://observatorium.io
 MD_FILES_TO_FORMAT = $(shell find docs -name "*.md") $(shell ls *.md)
@@ -56,3 +57,12 @@ web: $(HUGO) | web-pre
 .PHONY: web-serve
 web-serve: $(HUGO) | web-pre 
 	@cd $(WEBSITE_DIR) && $(HUGO) serve
+
+.PHONY: go-generate
+go-generate:
+	@$(MAKE) -C $(CONFIGURATION_GO_DIR) generate
+
+.PHONY: go-validate
+go-validate:
+	@$(MAKE) -C $(CONFIGURATION_GO_DIR) validate
+
