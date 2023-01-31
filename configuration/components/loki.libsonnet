@@ -309,7 +309,6 @@ local defaults = {
       extra_query_delay: '0s',
       query_ingesters_within: '3h',
       engine: {
-        timeout: '3m',
         max_look_back_period: '30s',
       },
       max_concurrent: defaults.query.concurrency,
