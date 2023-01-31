@@ -172,9 +172,9 @@ local defaults = {
         },
       } else {
         chunk_cache_config: {
-          enable_fifocache: true,
-          fifocache: {
-            max_size_bytes: '500MB',
+          embedded_cache: {
+            enabled: true,
+            max_size_mb: 500,
           },
         },
       }
@@ -194,6 +194,13 @@ local defaults = {
         ],
       ],
     } else {},
+
+    common: {
+      compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [
+        defaults.name + '-compactor-grpc',
+        defaults.namespace,
+      ],
+    },
 
     compactor: {
       compaction_interval: '2h',
@@ -294,6 +301,7 @@ local defaults = {
       per_stream_rate_limit: '3MB',
       per_stream_rate_limit_burst: '15MB',
       split_queries_by_interval: '30m',
+      deletion_mode: 'disabled',
     },
     querier: {
       query_timeout: '1h',
@@ -301,7 +309,6 @@ local defaults = {
       extra_query_delay: '0s',
       query_ingesters_within: '3h',
       engine: {
-        timeout: '3m',
         max_look_back_period: '30s',
       },
       max_concurrent: defaults.query.concurrency,
@@ -327,9 +334,9 @@ local defaults = {
       } else {
         results_cache: {
           cache: {
-            enable_fifocache: true,
-            fifocache: {
-              max_size_bytes: '500MB',
+            embedded_cache: {
+              enabled: true,
+              max_size_mb: 500,
             },
           },
         },
