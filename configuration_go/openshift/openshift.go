@@ -3,7 +3,7 @@ package openshift
 import (
 	"sort"
 
-	"github.com/observatorium/observatorium/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	templatev1 "github.com/openshift/api/template/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

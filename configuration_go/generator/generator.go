@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/bwplotka/mimic"
 	"github.com/bwplotka/mimic/encoding"
-	"github.com/observatorium/observatorium/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 )
 
 // GenerateWithMimic renders given ObjectMap to YAML with github.com/bwplotka/mimic.

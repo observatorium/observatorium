@@ -5,11 +5,11 @@ import (
 
 	"github.com/bwplotka/mimic"
 	"github.com/ghodss/yaml"
-	"github.com/observatorium/observatorium/abstr/kubernetes/api"
-	"github.com/observatorium/observatorium/generator"
-	"github.com/observatorium/observatorium/k8sutil"
-	"github.com/observatorium/observatorium/openshift"
-	apiprovider "github.com/observatorium/observatorium/providers/api"
+	"github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/api"
+	"github.com/observatorium/observatorium/configuration_go/generator"
+	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/openshift"
+	apiprovider "github.com/observatorium/observatorium/configuration_go/providers/api"
 
 	obsrbac "github.com/observatorium/api/rbac"
 	templatev1 "github.com/openshift/api/template/v1"
