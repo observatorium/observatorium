@@ -1,3 +1,4 @@
+local lokiMixins = import 'github.com/grafana/loki/production/ksonnet/loki/loki.libsonnet';
 // These are the defaults for this components configuration.
 // When calling the function to generate the component's manifest,
 // you can pass an object structured like the default to overwrite default values.
@@ -485,6 +486,29 @@ function(params) {
     },
   },
 
+  rhobsLoki::
+    lokiMixins {
+      _config+:: {
+        namespace: 'test',
+        storage_backend: 's3',
+        s3_address: 'http://example.com',
+        s3_bucket_name: 'my_bucket',
+        multi_zone_ingester_enabled: false,
+        // Compactor
+        using_boltdb_shipper: true,
+        ruler_enabled: true,
+        query_scheduler_enabled: true,
+        use_index_gateway: true,
+      },
+      // Both config_file and overrides_config use Tenka only native function
+      config_file:: {},
+      overrides_config:: {},
+      ingester_pdb:: {},
+      consul_config_map:: {},
+      consul_deployment:: {},
+      consul_service:: {},
+    },
+
   local normalizedName(id) =
     std.strReplace(id, '_', '-'),
 
@@ -707,7 +731,7 @@ function(params) {
       spec: {
         replicas: loki.config.replicas[component],
         selector: { matchLabels: podLabelSelector },
-        serviceName: newGrpcService(component).metadata.name,
+        serviceName: name,
         template: {
           metadata: {
             labels: podLabelSelector,
@@ -723,38 +747,21 @@ function(params) {
       },
     },
 
-  local newGrpcService(component) = {
-    apiVersion: 'v1',
-    kind: 'Service',
-    metadata: {
-      name: loki.config.name + '-' + normalizedName(component) + '-grpc',
+  local rhobsMetadataFormat(object) = object {
+    metadata+: {
+      name: loki.config.name + '-' + object.metadata.name,
       namespace: loki.config.namespace,
-      labels: newCommonLabels(component),
-    },
-    spec: {
-      ports: [
-        { name: 'grpc', targetPort: 9095, port: 9095 },
-      ],
-      selector: newPodLabelsSelector(component),
-      clusterIP: 'None',
+      labels: newCommonLabels(object.metadata.name),
     },
   },
 
-  local newHttpService(component) = {
-    apiVersion: 'v1',
-    kind: 'Service',
-    metadata: {
-      name: loki.config.name + '-' + normalizedName(component) + '-http',
-      namespace: loki.config.namespace,
-      labels: newCommonLabels(component),
+  local newService(component) =
+    local name = if component == 'query_scheduler' then component + '_discovery' else component;
+    rhobsMetadataFormat(loki.rhobsLoki[name + '_service']) {
+      spec+: {
+        selector: newPodLabelsSelector(component),
+      },
     },
-    spec: {
-      ports: [
-        { name: 'metrics', targetPort: 3100, port: 3100 },
-      ],
-      selector: newPodLabelsSelector(component),
-    },
-  },
 
   memberlistService:: {
     apiVersion: 'v1',
@@ -801,6 +808,9 @@ function(params) {
     'config-map': loki.configmap,
     'rules-config-map': loki.rulesConfigMap,
   } + {
+    [normalizedName(name) + '-service']: newService(name)
+    for name in std.objectFields(loki.config.components)
+  } + {
     [normalizedName(name) + '-deployment']: newDeployment(name, loki.config.components[name])
     for name in std.objectFields(loki.config.components)
     if !isStatefulSet(name)
@@ -808,13 +818,6 @@ function(params) {
     [normalizedName(name) + '-statefulset']: newStatefulSet(name, loki.config.components[name])
     for name in std.objectFields(loki.config.components)
     if isStatefulSet(name)
-  } + {
-    [normalizedName(name) + '-grpc-service']: newGrpcService(name)
-    for name in std.objectFields(loki.config.components)
-  } + {
-    [normalizedName(name) + '-http-service']: newHttpService(name)
-    for name in std.objectFields(loki.config.components)
-    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'query_scheduler', 'ingester', 'index_gateway', 'ruler'], name)
   } + (
     if std.length(loki.config.resources) != {} then {
       [normalizedName(name) + '-deployment']+: {
