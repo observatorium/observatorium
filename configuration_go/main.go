@@ -25,7 +25,7 @@ import (
 // Generating API config with sidecar
 // Generating OpenShift template of API config
 func main() {
-	g := mimic.New()
+	g := mimic.New().WithTopLevelComment(mimic.GeneratedComment)
 
 	defer g.Generate()
 

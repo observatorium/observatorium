@@ -3,7 +3,7 @@ module github.com/observatorium/observatorium
 go 1.19
 
 require (
-	github.com/bwplotka/mimic v0.2.0
+	github.com/bwplotka/mimic v0.2.1-0.20230303101552-f705cca2f4a4
 	github.com/efficientgo/core v1.0.0-rc.2
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/swag v0.22.3

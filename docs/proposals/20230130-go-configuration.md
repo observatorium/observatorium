@@ -18,8 +18,7 @@ While jsonnet is a commonly used configuration templating language, there are ce
 
 Templating via jsonnet, while achievable, often results in complex, unreadable code, and due to no doc generation and low IDE support becomes virtually undiscoverable. Codifying and abstracting operational practices and knowledge in jsonnet is difficult and time-consuming, due to the lack of type safety and testing practices. In certain cases, pre-existing upstreams also cannot be used and jsonnet templating needs to be written manually.
 
-Furthermore, for a project like Observatorium, this leads to a complex-to-adopt and messy installation model. An end-user is forced to go through one of the below,
-* Scale the steep learning curve of jsonnet initially (if needed), and understand complex Observatorium jsonnet library internals and abstractions (without documentation or discoverability) to be able to configure it exactly according to needs (sometimes even rewrite for customizability)
+Furthermore, for a project like Observatorium, this leads to a complex-to-adopt installation model, especially for those not familiar with jsonnet. An end-user is forced to go through one of the below,* Scale the steep learning curve of jsonnet initially (if needed), and understand complex Observatorium jsonnet library internals and abstractions (without documentation or discoverability) to be able to configure it exactly according to needs (sometimes even rewrite for customizability)
 * Copy over pre-generated YAML in observatorium/observatorium and change it manually
 * Reference generated YAML and rewrite it in templating the end-user is comfortable with
 
@@ -31,6 +30,7 @@ Compose Observatorium configuration as a Go-based library using configuration-as
 * Be able to rely on tested configuration generation, battle-tested versioning via Go modules and automatic documentation via [goDoc](https://blog.golang.org/godoc-documenting-go-code)
 * Be able to pull in, their own upstreams directly by just importing Go struct for their own configuration (sidecars/config files, etc)
 * Have a consistent installation and usage model for Observatorium, as a customizable simple static configuration generation solution, with sane defaults
+* Have superior IDE support with autocompletion and complete code navigation
 
 ## Non-Goals
 
@@ -48,6 +48,26 @@ Observatorium Devs and Users.
 In theory, we can arrange Go-based configuration libraries in Observatorium in the same fashion as we do for jsonnet with jsonnet-bundler i.e, something like below, only this would rely on Go modules for versioning and dependency management.
 
 ![Go Configuration library import path](./go-lib-upstream.png "Go Configuration library import path")
+
+### IDE/Editor Support
+
+Jsonnet does have some IDE support thanks to projects like https://github.com/grafana/jsonnet-language-server which are available as extensions to various editors. The primary features for this include,
+
+* Jump to definitions for local definitions and local imports
+* Error/Lint diagnostics
+* Standard library hover and autocomplete
+
+However, this does not work well with [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler),
+
+* Cannot jump to definitions of imported libs (can only jump to the import)
+* Error/lint diagnostics are misleading with `RUNTIME ERROR: couldn't open import (github.com/...`
+* Standard library hover/autocomplete works well, but no support for any user libraries
+
+In comparison, Go provides extremely mature IDE/editor support via [`gopls`](https://pkg.go.dev/golang.org/x/tools/gopls) with well-documented and feature-rich [integrations](https://github.com/golang/vscode-go/blob/master/README.md). While this proposal will not go too in-depth into comparing Jsonnet and Go dev tooling, there are some large benefits that come with Go tooling that allow for a much better UX,
+
+- Jump to definition supported for both local, standard lib and imported third-party modules
+- Hove and autocomplete with goDoc for standard library and user code definitions
+- Full language error/lint diagnostics
 
 ### Proof-of-Concept Library
 
@@ -175,6 +195,7 @@ kubect apply -f manifests/
 * Go is a strongly typed language which doesn't only mean type safety in configuration definitions, but also having help from the compiler/IDE of choice to figure out exactly what fields and types a struct can take in
 * Unit/e2e testing configuration generation is possible and certain practices like naming conventions are easy to enforce
 * Doc generation directly from code and tools like https://pkg.go.dev/ mean superior discoverability and ease-of-use
+* Battle-tested versioning via Go modules
 * Direct usage of pre-written structs, like Kubernetes structs, by importing them from upstream
 * Unified and simple installation model, with no such steep learning curve or custom config DSL
 

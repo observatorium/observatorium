@@ -98,6 +98,8 @@ github.com/blang/semver v3.5.0+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnweb
 github.com/brancz/kube-rbac-proxy v0.5.0/go.mod h1:cL2VjiIFGS90Cjh5ZZ8+It6tMcBt8rwvuw2J6Mamnl0=
 github.com/bwplotka/mimic v0.2.0 h1:FgkAj+Xbr9pW/T6N/6q9tezo50O6DTRAbWxsBJkKX4U=
 github.com/bwplotka/mimic v0.2.0/go.mod h1:TT/FO4KJ2iOjxaBxrHmhGawOOgVGSMupSiiEgBQZpxE=
+github.com/bwplotka/mimic v0.2.1-0.20230303101552-f705cca2f4a4 h1:z6ej4tVVkGgRXpdGB/p0qh1slebb/yI5TTYl3EFf4tw=
+github.com/bwplotka/mimic v0.2.1-0.20230303101552-f705cca2f4a4/go.mod h1:TT/FO4KJ2iOjxaBxrHmhGawOOgVGSMupSiiEgBQZpxE=
 github.com/campoy/embedmd v1.0.0/go.mod h1:oxyr9RCiSXg0M3VJ3ks0UGfp98BpSSGr0kpiX3MzVl8=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/cenkalti/backoff v0.0.0-20181003080854-62661b46c409/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
