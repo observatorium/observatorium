@@ -198,7 +198,7 @@ local defaults = {
 
     common: {
       compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-compactor-grpc',
+        defaults.name + '-compactor',
         defaults.namespace,
       ],
     },
@@ -217,18 +217,18 @@ local defaults = {
     },
     frontend: {
       scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-query-scheduler-grpc',
+        defaults.name + '-query-scheduler-discovery',
         defaults.namespace,
       ],
       tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [
-        defaults.name + '-querier-http',
+        defaults.name + '-querier',
         defaults.namespace,
       ],
       compress_responses: true,
     },
     frontend_worker: {
       scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-query-scheduler-grpc',
+        defaults.name + '-query-scheduler-discovery',
         defaults.namespace,
       ],
       grpc_client_config: {
@@ -398,7 +398,7 @@ local defaults = {
       boltdb_shipper: {
         index_gateway_client+: {
           server_address: '%s.%s.svc.cluster.local:9095' % [
-            defaults.name + '-index-gateway-grpc',
+            defaults.name + '-index-gateway',
             defaults.namespace,
           ],
         },
@@ -749,7 +749,8 @@ function(params) {
   // newService for a given compoent, generate its service using the loki mixins
   local newService(component) =
     // The query scheduler is the only component that its service has the sufix "_discovery"
-    // TODO: Normalize the service names upstream
+    // since it uses a headless svc config with PublishNotReadyAddresses for the scheduler
+    // to bootstrap scheduler<>worker connections.
     local name = if component == 'query_scheduler' then component + '_discovery' else component;
     metadataFormat(loki.rhobsLoki[name + '_service']) {
       spec+: {
@@ -803,8 +804,8 @@ function(params) {
     'rules-config-map': loki.rulesConfigMap,
   } + {
     // Service generation for all the components
-    [normalizedName(name) + '-service']: newService(name)
-    for name in std.objectFields(loki.config.components)
+    [normalizedName(component) + '-service']: newService(component)
+    for component in std.objectFields(loki.config.components)
   } + {
     [normalizedName(name) + '-deployment']: newDeployment(name, loki.config.components[name])
     for name in std.objectFields(loki.config.components)
