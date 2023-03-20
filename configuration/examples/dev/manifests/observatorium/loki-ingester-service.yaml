@@ -17,6 +17,9 @@ spec:
   - name: ingester-grpc
     port: 9095
     targetPort: 9095
+  - name: ingester-gossip-ring
+    port: 7946
+    targetPort: 7946
   selector:
     app.kubernetes.io/component: ingester
     app.kubernetes.io/instance: observatorium-xyz

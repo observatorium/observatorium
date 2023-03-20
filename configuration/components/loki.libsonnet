@@ -506,18 +506,6 @@ function(params) {
     },
   },
 
-  rhobsLoki::
-    lokiMixins {
-      _config+:: {
-        multi_zone_ingester_enabled: false,
-        // Compactor
-        using_boltdb_shipper: true,
-        ruler_enabled: true,
-        query_scheduler_enabled: true,
-        use_index_gateway: true,
-      },
-    },
-
   local normalizedName(id) =
     std.strReplace(id, '_', '-'),
 
@@ -808,10 +796,7 @@ function(params) {
 
   // newService for a given compoent, generate its service using the loki mixins
   local newService(component) =
-    // The query scheduler is the only component that its service has the sufix "_discovery"
-    // TODO: Normalize the service names upstream
-    local name = if component == 'query_scheduler' then component + '_discovery' else component;
-    metadataFormat(loki.rhobsLoki[name + '_service']) {
+    metadataFormat(loki.rhobsLoki[component + '_service']) {
       spec+: {
         selector: newPodLabelsSelector(component),
       },
@@ -863,8 +848,8 @@ function(params) {
     'rules-config-map': loki.rulesConfigMap,
   } + {
     // Service generation for all the components
-    [normalizedName(name) + '-service']: newService(name)
-    for name in std.objectFields(loki.config.components)
+    [normalizedName(component) + '-service']: newService(component)
+    for component in std.objectFields(loki.config.components)
   } + {
     [normalizedName(name) + '-deployment']: newDeployment(name, loki.config.components[name])
     for name in std.objectFields(loki.config.components)

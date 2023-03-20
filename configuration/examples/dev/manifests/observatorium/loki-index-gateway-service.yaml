@@ -17,6 +17,9 @@ spec:
   - name: index-gateway-grpc
     port: 9095
     targetPort: 9095
+  - name: index-gateway-gossip-ring
+    port: 7946
+    targetPort: 7946
   selector:
     app.kubernetes.io/component: index-gateway
     app.kubernetes.io/instance: observatorium-xyz
