@@ -489,10 +489,6 @@ function(params) {
   rhobsLoki::
     lokiMixins {
       _config+:: {
-        namespace: 'test',
-        storage_backend: 's3',
-        s3_address: 'http://example.com',
-        s3_bucket_name: 'my_bucket',
         multi_zone_ingester_enabled: false,
         // Compactor
         using_boltdb_shipper: true,
@@ -500,13 +496,6 @@ function(params) {
         query_scheduler_enabled: true,
         use_index_gateway: true,
       },
-      // Both config_file and overrides_config use Tenka only native function
-      config_file:: {},
-      overrides_config:: {},
-      ingester_pdb:: {},
-      consul_config_map:: {},
-      consul_deployment:: {},
-      consul_service:: {},
     },
 
   local normalizedName(id) =
@@ -747,7 +736,9 @@ function(params) {
       },
     },
 
-  local rhobsMetadataFormat(object) = object {
+  // metadataFormat for a given k8s object add a prefix to name, set namespace
+  // and set common labels
+  local metadataFormat(object) = object {
     metadata+: {
       name: loki.config.name + '-' + object.metadata.name,
       namespace: loki.config.namespace,
@@ -755,9 +746,12 @@ function(params) {
     },
   },
 
+  // newService for a given compoent, generate its service using the loki mixins
   local newService(component) =
+    // The query scheduler is the only component that its service has the sufix "_discovery"
+    // TODO: Normalize the service names upstream
     local name = if component == 'query_scheduler' then component + '_discovery' else component;
-    rhobsMetadataFormat(loki.rhobsLoki[name + '_service']) {
+    metadataFormat(loki.rhobsLoki[name + '_service']) {
       spec+: {
         selector: newPodLabelsSelector(component),
       },
@@ -808,6 +802,7 @@ function(params) {
     'config-map': loki.configmap,
     'rules-config-map': loki.rulesConfigMap,
   } + {
+    // Service generation for all the components
     [normalizedName(name) + '-service']: newService(name)
     for name in std.objectFields(loki.config.components)
   } + {
