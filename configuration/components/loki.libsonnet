@@ -746,7 +746,7 @@ function(params) {
     },
   },
 
-  // newService for a given compoent, generate its service using the loki mixins
+  // newService for a given component, generate its service using the loki mixins
   local newService(component) =
     // The query scheduler is the only component that its service has the sufix "_discovery"
     // since it uses a headless svc config with PublishNotReadyAddresses for the scheduler

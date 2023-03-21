@@ -14,6 +14,9 @@ spec:
   - name: compactor-http-metrics
     port: 3100
     targetPort: 3100
+  - name: compactor-grpc
+    port: 9095
+    targetPort: 9095
   selector:
     app.kubernetes.io/component: compactor
     app.kubernetes.io/instance: observatorium-xyz
