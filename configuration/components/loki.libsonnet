@@ -794,7 +794,7 @@ function(params) {
     },
   },
 
-  // newService for a given compoent, generate its service using the loki mixins
+  // newService for a given component, generate its service using the loki mixins
   local newService(component) =
     metadataFormat(loki.rhobsLoki[component + '_service']) {
       spec+: {
