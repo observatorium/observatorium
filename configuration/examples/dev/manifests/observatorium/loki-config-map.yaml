@@ -9,7 +9,7 @@ data:
           "enabled": true
           "max_size_mb": 500
     "common":
-      "compactor_grpc_address": "observatorium-xyz-loki-compactor-grpc.observatorium.svc.cluster.local:9095"
+      "compactor_grpc_address": "observatorium-xyz-loki-compactor.observatorium.svc.cluster.local:9095"
       "ring":
         "kvstore":
           "store": "memberlist"
@@ -24,13 +24,13 @@ data:
     "frontend":
       "compress_responses": true
       "log_queries_longer_than": "5s"
-      "scheduler_address": "observatorium-xyz-loki-query-scheduler-grpc.observatorium.svc.cluster.local:9095"
-      "tail_proxy_url": "observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100"
+      "scheduler_address": "observatorium-xyz-loki-query-scheduler.observatorium.svc.cluster.local:9095"
+      "tail_proxy_url": "observatorium-xyz-loki-querier.observatorium.svc.cluster.local:3100"
     "frontend_worker":
       "grpc_client_config":
         "max_send_msg_size": 104857600
       "match_max_concurrent": true
-      "scheduler_address": "observatorium-xyz-loki-query-scheduler-grpc.observatorium.svc.cluster.local:9095"
+      "scheduler_address": "observatorium-xyz-loki-query-scheduler.observatorium.svc.cluster.local:9095"
     "ingester":
       "chunk_block_size": 262144
       "chunk_encoding": "snappy"
@@ -140,7 +140,7 @@ data:
         "active_index_directory": "/data/loki/index"
         "cache_location": "/data/loki/index_cache"
         "index_gateway_client":
-          "server_address": "observatorium-xyz-loki-index-gateway-grpc.observatorium.svc.cluster.local:9095"
+          "server_address": "observatorium-xyz-loki-index-gateway.observatorium.svc.cluster.local:9095"
         "shared_store": "s3"
   overrides.yaml: '{}'
 kind: ConfigMap
