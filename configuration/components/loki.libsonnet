@@ -819,8 +819,13 @@ function(params) {
     },
   },
 
+  // serviceMonitors generates ServiceMonitors for all the components below, this
+  // code can be removed once the loki.mixins improves ServiceMonitor generation
+  // to generate 1 ServiceMonitor per component.
   serviceMonitors:: {
     [name]: {
+      // In loki.mixins both query_frontend and query_scheduler services ports are not prefixed with the component name
+      local portPrefix = if !std.member(['query_frontend', 'query_scheduler'], name) then normalizedName(name) + '-' else '',
       apiVersion: 'monitoring.coreos.com/v1',
       kind: 'ServiceMonitor',
       metadata+: {
@@ -835,7 +840,7 @@ function(params) {
           },
         },
         endpoints: [
-          { port: 'metrics' },
+          { port: portPrefix + 'http-metrics' },
         ],
       },
     }
@@ -937,6 +942,7 @@ function(params) {
       [loki.config.memberlist.ringName]: loki.memberlistService,
     } else {}
   ) + {
+    // Service Monitor generation for all the componets that enable it
     [normalizedName(name) + '-service-monitor']: loki.serviceMonitors[name]
     for name in std.objectFields(loki.config.components)
     if std.objectHas(loki.serviceMonitors, name) && loki.config.components[name].withServiceMonitor
