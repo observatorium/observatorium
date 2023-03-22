@@ -17,6 +17,9 @@ spec:
   - name: compactor-grpc
     port: 9095
     targetPort: 9095
+  - name: compactor-gossip-ring
+    port: 7946
+    targetPort: 7946
   selector:
     app.kubernetes.io/component: compactor
     app.kubernetes.io/instance: observatorium-xyz

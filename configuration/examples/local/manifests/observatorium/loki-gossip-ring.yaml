@@ -11,7 +11,7 @@ metadata:
 spec:
   clusterIP: None
   ports:
-  - name: gossip
+  - name: gossip-ring
     port: 7946
     protocol: TCP
     targetPort: 7946

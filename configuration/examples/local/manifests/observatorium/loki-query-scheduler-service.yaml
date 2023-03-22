@@ -18,6 +18,9 @@ spec:
   - name: grpclb
     port: 9095
     targetPort: 9095
+  - name: gossip-ring
+    port: 7946
+    targetPort: 7946
   publishNotReadyAddresses: true
   selector:
     app.kubernetes.io/component: query-scheduler

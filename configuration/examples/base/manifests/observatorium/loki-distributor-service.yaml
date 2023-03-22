@@ -17,6 +17,9 @@ spec:
   - name: distributor-grpc
     port: 9095
     targetPort: 9095
+  - name: distributor-gossip-ring
+    port: 7946
+    targetPort: 7946
   selector:
     app.kubernetes.io/component: distributor
     app.kubernetes.io/instance: observatorium-xyz

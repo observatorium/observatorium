@@ -17,9 +17,6 @@ local defaults = {
     shardFactor: 16,
     enableSharedQueries: false,
   },
-  ports: {
-    gossip: 7946,
-  },
   replicationFactor: 1,
   shardFactor: 16,
   limits: {
@@ -149,6 +146,7 @@ local defaults = {
     local grpcServerMaxMsgSize = 104857600,
     local querierConcurrency = 32,
     local indexPeriodHours = 24,
+    local gossipPort = 7946,
 
     analytics: {
       reporting_enabled: false,
@@ -182,7 +180,7 @@ local defaults = {
     ),
 
     memberlist+: if defaults.memberlist != {} then {
-      bind_port: defaults.ports.gossip,
+      bind_port: gossipPort,
       abort_if_cluster_join_fails: false,
       min_join_backoff: '1s',
       max_join_backoff: '1m',
@@ -191,7 +189,7 @@ local defaults = {
         '%s.%s.svc.cluster.local:%d' % [
           defaults.name + '-' + defaults.memberlist.ringName,
           defaults.namespace,
-          defaults.ports.gossip,
+          gossipPort,
         ],
       ],
     } else {},
@@ -495,6 +493,9 @@ function(params) {
         ruler_enabled: true,
         query_scheduler_enabled: true,
         use_index_gateway: true,
+        memberlist_ring_enabled: true,
+        // Label to be used to join gossip ring members
+        gossip_member_label: 'loki.grafana.com/gossip',
       },
     },
 
@@ -758,29 +759,26 @@ function(params) {
       },
     },
 
-  memberlistService:: {
-    apiVersion: 'v1',
-    kind: 'Service',
-    metadata: {
-      name: loki.config.name + '-' + loki.config.memberlist.ringName,
-      namespace: loki.config.namespace,
-      labels: loki.config.commonLabels,
+  // newGossipRingService is a headless service that has in its selectors the
+  // gossip_member_label that we want to preserve
+  local newGossipRingService() =
+    metadataFormat(loki.rhobsLoki.gossip_ring_service) {
+      metadata+: {
+        labels: loki.config.commonLabels,
+      },
+      spec+: {
+        selector+: loki.config.podLabelSelector,
+      },
     },
-    spec: {
-      ports: [
-        { name: 'gossip', targetPort: loki.config.ports.gossip, port: loki.config.ports.gossip, protocol: 'TCP' },
-      ],
-      selector: loki.config.podLabelSelector { 'loki.grafana.com/gossip': 'true' },
-      clusterIP: 'None',
-    },
-  },
 
   // serviceMonitors generates ServiceMonitors for all the components below, this
   // code can be removed once the loki.mixins improves ServiceMonitor generation
   // to generate 1 ServiceMonitor per component.
   serviceMonitors:: {
     [name]: {
-      // In loki.mixins both query_frontend and query_scheduler services ports are not prefixed with the component name
+      // DNS SRV records are used for discovering the schedulers or the frontends so the services
+      // of these two componets have ports without the "component_name-" prefix
+      // See https://github.com/grafana/loki/blob/4721d7efd308e7d85fe03464041179bb1414fe8c/production/ksonnet/loki/common.libsonnet#L25-L33
       local portPrefix = if !std.member(['query_frontend', 'query_scheduler'], name) then normalizedName(name) + '-' else '',
       apiVersion: 'monitoring.coreos.com/v1',
       kind: 'ServiceMonitor',
@@ -811,7 +809,12 @@ function(params) {
     // Service generation for all the components
     [normalizedName(component) + '-service']: newService(component)
     for component in std.objectFields(loki.config.components)
-  } + {
+  } + (
+    // Service generation for gossip ring
+    if loki.config.memberlist != {} then {
+      [loki.config.memberlist.ringName]: newGossipRingService(),
+    }
+  ) + {
     [normalizedName(name) + '-deployment']: newDeployment(name, loki.config.components[name])
     for name in std.objectFields(loki.config.components)
     if !isStatefulSet(name)
@@ -893,10 +896,6 @@ function(params) {
       for name in std.objectFields(loki.config.components)
       if isStatefulSet(name)
     }
-  ) + (
-    if loki.config.memberlist != {} then {
-      [loki.config.memberlist.ringName]: loki.memberlistService,
-    } else {}
   ) + (
     if loki.config.replicationFactor > 0 then {
       [normalizedName(name) + '-deployment']+: {
