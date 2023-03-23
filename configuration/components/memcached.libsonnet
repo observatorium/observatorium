@@ -30,6 +30,7 @@ local defaults = {
   replicas: error 'must provide replicas',
   resources: {},
   serviceMonitor: false,
+  affinity: false,
 
   maxItemSize: '1m',
   memoryLimitMb: 1024,
@@ -60,7 +61,6 @@ local defaults = {
     fsGroup: 65534,
     runAsUser: 65534,
   },
-
 };
 
 function(params) {
@@ -163,7 +163,30 @@ function(params) {
             securityContext: mc.config.securityContext,
             containers: [memcached, exporter],
             volumeClaimTemplates:: null,
-          },
+          } + if mc.config.affinity then {
+            affinity: {
+              podAntiAffinity: {
+                preferredDuringSchedulingIgnoredDuringExecution: [
+                  {
+                    weight: 100,
+                    podAffinityTerm: {
+                      topologyKey: 'kubernetes.io/hostname',
+                      namespaces: [mc.config.namespace],
+                      labelSelector: {
+                        matchExpressions: [
+                          {
+                            key: 'app.kubernetes.io/component',
+                            operator: 'In',
+                            values: [mc.config.commonLabels['app.kubernetes.io/component']],
+                          },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          } else {},
         },
       },
     },

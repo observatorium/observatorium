@@ -25,6 +25,20 @@ spec:
         app.kubernetes.io/name: loki
         app.kubernetes.io/part-of: observatorium
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                  - query-scheduler
+              namespaces:
+              - observatorium
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - -target=query-scheduler
