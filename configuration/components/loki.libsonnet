@@ -215,7 +215,7 @@ local defaults = {
     },
     frontend: {
       scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-query-scheduler-discovery',
+        defaults.name + '-query-scheduler',
         defaults.namespace,
       ],
       tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [
@@ -226,7 +226,7 @@ local defaults = {
     },
     frontend_worker: {
       scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-query-scheduler-discovery',
+        defaults.name + '-query-scheduler',
         defaults.namespace,
       ],
       grpc_client_config: {
@@ -749,11 +749,7 @@ function(params) {
 
   // newService for a given component, generate its service using the loki mixins
   local newService(component) =
-    // The query scheduler is the only component that its service has the sufix "_discovery"
-    // since it uses a headless svc config with PublishNotReadyAddresses for the scheduler
-    // to bootstrap scheduler<>worker connections.
-    local name = if component == 'query_scheduler' then component + '_discovery' else component;
-    metadataFormat(loki.rhobsLoki[name + '_service']) {
+    metadataFormat(loki.rhobsLoki[component + '_service']) {
       spec+: {
         selector: newPodLabelsSelector(component),
       },

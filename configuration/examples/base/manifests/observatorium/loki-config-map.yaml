@@ -22,13 +22,13 @@ data:
           "store": "memberlist"
     "frontend":
       "compress_responses": true
-      "scheduler_address": "observatorium-xyz-loki-query-scheduler-discovery.observatorium.svc.cluster.local:9095"
+      "scheduler_address": "observatorium-xyz-loki-query-scheduler.observatorium.svc.cluster.local:9095"
       "tail_proxy_url": "observatorium-xyz-loki-querier.observatorium.svc.cluster.local:3100"
     "frontend_worker":
       "grpc_client_config":
         "max_send_msg_size": 104857600
       "match_max_concurrent": true
-      "scheduler_address": "observatorium-xyz-loki-query-scheduler-discovery.observatorium.svc.cluster.local:9095"
+      "scheduler_address": "observatorium-xyz-loki-query-scheduler.observatorium.svc.cluster.local:9095"
     "ingester":
       "chunk_block_size": 262144
       "chunk_encoding": "snappy"
