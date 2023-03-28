@@ -48,7 +48,7 @@ local defaults = {
     compactor: {
       withLivenessProbe: true,
       withReadinessProbe: true,
-      withPodAntiAffinity: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -58,7 +58,7 @@ local defaults = {
     distributor: {
       withLivenessProbe: true,
       withReadinessProbe: true,
-      withPodAntiAffinity: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -79,7 +79,7 @@ local defaults = {
     ingester: {
       withLivenessProbe: true,
       withReadinessProbe: true,
-      withPodAntiAffinity: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -102,7 +102,7 @@ local defaults = {
     index_gateway: {
       withLivenessProbe: true,
       withReadinessProbe: true,
-      withPodAntiAffinity: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -112,7 +112,7 @@ local defaults = {
     querier: {
       withLivenessProbe: true,
       withReadinessProbe: true,
-      withPodAntiAffinity: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -122,7 +122,7 @@ local defaults = {
     query_frontend: {
       withLivenessProbe: true,
       withReadinessProbe: false,
-      withPodAntiAffinity: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -132,7 +132,7 @@ local defaults = {
     query_scheduler: {
       withLivenessProbe: true,
       withReadinessProbe: true,
-      withPodAntiAffinity: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -142,7 +142,7 @@ local defaults = {
     ruler: {
       withLivenessProbe: true,
       withReadinessProbe: true,
-      withPodAntiAffinity: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },

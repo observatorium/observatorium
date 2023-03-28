@@ -26,20 +26,6 @@ spec:
         app.kubernetes.io/name: loki
         app.kubernetes.io/part-of: observatorium
     spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app.kubernetes.io/component
-                  operator: In
-                  values:
-                  - index-gateway
-              namespaces:
-              - observatorium
-              topologyKey: kubernetes.io/hostname
-            weight: 100
       containers:
       - args:
         - -target=index-gateway
