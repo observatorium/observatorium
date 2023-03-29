@@ -141,286 +141,9 @@ local defaults = {
     },
   },
 
-  // Loki config.
-  config:: {
-    local grpcServerMaxMsgSize = 104857600,
-    local querierConcurrency = 32,
-    local indexPeriodHours = 24,
-    local gossipPort = 7946,
-
-    analytics: {
-      reporting_enabled: false,
-    },
-    auth_enabled: true,
-    chunk_store_config: {
-      max_look_back_period: '0s',
-    } + (
-      if defaults.storeChunkCache != '' then {
-        chunk_cache_config: {
-          memcached: {
-            batch_size: 100,
-            parallelism: 100,
-          },
-          memcached_client: {
-            addresses: defaults.storeChunkCache,
-            timeout: '100ms',
-            max_idle_conns: 100,
-            update_interval: '1m',
-            consistent_hash: true,
-          },
-        },
-      } else {
-        chunk_cache_config: {
-          embedded_cache: {
-            enabled: true,
-            max_size_mb: 500,
-          },
-        },
-      }
-    ),
-
-    memberlist+: if defaults.memberlist != {} then {
-      bind_port: gossipPort,
-      abort_if_cluster_join_fails: false,
-      min_join_backoff: '1s',
-      max_join_backoff: '1m',
-      max_join_retries: 10,
-      join_members: [
-        '%s.%s.svc.cluster.local:%d' % [
-          defaults.name + '-' + defaults.memberlist.ringName,
-          defaults.namespace,
-          gossipPort,
-        ],
-      ],
-    } else {},
-
-    common: {
-      compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-compactor',
-        defaults.namespace,
-      ],
-    },
-
-    compactor: {
-      compaction_interval: '2h',
-      shared_store: 's3',
-      working_directory: '/data/loki/compactor',
-    },
-    distributor: {
-      ring: {
-        kvstore: {
-          store: if defaults.memberlist != {} then 'memberlist' else 'inmemory',
-        },
-      },
-    },
-    frontend: {
-      scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-query-scheduler',
-        defaults.namespace,
-      ],
-      tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [
-        defaults.name + '-querier',
-        defaults.namespace,
-      ],
-      compress_responses: true,
-    },
-    frontend_worker: {
-      scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-query-scheduler',
-        defaults.namespace,
-      ],
-      grpc_client_config: {
-        max_send_msg_size: grpcServerMaxMsgSize,
-      },
-      match_max_concurrent: true,
-    },
-    query_scheduler: {
-      max_outstanding_requests_per_tenant:
-        if defaults.query.enableSharedQueries
-        then 1024
-        else defaults.limits.maxOutstandingPerTenant,
-    },
-    ingester: {
-      chunk_block_size: 262144,
-      chunk_encoding: 'snappy',
-      chunk_idle_period: '1h',
-      chunk_retain_period: '5m',
-      chunk_target_size: 2097152,
-      lifecycler: {
-        heartbeat_period: '5s',
-        interface_names: [
-          'eth0',
-        ],
-        join_after: if defaults.memberlist != {} then '60s' else '30s',
-        num_tokens: 512,
-        ring: {
-          heartbeat_timeout: '1m',
-          kvstore: {
-            store: if defaults.memberlist != {} then 'memberlist' else 'inmemory',
-          },
-        },
-      },
-      max_transfer_retries: 0,
-      wal: {
-        enabled: true,
-        dir: '/data/loki/wal',
-        replay_memory_ceiling: defaults.wal.replayMemoryCeiling,
-      },
-    },
-    ingester_client: {
-      grpc_client_config: {
-        max_recv_msg_size: 1024 * 1024 * 64,
-      },
-      remote_timeout: '1s',
-    },
-    limits_config: {
-      ingestion_rate_strategy: 'global',
-      ingestion_burst_size_mb: 20,
-      ingestion_rate_mb: 10,
-      max_label_name_length: 1024,
-      max_label_value_length: 2048,
-      max_label_names_per_series: 30,
-      reject_old_samples: true,
-      reject_old_samples_max_age: '%dh' % indexPeriodHours,
-      creation_grace_period: '10m',
-      enforce_metric_name: false,
-      max_streams_per_user: 0,
-      max_line_size: 256000,
-      max_entries_limit_per_query: 5000,
-      max_chunks_per_query: 2000000,
-      max_query_length: '721h',
-      max_query_parallelism:
-        if defaults.query.enableSharedQueries
-        then defaults.shardFactor * 16
-        else 16,
-      max_query_series: 500,
-      cardinality_limit: 100000,
-      max_global_streams_per_user: 10000,
-      max_cache_freshness_per_query: '10m',
-      per_stream_rate_limit: '3MB',
-      per_stream_rate_limit_burst: '15MB',
-      split_queries_by_interval: '30m',
-      deletion_mode: 'disabled',
-    },
-    querier: {
-      query_timeout: '1h',
-      tail_max_duration: '1h',
-      extra_query_delay: '0s',
-      query_ingesters_within: '3h',
-      engine: {
-        max_look_back_period: '30s',
-      },
-      max_concurrent: defaults.query.concurrency,
-    },
-    query_range: {
-      align_queries_with_step: true,
-      cache_results: true,
-      max_retries: 5,
-      parallelise_shardable_queries: defaults.query.enableSharedQueries,
-    } + (
-      if defaults.resultsCache != '' then {
-        results_cache: {
-          cache: {
-            memcached_client: {
-              timeout: '500ms',
-              consistent_hash: true,
-              addresses: defaults.resultsCache,
-              update_interval: '1m',
-              max_idle_conns: 16,
-            },
-          },
-        },
-      } else {
-        results_cache: {
-          cache: {
-            embedded_cache: {
-              enabled: true,
-              max_size_mb: 500,
-            },
-          },
-        },
-      }
-    ),
-    ruler: {
-      enable_api: true,
-      enable_sharding: true,
-      wal: {
-        dir: '/data/loki/wal',
-        truncate_frequency: '60m',
-        min_age: '5m',
-        max_age: '4h',
-      },
-      rule_path: '/data',
-      storage:
-        (if defaults.rulesStorageConfig.type == 'local' then {
-           type: 'local',
-           'local': {
-             directory: '/tmp/rules',
-           },
-         } else {
-           type: defaults.rulesStorageConfig.type,
-         }),
-      ring: {
-        kvstore: {
-          store: if defaults.memberlist != {} then 'memberlist' else 'inmemory',
-        },
-      },
-    },
-    schema_config: {
-      configs: [
-        {
-          from: '2020-10-01',
-          index: {
-            period: '24h',
-            prefix: 'loki_index_',
-          },
-          object_store: 's3',
-          schema: 'v11',
-          store: 'boltdb-shipper',
-        },
-      ],
-    },
-    server: {
-      graceful_shutdown_timeout: '5s',
-      grpc_server_min_time_between_pings: '10s',
-      grpc_server_ping_without_stream_allowed: true,
-      grpc_server_max_concurrent_streams: 1000,
-      grpc_server_max_recv_msg_size: grpcServerMaxMsgSize,
-      grpc_server_max_send_msg_size: grpcServerMaxMsgSize,
-      http_listen_port: 3100,
-      http_server_idle_timeout: '120s',
-      http_server_write_timeout: '1m',
-      log_level: 'error',
-    },
-    storage_config: {
-      boltdb_shipper: {
-        index_gateway_client+: {
-          server_address: '%s.%s.svc.cluster.local:9095' % [
-            defaults.name + '-index-gateway',
-            defaults.namespace,
-          ],
-        },
-        active_index_directory: '/data/loki/index',
-        cache_location: '/data/loki/index_cache',
-        cache_ttl: '24h',
-        resync_interval: '5m',
-        shared_store: 's3',
-      },
-    } + (
-      if defaults.indexQueryCache != '' then {
-        index_queries_cache_config: {
-          memcached: {
-            batch_size: 100,
-            parallelism: 100,
-          },
-          memcached_client: {
-            addresses: defaults.indexQueryCache,
-            consistent_hash: true,
-          },
-        },
-      } else {}
-    ),
-  },
+  // config this field will be merged with the lokiMixins default _config
+  // taking precedence
+  config:: {},
 
   // Loki config overrides.
   overrides:: {},
@@ -455,19 +178,6 @@ function(params) {
   assert std.isObject(loki.config.etcd) : 'etcd has to be an object',
   assert std.isArray(loki.config.etcdEndpoints) : 'etcdEndpoints has to be an array',
 
-  configmap:: {
-    apiVersion: 'v1',
-    kind: 'ConfigMap',
-    metadata: {
-      name: loki.config.name,
-      namespace: loki.config.namespace,
-      labels: loki.config.commonLabels,
-    },
-    data: {
-      'config.yaml': std.manifestYamlDoc(loki.config.config),
-      'overrides.yaml': std.manifestYamlDoc(loki.config.overrides),
-    },
-  },
 
   rulesConfigMap:: {
     apiVersion: 'v1',
@@ -496,6 +206,276 @@ function(params) {
         memberlist_ring_enabled: true,
         // Label to be used to join gossip ring members
         gossip_member_label: 'loki.grafana.com/gossip',
+
+        // Necessary for generating ConfigMap
+        namespace: loki.config.namespace,
+        boltdb_shipper_shared_store: 's3',
+        cluster: 'bob',
+        storage_backend: 's3',
+        s3_address: 's3',
+        s3_bucket_name: 'bob',
+
+        querier+: {
+          // This value should be set equal to (or less than) the CPU cores of the system the querier runs.
+          // A higher value will lead to a querier trying to process more requests than there are available
+          // cores and will result in scheduling delays.
+          concurrency: loki.config.query.concurrency,
+          // Necessary to avoid error in resource generation
+          use_topology_spread: false,
+        },
+
+        queryFrontend+: {
+          sharded_queries_enabled: loki.config.query.enableSharedQueries,
+        },
+
+        loki+: {
+          // analytics config is not yet supported in the loki.mixins
+          // We want this because, ... TODO(periklis) help
+          analytics: {
+            reporting_enabled: false,
+          },
+          // auth_enabled is disabled by default we want it because, ... TODO(periklis) help
+          auth_enabled: true,
+          chunk_store_config+: {
+            chunk_cache_config+: (
+              if loki.config.storeChunkCache == '' then {
+                // embedded_cache is not yet supported in the loki.mixins
+                // We want this because, ....
+                embedded_cache: {
+                  enabled: true,
+                  max_size_mb: 500,
+                },
+                // Disabel memcached
+                memcached:: {},
+                memcached_client:: {},
+              } else {
+                // memcached_client is configured differently in loki.mixins so
+                // let's set our own
+                memcached_client: {
+                  addresses: loki.config.storeChunkCache,
+                  timeout: '100ms',
+                  max_idle_conns: 100,
+                  update_interval: '1m',
+                },
+              }
+            ),
+            // max_look_back_period is not yet supported in the loki.mixins
+            // We want this because, ...
+            max_look_back_period: '0s',
+          },
+          common+: {
+            // compactor_grpc_address is not yet supported in the loki.mixins
+            local compactorService = newService('compactor'),
+            compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [compactorService.metadata.name, loki.config.namespace],
+            // Disable compactor_address
+            compactor_address:: {},
+          },
+          compactor+: {
+            // compaction_interval is not yet supported in the loki.mixins
+            compaction_interval: '2h',
+            // loki.mixins set's a different workingdir
+            working_directory: '/data/loki/compactor',
+          },
+          frontend+: {
+            // loki.mixins doesn't support prefixes in resources names so we have to overwrite
+            local schedulerService = newService('query_scheduler'),
+            scheduler_address: '%s.%s.svc.cluster.local:9095' % [schedulerService.metadata.name, loki.config.namespace],
+            // loki.mixins configures this parameter, to 5s, do we want it TODO(periklis) config decision
+            log_queries_longer_than:: {},
+            // loki.mixins doesn't support tail_proxy_url
+            local querierService = newService('querier'),
+            tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [querierService.metadata.name, loki.config.namespace],
+          },
+          frontend_worker+: {
+            // loki.mixins doesn't support prefixes in resources names so we have to overwrite
+            local schedulerService = newService('query_scheduler'),
+            scheduler_address: '%s.%s.svc.cluster.local:9095' % [schedulerService.metadata.name, loki.config.namespace],
+          },
+          ingester+: {
+            // chunk_idle_period loki.mixins set's the default to 15m but we want
+            // 1h because
+            chunk_idle_period: '1h',
+            // chunk_idle_period not defined in mixins, we want because
+            chunk_encoding: 'snappy',
+            // chunk_retain_period not defined in mixins, we want because
+            chunk_retain_period: '5m',
+            // chunk_target_size not defined in mixins, we want because
+            chunk_target_size: 2097152,
+            lifecycler+: {
+              // join_after mixins define it at 30s, we want 60s because
+              join_after: if loki.config.memberlist != {} then '60s' else '30s',
+              ring+: {
+                // replication_factor mixins set this to 3 not sure if it's interest to us
+                // TODO(periklis) config decision
+                replication_factor:: {},
+              },
+            },
+            wal+: {
+              // loki.mixins set's a different dir
+              dir: '/data/loki/wal',
+              // replay_memory_ceiling mixins set 7GB by default, we have 100MB
+              replay_memory_ceiling: loki.config.wal.replayMemoryCeiling,
+            },
+          },
+          limits_config+: {
+            // cardinality_limit mixins don't support this.
+            // We want this config because
+            cardinality_limit: 100000,
+            // creation_grace_period mixins don't support this.
+            // We want this config because
+            creation_grace_period: '10m',
+            // deletion_mode mixins don't support this.
+            // We want this config because
+            deletion_mode: 'disabled',
+            // max_chunks_per_query mixins don't support this.
+            // We want this config because
+            max_chunks_per_query: 2000000,
+            // max_entries_limit_per_query mixins don't support this.
+            // We want this config because
+            max_entries_limit_per_query: 5000,
+            // max_label's mixins don't support this.
+            // We want this config because
+            max_label_name_length: 1024,
+            max_label_names_per_series: 30,
+            max_label_value_length: 2048,
+            // max_line_size mixins don't support this.
+            // We want this config because
+            max_line_size: 256000,
+            // max_query_length mixins don't support this.
+            // We want this cofig because
+            max_query_length: '721h',
+            // TODO (JoaoBraveCoding) mixins already preforms some calculations better let them handle it
+            // max_query_parallelism: if loki.config.query.enableSharedQueries then loki.config.shardFactor * 16 else 16,
+            // max_query_series mixins don't support this.
+            // We want this cofig because
+            max_query_series: 500,
+            // per_stream_rate_limit's mixins don't support this.
+            // We want this cofig because
+            per_stream_rate_limit: '3MB',
+            per_stream_rate_limit_burst: '15MB',
+            // reject_old_samples_max_age's mixins set's this value to 168h
+            // We want this cofig because
+            reject_old_samples_max_age: '24h',
+          },
+          memberlist+: {
+            // Both cluster_label + cluster_label_verification_disabled exist only for
+            // backwards compatibility with 2.6.1, more info https://github.com/grafana/loki/blob/0030cafb167fd70375399599acd8568c9290746e/production/ksonnet/loki/memberlist.libsonnet#L20-L26
+            cluster_label:: {},
+            cluster_label_verification_disabled:: {},
+            // loki.mixins doesn't support prefixes in resources names so we have to overwrite
+            local gossipRingService = newGossipRingService(),
+            join_members: ['%s.%s.svc.cluster.local:7946' % [gossipRingService.metadata.name, loki.config.namespace]],
+          },
+          querier+: {
+            engine: {
+              // max_look_back_period mixins don't support this.
+              // We want this cofig because
+              max_look_back_period: '30s',
+            },
+            // extra_query_delay mixins don't support this.
+            // We want this cofig because
+            extra_query_delay: '0s',
+            // query_ingesters_within should be twice the max-chunk age
+            // (1h default) for safety buffer
+            // TODO(periklis) validate config and comment, mixins has this set to 2h
+            query_ingesters_within: '3h',
+            // query_timeout mixins don't support this.
+            // We want this cofig because
+            query_timeout: '1h',
+            // tail_max_duration mixins don't support this.
+            // We want this cofig because
+            tail_max_duration: '1h',
+          },
+          query_range+: {
+            results_cache+: {
+              // cache mixins don't support embedded_cache
+              // We want this cofig because
+              cache: (
+                if loki.config.resultsCache == '' then {
+                  embedded_cache: {
+                    enabled: true,
+                    max_size_mb: 500,
+                  },
+                } else {
+                  memcached_client: {
+                    timeout: '500ms',
+                    consistent_hash: true,
+                    addresses: loki.config.resultsCache,
+                    update_interval: '1m',
+                    max_idle_conns: 16,
+                  },
+                }
+              ),
+            },
+          },
+          ruler+: {
+            // alertmanager_url mixins set's the alertmanager_url
+            alertmanager_url:: {},
+            enable_alertmanager_v2:: {},
+            // rule_path mixins set's the path to /tmp/rules
+            rule_path: '/data',
+            // storage mixins always configures a gcs bucket
+            storage: {
+              type: loki.config.rulesStorageConfig.type,
+            },
+            // wal mixins don't support this.
+            // We want this cofig because
+            wal: {
+              dir: '/data/loki/wal',
+              truncate_frequency: '60m',
+              min_age: '5m',
+              max_age: '4h',
+            },
+          },
+          // schema_config only the index is dynamic in this config so we
+          // overwrite it
+          schema_config: {
+            configs: [
+              {
+                from: '2020-10-01',
+                index: {
+                  period: '24h',
+                  prefix: 'loki_index_',
+                },
+                object_store: 's3',
+                schema: 'v11',
+                store: 'boltdb-shipper',
+              },
+            ],
+          },
+          // server we use the defaults
+          server+: {},
+          storage_config+: {
+            aws:: {},
+            boltdb_shipper+: {
+              active_index_directory: '/data/loki/index',
+              cache_location: '/data/loki/index_cache',
+              cache_ttl: '24h',
+              index_gateway_client+: {
+                local indexService = newService('index_gateway'),
+                server_address: '%s.%s.svc.cluster.local:9095' % [indexService.metadata.name, loki.config.namespace],
+              },
+              resync_interval: '5m',
+            },
+            index_queries_cache_config:: {},
+          } + (
+            if loki.config.indexQueryCache != '' then {
+              index_queries_cache_config: {
+                memcached: {
+                  batch_size: 100,
+                  parallelism: 100,
+                },
+                memcached_client: {
+                  addresses: loki.config.indexQueryCache,
+                  consistent_hash: true,
+                },
+              },
+            } else {}
+          ),
+          table_manager:: {},
+          // This line is important it's what allows us to specify configuration in defaults.config
+          // that will take precedence vs the default loki config in this repo
+        } + loki.config.config,
       },
     },
 
@@ -516,9 +496,9 @@ function(params) {
     },
 
   local joinGossipRing(component) =
-    loki.config.config.distributor.ring.kvstore.store == 'memberlist' &&
-    loki.config.config.ingester.lifecycler.ring.kvstore.store == 'memberlist' &&
-    loki.config.config.ruler.ring.kvstore.store == 'memberlist' &&
+    loki.rhobsLoki._config.loki.distributor.ring.kvstore.store == 'memberlist' &&
+    loki.rhobsLoki._config.loki.ingester.lifecycler.ring.kvstore.store == 'memberlist' &&
+    loki.rhobsLoki._config.loki.ruler.ring.kvstore.store == 'memberlist' &&
     std.member(['distributor', 'ingester', 'querier', 'ruler'], component),
 
   local isStatefulSet(component) =
@@ -692,7 +672,8 @@ function(params) {
           spec: {
             containers: [newLokiContainer(name, component, config)],
             volumes: [
-              { name: 'config', configMap: { name: loki.configmap.metadata.name } },
+              local lokiConfigMap = newConfigMap();
+              { name: 'config', configMap: { name: lokiConfigMap.metadata.name } },
               { name: 'storage', emptyDir: {} },
             ],
           },
@@ -729,7 +710,8 @@ function(params) {
           spec: {
             containers: [newLokiContainer(name, component, config)],
             volumes: [
-              { name: 'config', configMap: { name: loki.configmap.metadata.name } },
+              local lokiConfigMap = newConfigMap();
+              { name: 'config', configMap: { name: lokiConfigMap.metadata.name } },
             ] + if component == 'ruler' && loki.config.rulesStorageConfig.type == 'local' then [rulesVolume] else [],
             volumeClaimTemplates:: null,
           },
@@ -746,6 +728,15 @@ function(params) {
       labels: newCommonLabels(object.metadata.name),
     },
   },
+
+  local newConfigMap() =
+    loki.rhobsLoki.config_file {
+      metadata+: {
+        name: loki.config.name,
+        namespace: loki.config.namespace,
+        labels: loki.config.commonLabels,
+      },
+    },
 
   // newService for a given component, generate its service using the loki mixins
   local newService(component) =
@@ -799,7 +790,8 @@ function(params) {
   },
 
   manifests: {
-    'config-map': loki.configmap,
+    //'config-map': loki.configmap,
+    'config-map': newConfigMap(),
     'rules-config-map': loki.rulesConfigMap,
   } + {
     // Service generation for all the components

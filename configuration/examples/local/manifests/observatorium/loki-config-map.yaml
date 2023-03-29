@@ -12,6 +12,9 @@ data:
       "max_look_back_period": "0s"
     "common":
       "compactor_grpc_address": "observatorium-xyz-loki-compactor.observatorium.svc.cluster.local:9095"
+      "ring":
+        "kvstore":
+          "store": "memberlist"
     "compactor":
       "compaction_interval": "2h"
       "shared_store": "s3"
@@ -99,7 +102,6 @@ data:
       "align_queries_with_step": true
       "cache_results": true
       "max_retries": 5
-      "parallelise_shardable_queries": false
       "results_cache":
         "cache":
           "embedded_cache":
@@ -140,7 +142,6 @@ data:
       "http_listen_port": 3100
       "http_server_idle_timeout": "120s"
       "http_server_write_timeout": "1m"
-      "log_level": "error"
     "storage_config":
       "boltdb_shipper":
         "active_index_directory": "/data/loki/index"
@@ -150,7 +151,6 @@ data:
           "server_address": "observatorium-xyz-loki-index-gateway.observatorium.svc.cluster.local:9095"
         "resync_interval": "5m"
         "shared_store": "s3"
-  overrides.yaml: '{}'
 kind: ConfigMap
 metadata:
   labels:
