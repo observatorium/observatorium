@@ -48,6 +48,7 @@ local defaults = {
     compactor: {
       withLivenessProbe: true,
       withReadinessProbe: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -57,6 +58,7 @@ local defaults = {
     distributor: {
       withLivenessProbe: true,
       withReadinessProbe: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -77,6 +79,7 @@ local defaults = {
     ingester: {
       withLivenessProbe: true,
       withReadinessProbe: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -99,6 +102,7 @@ local defaults = {
     index_gateway: {
       withLivenessProbe: true,
       withReadinessProbe: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -108,6 +112,7 @@ local defaults = {
     querier: {
       withLivenessProbe: true,
       withReadinessProbe: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -117,6 +122,7 @@ local defaults = {
     query_frontend: {
       withLivenessProbe: true,
       withReadinessProbe: false,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -126,6 +132,7 @@ local defaults = {
     query_scheduler: {
       withLivenessProbe: true,
       withReadinessProbe: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -135,6 +142,7 @@ local defaults = {
     ruler: {
       withLivenessProbe: true,
       withReadinessProbe: true,
+      withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
@@ -524,15 +532,17 @@ function(params) {
              std.objectHas(rsc, 'accessKeyIdKey') && rsc.accessKeyIdKey != '' &&
              std.objectHas(rsc, 'secretAccessKeyKey') && rsc.secretAccessKeyKey != ''));
 
-    local readinessProbe = { readinessProbe: {
-      initialDelaySeconds: 15,
-      timeoutSeconds: 1,
-      httpGet: {
-        scheme: 'HTTP',
-        port: 3100,
-        path: '/ready',
+    local readinessProbe = {
+      readinessProbe: {
+        initialDelaySeconds: 15,
+        timeoutSeconds: 1,
+        httpGet: {
+          scheme: 'HTTP',
+          port: 3100,
+          path: '/ready',
+        },
       },
-    } };
+    };
 
     local livenessProbe = {
       livenessProbe: {
@@ -652,6 +662,29 @@ function(params) {
       if std.length(config.resources) > 0
     },
 
+  local affinity(component, namespace) = {
+    podAntiAffinity: {
+      preferredDuringSchedulingIgnoredDuringExecution: [
+        {
+          weight: 100,
+          podAffinityTerm: {
+            topologyKey: 'kubernetes.io/hostname',
+            namespaces: [namespace],
+            labelSelector: {
+              matchExpressions: [
+                {
+                  key: 'app.kubernetes.io/component',
+                  operator: 'In',
+                  values: [normalizedName(component)],
+                },
+              ],
+            },
+          },
+        },
+      ],
+    },
+  },
+
   local newDeployment(component, config) =
     local name = loki.config.name + '-' + normalizedName(component);
     local podLabelSelector =
@@ -681,7 +714,9 @@ function(params) {
               { name: 'config', configMap: { name: loki.configmap.metadata.name } },
               { name: 'storage', emptyDir: {} },
             ],
-          },
+          } + if config.withPodAntiAffinity then {
+            affinity: affinity(component, loki.config.namespace),
+          } else {},
         },
       },
     },
@@ -718,7 +753,9 @@ function(params) {
               { name: 'config', configMap: { name: loki.configmap.metadata.name } },
             ] + if component == 'ruler' && loki.config.rulesStorageConfig.type == 'local' then [rulesVolume] else [],
             volumeClaimTemplates:: null,
-          },
+          } + if config.withPodAntiAffinity then {
+            affinity: affinity(component, loki.config.namespace),
+          } else {},
         },
       },
     },
