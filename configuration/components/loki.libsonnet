@@ -220,143 +220,127 @@ function(params) {
           // A higher value will lead to a querier trying to process more requests than there are available
           // cores and will result in scheduling delays.
           concurrency: loki.config.query.concurrency,
-          // Necessary to avoid error in resource generation
-          use_topology_spread: false,
         },
 
         queryFrontend+: {
+          // This value will set the value of parallelise_shardable_queries and
+          // have an impact in the generation of the query_frontend and query_scheduler
+          // See parallelise_shardable_queries https://grafana.com/docs/loki/latest/configuration/#query_range
           sharded_queries_enabled: loki.config.query.enableSharedQueries,
         },
 
+        // Docs: https://grafana.com/docs/loki/latest/configuration/#supported-contents-and-default-values-of-lokiyaml
         loki+: {
-          // analytics config is not yet supported in the loki.mixins
-          // We want this because, ... TODO(periklis) help
+          // Disable reporting analytics to grafana.com.
           analytics: {
             reporting_enabled: false,
           },
-          // auth_enabled is disabled by default we want it because, ... TODO(periklis) help
-          auth_enabled: true,
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#chunk_store_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L296-L309
           chunk_store_config+: {
             chunk_cache_config+: (
               if loki.config.storeChunkCache == '' then {
-                // embedded_cache is not yet supported in the loki.mixins
-                // We want this because, ....
+                // Only necessary for CI tests
                 embedded_cache: {
                   enabled: true,
+                  // Default is 100 we want 500 because, TODO(periklis) doc enhancement
                   max_size_mb: 500,
                 },
-                // Disabel memcached
+                // Disable memcached as it's enabled by default in the mixins
                 memcached:: {},
                 memcached_client:: {},
               } else {
-                // memcached_client is configured differently in loki.mixins so
-                // let's set our own
+                // Configured differently in loki.mixins
                 memcached_client: {
                   addresses: loki.config.storeChunkCache,
-                  timeout: '100ms',
+                  // Default is 16 we want 100 because, TODO(periklis) doc enhancement
                   max_idle_conns: 100,
-                  update_interval: '1m',
                 },
               }
             ),
-            // max_look_back_period is not yet supported in the loki.mixins
-            // We want this because, ...
-            max_look_back_period: '0s',
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#common
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L167-L169
           common+: {
             // compactor_grpc_address is not yet supported in the loki.mixins
+            // when supported we will still need support for prefixing resource names
+            // before removing this
             local compactorService = newService('compactor'),
             compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [compactorService.metadata.name, loki.config.namespace],
-            // Disable compactor_address
+            // Disable compactor_address as it's enabled by default in the mixins
             compactor_address:: {},
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#compactor
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/boltdb_shipper.libsonnet#L27-L30
           compactor+: {
-            // compaction_interval is not yet supported in the loki.mixins
+            // Default is 10m we want 2h, because TODO(periklis) doc enhancement
             compaction_interval: '2h',
-            // loki.mixins set's a different workingdir
+            // Mixins set's a different working directory, we might be able to remove this
+            // once we move all componets to mixins
             working_directory: '/data/loki/compactor',
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#frontend
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L181-L184
           frontend+: {
-            // loki.mixins doesn't support prefixes in resources names so we have to overwrite
+            // Mixins don't support prefixes in resources names so we have to overwrite
             local schedulerService = newService('query_scheduler'),
             scheduler_address: '%s.%s.svc.cluster.local:9095' % [schedulerService.metadata.name, loki.config.namespace],
-            // loki.mixins configures this parameter, to 5s, do we want it TODO(periklis) config decision
+            // TODO(periklis) config decision, by default this is 0s, mixins sets to 5s
             log_queries_longer_than:: {},
-            // loki.mixins doesn't support tail_proxy_url
+            // Mixins don't support tail_proxy_url, when support is added we will
+            // still need support for prefixing resource names before removing this
             local querierService = newService('querier'),
             tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [querierService.metadata.name, loki.config.namespace],
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#frontend_worker
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L185-L190
           frontend_worker+: {
-            // loki.mixins doesn't support prefixes in resources names so we have to overwrite
+            // Mixins dont support prefixes in resources names so we have to overwrite
             local schedulerService = newService('query_scheduler'),
             scheduler_address: '%s.%s.svc.cluster.local:9095' % [schedulerService.metadata.name, loki.config.namespace],
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#ingester
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L234-L257
           ingester+: {
-            // chunk_idle_period loki.mixins set's the default to 15m but we want
-            // 1h because
+            // Default is 30m if not configured, we want 1h because, TODO(periklis) doc enhancement
             chunk_idle_period: '1h',
-            // chunk_idle_period not defined in mixins, we want because
+            // Default is gzip if not configured, we want snappy because, TODO(periklis) doc enhancement
             chunk_encoding: 'snappy',
-            // chunk_retain_period not defined in mixins, we want because
+            // Default is 0s if not configured, we want 5m because, TODO(periklis) doc enhancement
             chunk_retain_period: '5m',
-            // chunk_target_size not defined in mixins, we want because
+            // Default is 1572864 if not configured, we want 2097152 because, TODO(periklis) doc enhancement
             chunk_target_size: 2097152,
             lifecycler+: {
-              // join_after mixins define it at 30s, we want 60s because
+              // Mixins set's default of 30s, we want 60s if memberlist is specified because,
+              // TODO(periklis) doc enhancement
               join_after: if loki.config.memberlist != {} then '60s' else '30s',
               ring+: {
-                // replication_factor mixins set this to 3 not sure if it's interest to us
-                // TODO(periklis) config decision
+                // TODO(periklis) config decision, mixins set this to _config.replication_factor
                 replication_factor:: {},
               },
             },
             wal+: {
-              // loki.mixins set's a different dir
+              // loki.mixins set's a different directory, we might be able to remove this
+              // once we move all componets to mixins
               dir: '/data/loki/wal',
-              // replay_memory_ceiling mixins set 7GB by default, we have 100MB
+              // Mixins sets this value to 7GB, we have 100MB for CI tests
               replay_memory_ceiling: loki.config.wal.replayMemoryCeiling,
             },
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#limits_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L214-L232
           limits_config+: {
-            // cardinality_limit mixins don't support this.
-            // We want this config because
-            cardinality_limit: 100000,
-            // creation_grace_period mixins don't support this.
-            // We want this config because
-            creation_grace_period: '10m',
-            // deletion_mode mixins don't support this.
-            // We want this config because
-            deletion_mode: 'disabled',
-            // max_chunks_per_query mixins don't support this.
-            // We want this config because
-            max_chunks_per_query: 2000000,
-            // max_entries_limit_per_query mixins don't support this.
-            // We want this config because
-            max_entries_limit_per_query: 5000,
-            // max_label's mixins don't support this.
-            // We want this config because
-            max_label_name_length: 1024,
-            max_label_names_per_series: 30,
-            max_label_value_length: 2048,
-            // max_line_size mixins don't support this.
-            // We want this config because
+            // Default is 0 if not configured, we want 256000 because, TODO(periklis) doc enhancement
             max_line_size: 256000,
-            // max_query_length mixins don't support this.
-            // We want this cofig because
+            // Mixins sets this valude to 12000h, we want 721h which is the default
             max_query_length: '721h',
             // TODO (JoaoBraveCoding) mixins already preforms some calculations better let them handle it
             // max_query_parallelism: if loki.config.query.enableSharedQueries then loki.config.shardFactor * 16 else 16,
-            // max_query_series mixins don't support this.
-            // We want this cofig because
-            max_query_series: 500,
-            // per_stream_rate_limit's mixins don't support this.
-            // We want this cofig because
-            per_stream_rate_limit: '3MB',
-            per_stream_rate_limit_burst: '15MB',
-            // reject_old_samples_max_age's mixins set's this value to 168h
-            // We want this cofig because
+            // Default is 168h if not configured, we want 24h because, TODO(periklis) doc enhancement
             reject_old_samples_max_age: '24h',
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#memberlist_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/memberlist.libsonnet#L79-L96
           memberlist+: {
             // Both cluster_label + cluster_label_verification_disabled exist only for
             // backwards compatibility with 2.6.1, more info https://github.com/grafana/loki/blob/0030cafb167fd70375399599acd8568c9290746e/production/ksonnet/loki/memberlist.libsonnet#L20-L26
@@ -366,74 +350,64 @@ function(params) {
             local gossipRingService = newGossipRingService(),
             join_members: ['%s.%s.svc.cluster.local:7946' % [gossipRingService.metadata.name, loki.config.namespace]],
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#querier
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L210-L213
           querier+: {
-            engine: {
-              // max_look_back_period mixins don't support this.
-              // We want this cofig because
-              max_look_back_period: '30s',
-            },
-            // extra_query_delay mixins don't support this.
-            // We want this cofig because
-            extra_query_delay: '0s',
-            // query_ingesters_within should be twice the max-chunk age
-            // (1h default) for safety buffer
+            // query_ingesters_within should be twice the max-chunk age (1h default) for safety buffer
             // TODO(periklis) validate config and comment, mixins has this set to 2h
             query_ingesters_within: '3h',
-            // query_timeout mixins don't support this.
-            // We want this cofig because
+            // Default is 1m if not configured, we want 1h because, TODO(periklis) doc enhancement
             query_timeout: '1h',
-            // tail_max_duration mixins don't support this.
-            // We want this cofig because
-            tail_max_duration: '1h',
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#query_range
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L191-L209
           query_range+: {
             results_cache+: {
-              // cache mixins don't support embedded_cache
-              // We want this cofig because
               cache: (
                 if loki.config.resultsCache == '' then {
+                  // Only necessary for CI tests
                   embedded_cache: {
                     enabled: true,
                     max_size_mb: 500,
                   },
                 } else {
+                  // Mixins still use host field where we want to use addresses so we
+                  // overwrite
                   memcached_client: {
+                    // Default is 100ms, we want 500ms because, TODO(periklis) doc enhancement
                     timeout: '500ms',
-                    consistent_hash: true,
                     addresses: loki.config.resultsCache,
-                    update_interval: '1m',
-                    max_idle_conns: 16,
                   },
                 }
               ),
             },
           },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#ruler
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L348-L368
           ruler+: {
-            // alertmanager_url mixins set's the alertmanager_url
+            // Alertmanager config will be set in downstream
             alertmanager_url:: {},
             enable_alertmanager_v2:: {},
-            // rule_path mixins set's the path to /tmp/rules
+            // Mixins set's the rule path to /tmp/rules
             rule_path: '/data',
-            // storage mixins always configures a gcs bucket
+            // Mixins always configures the type to be a gcs bucket
             storage: {
               type: loki.config.rulesStorageConfig.type,
             },
-            // wal mixins don't support this.
-            // We want this cofig because
             wal: {
+              // Default is "ruler-wal", we want it to be /data/loki/wal because, TODO(periklis) doc enhancement
               dir: '/data/loki/wal',
-              truncate_frequency: '60m',
-              min_age: '5m',
-              max_age: '4h',
             },
           },
-          // schema_config only the index is dynamic in this config so we
-          // overwrite it
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#schema_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L311-L323
           schema_config: {
+            // Mixins configures for gcs, where we want s3
             configs: [
               {
                 from: '2020-10-01',
                 index: {
+                  // Default is 168h we want 24h because, TODO(periklis) doc enhancement
                   period: '24h',
                   prefix: 'loki_index_',
                 },
@@ -443,35 +417,39 @@ function(params) {
               },
             ],
           },
-          // server we use the defaults
-          server+: {},
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#storage_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L266-L295
           storage_config+: {
+            // TODO JoaoBraveCoding
             aws:: {},
             boltdb_shipper+: {
+              // Mixins sets a different directory
               active_index_directory: '/data/loki/index',
               cache_location: '/data/loki/index_cache',
-              cache_ttl: '24h',
+              // Mixins don't support prefixes in resources names so we have to overwrite
               index_gateway_client+: {
                 local indexService = newService('index_gateway'),
                 server_address: '%s.%s.svc.cluster.local:9095' % [indexService.metadata.name, loki.config.namespace],
               },
-              resync_interval: '5m',
             },
+            // Since we only want to enable this when indexQueryCache is set
+            // we have to disable it
             index_queries_cache_config:: {},
           } + (
             if loki.config.indexQueryCache != '' then {
               index_queries_cache_config: {
                 memcached: {
+                  // Default is 1024, we want 100 because, TODO(periklis) doc enhancement
                   batch_size: 100,
-                  parallelism: 100,
                 },
                 memcached_client: {
+                  // mixins assumes a service format for the cache, we want to overwrite it
                   addresses: loki.config.indexQueryCache,
-                  consistent_hash: true,
                 },
               },
             } else {}
           ),
+          // Currently we don't want to configure the table manager
           table_manager:: {},
           // This line is important it's what allows us to specify configuration in defaults.config
           // that will take precedence vs the default loki config in this repo
@@ -729,12 +707,16 @@ function(params) {
     },
   },
 
+  // newConfigMap will create the loki config
   local newConfigMap() =
     loki.rhobsLoki.config_file {
       metadata+: {
         name: loki.config.name,
         namespace: loki.config.namespace,
         labels: loki.config.commonLabels,
+      },
+      data+: {
+        'overrides.yaml': std.manifestYamlDoc(loki.config.overrides),
       },
     },
 

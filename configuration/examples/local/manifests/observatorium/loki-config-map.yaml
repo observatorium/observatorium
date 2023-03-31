@@ -3,13 +3,11 @@ data:
   config.yaml: |-
     "analytics":
       "reporting_enabled": false
-    "auth_enabled": true
     "chunk_store_config":
       "chunk_cache_config":
         "embedded_cache":
           "enabled": true
           "max_size_mb": 500
-      "max_look_back_period": "0s"
     "common":
       "compactor_grpc_address": "observatorium-xyz-loki-compactor.observatorium.svc.cluster.local:9095"
       "ring":
@@ -58,27 +56,16 @@ data:
         "max_recv_msg_size": 67108864
       "remote_timeout": "1s"
     "limits_config":
-      "cardinality_limit": 100000
-      "creation_grace_period": "10m"
-      "deletion_mode": "disabled"
       "enforce_metric_name": false
       "ingestion_burst_size_mb": 20
       "ingestion_rate_mb": 10
       "ingestion_rate_strategy": "global"
       "max_cache_freshness_per_query": "10m"
-      "max_chunks_per_query": 2000000
-      "max_entries_limit_per_query": 5000
       "max_global_streams_per_user": 10000
-      "max_label_name_length": 1024
-      "max_label_names_per_series": 30
-      "max_label_value_length": 2048
       "max_line_size": 256000
       "max_query_length": "721h"
       "max_query_parallelism": 16
-      "max_query_series": 500
       "max_streams_per_user": 0
-      "per_stream_rate_limit": "3MB"
-      "per_stream_rate_limit_burst": "15MB"
       "reject_old_samples": true
       "reject_old_samples_max_age": "24h"
       "split_queries_by_interval": "30m"
@@ -91,13 +78,9 @@ data:
       "max_join_retries": 10
       "min_join_backoff": "1s"
     "querier":
-      "engine":
-        "max_look_back_period": "30s"
-      "extra_query_delay": "0s"
       "max_concurrent": 2
       "query_ingesters_within": "3h"
       "query_timeout": "1h"
-      "tail_max_duration": "1h"
     "query_range":
       "align_queries_with_step": true
       "cache_results": true
@@ -120,9 +103,6 @@ data:
         "type": "s3"
       "wal":
         "dir": "/data/loki/wal"
-        "max_age": "4h"
-        "min_age": "5m"
-        "truncate_frequency": "60m"
     "schema_config":
       "configs":
       - "from": "2020-10-01"
@@ -146,11 +126,10 @@ data:
       "boltdb_shipper":
         "active_index_directory": "/data/loki/index"
         "cache_location": "/data/loki/index_cache"
-        "cache_ttl": "24h"
         "index_gateway_client":
           "server_address": "observatorium-xyz-loki-index-gateway.observatorium.svc.cluster.local:9095"
-        "resync_interval": "5m"
         "shared_store": "s3"
+  overrides.yaml: '{}'
 kind: ConfigMap
 metadata:
   labels:
