@@ -1,3 +1,4 @@
+local lokiMixins = import 'github.com/grafana/loki/production/ksonnet/loki/loki.libsonnet';
 // These are the defaults for this components configuration.
 // When calling the function to generate the component's manifest,
 // you can pass an object structured like the default to overwrite default values.
@@ -151,285 +152,9 @@ local defaults = {
     },
   },
 
-  // Loki config.
-  config:: {
-    local grpcServerMaxMsgSize = 104857600,
-    local querierConcurrency = 32,
-    local indexPeriodHours = 24,
-
-    analytics: {
-      reporting_enabled: false,
-    },
-    auth_enabled: true,
-    chunk_store_config: {
-      max_look_back_period: '0s',
-    } + (
-      if defaults.storeChunkCache != '' then {
-        chunk_cache_config: {
-          memcached: {
-            batch_size: 100,
-            parallelism: 100,
-          },
-          memcached_client: {
-            addresses: defaults.storeChunkCache,
-            timeout: '100ms',
-            max_idle_conns: 100,
-            update_interval: '1m',
-            consistent_hash: true,
-          },
-        },
-      } else {
-        chunk_cache_config: {
-          embedded_cache: {
-            enabled: true,
-            max_size_mb: 500,
-          },
-        },
-      }
-    ),
-
-    memberlist+: if defaults.memberlist != {} then {
-      bind_port: defaults.ports.gossip,
-      abort_if_cluster_join_fails: false,
-      min_join_backoff: '1s',
-      max_join_backoff: '1m',
-      max_join_retries: 10,
-      join_members: [
-        '%s.%s.svc.cluster.local:%d' % [
-          defaults.name + '-' + defaults.memberlist.ringName,
-          defaults.namespace,
-          defaults.ports.gossip,
-        ],
-      ],
-    } else {},
-
-    common: {
-      compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-compactor-grpc',
-        defaults.namespace,
-      ],
-    },
-
-    compactor: {
-      compaction_interval: '2h',
-      shared_store: 's3',
-      working_directory: '/data/loki/compactor',
-    },
-    distributor: {
-      ring: {
-        kvstore: {
-          store: if defaults.memberlist != {} then 'memberlist' else 'inmemory',
-        },
-      },
-    },
-    frontend: {
-      scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-query-scheduler-grpc',
-        defaults.namespace,
-      ],
-      tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [
-        defaults.name + '-querier-http',
-        defaults.namespace,
-      ],
-      compress_responses: true,
-    },
-    frontend_worker: {
-      scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-        defaults.name + '-query-scheduler-grpc',
-        defaults.namespace,
-      ],
-      grpc_client_config: {
-        max_send_msg_size: grpcServerMaxMsgSize,
-      },
-      match_max_concurrent: true,
-    },
-    query_scheduler: {
-      max_outstanding_requests_per_tenant:
-        if defaults.query.enableSharedQueries
-        then 1024
-        else defaults.limits.maxOutstandingPerTenant,
-    },
-    ingester: {
-      chunk_block_size: 262144,
-      chunk_encoding: 'snappy',
-      chunk_idle_period: '1h',
-      chunk_retain_period: '5m',
-      chunk_target_size: 2097152,
-      lifecycler: {
-        heartbeat_period: '5s',
-        interface_names: [
-          'eth0',
-        ],
-        join_after: if defaults.memberlist != {} then '60s' else '30s',
-        num_tokens: 512,
-        ring: {
-          heartbeat_timeout: '1m',
-          kvstore: {
-            store: if defaults.memberlist != {} then 'memberlist' else 'inmemory',
-          },
-        },
-      },
-      max_transfer_retries: 0,
-      wal: {
-        enabled: true,
-        dir: '/data/loki/wal',
-        replay_memory_ceiling: defaults.wal.replayMemoryCeiling,
-      },
-    },
-    ingester_client: {
-      grpc_client_config: {
-        max_recv_msg_size: 1024 * 1024 * 64,
-      },
-      remote_timeout: '1s',
-    },
-    limits_config: {
-      ingestion_rate_strategy: 'global',
-      ingestion_burst_size_mb: 20,
-      ingestion_rate_mb: 10,
-      max_label_name_length: 1024,
-      max_label_value_length: 2048,
-      max_label_names_per_series: 30,
-      reject_old_samples: true,
-      reject_old_samples_max_age: '%dh' % indexPeriodHours,
-      creation_grace_period: '10m',
-      enforce_metric_name: false,
-      max_streams_per_user: 0,
-      max_line_size: 256000,
-      max_entries_limit_per_query: 5000,
-      max_chunks_per_query: 2000000,
-      max_query_length: '721h',
-      max_query_parallelism:
-        if defaults.query.enableSharedQueries
-        then defaults.shardFactor * 16
-        else 16,
-      max_query_series: 500,
-      cardinality_limit: 100000,
-      max_global_streams_per_user: 10000,
-      max_cache_freshness_per_query: '10m',
-      per_stream_rate_limit: '3MB',
-      per_stream_rate_limit_burst: '15MB',
-      split_queries_by_interval: '30m',
-      deletion_mode: 'disabled',
-    },
-    querier: {
-      query_timeout: '1h',
-      tail_max_duration: '1h',
-      extra_query_delay: '0s',
-      query_ingesters_within: '3h',
-      engine: {
-        max_look_back_period: '30s',
-      },
-      max_concurrent: defaults.query.concurrency,
-    },
-    query_range: {
-      align_queries_with_step: true,
-      cache_results: true,
-      max_retries: 5,
-      parallelise_shardable_queries: defaults.query.enableSharedQueries,
-    } + (
-      if defaults.resultsCache != '' then {
-        results_cache: {
-          cache: {
-            memcached_client: {
-              timeout: '500ms',
-              consistent_hash: true,
-              addresses: defaults.resultsCache,
-              update_interval: '1m',
-              max_idle_conns: 16,
-            },
-          },
-        },
-      } else {
-        results_cache: {
-          cache: {
-            embedded_cache: {
-              enabled: true,
-              max_size_mb: 500,
-            },
-          },
-        },
-      }
-    ),
-    ruler: {
-      enable_api: true,
-      enable_sharding: true,
-      wal: {
-        dir: '/data/loki/wal',
-        truncate_frequency: '60m',
-        min_age: '5m',
-        max_age: '4h',
-      },
-      rule_path: '/data',
-      storage:
-        (if defaults.rulesStorageConfig.type == 'local' then {
-           type: 'local',
-           'local': {
-             directory: '/tmp/rules',
-           },
-         } else {
-           type: defaults.rulesStorageConfig.type,
-         }),
-      ring: {
-        kvstore: {
-          store: if defaults.memberlist != {} then 'memberlist' else 'inmemory',
-        },
-      },
-    },
-    schema_config: {
-      configs: [
-        {
-          from: '2020-10-01',
-          index: {
-            period: '24h',
-            prefix: 'loki_index_',
-          },
-          object_store: 's3',
-          schema: 'v11',
-          store: 'boltdb-shipper',
-        },
-      ],
-    },
-    server: {
-      graceful_shutdown_timeout: '5s',
-      grpc_server_min_time_between_pings: '10s',
-      grpc_server_ping_without_stream_allowed: true,
-      grpc_server_max_concurrent_streams: 1000,
-      grpc_server_max_recv_msg_size: grpcServerMaxMsgSize,
-      grpc_server_max_send_msg_size: grpcServerMaxMsgSize,
-      http_listen_port: 3100,
-      http_server_idle_timeout: '120s',
-      http_server_write_timeout: '1m',
-      log_level: 'error',
-    },
-    storage_config: {
-      boltdb_shipper: {
-        index_gateway_client+: {
-          server_address: '%s.%s.svc.cluster.local:9095' % [
-            defaults.name + '-index-gateway-grpc',
-            defaults.namespace,
-          ],
-        },
-        active_index_directory: '/data/loki/index',
-        cache_location: '/data/loki/index_cache',
-        cache_ttl: '24h',
-        resync_interval: '5m',
-        shared_store: 's3',
-      },
-    } + (
-      if defaults.indexQueryCache != '' then {
-        index_queries_cache_config: {
-          memcached: {
-            batch_size: 100,
-            parallelism: 100,
-          },
-          memcached_client: {
-            addresses: defaults.indexQueryCache,
-            consistent_hash: true,
-          },
-        },
-      } else {}
-    ),
-  },
+  // config this field will be merged with the lokiMixins default _config
+  // taking precedence
+  config:: {},
 
   // Loki config overrides.
   overrides:: {},
@@ -464,19 +189,307 @@ function(params) {
   assert std.isObject(loki.config.etcd) : 'etcd has to be an object',
   assert std.isArray(loki.config.etcdEndpoints) : 'etcdEndpoints has to be an array',
 
-  configmap:: {
-    apiVersion: 'v1',
-    kind: 'ConfigMap',
-    metadata: {
-      name: loki.config.name,
-      namespace: loki.config.namespace,
-      labels: loki.config.commonLabels,
+  rhobsLoki::
+    lokiMixins {
+      _config+:: {
+        multi_zone_ingester_enabled: false,
+        // Compactor
+        using_boltdb_shipper: true,
+        ruler_enabled: true,
+        query_scheduler_enabled: true,
+        use_index_gateway: true,
+        memberlist_ring_enabled: true,
+        // Label to be used to join gossip ring members
+        gossip_member_label: 'loki.grafana.com/gossip',
+
+        // Necessary for generating ConfigMap
+        cluster: loki.name,
+        namespace: loki.config.namespace,
+        boltdb_shipper_shared_store: 's3',
+        storage_backend: 's3',
+        // This value should be an ENV VAR because in upstream we will want to
+        // update this value without having to regenerate the templates
+        replication_factor: '${LOKI_REPLICATION_FACTOR}',
+
+        querier+: {
+          // This value should be set equal to (or less than) the CPU cores of the system the querier runs.
+          // A higher value will lead to a querier trying to process more requests than there are available
+          // cores and will result in scheduling delays.
+          concurrency: loki.config.query.concurrency,
+        },
+
+        queryFrontend+: {
+          // This value will set the value of parallelise_shardable_queries and
+          // have an impact in the generation of the query_frontend and query_scheduler
+          // See parallelise_shardable_queries https://grafana.com/docs/loki/latest/configuration/#query_range
+          sharded_queries_enabled: loki.config.query.enableSharedQueries,
+        },
+
+        // Docs: https://grafana.com/docs/loki/latest/configuration/#supported-contents-and-default-values-of-lokiyaml
+        loki+: {
+          // Disable reporting analytics to grafana.com.
+          analytics: {
+            reporting_enabled: false,
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#chunk_store_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L296-L309
+          chunk_store_config+: {
+            chunk_cache_config+: (
+              if loki.config.storeChunkCache == '' then {
+                // Only necessary for CI tests
+                embedded_cache: {
+                  enabled: true,
+                  // Default is 100 we want 500, review value
+                  max_size_mb: 500,
+                },
+                // Disable memcached as it's enabled by default in the mixins
+                memcached:: {},
+                memcached_client:: {},
+              } else {
+                // Configured differently in loki.mixins
+                memcached_client: {
+                  addresses: loki.config.storeChunkCache,
+                  // Default is 16 we want 100, review value
+                  max_idle_conns: 100,
+                },
+              }
+            ),
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#common
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L167-L169
+          common+: {
+            // compactor_grpc_address is not yet supported in the loki.mixins
+            // when supported we will still need support for prefixing resource names
+            // before removing this
+            // local compactorService = newService('compactor'),
+            // compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [compactorService.metadata.name, loki.config.namespace],
+            // TODO(JoaoBraveCoding): replace when working on services
+            compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [
+              loki.config.name + '-compactor-grpc',
+              loki.config.namespace,
+            ],
+            // Disable compactor_address as it's enabled by default in the mixins
+            compactor_address:: {},
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#compactor
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/boltdb_shipper.libsonnet#L27-L30
+          compactor+: {
+            // Nowadays the default is 10m but previously it was 2h. We want to
+            // keep this value for now, as it's still unclear the benefit we would gain.
+            compaction_interval: '2h',
+            // Mixins set's a different working directory, we might be able to remove this
+            // once we move all componets to mixins
+            working_directory: '/data/loki/compactor',
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#frontend
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L181-L184
+          frontend+: {
+            // Mixins don't support prefixes in resources names so we have to overwrite
+            // local schedulerService = newService('query_scheduler'),
+            // scheduler_address: '%s.%s.svc.cluster.local:9095' % [schedulerService.metadata.name, loki.config.namespace],
+            // TODO(JoaoBraveCoding): replace when working on services
+            scheduler_address: '%s.%s.svc.cluster.local:9095' % [
+              loki.config.name + '-query-scheduler-grpc',
+              loki.config.namespace,
+            ],
+            // Mixins don't support tail_proxy_url, when support is added we will
+            // still need support for prefixing resource names before removing this
+            // local querierService = newService('querier'),
+            // tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [querierService.metadata.name, loki.config.namespace],
+            // TODO(JoaoBraveCoding): replace when working on services
+            tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [
+              loki.config.name + '-querier-http',
+              loki.config.namespace,
+            ],
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#frontend_worker
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L185-L190
+          frontend_worker+: {
+            // Mixins dont support prefixes in resources names so we have to overwrite
+            // local schedulerService = newService('query_scheduler'),
+            // scheduler_address: '%s.%s.svc.cluster.local:9095' % [schedulerService.metadata.name, loki.config.namespace],
+            // TODO(JoaoBraveCoding): replace when working on services
+            scheduler_address: '%s.%s.svc.cluster.local:9095' % [
+              loki.config.name + '-query-scheduler-grpc',
+              loki.config.namespace,
+            ],
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#ingester
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L234-L257
+          ingester+: {
+            // All the following fields overwrite the loki.mixins since the mixins
+            // still suggest using gzip which we know it performs worst than snappy
+            chunk_idle_period: '1h',
+            chunk_encoding: 'snappy',
+            chunk_retain_period: '5m',
+            chunk_target_size: 2097152,
+            wal+: {
+              // loki.mixins set's a different directory, we might be able to remove this
+              // once we move all componets to mixins
+              dir: '/data/loki/wal',
+              // Mixins sets this value to 7GB, we have 100MB for CI tests
+              replay_memory_ceiling: loki.config.wal.replayMemoryCeiling,
+            },
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#limits_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L214-L232
+          // Some of the limits set here are the same as their defaults, we want to have them explicit to
+          // facilitate reasoning about the service whenever we look at the config or try to debug issues.
+          limits_config+: {
+            max_line_size: 256000,
+            // We want 721h (30 days) as that is our service agreement
+            max_query_length: '721h',
+            // Default is 168h if not configured, we want 24h.
+            reject_old_samples_max_age: '24h',
+            cardinality_limit: 100000,
+            creation_grace_period: '10m',
+            max_chunks_per_query: 2000000,
+            max_entries_limit_per_query: 5000,
+            max_label_name_length: 1024,
+            max_label_names_per_series: 30,
+            max_label_value_length: 2048,
+            max_query_series: 500,
+            per_stream_rate_limit: '3MB',
+            per_stream_rate_limit_burst: '15MB',
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#memberlist_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/memberlist.libsonnet#L79-L96
+          memberlist+: {
+            // Both cluster_label + cluster_label_verification_disabled exist only for
+            // backwards compatibility with 2.6.1, more info https://github.com/grafana/loki/blob/0030cafb167fd70375399599acd8568c9290746e/production/ksonnet/loki/memberlist.libsonnet#L20-L26
+            cluster_label:: {},
+            cluster_label_verification_disabled:: {},
+            // loki.mixins doesn't support prefixes in resources names so we have to overwrite
+            // local gossipRingService = newGossipRingService(),
+            // join_members: ['%s.%s.svc.cluster.local:7946' % [gossipRingService.metadata.name, loki.config.namespace]],
+            // TODO(JoaoBraveCoding): replace when working on services
+            join_members: [
+              '%s.%s.svc.cluster.local:%d' % [
+                loki.config.name + '-' + loki.config.memberlist.ringName,
+                loki.config.namespace,
+                loki.config.ports.gossip,
+              ],
+            ],
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#query_range
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L191-L209
+          query_range+: {
+            results_cache+: {
+              cache: (
+                if loki.config.resultsCache == '' then {
+                  // Only necessary for CI tests
+                  embedded_cache: {
+                    enabled: true,
+                    // Default is 100 we want 500, review value
+                    max_size_mb: 500,
+                  },
+                } else {
+                  // Mixins still use host field where we want to use addresses so we
+                  // overwrite
+                  memcached_client: {
+                    // Default is 100ms, we want 500ms, review value
+                    timeout: '500ms',
+                    addresses: loki.config.resultsCache,
+                  },
+                }
+              ),
+            },
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#ruler
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L348-L368
+          ruler+: {
+            // Alertmanager config will be set downstream
+            alertmanager_url:: {},
+            enable_alertmanager_v2:: {},
+            // Mixins set's the rule path to /tmp/rules
+            rule_path: '/data',
+            // Mixins always configures the type to be a gcs bucket
+            storage: {
+              type: loki.config.rulesStorageConfig.type,
+            },
+            wal: {
+              // Default is "ruler-wal", we want it to be /data/loki/wal because, we don't want
+              // for PVC to change
+              dir: '/data/loki/wal',
+            },
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#schema_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L311-L323
+          schema_config: {
+            // Mixins configures for gcs, where we want s3
+            configs: [
+              {
+                from: '2020-10-01',
+                index: {
+                  // Default is 168h we want 24h because, that's how we have managed
+                  // indexes since the start of the service
+                  period: '24h',
+                  prefix: 'loki_index_',
+                },
+                object_store: 's3',
+                schema: 'v11',
+                store: 'boltdb-shipper',
+              },
+            ],
+          },
+          // Docs: https://grafana.com/docs/loki/latest/configuration/#storage_config
+          // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L266-L295
+          storage_config+: {
+            aws:: {},
+            boltdb_shipper+: {
+              // Mixins sets a different directory
+              active_index_directory: '/data/loki/index',
+              cache_location: '/data/loki/index_cache',
+              // Mixins don't support prefixes in resources names so we have to overwrite
+              index_gateway_client+: {
+                // local indexService = newService('index_gateway'),
+                // server_address: '%s.%s.svc.cluster.local:9095' % [indexService.metadata.name, loki.config.namespace],
+                // TODO(JoaoBraveCoding): replace when working on services
+                server_address: '%s.%s.svc.cluster.local:9095' % [
+                  loki.config.name + '-index-gateway-grpc',
+                  loki.config.namespace,
+                ],
+              },
+            },
+            // Since we only want to enable this when indexQueryCache is set
+            // we have to disable it
+            index_queries_cache_config:: {},
+          } + (
+            if loki.config.indexQueryCache != '' then {
+              index_queries_cache_config: {
+                memcached: {
+                  // Default is 1024, we want 100 because, review value
+                  batch_size: 100,
+                },
+                memcached_client: {
+                  // mixins assumes a service format for the cache, we want to overwrite it
+                  addresses: loki.config.indexQueryCache,
+                },
+              },
+            } else {}
+          ),
+          // Currently we don't want to configure the table manager
+          table_manager:: {},
+          // This line is important it's what allows us to specify configuration in defaults.config
+          // that will take precedence vs the default loki config in this repo
+        } + loki.config.config,
+      },
     },
-    data: {
-      'config.yaml': std.manifestYamlDoc(loki.config.config),
-      'overrides.yaml': std.manifestYamlDoc(loki.config.overrides),
+
+  // newConfigMap will return a ConfigMap with the loki config and overrides.
+  // Changes to the configuration should be introduced in loki.rhobsLoki._config
+  // and not in here
+  local newConfigMap() =
+    loki.rhobsLoki.config_file {
+      metadata+: {
+        name: loki.config.name,
+        namespace: loki.config.namespace,
+        labels: loki.config.commonLabels,
+      },
+      data+: {
+        'overrides.yaml': std.manifestYamlDoc(loki.config.overrides),
+      },
     },
-  },
 
   rulesConfigMap:: {
     apiVersion: 'v1',
@@ -510,9 +523,9 @@ function(params) {
     },
 
   local joinGossipRing(component) =
-    loki.config.config.distributor.ring.kvstore.store == 'memberlist' &&
-    loki.config.config.ingester.lifecycler.ring.kvstore.store == 'memberlist' &&
-    loki.config.config.ruler.ring.kvstore.store == 'memberlist' &&
+    loki.rhobsLoki._config.loki.distributor.ring.kvstore.store == 'memberlist' &&
+    loki.rhobsLoki._config.loki.ingester.lifecycler.ring.kvstore.store == 'memberlist' &&
+    loki.rhobsLoki._config.loki.ruler.ring.kvstore.store == 'memberlist' &&
     std.member(['distributor', 'ingester', 'querier', 'ruler'], component),
 
   local isStatefulSet(component) =
@@ -556,8 +569,9 @@ function(params) {
       },
     };
 
+    // Syntactic sugar
+    local envVarFromValue(name, value) = { name: name, value: value };
     local rulesVolumeMount = { name: 'rules', mountPath: '/tmp/rules', readOnly: false };
-
     local resources = { resources: config.resources };
     {
       name: name,
@@ -568,6 +582,8 @@ function(params) {
         '-config.file=/etc/loki/config/config.yaml',
         '-limits.per-user-override-config=/etc/loki/config/overrides.yaml',
         '-log.level=error',
+        // Necessary flag to support env variable expansion
+        '-config.expand-env=true',
       ] + (
         if std.objectHas(osc, 'endpointKey') then [
           '-s3.url=$(S3_URL)',
@@ -589,7 +605,13 @@ function(params) {
           '-ruler.storage.s3.secret-access-key=$(RULER_AWS_SECRET_ACCESS_KEY)',
         ] else []
       ),
-      env: (
+      // Some of the values present in here we only know them at rollout time
+      // Loki config supports env variable expansion, we leverage this feature to
+      // inject config parameters at rollout time.
+      env: [
+        // env only supports strings hence the addition with ''
+        envVarFromValue('LOKI_REPLICATION_FACTOR', '' + loki.config.replicationFactor),
+      ] + (
         if std.objectHas(osc, 'endpointKey') then [
           { name: 'S3_URL', valueFrom: { secretKeyRef: {
             name: osc.secretName,
@@ -711,7 +733,8 @@ function(params) {
           spec: {
             containers: [newLokiContainer(name, component, config)],
             volumes: [
-              { name: 'config', configMap: { name: loki.configmap.metadata.name } },
+              local lokiConfigMap = newConfigMap();
+              { name: 'config', configMap: { name: lokiConfigMap.metadata.name } },
               { name: 'storage', emptyDir: {} },
             ],
           } + if config.withPodAntiAffinity then {
@@ -750,7 +773,8 @@ function(params) {
           spec: {
             containers: [newLokiContainer(name, component, config)],
             volumes: [
-              { name: 'config', configMap: { name: loki.configmap.metadata.name } },
+              local lokiConfigMap = newConfigMap();
+              { name: 'config', configMap: { name: lokiConfigMap.metadata.name } },
             ] + if component == 'ruler' && loki.config.rulesStorageConfig.type == 'local' then [rulesVolume] else [],
             volumeClaimTemplates:: null,
           } + if config.withPodAntiAffinity then {
@@ -835,7 +859,7 @@ function(params) {
   },
 
   manifests: {
-    'config-map': loki.configmap,
+    'config-map': newConfigMap(),
     'rules-config-map': loki.rulesConfigMap,
   } + {
     [normalizedName(name) + '-deployment']: newDeployment(name, loki.config.components[name])
@@ -929,46 +953,6 @@ function(params) {
   ) + (
     if loki.config.memberlist != {} then {
       [loki.config.memberlist.ringName]: loki.memberlistService,
-    } else {}
-  ) + (
-    if loki.config.replicationFactor > 0 then {
-      [normalizedName(name) + '-deployment']+: {
-        spec+: {
-          template+: {
-            spec+: {
-              containers: [
-                c {
-                  args+: [
-                    '-distributor.replication-factor=%d' % loki.config.replicationFactor,
-                  ],
-                }
-                for c in super.containers
-              ],
-            },
-          },
-        },
-      }
-      for name in std.objectFields(loki.config.components)
-      if !isStatefulSet(name)
-    } + {
-      [normalizedName(name) + '-statefulset']+: {
-        spec+: {
-          template+: {
-            spec+: {
-              containers: [
-                c {
-                  args+: [
-                    '-distributor.replication-factor=%d' % loki.config.replicationFactor,
-                  ],
-                }
-                for c in super.containers
-              ],
-            },
-          },
-        },
-      }
-      for name in std.objectFields(loki.config.components)
-      if isStatefulSet(name)
     } else {}
   ) + {
     [normalizedName(name) + '-service-monitor']: loki.serviceMonitors[name]
