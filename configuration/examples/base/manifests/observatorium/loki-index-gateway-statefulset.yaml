@@ -17,7 +17,7 @@ spec:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: loki
       app.kubernetes.io/part-of: observatorium
-  serviceName: observatorium-xyz-loki-index-gateway-grpc
+  serviceName: observatorium-xyz-loki-index-gateway
   template:
     metadata:
       labels:

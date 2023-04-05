@@ -2,21 +2,28 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
+    app.kubernetes.io/component: query-scheduler
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
     app.kubernetes.io/version: 2.7.2
-  name: observatorium-xyz-loki-gossip-ring
+  name: observatorium-xyz-loki-query-scheduler-headless
   namespace: observatorium
 spec:
   clusterIP: None
   ports:
+  - name: http-metrics
+    port: 3100
+    targetPort: 3100
+  - name: grpclb
+    port: 9095
+    targetPort: 9095
   - name: gossip-ring
     port: 7946
-    protocol: TCP
     targetPort: 7946
+  publishNotReadyAddresses: true
   selector:
+    app.kubernetes.io/component: query-scheduler
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
-    loki.grafana.com/gossip: "true"

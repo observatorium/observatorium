@@ -17,13 +17,17 @@ local defaults = {
     shardFactor: 16,
     enableSharedQueries: false,
   },
-  ports: {
-    gossip: 7946,
-  },
   replicationFactor: 1,
   shardFactor: 16,
   limits: {
     maxOutstandingPerTenant: 256,
+  },
+  // Default ports used by the different loki components
+  // These values are used to template some parts of the config
+  ports: {
+    http: 3100,
+    grpc: 9095,
+    gossip: 7946,
   },
 
   // TODO(kakkoyun): Is it duplicated with components?
@@ -261,13 +265,8 @@ function(params) {
             // compactor_grpc_address is not yet supported in the loki.mixins
             // when supported we will still need support for prefixing resource names
             // before removing this
-            // local compactorService = newService('compactor'),
-            // compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [compactorService.metadata.name, loki.config.namespace],
-            // TODO(JoaoBraveCoding): replace when working on services
-            compactor_grpc_address: '%s.%s.svc.cluster.local:9095' % [
-              loki.config.name + '-compactor-grpc',
-              loki.config.namespace,
-            ],
+            local compactorService = newService('compactor'),
+            compactor_grpc_address: '%s.%s.svc.cluster.local:%s' % [compactorService.metadata.name, loki.config.namespace, loki.config.ports.grpc],
             // Disable compactor_address as it's enabled by default in the mixins
             compactor_address:: {},
           },
@@ -285,34 +284,19 @@ function(params) {
           // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L181-L184
           frontend+: {
             // Mixins don't support prefixes in resources names so we have to overwrite
-            // local schedulerService = newService('query_scheduler'),
-            // scheduler_address: '%s.%s.svc.cluster.local:9095' % [schedulerService.metadata.name, loki.config.namespace],
-            // TODO(JoaoBraveCoding): replace when working on services
-            scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-              loki.config.name + '-query-scheduler-grpc',
-              loki.config.namespace,
-            ],
+            local schedulerService = newHeadlessService('query_scheduler'),
+            scheduler_address: '%s.%s.svc.cluster.local:%s' % [schedulerService.metadata.name, loki.config.namespace, loki.config.ports.grpc],
             // Mixins don't support tail_proxy_url, when support is added we will
             // still need support for prefixing resource names before removing this
-            // local querierService = newService('querier'),
-            // tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [querierService.metadata.name, loki.config.namespace],
-            // TODO(JoaoBraveCoding): replace when working on services
-            tail_proxy_url: '%s.%s.svc.cluster.local:3100' % [
-              loki.config.name + '-querier-http',
-              loki.config.namespace,
-            ],
+            local querierService = newService('querier'),
+            tail_proxy_url: '%s.%s.svc.cluster.local:%s' % [querierService.metadata.name, loki.config.namespace, loki.config.ports.http],
           },
           // Docs: https://grafana.com/docs/loki/latest/configuration/#frontend_worker
           // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L185-L190
           frontend_worker+: {
             // Mixins dont support prefixes in resources names so we have to overwrite
-            // local schedulerService = newService('query_scheduler'),
-            // scheduler_address: '%s.%s.svc.cluster.local:9095' % [schedulerService.metadata.name, loki.config.namespace],
-            // TODO(JoaoBraveCoding): replace when working on services
-            scheduler_address: '%s.%s.svc.cluster.local:9095' % [
-              loki.config.name + '-query-scheduler-grpc',
-              loki.config.namespace,
-            ],
+            local schedulerService = newHeadlessService('query_scheduler'),
+            scheduler_address: '%s.%s.svc.cluster.local:%s' % [schedulerService.metadata.name, loki.config.namespace, loki.config.ports.grpc],
           },
           // Docs: https://grafana.com/docs/loki/latest/configuration/#ingester
           // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L234-L257
@@ -360,16 +344,8 @@ function(params) {
             cluster_label:: {},
             cluster_label_verification_disabled:: {},
             // loki.mixins doesn't support prefixes in resources names so we have to overwrite
-            // local gossipRingService = newGossipRingService(),
-            // join_members: ['%s.%s.svc.cluster.local:7946' % [gossipRingService.metadata.name, loki.config.namespace]],
-            // TODO(JoaoBraveCoding): replace when working on services
-            join_members: [
-              '%s.%s.svc.cluster.local:%d' % [
-                loki.config.name + '-' + loki.config.memberlist.ringName,
-                loki.config.namespace,
-                loki.config.ports.gossip,
-              ],
-            ],
+            local gossipRingService = newGossipRingService(),
+            join_members: ['%s.%s.svc.cluster.local:%s' % [gossipRingService.metadata.name, loki.config.namespace, loki.config.ports.gossip]],
           },
           // Docs: https://grafana.com/docs/loki/latest/configuration/#query_range
           // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L191-L209
@@ -442,13 +418,8 @@ function(params) {
               cache_location: '/data/loki/index_cache',
               // Mixins don't support prefixes in resources names so we have to overwrite
               index_gateway_client+: {
-                // local indexService = newService('index_gateway'),
-                // server_address: '%s.%s.svc.cluster.local:9095' % [indexService.metadata.name, loki.config.namespace],
-                // TODO(JoaoBraveCoding): replace when working on services
-                server_address: '%s.%s.svc.cluster.local:9095' % [
-                  loki.config.name + '-index-gateway-grpc',
-                  loki.config.namespace,
-                ],
+                local indexService = newService('index_gateway'),
+                server_address: '%s.%s.svc.cluster.local:%s' % [indexService.metadata.name, loki.config.namespace, loki.config.ports.grpc],
               },
             },
             // Since we only want to enable this when indexQueryCache is set
@@ -474,6 +445,8 @@ function(params) {
           // that will take precedence vs the default loki config in this repo
         } + loki.config.config,
       },
+      // Fix the query_scheduler headless service name on loki.mixins
+      query_scheduler_headless_service_name:: 'query-scheduler-headless',
     },
 
   // newConfigMap will return a ConfigMap with the loki config and overrides.
@@ -765,7 +738,7 @@ function(params) {
       spec: {
         replicas: loki.config.replicas[component],
         selector: { matchLabels: podLabelSelector },
-        serviceName: newGrpcService(component).metadata.name,
+        serviceName: name,
         template: {
           metadata: {
             labels: podLabelSelector,
@@ -784,58 +757,54 @@ function(params) {
       },
     },
 
-  local newGrpcService(component) = {
-    apiVersion: 'v1',
-    kind: 'Service',
-    metadata: {
-      name: loki.config.name + '-' + normalizedName(component) + '-grpc',
+  // metadataFormat for a given k8s object add a prefix to name, set namespace
+  // and set common labels
+  local metadataFormat(component, object) = object {
+    metadata+: {
+      name: loki.config.name + '-' + object.metadata.name,
       namespace: loki.config.namespace,
       labels: newCommonLabels(component),
     },
-    spec: {
-      ports: [
-        { name: 'grpc', targetPort: 9095, port: 9095 },
-      ],
-      selector: newPodLabelsSelector(component),
-      clusterIP: 'None',
-    },
   },
 
-  local newHttpService(component) = {
-    apiVersion: 'v1',
-    kind: 'Service',
-    metadata: {
-      name: loki.config.name + '-' + normalizedName(component) + '-http',
-      namespace: loki.config.namespace,
-      labels: newCommonLabels(component),
+  // newService for a given component, generate its service using the loki mixins
+  local newService(component) =
+    metadataFormat(component, loki.rhobsLoki[component + '_service']) {
+      spec+: {
+        selector: newPodLabelsSelector(component),
+      },
     },
-    spec: {
-      ports: [
-        { name: 'metrics', targetPort: 3100, port: 3100 },
-      ],
-      selector: newPodLabelsSelector(component),
-    },
-  },
 
-  memberlistService:: {
-    apiVersion: 'v1',
-    kind: 'Service',
-    metadata: {
-      name: loki.config.name + '-' + loki.config.memberlist.ringName,
-      namespace: loki.config.namespace,
-      labels: loki.config.commonLabels,
+  // newHeadlessService for a given component, generate its headless service using the loki mixins
+  // headless services are usually required for DNS SRV dicovery
+  local newHeadlessService(component) =
+    metadataFormat(component, loki.rhobsLoki[component + '_headless_service']) {
+      spec+: {
+        selector: newPodLabelsSelector(component),
+      },
     },
-    spec: {
-      ports: [
-        { name: 'gossip', targetPort: loki.config.ports.gossip, port: loki.config.ports.gossip, protocol: 'TCP' },
-      ],
-      selector: loki.config.podLabelSelector { 'loki.grafana.com/gossip': 'true' },
-      clusterIP: 'None',
-    },
-  },
 
+  // newGossipRingService is a headless service that has in its selectors the
+  // gossip_member_label that we want to preserve
+  local newGossipRingService() =
+    metadataFormat('gossip', loki.rhobsLoki.gossip_ring_service) {
+      metadata+: {
+        labels: loki.config.commonLabels,
+      },
+      spec+: {
+        selector+: loki.config.podLabelSelector,
+      },
+    },
+
+  // serviceMonitors generates ServiceMonitors for all the components below, this
+  // code can be removed once the loki.mixins improves ServiceMonitor generation
+  // to generate 1 ServiceMonitor per component.
   serviceMonitors:: {
     [name]: {
+      // DNS SRV records are used for discovering the schedulers or the frontends so the services
+      // of these two componets have ports without the "component_name-" prefix
+      // See https://github.com/grafana/loki/blob/4721d7efd308e7d85fe03464041179bb1414fe8c/production/ksonnet/loki/common.libsonnet#L25-L33
+      local portPrefix = if !std.member(['query_frontend', 'query_scheduler'], name) then normalizedName(name) + '-' else '',
       apiVersion: 'monitoring.coreos.com/v1',
       kind: 'ServiceMonitor',
       metadata+: {
@@ -850,7 +819,7 @@ function(params) {
           },
         },
         endpoints: [
-          { port: 'metrics' },
+          { port: portPrefix + 'http-metrics' },
         ],
       },
     }
@@ -862,6 +831,23 @@ function(params) {
     'config-map': newConfigMap(),
     'rules-config-map': loki.rulesConfigMap,
   } + {
+    // Service generation for all the components except query_schedulers
+    // see below comment
+    [normalizedName(component) + '-service']: newService(component)
+    for component in std.objectFields(loki.config.components)
+    if !std.member(['query_scheduler'], component)
+  } + {
+    // Headless service generation for query_schedulers to allow frontend components
+    // to discover them using DNS SRV records
+    [normalizedName(component) + '-headless-service']: newHeadlessService(component)
+    for component in std.objectFields(loki.config.components)
+    if std.member(['query_scheduler'], component)
+  } + (
+    // Service generation for gossip ring
+    if loki.config.memberlist != {} then {
+      [loki.config.memberlist.ringName]: newGossipRingService(),
+    }
+  ) + {
     [normalizedName(name) + '-deployment']: newDeployment(name, loki.config.components[name])
     for name in std.objectFields(loki.config.components)
     if !isStatefulSet(name)
@@ -869,13 +855,6 @@ function(params) {
     [normalizedName(name) + '-statefulset']: newStatefulSet(name, loki.config.components[name])
     for name in std.objectFields(loki.config.components)
     if isStatefulSet(name)
-  } + {
-    [normalizedName(name) + '-grpc-service']: newGrpcService(name)
-    for name in std.objectFields(loki.config.components)
-  } + {
-    [normalizedName(name) + '-http-service']: newHttpService(name)
-    for name in std.objectFields(loki.config.components)
-    if std.member(['compactor', 'distributor', 'query_frontend', 'querier', 'query_scheduler', 'ingester', 'index_gateway', 'ruler'], name)
   } + (
     if std.length(loki.config.resources) != {} then {
       [normalizedName(name) + '-deployment']+: {
@@ -950,11 +929,8 @@ function(params) {
       for name in std.objectFields(loki.config.components)
       if isStatefulSet(name)
     }
-  ) + (
-    if loki.config.memberlist != {} then {
-      [loki.config.memberlist.ringName]: loki.memberlistService,
-    } else {}
   ) + {
+    // Service Monitor generation for all the componets that enable it
     [normalizedName(name) + '-service-monitor']: loki.serviceMonitors[name]
     for name in std.objectFields(loki.config.components)
     if std.objectHas(loki.serviceMonitors, name) && loki.config.components[name].withServiceMonitor
