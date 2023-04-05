@@ -7,9 +7,10 @@ metadata:
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
     app.kubernetes.io/version: 2.7.2
-  name: observatorium-xyz-loki-query-scheduler
+  name: observatorium-xyz-loki-query-scheduler-headless
   namespace: observatorium
 spec:
+  clusterIP: None
   ports:
   - name: http-metrics
     port: 3100
@@ -20,6 +21,7 @@ spec:
   - name: gossip-ring
     port: 7946
     targetPort: 7946
+  publishNotReadyAddresses: true
   selector:
     app.kubernetes.io/component: query-scheduler
     app.kubernetes.io/instance: observatorium-xyz
