@@ -45,11 +45,71 @@
       "source": {
         "git": {
           "remote": "https://github.com/grafana/jsonnet-libs.git",
+          "subdir": "consul"
+        }
+      },
+      "version": "0c3703518707800bd674530672a6669f582819aa",
+      "sum": "Po3c1Ic96ngrJCtOazic/7OsLkoILOKZWXWyZWl+od8="
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/grafana/jsonnet-libs.git",
           "subdir": "grafana-builder"
         }
       },
       "version": "9ce44b845bdf4258a755b58087025c271f61b5bf",
       "sum": "0KkygBQd/AFzUvVzezE4qF/uDYgrwUXVpZfINBti0oc="
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/grafana/jsonnet-libs.git",
+          "subdir": "jaeger-agent-mixin"
+        }
+      },
+      "version": "0c3703518707800bd674530672a6669f582819aa",
+      "sum": "nsukyr2SS8h97I2mxvBazXZp2fxu1i6eg+rKq3/NRwY="
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/grafana/jsonnet-libs.git",
+          "subdir": "ksonnet-util"
+        }
+      },
+      "version": "0c3703518707800bd674530672a6669f582819aa",
+      "sum": "0y3AFX9LQSpfWTxWKSwoLgbt0Wc9nnCwhMH2szKzHv0="
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/grafana/jsonnet-libs.git",
+          "subdir": "memcached"
+        }
+      },
+      "version": "0c3703518707800bd674530672a6669f582819aa",
+      "sum": "SWywAq4U0MRPMbASU0Ez8O9ArRNeoZzb75sEuReueow="
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/grafana/loki.git",
+          "subdir": "production/ksonnet/loki"
+        }
+      },
+      "version": "e773c004f5b671298e1136ca435d6e7ea55b2ae1",
+      "sum": "TzYVDF0DQfzP+pZT43DuLIV47g2f3ZuXYLeMEr3EB+w="
+    },
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/jsonnet-libs/k8s-libsonnet.git",
+          "subdir": "1.26"
+        }
+      },
+      "version": "9e5b48eee32913938d3cac30f183b49ecd9fe13a",
+      "sum": "7pl3HQqiKg4zJ0dWFqMo9yMGDEvlVdxgPGr1rMm0/LE="
     },
     {
       "source": {
