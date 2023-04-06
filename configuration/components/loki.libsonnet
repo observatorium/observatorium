@@ -452,6 +452,9 @@ function(params) {
   // Changes to the configuration should be introduced in loki.rhobsLoki._config
   // and not in here
   local newConfigMap() =
+    // List of ENV vars that should show in the loki config without quotes
+    local envVars = ['${LOKI_REPLICATION_FACTOR}'];
+    local config = loki.rhobsLoki.config_file.data['config.yaml'];
     loki.rhobsLoki.config_file {
       metadata+: {
         name: loki.config.name,
@@ -459,9 +462,19 @@ function(params) {
         labels: loki.config.commonLabels,
       },
       data+: {
+        // Remove quotes from env vars in the array envVars and return
+        'config.yaml': removeDoubleQuotes(config, envVars),
         'overrides.yaml': std.manifestYamlDoc(loki.config.overrides),
       },
     },
+
+
+  // Loop over fromArray (of strings), running std.stdReplace() to remove "
+  local removeDoubleQuotes(str, fromArray) = std.foldl(
+    function(retStr, from) std.strReplace(retStr, '"' + from + '"', from),
+    fromArray,
+    str
+  ),
 
   rulesConfigMap:: {
     apiVersion: 'v1',

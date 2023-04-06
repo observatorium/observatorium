@@ -62,7 +62,6 @@ examples/base/manifests: examples/base/main.jsonnet vendor $(JSONNET_SRC) $(JSON
 	-mkdir examples/base/manifests
 	$(JSONNET) -J vendor -J lib -c -m examples/base/manifests examples/base/main.jsonnet | $(XARGS) -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find examples/base/manifests -type f ! -name '*.yaml' -delete
-	sed -i 's/"$${LOKI_REPLICATION_FACTOR}"/$${LOKI_REPLICATION_FACTOR}/g' examples/base/manifests/observatorium/loki-config-map.yaml
 
 examples/dev/manifests: examples/dev/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
@@ -70,7 +69,6 @@ examples/dev/manifests: examples/dev/main.jsonnet vendor $(JSONNET_SRC) $(JSONNE
 	-mkdir examples/dev/manifests
 	$(JSONNET) -J vendor -J lib -c -m examples/dev/manifests examples/dev/main.jsonnet | $(XARGS) -I{} sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find examples/dev/manifests -type f ! -name '*.yaml' -delete
-	sed -i 's/"$${LOKI_REPLICATION_FACTOR}"/$${LOKI_REPLICATION_FACTOR}/g' examples/dev/manifests/observatorium/loki-config-map.yaml
 
 examples/local/manifests: examples/local/main.jsonnet vendor $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
@@ -78,7 +76,6 @@ examples/local/manifests: examples/local/main.jsonnet vendor $(JSONNET_SRC) $(JS
 	-mkdir examples/local/manifests
 	$(JSONNET) -J vendor -J lib -c -m examples/local/manifests examples/local/main.jsonnet | $(XARGS) -I{} $(XARGS_FLAGS) sh -c 'cat {} | $(GOJSONTOYAML) > {}.yaml' -- {}
 	find examples/local/manifests -type f ! -name '*.yaml' -delete
-	sed -i 's/"$${LOKI_REPLICATION_FACTOR}"/$${LOKI_REPLICATION_FACTOR}/g' examples/local/manifests/observatorium/loki-config-map.yaml
 
 tests/manifests: tests/main.jsonnet vendor generate-cert $(JSONNET_SRC) $(JSONNET) $(GOJSONTOYAML)
 	-make fmt
