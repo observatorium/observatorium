@@ -31,13 +31,12 @@ spec:
         - -target=compactor
         - -config.file=/etc/loki/config/config.yaml
         - -limits.per-user-override-config=/etc/loki/config/overrides.yaml
-        - -log.level=error
         - -config.expand-env=true
-        - -s3.url=$(S3_URL)
-        - -s3.force-path-style=true
         env:
         - name: LOKI_REPLICATION_FACTOR
           value: "1"
+        - name: LOKI_LOG_LEVEL
+          value: info
         - name: S3_URL
           valueFrom:
             secretKeyRef:

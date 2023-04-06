@@ -55,7 +55,7 @@ data:
       "wal":
         "dir": "/data/loki/wal"
         "enabled": true
-        "replay_memory_ceiling": "100MB"
+        "replay_memory_ceiling": ${LOKI_INGESTER_WAL_REPLAY_MEMORY_CEILING}
     "ingester_client":
       "grpc_client_config":
         "max_recv_msg_size": 67108864
@@ -95,7 +95,7 @@ data:
     "querier":
       "engine":
         "max_look_back_period": "5m"
-      "max_concurrent": 2
+      "max_concurrent": ${LOKI_QUERIER_MAX_CONCURRENCY}
       "query_ingesters_within": "2h"
     "query_range":
       "align_queries_with_step": true
@@ -116,6 +116,9 @@ data:
           "store": "memberlist"
       "rule_path": "/data"
       "storage":
+        "s3":
+          "s3": "${RULER_S3_URL}"
+          "s3forcepathstyle": true
         "type": "s3"
       "wal":
         "dir": "/data/loki/wal"
@@ -138,7 +141,11 @@ data:
       "http_listen_port": 3100
       "http_server_idle_timeout": "120s"
       "http_server_write_timeout": "1m"
+      "log_level": "${LOKI_LOG_LEVEL}"
     "storage_config":
+      "aws":
+        "s3": "${S3_URL}"
+        "s3forcepathstyle": true
       "boltdb_shipper":
         "active_index_directory": "/data/loki/index"
         "cache_location": "/data/loki/index_cache"
