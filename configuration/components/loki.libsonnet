@@ -183,7 +183,6 @@ function(params) {
   // Combine the defaults and the passed params to make the component's config.
   config:: defaults + params,
   // Safety checks for combined config of defaults and params.
-  assert std.isNumber(loki.config.replicationFactor),
   assert std.isNumber(loki.config.query.concurrency),
   assert std.isObject(loki.config.limits) : 'limits has to be an object',
   assert std.isObject(loki.config.replicas) : 'replicas has to be an object',
