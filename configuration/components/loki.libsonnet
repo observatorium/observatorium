@@ -55,7 +55,18 @@ local defaults = {
         limits: { cpu: '200m', memory: '200Mi' },
       },
       withServiceMonitor: false,
-    },
+    } + (
+      if defaults.etcdEndpoints != [] then {
+        compactor_ring+: {
+          kvstore: {
+            store: 'etcd',
+            etcd: {
+              endpoints: defaults.etcdEndpoints,
+            },
+          },
+        },
+      } else {}
+    ),
     distributor: {
       withLivenessProbe: true,
       withReadinessProbe: true,
@@ -280,6 +291,11 @@ function(params) {
             // Mixins set's a different working directory, we might be able to remove this
             // once we move all componets to mixins
             working_directory: '/data/loki/compactor',
+            compactor_ring: {
+              kvstore: {
+                store: 'memberlist',
+              },
+            },
           },
           // Docs: https://grafana.com/docs/loki/latest/configuration/#frontend
           // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L181-L184
