@@ -373,7 +373,7 @@ function(params) {
           // Docs: https://grafana.com/docs/loki/latest/configuration/#ruler
           // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L348-L368
           ruler+: {
-            // Alertmanager config will be set downstream
+            // Alertmanager config will be set downstream and unhidden with :::
             alertmanager_url:: {},
             enable_alertmanager_v2:: {},
             // Mixins set's the rule path to /tmp/rules
@@ -426,7 +426,7 @@ function(params) {
             index_queries_cache_config:: {},
           } + (
             if loki.config.indexQueryCache != '' then {
-              index_queries_cache_config: {
+              index_queries_cache_config::: {
                 memcached: {
                   // Default is 1024, we want 100 because, review value
                   batch_size: 100,
