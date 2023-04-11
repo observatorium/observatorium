@@ -61,7 +61,7 @@ local defaults = {
       withServiceMonitor: false,
     } + (
       if defaults.etcdEndpoints != [] then {
-        compactor_ring+: {
+        compactor_ring: {
           kvstore: {
             store: 'etcd',
             etcd: {
