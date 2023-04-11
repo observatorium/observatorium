@@ -15,6 +15,9 @@ data:
           "store": "memberlist"
     "compactor":
       "compaction_interval": "2h"
+      "compactor_ring":
+        "kvstore":
+          "store": "memberlist"
       "shared_store": "s3"
       "working_directory": "/data/loki/compactor"
     "distributor":
