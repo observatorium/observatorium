@@ -155,7 +155,7 @@ dev.manifests
     },
     type: 'Opaque',
   },
-  'minio-secret-observatorium-rules': {
+  'minio/minio-secret-observatorium-rules': {
     apiVersion: 'v1',
     kind: 'Secret',
     metadata: {
