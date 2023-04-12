@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: loki
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: 2.7.2
+    app.kubernetes.io/version: 2.8.0
   name: observatorium-xyz-loki-query-frontend
   namespace: observatorium
 spec:
@@ -45,7 +45,7 @@ spec:
             secretKeyRef:
               key: endpoint
               name: loki-objectstorage
-        image: docker.io/grafana/loki:2.7.2
+        image: docker.io/grafana/loki:2.8.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 10
