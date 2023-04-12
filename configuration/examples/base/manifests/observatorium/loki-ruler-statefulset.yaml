@@ -35,10 +35,14 @@ spec:
         - -limits.per-user-override-config=/etc/loki/config/overrides.yaml
         - -config.expand-env=true
         env:
-        - name: LOKI_REPLICATION_FACTOR
-          value: "1"
         - name: LOKI_LOG_LEVEL
           value: info
+        - name: LOKI_REPLICATION_FACTOR
+          value: "1"
+        - name: LOKI_QUERIER_MAX_CONCURRENCY
+          value: "2"
+        - name: LOKI_INGESTER_WAL_REPLAY_MEMORY_CEILING
+          value: 100MB
         - name: S3_URL
           valueFrom:
             secretKeyRef:

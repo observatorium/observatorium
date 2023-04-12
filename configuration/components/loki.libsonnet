@@ -207,7 +207,7 @@ function(params) {
   assert std.isObject(loki.config.etcd) : 'etcd has to be an object',
   assert std.isArray(loki.config.etcdEndpoints) : 'etcdEndpoints has to be an array',
 
-  rhobsLoki::
+  mixins::
     lokiMixins {
       // Some values in the loki config are ENV var, we do this because upstream
       // we will want to update them without having to regenerate the templates
@@ -496,13 +496,13 @@ function(params) {
     },
 
   // newConfigMap will return a ConfigMap with the loki config and overrides.
-  // Changes to the configuration should be introduced in loki.rhobsLoki._config
+  // Changes to the configuration should be introduced in loki.mixins._config
   // and not in here
   local newConfigMap() =
     // List of ENV vars that should show in the loki config without quotes
     local envVars = ['${LOKI_REPLICATION_FACTOR}', '${LOKI_QUERIER_MAX_CONCURRENCY}', '${LOKI_INGESTER_WAL_REPLAY_MEMORY_CEILING}'];
-    local config = loki.rhobsLoki.config_file.data['config.yaml'];
-    loki.rhobsLoki.config_file {
+    local config = loki.mixins.config_file.data['config.yaml'];
+    loki.mixins.config_file {
       metadata+: {
         name: loki.config.name,
         namespace: loki.config.namespace,
@@ -522,6 +522,45 @@ function(params) {
     fromArray,
     str
   ),
+
+  // buildEnvVars compiles a list of parameters whose values are only
+  // known at rollout time. Loki config supports env variable expansion, we
+  // leverage this feature to inject these config values at rollout time.
+  // Some values are only specific to some component but since all components
+  // consume the same ConfigMap we decided for all components share the same
+  // of env variables.
+  local buildConfigVars(component) =
+    // Syntactic sugar
+    local envVarFromValue(name, value) = { name: name, value: value };
+    local envVarFromSecret(name, secretName, secretKey) = { name: name, valueFrom: { secretKeyRef: { name: secretName, key: secretKey } } };
+    local osc = loki.config.objectStorageConfig;
+    local rsc = loki.config.rulesStorageConfig;
+    [
+      envVarFromValue('LOKI_LOG_LEVEL', loki.config.logLevel),
+      // The following values are added with '', because env only supports strings
+      envVarFromValue('LOKI_REPLICATION_FACTOR', '' + loki.config.replicationFactor),
+      envVarFromValue('LOKI_QUERIER_MAX_CONCURRENCY', '' + loki.config.query.concurrency),
+      envVarFromValue('LOKI_INGESTER_WAL_REPLAY_MEMORY_CEILING', '' + loki.config.wal.replayMemoryCeiling),
+    ] + (
+      if std.objectHas(osc, 'endpointKey') then [
+        envVarFromSecret('S3_URL', osc.secretName, osc.endpointKey),
+      ] else [
+        envVarFromSecret('S3_BUCKETS', osc.secretName, osc.bucketsKey),
+        envVarFromSecret('S3_REGION', osc.secretName, osc.regionKey),
+        envVarFromSecret('AWS_ACCESS_KEY_ID', osc.secretName, osc.accessKeyIdKey),
+        envVarFromSecret('AWS_SECRET_ACCESS_KEY', osc.secretName, osc.secretAccessKeyKey),
+      ]
+    ) + (
+      if component == 'ruler' && std.objectHas(rsc, 'endpointKey') then [
+        envVarFromSecret('RULER_S3_URL', rsc.secretName, rsc.endpointKey),
+      ] else if component == 'ruler' then [
+        envVarFromSecret('RULER_S3_BUCKETS', rsc.secretName, rsc.bucketsKey),
+        envVarFromSecret('RULER_S3_REGION', rsc.secretName, rsc.regionKey),
+        envVarFromSecret('RULER_AWS_ACCESS_KEY_ID', rsc.secretName, rsc.accessKeyIdKey),
+        envVarFromSecret('RULER_AWS_SECRET_ACCESS_KEY', rsc.secretName, rsc.secretAccessKeyKey),
+      ] else []
+    ),
+
 
   rulesConfigMap:: {
     apiVersion: 'v1',
@@ -555,9 +594,9 @@ function(params) {
     },
 
   local joinGossipRing(component) =
-    loki.rhobsLoki._config.loki.distributor.ring.kvstore.store == 'memberlist' &&
-    loki.rhobsLoki._config.loki.ingester.lifecycler.ring.kvstore.store == 'memberlist' &&
-    loki.rhobsLoki._config.loki.ruler.ring.kvstore.store == 'memberlist' &&
+    loki.mixins._config.loki.distributor.ring.kvstore.store == 'memberlist' &&
+    loki.mixins._config.loki.ingester.lifecycler.ring.kvstore.store == 'memberlist' &&
+    loki.mixins._config.loki.ruler.ring.kvstore.store == 'memberlist' &&
     std.member(['distributor', 'ingester', 'querier', 'ruler'], component),
 
   local isStatefulSet(component) =
@@ -602,8 +641,6 @@ function(params) {
     };
 
     // Syntactic sugar
-    local envVarFromValue(name, value) = { name: name, value: value };
-    local envVarFromSecret(name, secretName, secretKey) = { name: name, valueFrom: { secretKeyRef: { name: secretName, key: secretKey } } };
     local rulesVolumeMount = { name: 'rules', mountPath: '/tmp/rules', readOnly: false };
     local resources = { resources: config.resources };
     {
@@ -617,42 +654,7 @@ function(params) {
         // Necessary flag to support env variable expansion
         '-config.expand-env=true',
       ],
-      // Some of the values present in here we only know them at rollout time
-      // Loki config supports env variable expansion, we leverage this feature to
-      // inject config parameters at rollout time.
-      env: [
-        // env only supports strings hence the addition with ''
-        envVarFromValue('LOKI_REPLICATION_FACTOR', '' + loki.config.replicationFactor),
-        envVarFromValue('LOKI_LOG_LEVEL', loki.config.logLevel),
-      ] + (
-        if component == 'querier' then [
-          // env only supports strings hence the addition with ''
-          envVarFromValue('LOKI_QUERIER_MAX_CONCURRENCY', '' + loki.config.query.concurrency),
-        ] else []
-      ) + (
-        if component == 'ingester' then [
-          // env only supports strings hence the addition with ''
-          envVarFromValue('LOKI_INGESTER_WAL_REPLAY_MEMORY_CEILING', '' + loki.config.wal.replayMemoryCeiling),
-        ] else []
-      ) + (
-        if std.objectHas(osc, 'endpointKey') then [
-          envVarFromSecret('S3_URL', osc.secretName, osc.endpointKey),
-        ] else [
-          envVarFromSecret('S3_BUCKETS', osc.secretName, osc.bucketsKey),
-          envVarFromSecret('S3_REGION', osc.secretName, osc.regionKey),
-          envVarFromSecret('AWS_ACCESS_KEY_ID', osc.secretName, osc.accessKeyIdKey),
-          envVarFromSecret('AWS_SECRET_ACCESS_KEY', osc.secretName, osc.secretAccessKeyKey),
-        ]
-      ) + (
-        if component == 'ruler' && std.objectHas(rsc, 'endpointKey') then [
-          envVarFromSecret('RULER_S3_URL', rsc.secretName, rsc.endpointKey),
-        ] else if component == 'ruler' then [
-          envVarFromSecret('RULER_S3_BUCKETS', rsc.secretName, rsc.bucketsKey),
-          envVarFromSecret('RULER_S3_REGION', rsc.secretName, rsc.regionKey),
-          envVarFromSecret('RULER_AWS_ACCESS_KEY_ID', rsc.secretName, rsc.accessKeyIdKey),
-          envVarFromSecret('RULER_AWS_SECRET_ACCESS_KEY', rsc.secretName, rsc.secretAccessKeyKey),
-        ] else []
-      ),
+      env: buildConfigVars(component),
       ports: [
         { name: 'metrics', containerPort: 3100 },
         { name: 'grpc', containerPort: 9095 },
@@ -789,7 +791,7 @@ function(params) {
 
   // newService for a given component, generate its service using the loki mixins
   local newService(component) =
-    metadataFormat(component, loki.rhobsLoki[component + '_service']) {
+    metadataFormat(component, loki.mixins[component + '_service']) {
       spec+: {
         selector: newPodLabelsSelector(component),
       },
@@ -798,7 +800,7 @@ function(params) {
   // newHeadlessService for a given component, generate its headless service using the loki mixins
   // headless services are usually required for DNS SRV dicovery
   local newHeadlessService(component) =
-    metadataFormat(component, loki.rhobsLoki[component + '_headless_service']) {
+    metadataFormat(component, loki.mixins[component + '_headless_service']) {
       spec+: {
         selector: newPodLabelsSelector(component),
       },
@@ -807,7 +809,7 @@ function(params) {
   // newGossipRingService is a headless service that has in its selectors the
   // gossip_member_label that we want to preserve
   local newGossipRingService() =
-    metadataFormat('gossip', loki.rhobsLoki.gossip_ring_service) {
+    metadataFormat('gossip', loki.mixins.gossip_ring_service) {
       metadata+: {
         labels: loki.config.commonLabels,
       },
