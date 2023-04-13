@@ -20,6 +20,9 @@ local defaults = {
     shardFactor: 16,
     enableSharedQueries: false,
   },
+  ruler: {
+    externalUrl: '',
+  },
   replicationFactor: 1,
   logLevel: 'info',
   shardFactor: 16,
@@ -198,7 +201,9 @@ function(params) {
   // Combine the defaults and the passed params to make the component's config.
   config:: defaults + params,
   // Safety checks for combined config of defaults and params.
-  assert std.isNumber(loki.config.query.concurrency),
+  assert std.isNumber(loki.config.replicationFactor) || std.isString(loki.config.replicationFactor),
+  assert std.isNumber(loki.config.query.concurrency) || std.isString(loki.config.query.concurrency),
+  assert std.isNumber(loki.config.wal.replayMemoryCeiling) || std.isString(loki.config.wal.replayMemoryCeiling),
   assert std.isObject(loki.config.limits) : 'limits has to be an object',
   assert std.isObject(loki.config.replicas) : 'replicas has to be an object',
   assert std.isObject(loki.config.resources) : 'replicas has to be an object',
@@ -335,6 +340,9 @@ function(params) {
           // Some of the limits set here are the same as their defaults, we want to have them explicit to
           // facilitate reasoning about the service whenever we look at the config or try to debug issues.
           limits_config+: {
+            // Although deletion_mode is by default false we want to make it explicit
+            // because the Deletion API has caused numerous issues upstream.
+            deletion_mode: 'disabled',
             max_line_size: 256000,
             // We want 721h (30 days) as that is our service agreement
             max_query_length: '721h',
@@ -417,7 +425,11 @@ function(params) {
               // for PVC to change
               dir: '/data/loki/wal',
             },
-          },
+          } + (
+            if loki.config.ruler.externalUrl != '' then {
+              external_url: loki.config.ruler.externalUrl,
+            } else {}
+          ),
           // Docs: https://grafana.com/docs/loki/latest/configuration/#schema_config
           // Defaults: https://github.com/grafana/loki/blob/main/production/ksonnet/loki/config.libsonnet#L311-L323
           schema_config: {
@@ -542,6 +554,10 @@ function(params) {
       envVarFromValue('LOKI_QUERIER_MAX_CONCURRENCY', '' + loki.config.query.concurrency),
       envVarFromValue('LOKI_INGESTER_WAL_REPLAY_MEMORY_CEILING', '' + loki.config.wal.replayMemoryCeiling),
     ] + (
+      if loki.config.ruler.externalUrl != '' then [
+        envVarFromValue('ALERTMANAGER_EXTERNAL_URL', loki.config.ruler.externalUrl),
+      ] else []
+    ) + (
       if std.objectHas(osc, 'endpointKey') then [
         envVarFromSecret('S3_URL', osc.secretName, osc.endpointKey),
       ] else [

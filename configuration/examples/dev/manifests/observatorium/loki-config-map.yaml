@@ -63,6 +63,7 @@ data:
     "limits_config":
       "cardinality_limit": 100000
       "creation_grace_period": "10m"
+      "deletion_mode": "disabled"
       "enforce_metric_name": false
       "ingestion_burst_size_mb": 20
       "ingestion_rate_mb": 10
