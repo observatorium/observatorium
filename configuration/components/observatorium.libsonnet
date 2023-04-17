@@ -63,19 +63,19 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
     },
     logs: {
       readEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.loki.manifests['query-frontend-service'].metadata.name,
-        obs.loki.manifests['query-frontend-service'].metadata.namespace,
-        obs.loki.manifests['query-frontend-service'].spec.ports[0].port,
+        obs.loki.manifests['query-frontend-http-service'].metadata.name,
+        obs.loki.manifests['query-frontend-http-service'].metadata.namespace,
+        obs.loki.manifests['query-frontend-http-service'].spec.ports[0].port,
       ],
       tailEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.loki.manifests['querier-service'].metadata.name,
-        obs.loki.manifests['querier-service'].metadata.namespace,
-        obs.loki.manifests['querier-service'].spec.ports[0].port,
+        obs.loki.manifests['querier-http-service'].metadata.name,
+        obs.loki.manifests['querier-http-service'].metadata.namespace,
+        obs.loki.manifests['querier-http-service'].spec.ports[0].port,
       ],
       writeEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
-        obs.loki.manifests['distributor-service'].metadata.name,
-        obs.loki.manifests['distributor-service'].metadata.namespace,
-        obs.loki.manifests['distributor-service'].spec.ports[0].port,
+        obs.loki.manifests['distributor-http-service'].metadata.name,
+        obs.loki.manifests['distributor-http-service'].metadata.namespace,
+        obs.loki.manifests['distributor-http-service'].spec.ports[0].port,
       ],
     },
     traces: {
