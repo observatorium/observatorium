@@ -42,7 +42,7 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
 
   api:: api({
     local cfg = self,
-    version: 'main-2022-03-03-v0.1.2-139-gb3a1918',
+    version: 'main-2022-11-14-v0.1.2-283-gc29a861',
     image: 'quay.io/observatorium/api:' + cfg.version,
     imagePullPolicy: 'IfNotPresent',
     name: obs.config.name + '-' + cfg.commonLabels['app.kubernetes.io/name'],
@@ -76,6 +76,11 @@ local api = (import 'observatorium-api/observatorium-api.libsonnet');
         obs.loki.manifests['distributor-http-service'].metadata.name,
         obs.loki.manifests['distributor-http-service'].metadata.namespace,
         obs.loki.manifests['distributor-http-service'].spec.ports[0].port,
+      ],
+      rulesEndpoint: 'http://%s.%s.svc.cluster.local:%d' % [
+        obs.loki.manifests['ruler-http-service'].metadata.name,
+        obs.loki.manifests['ruler-http-service'].metadata.namespace,
+        obs.loki.manifests['ruler-http-service'].spec.ports[0].port,
       ],
     },
     traces: {
