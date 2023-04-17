@@ -25,6 +25,6 @@ metadata:
     app.kubernetes.io/instance: observatorium-xyz
     app.kubernetes.io/name: observatorium-api
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: main-2022-03-03-v0.1.2-139-gb3a1918
+    app.kubernetes.io/version: main-2022-11-14-v0.1.2-283-gc29a861
   name: observatorium-xyz-observatorium-api
   namespace: observatorium
