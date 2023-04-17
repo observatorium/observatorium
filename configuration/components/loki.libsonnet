@@ -903,7 +903,7 @@ function(params) {
     // TODO: delete this function once we have merged and deployed https://github.com/rhobs/configuration/pull/450
     [normalizedName(component) + '-http-service']: newHttpService(component)
     for component in std.objectFields(loki.config.components)
-    if std.member(['query_frontend', 'querier', 'distributor'], component)
+    if std.member(['query_frontend', 'querier', 'distributor', 'ruler'], component)
   } + (
     // Service generation for gossip ring
     if loki.config.memberlist != {} then {
