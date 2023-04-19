@@ -10,6 +10,7 @@ metadata:
   name: observatorium-xyz-loki-ingester
   namespace: observatorium
 spec:
+  podManagementPolicy: Parallel
   replicas: 1
   selector:
     matchLabels:
@@ -17,7 +18,6 @@ spec:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: loki
       app.kubernetes.io/part-of: observatorium
-      loki.grafana.com/gossip: "true"
   serviceName: observatorium-xyz-loki-ingester
   template:
     metadata:
@@ -60,7 +60,7 @@ spec:
         name: observatorium-xyz-loki-ingester
         ports:
         - containerPort: 3100
-          name: metrics
+          name: http-metrics
         - containerPort: 9095
           name: grpc
         - containerPort: 7946
@@ -69,7 +69,6 @@ spec:
           httpGet:
             path: /ready
             port: 3100
-            scheme: HTTP
           initialDelaySeconds: 15
           timeoutSeconds: 1
         resources:
@@ -82,16 +81,21 @@ spec:
         volumeMounts:
         - mountPath: /etc/loki/config/
           name: config
-          readOnly: false
         - mountPath: /data
           name: storage
-          readOnly: false
+      securityContext:
+        fsGroup: 10001
+      terminationGracePeriodSeconds: 4800
       volumes:
       - configMap:
           name: observatorium-xyz-loki
         name: config
+  updateStrategy:
+    type: RollingUpdate
   volumeClaimTemplates:
-  - metadata:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
       labels:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: loki

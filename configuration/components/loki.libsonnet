@@ -39,9 +39,10 @@ local defaults = {
 
   // TODO(kakkoyun): Is it duplicated with components?
   resources: {},
-  volumeClaimTemplates: {},
+  // Storage class name to be used in the volumeClaimTemplates of
+  // compactor, ingester, index_gateway and ruler
+  storageClassName: '',
   memberlist: {},
-  etcd: {},
   rules: {},
   rulesStorageConfig: {
     type: 'local',
@@ -54,30 +55,18 @@ local defaults = {
   storeChunkCache: '',
   resultsCache: '',
 
-  etcdEndpoints: [],
-
   components:: {
     compactor: {
-      withLivenessProbe: true,
-      withReadinessProbe: true,
       withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
+      livenessProbe: {},
+      readinessProbe: {},
+      pvcSize: '250Mi',
       withServiceMonitor: false,
-    } + (
-      if defaults.etcdEndpoints != [] then {
-        compactor_ring+: {
-          kvstore: {
-            store: 'etcd',
-            etcd: {
-              endpoints: defaults.etcdEndpoints,
-            },
-          },
-        },
-      } else {}
-    ),
+    },
     distributor: {
       withLivenessProbe: true,
       withReadinessProbe: true,
@@ -87,49 +76,27 @@ local defaults = {
         limits: { cpu: '200m', memory: '200Mi' },
       },
       withServiceMonitor: false,
-    } + (
-      if defaults.etcdEndpoints != [] then {
-        ring: {
-          kvstore: {
-            store: 'etcd',
-            etcd: {
-              endpoints: defaults.etcdEndpoints,
-            },
-          },
-        },
-      } else {}
-    ),
+    },
     ingester: {
-      withLivenessProbe: true,
-      withReadinessProbe: true,
       withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
+      livenessProbe: {},
+      readinessProbe: {},
+      pvcSize: '250Mi',
       withServiceMonitor: false,
-    } + (
-      if defaults.etcdEndpoints != [] then {
-        lifecycler+: {
-          ring+: {
-            kvstore: {
-              store: 'etcd',
-              etcd: {
-                endpoints: defaults.etcdEndpoints,
-              },
-            },
-          },
-        },
-      } else {}
-    ),
+    },
     index_gateway: {
-      withLivenessProbe: true,
-      withReadinessProbe: true,
       withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
+      livenessProbe: {},
+      readinessProbe: {},
+      pvcSize: '250Mi',
       withServiceMonitor: false,
     },
     querier: {
@@ -163,13 +130,14 @@ local defaults = {
       withServiceMonitor: false,
     },
     ruler: {
-      withLivenessProbe: true,
-      withReadinessProbe: true,
       withPodAntiAffinity: false,
       resources: {
         requests: { cpu: '100m', memory: '100Mi' },
         limits: { cpu: '200m', memory: '200Mi' },
       },
+      livenessProbe: {},
+      readinessProbe: {},
+      pvcSize: '250Mi',
       withServiceMonitor: false,
     },
   },
@@ -207,10 +175,7 @@ function(params) {
   assert std.isObject(loki.config.limits) : 'limits has to be an object',
   assert std.isObject(loki.config.replicas) : 'replicas has to be an object',
   assert std.isObject(loki.config.resources) : 'replicas has to be an object',
-  assert std.isObject(loki.config.volumeClaimTemplates) : 'volumeClaimTemplates has to be an object',
   assert std.isObject(loki.config.memberlist) : 'memberlist has to be an object',
-  assert std.isObject(loki.config.etcd) : 'etcd has to be an object',
-  assert std.isArray(loki.config.etcdEndpoints) : 'etcdEndpoints has to be an array',
 
   mixins::
     lokiMixins {
@@ -233,6 +198,24 @@ function(params) {
         boltdb_shipper_shared_store: 's3',
         storage_backend: 's3',
         replication_factor: '${LOKI_REPLICATION_FACTOR}',
+
+        // Compactor storage
+        compactor_pvc_class: loki.config.storageClassName,
+        compactor_pvc_size: loki.config.components.compactor.pvcSize,
+
+        // Ingester
+        ingester_data_disk_class: loki.config.storageClassName,
+        ingester_data_disk_size: loki.config.components.ingester.pvcSize,
+
+        // Indexer Gateway
+        index_gateway_pvc_class: loki.config.storageClassName,
+        index_gateway_pvc_size: loki.config.components.index_gateway.pvcSize,
+
+        // Ruler
+        stateful_rulers: true,
+        ruler_pvc_class: loki.config.storageClassName,
+        ruler_pvc_size: loki.config.components.ruler.pvcSize,
+
 
         querier+: {
           concurrency: '${LOKI_QUERIER_MAX_CONCURRENCY}',
@@ -577,6 +560,155 @@ function(params) {
       ] else []
     ),
 
+  // patchContainer introduce observatorium specific configuration to a loki
+  // container configuration depending on the component
+  local patchContainer(component, container) =
+    local cConfig = loki.config.components[component];
+    container + (
+      if container.name == normalizedName(component) then {
+        // Args have to be overwritten because we have a diffrent path
+        // for override-config
+        args: [
+          '-target=' + normalizedName(component),
+          // Mixins separates stores config and overrides in two seperate folders
+          // So we have to overrite this
+          '-config.file=/etc/loki/config/config.yaml',
+          '-limits.per-user-override-config=/etc/loki/config/overrides.yaml',
+          // Necessary flag to support env variable expansion
+          '-config.expand-env=true',
+        ],
+        env: buildConfigVars(component),
+        image: loki.config.image,
+        name: loki.config.name + '-' + normalizedName(component),
+        // Mixins only configures probes for some components. If a component doesn't
+        // configure a probe we will provide a default.
+        // We still provide the possibility of overwriting using the compoents
+        livenessProbe+: if !std.objectHas(container, 'livenessProbe') then {
+          httpGet: {
+            // As of this commit, Loki doesn't have a /healthz endpoint,
+            // instead we use the /metrics endpoint
+            path: '/metrics',
+            port: 3100,
+            scheme: 'HTTP',
+          },
+          // With these values if the application doesn't reply at the
+          // end of 5min it will be restarted. 10 * 30 = 5min
+          failureThreshold: 10,
+          periodSeconds: 30,
+        } else {} + cConfig.livenessProbe,
+        readinessProbe+: if !std.objectHas(container, 'readinessProbe') then {
+          httpGet: {
+            // As of this commit, Loki doesn't have a /readyz endpoint
+            // instead we use the /ready endpoint
+            path: '/ready',
+            port: 3100,
+            scheme: 'HTTP',
+          },
+          // With these values if the application doesn't reply at the
+          // end of (15sec +) 30sec it will become NotReady. 10 * 3 = 30sec
+          initialDelaySeconds: 15,
+          periodSeconds: 10,
+          failureThreshold: 3,
+        } else {} + cConfig.readinessProbe,
+        // We will always want to define our own resources
+        resources: cConfig.resources,
+        // For legacy reasons initially both config and overwrites were in the
+        // same config map, mixins has them in seperates, it's easier to just overwrite
+        volumeMounts: [
+          {
+            mountPath: '/etc/loki/config/',
+            name: 'config',
+          },
+          // For legacy reasons all statefulsets had their pvc named 'storage',
+          // mixins names their pvc differently and there is no support to overwrite
+        ] + (if isStatefulSet(component) then [{ name: 'storage', mountPath: '/data' }] else []),
+      } else {}
+    ),
+
+  // newStatefulset for a given component, generate its statefulSet using
+  // loki mixins. Some observatorium specific configuration is added to the
+  // statefulset
+  local newStatefulSet(component) =
+    local cConfig = loki.config.components[component];
+    local mixin = loki.mixins[component + '_statefulset'];
+    local sset = metadataFormat(component, mixin) {
+      spec+: {
+        replicas: loki.config.replicas[component],
+        selector: {
+          matchLabels: newPodLabelsSelector(component),
+        },
+        // Generate the service and fetch the name
+        serviceName: newService(component).metadata.name,
+        template+: {
+          metadata+: {
+            // Loki mixins automatically generates a config hash, this removes it
+            annotations:: {},
+            // Re-use labels from mixins to keep 'gossip' label, remove 'name' label
+            labels+: newPodLabelsSelector(component) + { name:: '' },
+          },
+          spec+: (
+            // Configure podAntiAffinity if it's enabeld for the component
+            // otherwise remove it, mixins doesn't provide good support for podAntiAffinity
+            if cConfig.withPodAntiAffinity then {
+              affinity: podAntiAffinitiy(component, loki.config.namespace),
+            } else { affinity:: {} }
+          ) + {
+            containers: [patchContainer(component, container) for container in mixin.spec.template.spec.containers],
+            volumes: [
+              local lokiConfigMap = newConfigMap();
+              { name: 'config', configMap: { name: lokiConfigMap.metadata.name } },
+            ],
+          },
+        },
+        // Iterate over volumeClaimTemplates and add labels to pvcs and name
+        // them all 'storage', we do this for legacy reasons.
+        volumeClaimTemplates: [
+          volume {
+            metadata+: {
+              name: 'storage',
+              labels+: loki.config.podLabelSelector,
+            },
+          } +
+          // Hide storageClassName if not set, we need this for CI
+          if loki.config.storageClassName == '' then {
+            spec+: {
+              storageClassName+:: '',
+            },
+          } else {}
+          // Ingester has more than one volumeClaimTemplates since it separates data from wal
+          // since for legacy reasons we put everything into data this makes it consistent
+          for volume in [mixin.spec.volumeClaimTemplates[0]]
+        ],
+      },
+    };
+    (
+      if component == 'ruler' then
+        mountRulesVolume(sset)
+      else
+        sset
+    ),
+
+  // mountRulesVolume given a statefulset it will mount the rules config file
+  local mountRulesVolume(sset) =
+    local rulesVolumeMount = { name: 'rules', mountPath: '/tmp/rules' };
+    local rulesVolume = { name: 'rules', configMap: { name: rulesConfigName() } };
+    sset + (
+      if loki.config.rulesStorageConfig.type == 'local' then {} else {
+        spec+: {
+          template+: {
+            spec+: {
+              containers: [
+                container {
+                  volumeMounts+: [rulesVolumeMount],
+                }
+                for container in sset.spec.template.spec.containers
+              ],
+              volumes+: [rulesVolume],
+            },
+          },
+        },
+      }
+    ),
 
   rulesConfigMap:: {
     apiVersion: 'v1',
@@ -695,7 +827,7 @@ function(params) {
       if std.length(config.resources) > 0
     },
 
-  local affinity(component, namespace) = {
+  local podAntiAffinitiy(component, namespace) = {
     podAntiAffinity: {
       preferredDuringSchedulingIgnoredDuringExecution: [
         {
@@ -749,47 +881,7 @@ function(params) {
               { name: 'storage', emptyDir: {} },
             ],
           } + if config.withPodAntiAffinity then {
-            affinity: affinity(component, loki.config.namespace),
-          } else {},
-        },
-      },
-    },
-
-  local newStatefulSet(component, config) =
-    local name = loki.config.name + '-' + normalizedName(component);
-    local podLabelSelector =
-      newPodLabelsSelector(component) +
-      if joinGossipRing(component) then
-        { 'loki.grafana.com/gossip': 'true' }
-      else {};
-
-    local rulesVolume = { name: 'rules', configMap: { name: rulesConfigName() } };
-
-    {
-      apiVersion: 'apps/v1',
-      kind: 'StatefulSet',
-      metadata: {
-        name: name,
-        namespace: loki.config.namespace,
-        labels: newCommonLabels(component),
-      },
-      spec: {
-        replicas: loki.config.replicas[component],
-        selector: { matchLabels: podLabelSelector },
-        serviceName: name,
-        template: {
-          metadata: {
-            labels: podLabelSelector,
-          },
-          spec: {
-            containers: [newLokiContainer(name, component, config)],
-            volumes: [
-              local lokiConfigMap = newConfigMap();
-              { name: 'config', configMap: { name: lokiConfigMap.metadata.name } },
-            ] + if component == 'ruler' && loki.config.rulesStorageConfig.type == 'local' then [rulesVolume] else [],
-            volumeClaimTemplates:: null,
-          } + if config.withPodAntiAffinity then {
-            affinity: affinity(component, loki.config.namespace),
+            affinity: podAntiAffinitiy(component, loki.config.namespace),
           } else {},
         },
       },
@@ -910,13 +1002,14 @@ function(params) {
       [loki.config.memberlist.ringName]: newGossipRingService(),
     }
   ) + {
+    // StatefulSet generation
+    [normalizedName(component) + '-statefulset']: newStatefulSet(component)
+    for component in std.objectFields(loki.config.components)
+    if isStatefulSet(component)
+  } + {
     [normalizedName(name) + '-deployment']: newDeployment(name, loki.config.components[name])
     for name in std.objectFields(loki.config.components)
     if !isStatefulSet(name)
-  } + {
-    [normalizedName(name) + '-statefulset']: newStatefulSet(name, loki.config.components[name])
-    for name in std.objectFields(loki.config.components)
-    if isStatefulSet(name)
   } + (
     if std.length(loki.config.resources) != {} then {
       [normalizedName(name) + '-deployment']+: {
@@ -935,23 +1028,6 @@ function(params) {
       }
       for name in std.objectFields(loki.config.resources)
       if !isStatefulSet(name)
-    } + {
-      [normalizedName(name) + '-statefulset']+: {
-        spec+: {
-          template+: {
-            spec+: {
-              containers: [
-                c {
-                  resources: loki.config.resources[name],
-                }
-                for c in super.containers
-              ],
-            },
-          },
-        },
-      }
-      for name in std.objectFields(loki.config.resources)
-      if isStatefulSet(name)
     }
   ) + (
     if std.length(loki.config.replicas) != {} then {
@@ -962,34 +1038,6 @@ function(params) {
       }
       for name in std.objectFields(loki.config.replicas)
       if !isStatefulSet(name)
-    } + {
-      [normalizedName(name) + '-statefulset']+: {
-        spec+: {
-          replicas: loki.config.replicas[name],
-        },
-      }
-      for name in std.objectFields(loki.config.replicas)
-      if isStatefulSet(name)
-    }
-  ) + (
-    if std.length(loki.config.volumeClaimTemplates) != {} then {
-      [normalizedName(name) + '-statefulset']+: {
-        spec+: {
-          template+: {
-            spec+: {
-              volumes: std.filter(function(v) v.name != 'storage', super.volumes),
-            },
-          },
-          volumeClaimTemplates: [loki.config.volumeClaimTemplate {
-            metadata+: {
-              name: 'storage',
-              labels+: loki.config.podLabelSelector,
-            },
-          }],
-        },
-      }
-      for name in std.objectFields(loki.config.components)
-      if isStatefulSet(name)
     }
   ) + {
     // Service Monitor generation for all the componets that enable it

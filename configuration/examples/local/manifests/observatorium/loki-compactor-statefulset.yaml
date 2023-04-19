@@ -25,6 +25,7 @@ spec:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: loki
         app.kubernetes.io/part-of: observatorium
+        loki.grafana.com/gossip: "true"
     spec:
       containers:
       - args:
@@ -58,15 +59,15 @@ spec:
         name: observatorium-xyz-loki-compactor
         ports:
         - containerPort: 3100
-          name: metrics
+          name: http-metrics
         - containerPort: 9095
           name: grpc
+        - containerPort: 7946
+          name: gossip-ring
         readinessProbe:
           httpGet:
             path: /ready
             port: 3100
-            scheme: HTTP
-          initialDelaySeconds: 15
           timeoutSeconds: 1
         resources:
           limits:
@@ -78,16 +79,20 @@ spec:
         volumeMounts:
         - mountPath: /etc/loki/config/
           name: config
-          readOnly: false
         - mountPath: /data
           name: storage
-          readOnly: false
+      securityContext:
+        fsGroup: 10001
       volumes:
       - configMap:
           name: observatorium-xyz-loki
         name: config
+  updateStrategy:
+    type: RollingUpdate
   volumeClaimTemplates:
-  - metadata:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
       labels:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: loki

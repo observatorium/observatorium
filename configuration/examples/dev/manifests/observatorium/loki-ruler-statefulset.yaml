@@ -10,6 +10,7 @@ metadata:
   name: observatorium-xyz-loki-ruler
   namespace: observatorium
 spec:
+  podManagementPolicy: Parallel
   replicas: 1
   selector:
     matchLabels:
@@ -17,7 +18,6 @@ spec:
       app.kubernetes.io/instance: observatorium-xyz
       app.kubernetes.io/name: loki
       app.kubernetes.io/part-of: observatorium
-      loki.grafana.com/gossip: "true"
   serviceName: observatorium-xyz-loki-ruler
   template:
     metadata:
@@ -65,7 +65,7 @@ spec:
         name: observatorium-xyz-loki-ruler
         ports:
         - containerPort: 3100
-          name: metrics
+          name: http-metrics
         - containerPort: 9095
           name: grpc
         - containerPort: 7946
@@ -74,7 +74,6 @@ spec:
           httpGet:
             path: /ready
             port: 3100
-            scheme: HTTP
           initialDelaySeconds: 15
           timeoutSeconds: 1
         resources:
@@ -87,16 +86,25 @@ spec:
         volumeMounts:
         - mountPath: /etc/loki/config/
           name: config
-          readOnly: false
         - mountPath: /data
           name: storage
-          readOnly: false
+        - mountPath: /tmp/rules
+          name: rules
+      securityContext:
+        fsGroup: 10001
       volumes:
       - configMap:
           name: observatorium-xyz-loki
         name: config
+      - configMap:
+          name: observatorium-xyz-loki-rules
+        name: rules
+  updateStrategy:
+    type: RollingUpdate
   volumeClaimTemplates:
-  - metadata:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
       labels:
         app.kubernetes.io/instance: observatorium-xyz
         app.kubernetes.io/name: loki
