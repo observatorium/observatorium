@@ -122,6 +122,7 @@ function(params) {
         { name: 'GUBER_GRPC_ADDRESS', value: '0.0.0.0:%s' % gubernator.config.ports.grpc },
         { name: 'GUBER_K8S_POD_PORT', value: std.toString(gubernator.config.ports.grpc) },
         { name: 'GUBER_K8S_ENDPOINTS_SELECTOR', value: 'app.kubernetes.io/name=gubernator' },
+        { name: 'GUBER_PEER_DISCOVERY_TYPE', value: 'k8s' },
       ],
       ports: [
         { name: port.name, containerPort: port.port }
