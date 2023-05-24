@@ -95,6 +95,7 @@ function(params) {
       labels: gubernator.config.commonLabels,
     },
     spec: {
+      clusterIP: 'None',
       ports: [
         {
           assert std.isString(name),
