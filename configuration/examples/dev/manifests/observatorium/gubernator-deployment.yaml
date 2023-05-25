@@ -48,6 +48,8 @@ spec:
           value: "8081"
         - name: GUBER_K8S_ENDPOINTS_SELECTOR
           value: app.kubernetes.io/name=gubernator
+        - name: GUBER_PEER_DISCOVERY_TYPE
+          value: k8s
         image: ghcr.io/mailgun/gubernator:v2.0.0-rc.36
         imagePullPolicy: IfNotPresent
         name: gubernator
