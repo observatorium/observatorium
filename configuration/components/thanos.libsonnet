@@ -9,7 +9,7 @@ local defaults = {
   local defaults = self,
   name: 'observatorium-xyz',
   namespace: 'observatorium',
-  version: 'v0.24.0',
+  version: 'v0.31.0',
   image: 'quay.io/thanos/thanos:' + defaults.version,
   imagePullPolicy: 'IfNotPresent',
   objectStorageConfig: {
