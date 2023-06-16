@@ -59,7 +59,7 @@ local up = (import 'up/job/up.libsonnet');
 
 local metricsConfig = {
   name: 'observatorium-up-metrics',
-  version: 'master-2020-11-04-0c6ece8',
+  version: 'master-2022-10-27-d8bb06f',
   image: 'quay.io/observatorium/up:' + self.version,
   commonLabels+:: {
     'app.kubernetes.io/instance': 'e2e-test',
@@ -82,7 +82,7 @@ local metricsConfig = {
     obs.api.service.metadata.namespace,
     obs.api.service.spec.ports[2].port,
   ],
-  readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
+  readEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
     obs.api.service.spec.ports[2].port,
@@ -114,7 +114,7 @@ local upMetricsTLS = up(metricsConfig {
     obs.api.service.metadata.namespace,
     obs.api.service.spec.ports[2].port,
   ],
-  readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/query' % [
+  readEndpoint: 'https://%s.%s.svc.cluster.local:%d/api/metrics/v1/test' % [
     obs.api.service.metadata.name,
     obs.api.service.metadata.namespace,
     obs.api.service.spec.ports[2].port,
@@ -127,7 +127,7 @@ local upMetricsTLS = up(metricsConfig {
 
 local logsConfig = {
   name: 'observatorium-up-logs',
-  version: 'master-2020-11-04-0c6ece8',
+  version: 'master-2022-10-27-d8bb06f',
   image: 'quay.io/observatorium/up:' + self.version,
   commonLabels+:: {
     'app.kubernetes.io/instance': 'e2e-test',

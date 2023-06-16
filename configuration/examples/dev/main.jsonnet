@@ -132,7 +132,7 @@ local up = (import 'up/up.libsonnet')({
   namespace: dev.config.namespace,
   replicas: 1,
   commonLabels+:: dev.config.commonLabels,
-  version: 'master-2020-11-04-0c6ece8',
+  version: 'master-2022-10-27-d8bb06f',
   image: 'quay.io/observatorium/up:' + cfg.version,
   endpointType: 'metrics',
   writeEndpoint: 'http://%s.%s.svc.cluster.local:%d/api/metrics/v1/test/api/v1/receive' % [

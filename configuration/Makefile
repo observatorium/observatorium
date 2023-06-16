@@ -45,7 +45,7 @@ lint: $(JSONNET_LINT) vendor
 	echo ${JSONNET_SRC} | $(XARGS) -n 1 -- $(JSONNET_LINT) -J vendor
 
 .PHONY: generate
-generate: examples/base/manifests examples/dev/manifests examples/local/manifests
+generate: examples/base/manifests examples/dev/manifests examples/local/manifests tests/manifests
 
 .PHONY: validate
 validate: $(KUBEVAL) generate
