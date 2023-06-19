@@ -55,7 +55,7 @@ function(params) {
                   value: minio.config.secretKey,
                 },
               ],
-              image: 'minio/minio:RELEASE.2021-09-09T21-37-07Z',
+              image: 'minio/minio:RELEASE.2023-05-27T05-56-19Z',
               imagePullPolicy: 'IfNotPresent',
               name: 'minio',
               ports: [

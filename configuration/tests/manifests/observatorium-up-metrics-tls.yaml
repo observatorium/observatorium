@@ -5,7 +5,7 @@ metadata:
     app.kubernetes.io/component: test
     app.kubernetes.io/instance: e2e-test
     app.kubernetes.io/name: observatorium-up
-    app.kubernetes.io/version: master-2020-11-04-0c6ece8
+    app.kubernetes.io/version: master-2022-10-27-d8bb06f
   name: observatorium-up-metrics-tls
 spec:
   backoffLimit: 5
@@ -15,13 +15,13 @@ spec:
         app.kubernetes.io/component: test
         app.kubernetes.io/instance: e2e-test
         app.kubernetes.io/name: observatorium-up
-        app.kubernetes.io/version: master-2020-11-04-0c6ece8
+        app.kubernetes.io/version: master-2022-10-27-d8bb06f
     spec:
       containers:
       - args:
         - --endpoint-type=metrics
         - --endpoint-write=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/receive
-        - --endpoint-read=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test/api/v1/query
+        - --endpoint-read=https://observatorium-xyz-observatorium-api.observatorium.svc.cluster.local:8080/api/metrics/v1/test
         - --period=1s
         - --duration=2m
         - --name=foo
@@ -31,7 +31,7 @@ spec:
         - --threshold=0.90
         - --tls-ca-file=/mnt/tls/ca.pem
         - --token-file=/var/shared/token
-        image: quay.io/observatorium/up:master-2020-11-04-0c6ece8
+        image: quay.io/observatorium/up:master-2022-10-27-d8bb06f
         name: observatorium-up
         resources:
           limits:
