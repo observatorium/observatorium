@@ -165,6 +165,29 @@ function(params) {
             labels: gubernator.config.commonLabels,
           },
           spec: {
+            affinity: {
+              podAntiAffinity: {
+                preferredDuringSchedulingIgnoredDuringExecution: [
+                  {
+                    weight: 100,
+                    podAffinityTerm: {
+                      labelSelector: {
+                        matchExpressions: [
+                          {
+                            key: 'app.kubernetes.io/name',
+                            operator: 'In',
+                            values: [
+                              'gubernator',
+                            ],
+                          },
+                        ],
+                      },
+                      topologyKey: 'kubernetes.io/hostname',
+                    },
+                  },
+                ],
+              },
+            },
             containers: [c],
             serviceAccountName: gubernator.serviceAccount.metadata.name,
             restartPolicy: 'Always',
