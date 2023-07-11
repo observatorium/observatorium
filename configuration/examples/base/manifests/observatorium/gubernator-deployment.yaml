@@ -30,6 +30,18 @@ spec:
         app.kubernetes.io/part-of: observatorium
         app.kubernetes.io/version: v2.0.0-rc.36
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - gubernator
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - env:
         - name: GUBER_K8S_NAMESPACE
