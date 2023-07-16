@@ -5,7 +5,6 @@ import (
 
 	mon "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -13,15 +12,6 @@ import (
 // ObjectMap represents a map of string to runtime.Objects. Usually used
 // to represent a collection of manifests.
 type ObjectMap map[string]runtime.Object
-
-// SidecarConfig represents the configuration required to add extra containers
-// to a particular Deployment/StatefulSet.
-type SidecarConfig struct {
-	Sidecars                      []corev1.Container
-	AdditionalPodVolumes          []corev1.Volume
-	AdditionalServicePorts        []corev1.ServicePort
-	AdditionalServiceMonitorPorts []monv1.Endpoint
-}
 
 // Reusable K8s metadata definitions.
 
