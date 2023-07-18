@@ -469,7 +469,9 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		Data:       sdData,
 	}
 
-	queryArgs := k8sutil.ArgList(
+	args := []string{
+		"query",
+
 		// Logging.
 		k8sutil.FlagArg("log.level", q.logLevel),
 		k8sutil.FlagArg("log.format", q.logFormat),
@@ -504,9 +506,6 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		// Query.
 		k8sutil.FlagArg("query.active-query-path", q.activeQueryPath),
 		k8sutil.BoolFlagArg("query.auto-downsampling", q.autoDownsampling),
-		k8sutil.RepeatableFlagArg("query.conn-metric.label", q.connectionMetricLabels),
-		k8sutil.RepeatableLabelFlagArg("selector-label", q.selectorLabels),
-		k8sutil.RepeatableFlagArg("query.replica-label", q.replicaLabels),
 		k8sutil.FlagArg("query.default-evaluation-interval", q.defaultEvaluationInterval.String()),
 		k8sutil.FlagArg("query.default-step", q.defaultStep.String()),
 		k8sutil.FlagArg("query.lookback-delta", q.lookbackDelta.String()),
@@ -521,15 +520,8 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		k8sutil.FlagArg("query.timeout", q.timeout.String()),
 		k8sutil.FlagArg("tracing.config", q.tracingConfig),
 		k8sutil.FlagArg("alert.query-url", q.alertQueryURL),
-		k8sutil.RepeatableFloatFlagArg("query.telemetry.request-duration-seconds-quantiles", q.telemetry.DurationQuantiles),
-		k8sutil.RepeatableFloatFlagArg("query.telemetry.request-samples-quantiles", q.telemetry.SampleQuantiles),
-		k8sutil.RepeatableFloatFlagArg("query.telemetry.request-series-seconds-quantiles", q.telemetry.SeriesQuantiles),
 
 		// Endpoints.
-		k8sutil.RepeatableFlagArg("endpoint", q.endpoints),
-		k8sutil.RepeatableFlagArg("endpoint-strict", q.endpointsStrict),
-		k8sutil.RepeatableFlagArg("endpoint-group", q.endpointGroup),
-		k8sutil.RepeatableFlagArg("endpoint-group-strict", q.endpointGroupStrict),
 
 		// Store.
 		k8sutil.FlagArg("store.limits.request-series", fmt.Sprint(q.s.RequestSeriesLimit)),
@@ -539,8 +531,24 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		k8sutil.FlagArg("store.sd-dns-interval", q.s.SDDNSInterval.String()),
 		k8sutil.FlagArg("store.sd-dns-resolver", q.s.SDDNSResolver),
 		k8sutil.FlagArg("store.sd-interval", q.s.SDInterval.String()),
-		k8sutil.RepeatableFlagArg("store.sd-files", sdFileList),
-	)
+	}
+
+	args = append(args, k8sutil.RepeatableFlagArg("query.conn-metric.label", q.connectionMetricLabels)...)
+	args = append(args, k8sutil.RepeatableLabelFlagArg("selector-label", q.selectorLabels)...)
+	args = append(args, k8sutil.RepeatableFlagArg("query.replica-label", q.replicaLabels)...)
+
+	args = append(args, k8sutil.RepeatableFloatFlagArg("query.telemetry.request-duration-seconds-quantiles", q.telemetry.DurationQuantiles)...)
+	args = append(args, k8sutil.RepeatableFloatFlagArg("query.telemetry.request-samples-quantiles", q.telemetry.SampleQuantiles)...)
+	args = append(args, k8sutil.RepeatableFloatFlagArg("query.telemetry.request-series-seconds-quantiles", q.telemetry.SeriesQuantiles)...)
+
+	args = append(args, k8sutil.RepeatableFlagArg("endpoint", q.endpoints)...)
+	args = append(args, k8sutil.RepeatableFlagArg("endpoint-strict", q.endpointsStrict)...)
+	args = append(args, k8sutil.RepeatableFlagArg("endpoint-group", q.endpointGroup)...)
+	args = append(args, k8sutil.RepeatableFlagArg("endpoint-group-strict", q.endpointGroupStrict)...)
+
+	args = append(args, k8sutil.RepeatableFlagArg("store.sd-files", sdFileList)...)
+
+	queryArgs := k8sutil.ArgList(args)
 
 	queryArgs = append(queryArgs, q.additionalQueryArgs...)
 

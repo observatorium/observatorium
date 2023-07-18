@@ -275,7 +275,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 		StringData: c.tenantsSecret,
 	}
 
-	apiArgs := k8sutil.ArgList(
+	apiArgs := k8sutil.ArgList([]string{
 		k8sutil.FlagArg("web.listen", "0.0.0.0:8080"),
 		k8sutil.FlagArg("web.internal.listen", "0.0.0.0:8081"),
 		k8sutil.FlagArg("grpc.listen", "0.0.0.0:8090"),
@@ -297,7 +297,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 
 		k8sutil.FlagArg("traces.write.endpoint", c.traces.WriteEndpoint),
 		k8sutil.FlagArg("experimental.traces.read.endpoint-template", c.traces.ReadEndpoint),
-	)
+	})
 
 	apiArgs = append(apiArgs, c.additionalAPIArgs...)
 

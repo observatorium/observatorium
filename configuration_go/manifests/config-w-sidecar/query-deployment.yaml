@@ -47,6 +47,7 @@ spec:
             weight: 100
       containers:
       - args:
+        - query
         - --log.level=debug
         - --log.format=logfmt
         - --http-address=0.0.0.0:9090
@@ -57,10 +58,6 @@ spec:
         - --grpc.proxy-strategy=eager
         - --web.prefix-header=X-Forwarded-Prefix
         - --query.auto-downsampling
-        - |-
-          --query.replica-label=replica
-          --query.replica-label=rule_replica
-          --query.replica-label=prometheus_replica
         - --query.default-evaluation-interval=0s
         - --query.default-step=0s
         - --query.lookback-delta=15m
@@ -99,31 +96,32 @@ spec:
             Tags: ""
             User: ""
           Type: JAEGER
-        - |-
-          --query.telemetry.request-duration-seconds-quantiles=0.100000
-          --query.telemetry.request-duration-seconds-quantiles=0.250000
-          --query.telemetry.request-duration-seconds-quantiles=0.750000
-          --query.telemetry.request-duration-seconds-quantiles=1.250000
-          --query.telemetry.request-duration-seconds-quantiles=1.750000
-          --query.telemetry.request-duration-seconds-quantiles=2.000000
-          --query.telemetry.request-duration-seconds-quantiles=3.000000
-          --query.telemetry.request-duration-seconds-quantiles=5.000000
-          --query.telemetry.request-duration-seconds-quantiles=10.000000
-          --query.telemetry.request-duration-seconds-quantiles=15.000000
-          --query.telemetry.request-duration-seconds-quantiles=30.000000
-          --query.telemetry.request-duration-seconds-quantiles=60.000000
-          --query.telemetry.request-duration-seconds-quantiles=120.000000
-        - |-
-          --endpoint=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-0.observatorium.svc.cluster.local
-          --endpoint=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-1.observatorium.svc.cluster.local
-          --endpoint=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-2.observatorium.svc.cluster.local
-          --endpoint=dnssrv+_grpc._tcp.observatorium-thanos-receive.observatorium.svc.cluster.local
         - --store.limits.request-series=0
         - --store.limits.request-samples=0
         - --store.response-timeout=0s
         - --store.unhealthy-timeout=0s
         - --store.sd-dns-interval=0s
         - --store.sd-interval=0s
+        - --query.replica-label=replica
+        - --query.replica-label=rule_replica
+        - --query.replica-label=prometheus_replica
+        - --query.telemetry.request-duration-seconds-quantiles=0.100000
+        - --query.telemetry.request-duration-seconds-quantiles=0.250000
+        - --query.telemetry.request-duration-seconds-quantiles=0.750000
+        - --query.telemetry.request-duration-seconds-quantiles=1.250000
+        - --query.telemetry.request-duration-seconds-quantiles=1.750000
+        - --query.telemetry.request-duration-seconds-quantiles=2.000000
+        - --query.telemetry.request-duration-seconds-quantiles=3.000000
+        - --query.telemetry.request-duration-seconds-quantiles=5.000000
+        - --query.telemetry.request-duration-seconds-quantiles=10.000000
+        - --query.telemetry.request-duration-seconds-quantiles=15.000000
+        - --query.telemetry.request-duration-seconds-quantiles=30.000000
+        - --query.telemetry.request-duration-seconds-quantiles=60.000000
+        - --query.telemetry.request-duration-seconds-quantiles=120.000000
+        - --endpoint=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-0.observatorium.svc.cluster.local
+        - --endpoint=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-1.observatorium.svc.cluster.local
+        - --endpoint=dnssrv+_grpc._tcp.observatorium-thanos-store-shard-2.observatorium.svc.cluster.local
+        - --endpoint=dnssrv+_grpc._tcp.observatorium-thanos-receive.observatorium.svc.cluster.local
         - --store.sd-files=etc/thanos/sd/rule-sd.yaml
         image: quay.io/thanos-io/thanos:v0.31
         imagePullPolicy: IfNotPresent

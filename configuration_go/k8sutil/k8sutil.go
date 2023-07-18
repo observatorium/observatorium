@@ -82,9 +82,9 @@ func BoolFlagArg(flagName string, flagValue bool) string {
 }
 
 // RepeatableFloatFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
-func RepeatableFloatFlagArg(flagName string, flagValues []float64) string {
+func RepeatableFloatFlagArg(flagName string, flagValues []float64) []string {
 	if flagName == "" || len(flagValues) == 0 {
-		return ""
+		return []string{}
 	}
 
 	result := []string{}
@@ -92,13 +92,13 @@ func RepeatableFloatFlagArg(flagName string, flagValues []float64) string {
 		result = append(result, fmt.Sprintf("--%s=%f", flagName, v))
 	}
 
-	return strings.Join(result, "\n")
+	return result
 }
 
 // RepeatableFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
-func RepeatableFlagArg(flagName string, flagValues []string) string {
+func RepeatableFlagArg(flagName string, flagValues []string) []string {
 	if flagName == "" || len(flagValues) == 0 {
-		return ""
+		return []string{}
 	}
 
 	result := []string{}
@@ -106,13 +106,13 @@ func RepeatableFlagArg(flagName string, flagValues []string) string {
 		result = append(result, fmt.Sprintf("--%s=%s", flagName, v))
 	}
 
-	return strings.Join(result, "\n")
+	return result
 }
 
 // RepeatableFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
-func RepeatableLabelFlagArg(flagName string, flagValues labels.Labels) string {
+func RepeatableLabelFlagArg(flagName string, flagValues labels.Labels) []string {
 	if flagName == "" || len(flagValues) == 0 {
-		return ""
+		return []string{}
 	}
 
 	result := []string{}
@@ -125,11 +125,11 @@ func RepeatableLabelFlagArg(flagName string, flagValues labels.Labels) string {
 		result = append(result, fmt.Sprintf("--%s=%s", flagName, v))
 	}
 
-	return strings.Join(result, "\n")
+	return result
 }
 
 // ArgList prunes any empty flags.
-func ArgList(args ...string) []string {
+func ArgList(args []string) []string {
 	n := 0
 	for _, x := range args {
 		if x != "" {
