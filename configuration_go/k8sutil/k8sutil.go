@@ -2,9 +2,11 @@ package k8sutil
 
 import (
 	"fmt"
+	"strings"
 
 	mon "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/prometheus/prometheus/model/labels"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -67,6 +69,63 @@ func FlagArg(flagName, flagValue string) string {
 	}
 
 	return fmt.Sprintf("--%s=%s", flagName, flagValue)
+}
+
+// BoolFlagArg returns consistent pattern bool flags as args for Deployment/StatefulSet containers.
+// Returns empty string if flag name is empty or value is false.
+func BoolFlagArg(flagName string, flagValue bool) string {
+	if flagName == "" || !flagValue {
+		return ""
+	}
+
+	return fmt.Sprintf("--%s", flagName)
+}
+
+// RepeatableFloatFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
+func RepeatableFloatFlagArg(flagName string, flagValues []float64) string {
+	if flagName == "" || len(flagValues) == 0 {
+		return ""
+	}
+
+	result := []string{}
+	for _, v := range flagValues {
+		result = append(result, fmt.Sprintf("--%s=%f", flagName, v))
+	}
+
+	return strings.Join(result, "\n")
+}
+
+// RepeatableFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
+func RepeatableFlagArg(flagName string, flagValues []string) string {
+	if flagName == "" || len(flagValues) == 0 {
+		return ""
+	}
+
+	result := []string{}
+	for _, v := range flagValues {
+		result = append(result, fmt.Sprintf("--%s=%s", flagName, v))
+	}
+
+	return strings.Join(result, "\n")
+}
+
+// RepeatableFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
+func RepeatableLabelFlagArg(flagName string, flagValues labels.Labels) string {
+	if flagName == "" || len(flagValues) == 0 {
+		return ""
+	}
+
+	result := []string{}
+
+	fs := flagValues.String()
+	fs = fs[1 : len(fs)-2]
+	ls := strings.Split(fs, ", ")
+
+	for _, v := range ls {
+		result = append(result, fmt.Sprintf("--%s=%s", flagName, v))
+	}
+
+	return strings.Join(result, "\n")
 }
 
 // ArgList prunes any empty flags.
