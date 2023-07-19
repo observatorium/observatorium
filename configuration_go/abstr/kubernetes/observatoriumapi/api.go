@@ -25,7 +25,7 @@ type observatoriumAPI struct {
 	additionalAPIArgs []string
 
 	// Embedded K8s config struct which exposes override methods.
-	k8sutil.GenericDeploymentConfig
+	k8sutil.DeploymentGenericConfig
 }
 
 type MetricsBackend struct {
@@ -133,7 +133,7 @@ var DefaultLabels map[string]string = map[string]string{
 func NewObservatoriumAPI(opts ...ObservatoriumAPIOption) *observatoriumAPI {
 	c := &observatoriumAPI{
 		logLevel: "info",
-		GenericDeploymentConfig: k8sutil.GenericDeploymentConfig{
+		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
 			Image:           "quay.io/observatorium/api",
 			ImageTag:        "latest",
 			ImagePullPolicy: corev1.PullIfNotPresent,
@@ -218,7 +218,7 @@ func NewObservatoriumAPI(opts ...ObservatoriumAPIOption) *observatoriumAPI {
 // K8sConfig overrides the default K8s options for Observatorium API.
 func (c *observatoriumAPI) K8sConfig(opts ...k8sutil.DeploymentOption) *observatoriumAPI {
 	for _, o := range opts {
-		o(&c.GenericDeploymentConfig)
+		o(&c.DeploymentGenericConfig)
 	}
 
 	c.CommonLabels[k8sutil.InstanceLabel] = c.Name
@@ -342,7 +342,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 
 	// Attach any configured sidecars.
 	containers := []corev1.Container{observatoriumAPIContainer}
-	containers = append(containers, c.Sidecars.Sidecars...)
+	containers = append(containers, c.Extras.Sidecars...)
 	// Attach any configured volumes.
 	volumes := []corev1.Volume{
 		{
@@ -364,7 +364,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 			},
 		},
 	}
-	volumes = append(volumes, c.Sidecars.AdditionalPodVolumes...)
+	volumes = append(volumes, c.Extras.AdditionalPodVolumes...)
 
 	apiDeployment := appsv1.Deployment{
 		TypeMeta:   k8sutil.DeploymentMeta,
@@ -412,7 +412,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 			TargetPort:  intstr.FromInt(8080),
 		},
 	}
-	ports = append(ports, c.Sidecars.AdditionalServicePorts...)
+	ports = append(ports, c.Extras.AdditionalServicePorts...)
 
 	// Instantiate API Service.
 	apiService := corev1.Service{
@@ -439,7 +439,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 				Port: "internal",
 			},
 		}
-		endpoints = append(endpoints, c.Sidecars.AdditionalServiceMonitorPorts...)
+		endpoints = append(endpoints, c.Extras.AdditionalServiceMonitorPorts...)
 
 		apiServiceMonitor := monv1.ServiceMonitor{
 			TypeMeta: k8sutil.ServiceMonitorMeta,

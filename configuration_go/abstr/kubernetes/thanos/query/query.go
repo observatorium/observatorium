@@ -56,7 +56,7 @@ type query struct {
 	additionalQueryArgs []string
 
 	// Embedded K8s config struct which exposes override methods.
-	k8sutil.GenericDeploymentConfig
+	k8sutil.DeploymentGenericConfig
 }
 
 // StoreOptions specify the Store API, and Store service discovery options
@@ -440,11 +440,20 @@ var DefaultLabels map[string]string = map[string]string{
 	k8sutil.PartOfLabel:    "observatorium",
 }
 
+// NewThanosQuery returns a new instance of Thanos Query, customized with options.
+// Also includes options for adding sidecars.
+// Returns the following K8s Objects:
+// Deployment
+// Service
+// ServiceAccount
+// Service Discovery ConfigMap (if option is used)
+//
+// NOTE: You need to call K8sConfig() to customize k8s-native options.
 func NewThanosQuery(opts ...ThanosQueryOption) *query {
 	q := query{
 		logLevel:  "info",
 		logFormat: "logfmt",
-		GenericDeploymentConfig: k8sutil.GenericDeploymentConfig{
+		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
 			Image:           "quay.io/thanos/thanos",
 			ImageTag:        "latest",
 			ImagePullPolicy: corev1.PullIfNotPresent,
@@ -529,7 +538,7 @@ func NewThanosQuery(opts ...ThanosQueryOption) *query {
 // K8sConfig overrides the default K8s options for Thanos Query.
 func (q *query) K8sConfig(opts ...k8sutil.DeploymentOption) *query {
 	for _, o := range opts {
-		o(&q.GenericDeploymentConfig)
+		o(&q.DeploymentGenericConfig)
 	}
 
 	q.CommonLabels[k8sutil.InstanceLabel] = q.Name
@@ -570,18 +579,14 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		ObjectMeta: commonObjectMeta,
 	}
 
-	// Instantiate SD file configmap if passed.
+	// Instantiate SD file list and configmap if passed.
 	sdFileList := []string{}
 	sdData := map[string]string{}
 	for _, f := range q.s.SDFiles {
 		sdFileList = append(sdFileList, "etc/thanos/sd/"+f.Name+".yaml")
-		sdData[f.Name+".yaml"] = f.Data
-	}
-
-	sdConfigMap := corev1.ConfigMap{
-		TypeMeta:   k8sutil.ConfigMapMeta,
-		ObjectMeta: commonObjectMeta,
-		Data:       sdData,
+		if f.Data != "" {
+			sdData[f.Name+".yaml"] = f.Data
+		}
 	}
 
 	// Build argument list for the Query container.
@@ -695,30 +700,17 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		ReadinessProbe: &q.ReadinessProbe,
 	}
 
-	thanosQueryContainer.VolumeMounts = append(thanosQueryContainer.VolumeMounts,
-		corev1.VolumeMount{
-			MountPath: "etc/thanos/sd",
-			Name:      "file-sd",
-		})
+	if len(sdFileList) != 0 {
+		thanosQueryContainer.VolumeMounts = append(thanosQueryContainer.VolumeMounts,
+			corev1.VolumeMount{
+				MountPath: "etc/thanos/sd",
+				Name:      "file-sd",
+			})
+	}
 
 	// Attach any configured sidecars.
 	containers := []corev1.Container{thanosQueryContainer}
-	containers = append(containers, q.Sidecars.Sidecars...)
-
-	// Attach any configured volumes.
-	volumes := []corev1.Volume{
-		{
-			Name: "file-sd",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sdConfigMap.Name,
-					},
-				},
-			},
-		},
-	}
-	volumes = append(volumes, q.Sidecars.AdditionalPodVolumes...)
+	containers = append(containers, q.Extras.Sidecars...)
 
 	queryDeployment := appsv1.Deployment{
 		TypeMeta:   k8sutil.DeploymentMeta,
@@ -739,7 +731,6 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 					Affinity:           &q.Affinity,
 					Containers:         containers,
 					ServiceAccountName: queryServiceAccount.Name,
-					Volumes:            volumes,
 				},
 			},
 		},
@@ -766,7 +757,7 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 			TargetPort:  intstr.FromInt(9091),
 		},
 	}
-	ports = append(ports, q.Sidecars.AdditionalServicePorts...)
+	ports = append(ports, q.Extras.AdditionalServicePorts...)
 
 	// Instantiate Query Service.
 	queryService := corev1.Service{
@@ -780,10 +771,37 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 
 	manifests := k8sutil.ObjectMap{
 		"query-serviceAccount": &queryServiceAccount,
-		"query-deployment":     &queryDeployment,
 		"query-service":        &queryService,
-		"query-sd-configmap":   &sdConfigMap,
 	}
+
+	volumes := []corev1.Volume{}
+
+	if len(sdData) != 0 {
+		sdConfigMap := corev1.ConfigMap{
+			TypeMeta:   k8sutil.ConfigMapMeta,
+			ObjectMeta: commonObjectMeta,
+			Data:       sdData,
+		}
+
+		manifests["query-sd-configmap"] = &sdConfigMap
+
+		volumes = append(volumes, corev1.Volume{
+			Name: "file-sd",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sdConfigMap.Name,
+					},
+				},
+			},
+		})
+	}
+
+	// Attach any configured volumes.
+	volumes = append(volumes, q.Extras.AdditionalPodVolumes...)
+	queryDeployment.Spec.Template.Spec.Volumes = volumes
+
+	manifests["query-deployment"] = &queryDeployment
 
 	// If enabled, instantiate Query ServiceMonitor.
 	if q.EnableServiceMonitor {
@@ -800,7 +818,7 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 				},
 			},
 		}
-		endpoints = append(endpoints, q.Sidecars.AdditionalServiceMonitorPorts...)
+		endpoints = append(endpoints, q.Extras.AdditionalServiceMonitorPorts...)
 
 		apiServiceMonitor := monv1.ServiceMonitor{
 			TypeMeta: k8sutil.ServiceMonitorMeta,

@@ -175,7 +175,7 @@ func main() {
 		},
 	}
 
-	sidecar := k8sutil.SidecarConfig{
+	sidecar := k8sutil.ExtraConfig{
 		Sidecars: []corev1.Container{dummyContainer},
 		AdditionalServicePorts: []corev1.ServicePort{
 			{
@@ -228,7 +228,7 @@ func main() {
 			k8sutil.WithResources(apiResources),
 			k8sutil.WithServiceMonitor(),
 			// Add dummy-sidecar stuff
-			k8sutil.WithSidecars(sidecar),
+			k8sutil.WithExtras(sidecar),
 		).Manifests(),
 		"config-w-sidecar",
 	)
@@ -285,7 +285,7 @@ func main() {
 			k8sutil.WithResources(apiResources),
 			k8sutil.WithServiceMonitor(),
 			// Add dummy-sidecar stuff
-			k8sutil.WithSidecars(sidecar),
+			k8sutil.WithExtras(sidecar),
 		).Manifests(),
 		"config-w-sidecar",
 	)
