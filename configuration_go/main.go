@@ -233,7 +233,7 @@ func main() {
 		"config-w-sidecar",
 	)
 
-	// Thanos Query/
+	// Thanos Query sample deployment.
 	generator.GenerateWithMimic(
 		g,
 		query.NewThanosQuery(
@@ -264,7 +264,7 @@ func main() {
 				Type: trclient.Jaeger,
 				Config: jaeger.Config{
 					SamplerParam: 2,
-					SamplerType:  "ratelimiting",
+					SamplerType:  jaeger.SamplerTypeRateLimiting,
 					ServiceName:  "thanos-query",
 				},
 			}),

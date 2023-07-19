@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/bwplotka/mimic"
-	"github.com/ghodss/yaml"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
+	"gopkg.in/yaml.v2"
 
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -19,6 +19,7 @@ import (
 )
 
 type query struct {
+	// Query configs.
 	logLevel, logFormat string
 	g                   GRPCOptions
 	h                   HTTPOptions
@@ -54,27 +55,47 @@ type query struct {
 
 	additionalQueryArgs []string
 
+	// Embedded K8s config struct which exposes override methods.
 	k8sutil.GenericDeploymentConfig
 }
 
+// StoreOptions specify the Store API, and Store service discovery options
+// for Thanos Querier.
 type StoreOptions struct {
+	// The maximum series allowed for a single Series request. The Series call fails if this limit is exceeded. 0 means no limit.
 	RequestSampleLimit int
+
+	// The maximum samples allowed for a single Series request, The Series call fails if this limit is exceeded. 0 means no limit.
+	// NOTE: For efficiency the limit is internally implemented as 'chunks limit' considering each chunk contains a maximum of 120 samples
 	RequestSeriesLimit int
 
-	ResponseTimeout  model.Duration
+	// If a Store doesn't send any data in this specified duration then a Store will be ignored and partial data will be returned if it's enabled.
+	// 0 (default) disables timeout
+	ResponseTimeout model.Duration
+
+	// Timeout before an unhealthy store is cleaned from the store UI page. Default is 5m.
 	UnhealthyTimeout model.Duration
 
+	// Interval between DNS resolutions for Store endpoints. Default is 30s.
 	SDDNSInterval model.Duration
+
+	// DNS Resolver to use for Store endpoints. Possible options: golang, miekgdns. Default is miekgdns.
 	SDDNSResolver string
-	SDInterval    model.Duration
-	SDFiles       []SDFile
+
+	// Refresh interval to re-read file SD files. It is used as a resync fallback. Default is 5m.
+	SDInterval model.Duration
+
+	// Path to files that contain addresses of store API servers. The path can be a glob pattern.
+	SDFiles []SDFile
 }
 
+// SDFile represents a static service discovery file to be mounted to Querier.
 type SDFile struct {
 	Data string
 	Name string
 }
 
+// GRPCOptions specify the client and server gRPC config options for Querier.
 type GRPCOptions struct {
 	ClientSecure     bool
 	ClientSkipVerify bool
@@ -82,7 +103,10 @@ type GRPCOptions struct {
 	ClientKey        string
 	ClientCACert     string
 	ClientServerName string
-	Compression      string
+
+	// Compression algorithm to use for gRPC requests to other clients. Must be one of: ["none", "snappy"]
+	// Default is none.
+	Compression string
 
 	ServerAddress          string
 	ServerTLSCert          string
@@ -91,22 +115,42 @@ type GRPCOptions struct {
 	ServerMaxConnectionAge model.Duration
 	ServerGracePeriod      model.Duration
 
+	// Strategy to use when proxying Series requests to leaf nodes. Hidden and only used for testing, will be removed after lazy becomes the default
 	ProxyStrategy string
 }
 
+// HTTPOptions specify the HTTP config options for Querier.
 type HTTPOptions struct {
 	BindAddress string
 	GracePeriod model.Duration
 	TLSConfig   string
 }
 
+// WebOptions specify the Web/UI/URL config options for Querier.
 type WebOptions struct {
-	DisableCORS      bool
-	RoutePrefix      string
-	ExternalPrefix   string
+	// 	Whether to disable CORS headers to be set by Thanos. By default Thanos sets CORS headers to be allowed by all.
+	DisableCORS bool
+
+	// Prefix for API and UI endpoints. This allows thanos UI to be served on a sub-path. Defaults to the value of --web.external-prefix.
+	// This option is analogous to --web.route-prefix of Prometheus.
+	RoutePrefix string
+
+	// Static prefix for all HTML links and redirect URLs in the UI query web interface. Actual endpoints are still served on / or the
+	// web.route-prefix. This allows thanos UI to be served behind a reverse proxy that strips a URL sub-path.
+	ExternalPrefix string
+
+	// Name of HTTP request header used for dynamic prefixing of UI links and redirects.
+	// This option is ignored if web.external-prefix argument is set.
+	//
+	// Security risk: enable this option only if a reverse proxy in front of thanos is resetting the header.
+	//
+	// The --web.prefix-header=X-Forwarded-Prefix option can be useful, for example, if Thanos UI is served via Traefik reverse proxy
+	// with PathPrefixStrip option enabled, which sends the stripped prefix value in X-Forwarded-Prefix header. This allows thanos UI
+	// to be served on a sub-path.
 	PrefixHeaderName string
 }
 
+// QueryTelemetry specifies the query telemetry quantiles for Querier.
 type QueryTelemetry struct {
 	DurationQuantiles []float64
 	SampleQuantiles   []float64
@@ -124,24 +168,28 @@ func WithLogging(logLevel, logFormat string) ThanosQueryOption {
 	}
 }
 
+// WithGRPCOptions allows overriding the default gRPC options for Thanos Querier.
 func WithGRPCOptions(opts GRPCOptions) ThanosQueryOption {
 	return func(q *query) {
 		q.g = opts
 	}
 }
 
+// WithHTTPOptions allows overriding the default HTTP options for Thanos Querier.
 func WithHTTPOptions(opts HTTPOptions) ThanosQueryOption {
 	return func(q *query) {
 		q.h = opts
 	}
 }
 
+// WithWebOptions allows overriding the default Web/UI/URL options for Thanos Querier.
 func WithWebOptions(opts WebOptions) ThanosQueryOption {
 	return func(q *query) {
 		q.w = opts
 	}
 }
 
+// WithStoreOptions allows overriding the default Store (API or SD) options for Thanos Querier.
 func WithStoreOptions(opts StoreOptions) ThanosQueryOption {
 	return func(q *query) {
 		q.s = opts
@@ -163,30 +211,56 @@ func WithEndpointsStrict(endpoints ...string) ThanosQueryOption {
 	}
 }
 
+// WithEndpointGroup allows configuring DNS name of statically configured Thanos API
+// server groups. Targets resolved from the DNS name will be queried in a round-robin,
+// instead of a fanout manner. This option should be used when connecting a Thanos Query
+// to HA groups of Thanos components
+func WithEndpointGroup(group ...string) ThanosQueryOption {
+	return func(q *query) {
+		q.endpointGroup = group
+	}
+}
+
+// WithStrictEndpointGroup allows configuring DNS name of statically configured Thanos API
+// server groups that will be always used even if health check fails. Targets resolved from
+// the DNS name will be queried in a round-robin, instead of a fanout manner. This option
+// should be used when connecting a Thanos Query to HA groups of Thanos components
+func WithStrictEndpointGroup(group ...string) ThanosQueryOption {
+	return func(q *query) {
+		q.endpointGroupStrict = group
+	}
+}
+
+// WithAutoDownsampling enables auto downsampling by default for Thanos Querier.
 func WithAutoDownsampling() ThanosQueryOption {
 	return func(q *query) {
 		q.autoDownsampling = true
 	}
 }
 
+// WithActiveQueryPath allows setting a path for active query file for Thanos Querier.
 func WithActiveQueryPath(path string) ThanosQueryOption {
 	return func(q *query) {
 		q.activeQueryPath = path
 	}
 }
 
+// WithConnectionMetricLabels allows overriding the default selection of query connection
+// metric labels to be collected from endpoint set.
 func WithConnectionMetricLabels(labels []string) ThanosQueryOption {
 	return func(q *query) {
 		q.connectionMetricLabels = labels
 	}
 }
 
+// WithSelectorLabels allows setting selector labels that will be exposed in info endpoint.
 func WithSelectorLabels(labels labels.Labels) ThanosQueryOption {
 	return func(q *query) {
 		q.selectorLabels = labels
 	}
 }
 
+// WithDefaultEvaluationInterval allows overriding the default evaluation interval for sub queries in Thanos Querier.
 func WithDefaultEvaluationInterval(interval string) ThanosQueryOption {
 	return func(q *query) {
 		pi, err := model.ParseDuration(interval)
@@ -197,6 +271,10 @@ func WithDefaultEvaluationInterval(interval string) ThanosQueryOption {
 	}
 }
 
+// WithDefaultStep allows overriding the default step for range queries in Thanos Querier.
+// Default step is only used when step is not set in UI. In such cases, Thanos UI will use
+// default step to calculate resolution (resolution = max(rangeSeconds / 250, defaultStep)).
+// This will not work from Grafana, but Grafana has __step variable which can be used.
 func WithDefaultStep(step string) ThanosQueryOption {
 	return func(q *query) {
 		ps, err := model.ParseDuration(step)
@@ -207,6 +285,14 @@ func WithDefaultStep(step string) ThanosQueryOption {
 	}
 }
 
+// WithLookbackDelta allows overriding the maximum lookback delta used by Thanos Querier.
+// for retrieving metrics during expression evaluations. PromQL always evaluates the query
+// for the certain timestamp (query range timestamps are deduced by step).
+//
+// Since scrape intervals might be different, PromQL looks back for given amount of time to
+// get latest  sample. If it exceeds the maximum lookback delta it assumes series is stale
+// and returns none (a gap). This is why lookback delta should be set to at least 2 times
+// of the slowest scrape interval. If unset it will use the promql default of 5m
 func WithLookbackDelta(delta string) ThanosQueryOption {
 	return func(q *query) {
 		pd, err := model.ParseDuration(delta)
@@ -217,24 +303,33 @@ func WithLookbackDelta(delta string) ThanosQueryOption {
 	}
 }
 
+// WithDynamicLookbackDelta allows for larger lookback duration for queries based on resolution
+// for Thanos Querier.
 func WithDynamicLookbackDelta() ThanosQueryOption {
 	return func(q *query) {
 		q.dynamicLookbackDelta = true
 	}
 }
 
+// WithMaxConcurrentQueries allows overriding the default (20) maximum number of concurrent queries
+// that can be executed by Thanos Querier.
 func WithMaxConcurrentQueries(max int) ThanosQueryOption {
 	return func(q *query) {
 		q.maxConcurrentQueries = max
 	}
 }
 
+// WithMaxConcurrentSelects allows overriding the default (4) maximum number of concurrent selects
+// that can be executed by Thanos Querier while evaluating a single query.
 func WithMaxConcurrentSelects(max int) ThanosQueryOption {
 	return func(q *query) {
 		q.maxConcurrentSelects = max
 	}
 }
 
+// WithInstantDefaultMaxSourceResolution allows overriding the default value for max_source_resolution
+// for instant queries. If not set, defaults to 0s only taking raw resolution into account. 1h can be a
+// good value if you use instant queries over time ranges that incorporate times outside of your raw-retention.
 func WithInstantDefaultMaxSourceResolution(resolution string) ThanosQueryOption {
 	return func(q *query) {
 		pr, err := model.ParseDuration(resolution)
@@ -245,6 +340,9 @@ func WithInstantDefaultMaxSourceResolution(resolution string) ThanosQueryOption 
 	}
 }
 
+// WithMetadataDefaultTimeRange allows overriding default metadata time range duration for retrieving
+// labels through Labels and Series API when the range parameters are not specified. The zero value
+// means range covers the time since the beginning.
 func WithMetadataDefaultTimeRange(timeRange string) ThanosQueryOption {
 	return func(q *query) {
 		pr, err := model.ParseDuration(timeRange)
@@ -255,36 +353,45 @@ func WithMetadataDefaultTimeRange(timeRange string) ThanosQueryOption {
 	}
 }
 
+// WithPartialResponse allows enabling partial response for queries if no partial_response param is specified.
 func WithPartialResponse() ThanosQueryOption {
 	return func(q *query) {
 		q.partialResponse = true
 	}
 }
 
+// WithEngine allows overriding the default PromQL engine for Thanos Querier. Default is thanos.
 func WithEngine(engine string) ThanosQueryOption {
 	return func(q *query) {
 		q.promQLEngine = engine
 	}
 }
 
+// WithQueryMode allows overriding the default PromQL query mode for Thanos Querier. Default is local.
+// Can be set to either local or distributed.
 func WithQueryMode(mode string) ThanosQueryOption {
 	return func(q *query) {
 		q.promQLQueryMode = mode
 	}
 }
 
+// WithReplicaLabels allows setting labels to treat as a replica indicator along which data is deduplicated.
+// Still you will be able to query without deduplication using 'dedup=false' parameter. Data includes
+// time series, recording rules, and alerting rules.replica labels in Thanos Querier.
 func WithReplicaLabels(labels []string) ThanosQueryOption {
 	return func(q *query) {
 		q.replicaLabels = labels
 	}
 }
 
+// WithQueryTelemetry allows overriding the default query request telemetry quantiles for Thanos Querier.
 func WithQueryTelemetry(qt QueryTelemetry) ThanosQueryOption {
 	return func(q *query) {
 		q.telemetry = qt
 	}
 }
 
+// WithQueryTimeout allows overriding the default (2m) query processing timeout for Thanos Querier.
 func WithQueryTimeout(timeout string) ThanosQueryOption {
 	return func(q *query) {
 		pt, err := model.ParseDuration(timeout)
@@ -295,6 +402,12 @@ func WithQueryTimeout(timeout string) ThanosQueryOption {
 	}
 }
 
+// WithTracingConfig allows passing in-line YAML tracing configuration for Thanos Querier.
+// See format details: https://thanos.io/tip/thanos/tracing.md/#configuration.
+// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
+//
+// Please use the exported TracingConfig and provider configuration structs from
+// "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing" package.
 func WithTracingConfig(config trclient.TracingConfig) ThanosQueryOption {
 	return func(q *query) {
 		b, err := yaml.Marshal(config)
@@ -305,6 +418,7 @@ func WithTracingConfig(config trclient.TracingConfig) ThanosQueryOption {
 	}
 }
 
+// WithAlertQueryURL allows setting external Thanos Query URL that would be set in all alerts 'Source' field.
 func WithAlertQueryURL(url string) ThanosQueryOption {
 	return func(q *query) {
 		q.alertQueryURL = url
@@ -456,6 +570,7 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		ObjectMeta: commonObjectMeta,
 	}
 
+	// Instantiate SD file configmap if passed.
 	sdFileList := []string{}
 	sdData := map[string]string{}
 	for _, f := range q.s.SDFiles {
@@ -469,6 +584,7 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		Data:       sdData,
 	}
 
+	// Build argument list for the Query container.
 	args := []string{
 		"query",
 
@@ -521,8 +637,6 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		k8sutil.FlagArg("tracing.config", q.tracingConfig),
 		k8sutil.FlagArg("alert.query-url", q.alertQueryURL),
 
-		// Endpoints.
-
 		// Store.
 		k8sutil.FlagArg("store.limits.request-series", fmt.Sprint(q.s.RequestSeriesLimit)),
 		k8sutil.FlagArg("store.limits.request-samples", fmt.Sprint(q.s.RequestSampleLimit)),
@@ -533,19 +647,23 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 		k8sutil.FlagArg("store.sd-interval", q.s.SDInterval.String()),
 	}
 
+	// Labels
 	args = append(args, k8sutil.RepeatableFlagArg("query.conn-metric.label", q.connectionMetricLabels)...)
 	args = append(args, k8sutil.RepeatableLabelFlagArg("selector-label", q.selectorLabels)...)
 	args = append(args, k8sutil.RepeatableFlagArg("query.replica-label", q.replicaLabels)...)
 
+	// Telemetry
 	args = append(args, k8sutil.RepeatableFloatFlagArg("query.telemetry.request-duration-seconds-quantiles", q.telemetry.DurationQuantiles)...)
 	args = append(args, k8sutil.RepeatableFloatFlagArg("query.telemetry.request-samples-quantiles", q.telemetry.SampleQuantiles)...)
 	args = append(args, k8sutil.RepeatableFloatFlagArg("query.telemetry.request-series-seconds-quantiles", q.telemetry.SeriesQuantiles)...)
 
+	// Endpoints.
 	args = append(args, k8sutil.RepeatableFlagArg("endpoint", q.endpoints)...)
 	args = append(args, k8sutil.RepeatableFlagArg("endpoint-strict", q.endpointsStrict)...)
 	args = append(args, k8sutil.RepeatableFlagArg("endpoint-group", q.endpointGroup)...)
 	args = append(args, k8sutil.RepeatableFlagArg("endpoint-group-strict", q.endpointGroupStrict)...)
 
+	// SD Files.
 	args = append(args, k8sutil.RepeatableFlagArg("store.sd-files", sdFileList)...)
 
 	queryArgs := k8sutil.ArgList(args)

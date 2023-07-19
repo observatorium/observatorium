@@ -1,5 +1,7 @@
 package client
 
+// Taken from github.com/thanos-io/thanos/pkg/tracing/client/client.go
+
 type TracingProvider string
 
 const (

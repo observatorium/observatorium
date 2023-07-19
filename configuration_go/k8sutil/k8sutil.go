@@ -62,9 +62,10 @@ const VersionLabel string = "app.kubernetes.io/version"
 const ManagedByLabel string = "app.kubernetes.io/managed-by"
 
 // FlagArg returns consistent pattern flags as args for Deployment/StatefulSet containers.
-// Returns empty string if flag name or value is empty. Not to be used for commands or bool args.
+// Returns empty string if flag name or value is empty or if flag value is a zero/default value.
+// Not to be used for commands or bool args.
 func FlagArg(flagName, flagValue string) string {
-	if flagName == "" || flagValue == "" {
+	if flagName == "" || flagValue == "" || flagValue == "0" || flagValue == "0s" {
 		return ""
 	}
 
