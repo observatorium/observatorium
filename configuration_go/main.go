@@ -5,11 +5,14 @@ import (
 
 	"github.com/bwplotka/mimic"
 	"github.com/ghodss/yaml"
-	"github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/api"
+	api "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/observatoriumapi"
+	query "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/thanos/query"
 	"github.com/observatorium/observatorium/configuration_go/generator"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/openshift"
 	apiprovider "github.com/observatorium/observatorium/configuration_go/providers/api"
+	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
+	jaeger "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/jaeger"
 
 	obsrbac "github.com/observatorium/api/rbac"
 	templatev1 "github.com/openshift/api/template/v1"
@@ -103,31 +106,31 @@ func main() {
 		g,
 		api.NewObservatoriumAPI(
 			api.WithLogLevel("debug"),
-			api.WithMetrics(
-				"http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090",
-				"http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291",
-				"http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080",
-			),
-			api.WithLogs(
-				"http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100",
-				"http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100",
-				"http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100",
-				"http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100",
-			),
-			api.WithTraces(
-				"http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/",
-				"observatorium-xyz-otel-collector:4317",
-			),
+			api.WithMetrics(api.MetricsBackend{
+				ReadEndpoint:  "http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090",
+				WriteEndpoint: "http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291",
+				RulesEndpoint: "http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080",
+			}),
+			api.WithLogs(api.LogsBackend{
+				ReadEndpoint:  "http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100",
+				WriteEndpoint: "http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100",
+				RulesEndpoint: "http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100",
+				TailEndpoint:  "http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100",
+			}),
+			api.WithTraces(api.TracesBackend{
+				ReadEndpoint:  "http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/",
+				WriteEndpoint: "observatorium-xyz-otel-collector:4317",
+			}),
 			api.WithRateLimiter("observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081"),
 			api.WithRBACYAML(string(rbacData)),
 			api.WithTenantsSecret(map[string]string{"tenants.yaml": string(tenantsData)}),
-
-			api.WithImage("quay.io/observatorium/api", "main-2023-01-24-v0.1.2-318-g5f4fdf4"),
-			api.WithName("observatorium-xyz"),
-			api.WithNamespace("observatorium"),
-			api.WithReplicas(3),
-			api.WithAPIResources(apiResources),
-			api.WithServiceMonitor(),
+		).K8sConfig(
+			k8sutil.WithImage("quay.io/observatorium/api", "main-2023-01-24-v0.1.2-318-g5f4fdf4"),
+			k8sutil.WithName("observatorium-xyz"),
+			k8sutil.WithNamespace("observatorium"),
+			k8sutil.WithReplicas(3),
+			k8sutil.WithResources(apiResources),
+			k8sutil.WithServiceMonitor(),
 		).Manifests(),
 		"config",
 	)
@@ -172,7 +175,7 @@ func main() {
 		},
 	}
 
-	sidecar := k8sutil.SidecarConfig{
+	sidecar := k8sutil.ExtraConfig{
 		Sidecars: []corev1.Container{dummyContainer},
 		AdditionalServicePorts: []corev1.ServicePort{
 			{
@@ -199,33 +202,90 @@ func main() {
 		g,
 		api.NewObservatoriumAPI(
 			api.WithLogLevel("debug"),
-			api.WithMetrics(
-				"http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090",
-				"http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291",
-				"http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080",
-			),
-			api.WithLogs(
-				"http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100",
-				"http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100",
-				"http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100",
-				"http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100",
-			),
-			api.WithTraces(
-				"http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/",
-				"observatorium-xyz-otel-collector:4317",
-			),
+			api.WithMetrics(api.MetricsBackend{
+				ReadEndpoint:  "http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090",
+				WriteEndpoint: "http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291",
+				RulesEndpoint: "http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080",
+			}),
+			api.WithLogs(api.LogsBackend{
+				ReadEndpoint:  "http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100",
+				WriteEndpoint: "http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100",
+				RulesEndpoint: "http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100",
+				TailEndpoint:  "http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100",
+			}),
+			api.WithTraces(api.TracesBackend{
+				ReadEndpoint:  "http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/",
+				WriteEndpoint: "observatorium-xyz-otel-collector:4317",
+			}),
 			api.WithRateLimiter("observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081"),
 			api.WithRBACYAML(string(rbacData)),
 			api.WithTenantsSecret(map[string]string{"tenants.yaml": string(tenantsData)}),
-
-			api.WithImage("quay.io/observatorium/api", "main-2023-01-24-v0.1.2-318-g5f4fdf4"),
-			api.WithName("observatorium-xyz"),
-			api.WithNamespace("observatorium"),
-			api.WithReplicas(3),
-			api.WithAPIResources(apiResources),
-			api.WithServiceMonitor(),
+		).K8sConfig(
+			k8sutil.WithImage("quay.io/observatorium/api", "main-2023-01-24-v0.1.2-318-g5f4fdf4"),
+			k8sutil.WithName("observatorium-xyz"),
+			k8sutil.WithNamespace("observatorium"),
+			k8sutil.WithReplicas(3),
+			k8sutil.WithResources(apiResources),
+			k8sutil.WithServiceMonitor(),
 			// Add dummy-sidecar stuff
-			api.WithSidecars(sidecar),
+			k8sutil.WithExtras(sidecar),
+		).Manifests(),
+		"config-w-sidecar",
+	)
+
+	// Thanos Query sample deployment.
+	generator.GenerateWithMimic(
+		g,
+		query.NewThanosQuery(
+			query.WithGRPCOptions(query.GRPCOptions{
+				ServerAddress: "0.0.0.0:10901",
+				ProxyStrategy: "eager",
+			}),
+			query.WithHTTPOptions(query.HTTPOptions{
+				BindAddress: "0.0.0.0:9090",
+			}),
+			query.WithLogging("debug", "logfmt"),
+			query.WithReplicaLabels([]string{"replica", "rule_replica", "prometheus_replica"}),
+			query.WithWebOptions(query.WebOptions{
+				PrefixHeaderName: "X-Forwarded-Prefix",
+			}),
+			query.WithEndpoints([]string{
+				"dnssrv+_grpc._tcp.observatorium-thanos-store-shard-0.observatorium.svc.cluster.local",
+				"dnssrv+_grpc._tcp.observatorium-thanos-store-shard-1.observatorium.svc.cluster.local",
+				"dnssrv+_grpc._tcp.observatorium-thanos-store-shard-2.observatorium.svc.cluster.local",
+				"dnssrv+_grpc._tcp.observatorium-thanos-receive.observatorium.svc.cluster.local",
+			}...),
+			query.WithQueryTimeout("15m"),
+			query.WithLookbackDelta("15m"),
+			query.WithAutoDownsampling(),
+			query.WithMaxConcurrentQueries(20),
+			query.WithEngine("prometheus"),
+			query.WithTracingConfig(trclient.TracingConfig{
+				Type: trclient.Jaeger,
+				Config: jaeger.Config{
+					SamplerParam: 2,
+					SamplerType:  jaeger.SamplerTypeRateLimiting,
+					ServiceName:  "thanos-query",
+				},
+			}),
+			query.WithStoreOptions(query.StoreOptions{
+				SDFiles: []query.SDFile{{
+					Name: "rule-sd",
+					Data: "dnssrv+_grpc._tcp.observatorium-thanos-rule.observatorium.svc.cluster.local",
+				}},
+			}),
+			query.WithQueryTelemetry(query.QueryTelemetry{
+				DurationQuantiles: []float64{0.1, 0.25, 0.75, 1.25, 1.75, 2, 3, 5, 10, 15, 30, 60, 120},
+			}),
+		).K8sConfig(
+			k8sutil.WithImage("quay.io/thanos-io/thanos", "v0.31"),
+			k8sutil.WithName("observatorium-xyz"),
+			k8sutil.WithNamespace("observatorium"),
+			k8sutil.WithReplicas(3),
+			k8sutil.WithResources(apiResources),
+			k8sutil.WithServiceMonitor(),
+			// Add dummy-sidecar stuff
+			k8sutil.WithExtras(sidecar),
 		).Manifests(),
 		"config-w-sidecar",
 	)
@@ -238,31 +298,31 @@ func main() {
 			"observatorium-template",
 			api.NewObservatoriumAPI(
 				api.WithLogLevel("${OBSERVATORIUM_API_LOG_LEVEL}"),
-				api.WithMetrics(
-					"http://observatorium-xyz-thanos-query-frontend.${NAMESPACE}.svc.cluster.local:9090",
-					"http://observatorium-xyz-thanos-receive.${NAMESPACE}.svc.cluster.local:19291",
-					"http://observatorium-xyz-rules-objstore.${NAMESPACE}.svc.cluster.local:8080",
-				),
-				api.WithLogs(
-					"http://observatorium-xyz-loki-query-frontend-http.${NAMESPACE}.svc.cluster.local:3100",
-					"http://observatorium-xyz-loki-distributor-http.${NAMESPACE}.svc.cluster.local:3100",
-					"http://observatorium-xyz-loki-ruler-http.${NAMESPACE}.svc.cluster.local:3100",
-					"http://observatorium-xyz-loki-querier-http.${NAMESPACE}.svc.cluster.local:3100",
-				),
-				api.WithTraces(
-					"http://observatorium-xyz-jaeger-query.${NAMESPACE}.svc.cluster.local:16686/",
-					"observatorium-xyz-otel-collector:4317",
-				),
+				api.WithMetrics(api.MetricsBackend{
+					ReadEndpoint:  "http://observatorium-xyz-thanos-query-frontend.${NAMESPACE}.svc.cluster.local:9090",
+					WriteEndpoint: "http://observatorium-xyz-thanos-receive.${NAMESPACE}.svc.cluster.local:19291",
+					RulesEndpoint: "http://observatorium-xyz-rules-objstore.${NAMESPACE}.svc.cluster.local:8080",
+				}),
+				api.WithLogs(api.LogsBackend{
+					ReadEndpoint:  "http://observatorium-xyz-loki-query-frontend-http.${NAMESPACE}.svc.cluster.local:3100",
+					WriteEndpoint: "http://observatorium-xyz-loki-distributor-http.${NAMESPACE}.svc.cluster.local:3100",
+					RulesEndpoint: "http://observatorium-xyz-loki-ruler-http.${NAMESPACE}.svc.cluster.local:3100",
+					TailEndpoint:  "http://observatorium-xyz-loki-querier-http.${NAMESPACE}.svc.cluster.local:3100",
+				}),
+				api.WithTraces(api.TracesBackend{
+					ReadEndpoint:  "http://observatorium-xyz-jaeger-query.${NAMESPACE}.svc.cluster.local:16686/",
+					WriteEndpoint: "observatorium-xyz-otel-collector:4317",
+				}),
 				api.WithRateLimiter("observatorium-xyz-gubernator.${NAMESPACE}.svc.cluster.local:8081"),
 				api.WithRBACYAML(string(rbacData)),
 				api.WithTenantsSecret(map[string]string{"tenants.yaml": string(tenantsData)}),
-
-				api.WithImage("${OBSERVATORIUM_API_IMAGE}", "${OBSERVATORIUM_API_IMAGE_TAG}"),
-				api.WithName("observatorium-xyz"),
-				api.WithNamespace("${NAMESPACE}"),
-				api.WithAPIResources(apiResources),
-				api.WithReplicas(3),
-				api.WithServiceMonitor(),
+			).K8sConfig(
+				k8sutil.WithImage("${OBSERVATORIUM_API_IMAGE}", "${OBSERVATORIUM_API_IMAGE_TAG}"),
+				k8sutil.WithName("observatorium-xyz"),
+				k8sutil.WithNamespace("${NAMESPACE}"),
+				k8sutil.WithResources(apiResources),
+				k8sutil.WithReplicas(3),
+				k8sutil.WithServiceMonitor(),
 			).Manifests(),
 			metav1.ObjectMeta{
 				Name: "observatorium",

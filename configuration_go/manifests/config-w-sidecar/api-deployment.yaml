@@ -33,6 +33,18 @@ spec:
         app.kubernetes.io/part-of: observatorium
       namespace: observatorium
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - observatorium-api
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - --web.listen=0.0.0.0:8080
@@ -115,6 +127,9 @@ spec:
           name: config
           readOnly: true
           subPath: config.yaml
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
       serviceAccountName: observatorium-xyz-observatorium-api
       volumes:
       - configMap:

@@ -1,101 +1,58 @@
-package api
+package observatoriumapi
 
 import (
 	"fmt"
 
 	"github.com/bwplotka/mimic"
-	"github.com/go-openapi/swag"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 type observatoriumAPI struct {
 	// API configs.
-	logLevel                                 string
-	rbacYAML                                 string
-	tenantsSecret                            map[string]string
-	metricsRead, metricsWrite, metricsRules  string
-	logsRead, logsWrite, logsRules, logsTail string
-	tracesRead, tracesWrite                  string
-	rateLimiter                              string
-	additionalAPIArgs                        []string
+	logLevel          string
+	rbacYAML          string
+	tenantsSecret     map[string]string
+	metrics           MetricsBackend
+	logs              LogsBackend
+	traces            TracesBackend
+	rateLimiter       string
+	additionalAPIArgs []string
 
-	// K8s specific configs.
-	image                string
-	imageTag             string
-	imagePullPolicy      corev1.PullPolicy
-	name                 string
-	namespace            string
-	commonLabels         map[string]string
-	replicas             int32
-	apiPodResources      corev1.ResourceRequirements
-	enableServiceMonitor bool
+	// Embedded K8s config struct which exposes override methods.
+	k8sutil.DeploymentGenericConfig
+}
 
-	//Sidecar configs.
-	sidecars k8sutil.SidecarConfig
+type MetricsBackend struct {
+	ReadEndpoint  string
+	WriteEndpoint string
+	RulesEndpoint string
+}
+
+type LogsBackend struct {
+	ReadEndpoint  string
+	WriteEndpoint string
+	TailEndpoint  string
+	RulesEndpoint string
+}
+
+type TracesBackend struct {
+	ReadEndpoint  string
+	WriteEndpoint string
 }
 
 // Allows specifying external functions for overriding Observatorium API options.
 type ObservatoriumAPIOption func(a *observatoriumAPI)
 
-// WithImage overrides default Observatorium latest image. K8s config.
-func WithImage(image, imageTag string) ObservatoriumAPIOption {
-	return func(a *observatoriumAPI) {
-		a.image = image
-		a.imageTag = imageTag
-	}
-}
-
-// WithImagePullPolicy overrides default (IfNotPresent) image pull policy. K8s config.
-func WithImagePullPolicy(imagePullPolicy corev1.PullPolicy) ObservatoriumAPIOption {
-	return func(a *observatoriumAPI) {
-		a.imagePullPolicy = imagePullPolicy
-	}
-}
-
-// WithImage overrides the default number of API replicas to run. Default is 1. K8s config.
-func WithReplicas(replicas int32) ObservatoriumAPIOption {
-	return func(a *observatoriumAPI) {
-		a.replicas = replicas
-	}
-}
-
 // WithAdditionalAPIArgs allows including additional arguments to the Observatorium API deployment.
 func WithAdditionalAPIArgs(additionalAPIArgs []string) ObservatoriumAPIOption {
 	return func(a *observatoriumAPI) {
 		a.additionalAPIArgs = additionalAPIArgs
-	}
-}
-
-// WithCommonLabels overrides the default K8s metadata labels and selectors. K8s config.
-func WithCommonLabels(commonLabels map[string]string) ObservatoriumAPIOption {
-	return func(a *observatoriumAPI) {
-		a.commonLabels = commonLabels
-	}
-}
-
-// WithName overrides the default name of all the individual objects. K8s config.
-func WithName(name string) ObservatoriumAPIOption {
-	return func(a *observatoriumAPI) {
-		a.name = name
-	}
-}
-
-// WithNamespace overrides the default namespace of all the individual objects. K8s config.
-func WithNamespace(namespace string) ObservatoriumAPIOption {
-	return func(a *observatoriumAPI) {
-		a.namespace = namespace
-	}
-}
-
-// WithAPIResources overrides the default API Pod resource config (empty) .
-func WithAPIResources(resource corev1.ResourceRequirements) ObservatoriumAPIOption {
-	return func(a *observatoriumAPI) {
-		a.apiPodResources = resource
 	}
 }
 
@@ -133,48 +90,25 @@ func WithRateLimiter(rateLimiter string) ObservatoriumAPIOption {
 
 // WithMetrics enables metrics signal for Observatorium API and includes passed in URL args as flags.
 // If any of the URLs are empty, the flags are not included.
-func WithMetrics(metricsRead, metricsWrite, metricsRules string) ObservatoriumAPIOption {
+func WithMetrics(m MetricsBackend) ObservatoriumAPIOption {
 	return func(a *observatoriumAPI) {
-		a.metricsRead = metricsRead
-		a.metricsWrite = metricsWrite
-		a.metricsRules = metricsRules
+		a.metrics = m
 	}
 }
 
 // WithLogs enables logging signal for Observatorium API and includes passed in URL args as flags.
 // If any of the URLs are empty, the flags are not included.
-func WithLogs(logsRead, logsWrite, logsRules, logsTail string) ObservatoriumAPIOption {
+func WithLogs(l LogsBackend) ObservatoriumAPIOption {
 	return func(a *observatoriumAPI) {
-		a.logsRead = logsRead
-		a.logsWrite = logsWrite
-		a.logsRules = logsRules
-		a.logsTail = logsTail
+		a.logs = l
 	}
 }
 
 // WithTraces enables tracing signal for Observatorium API and includes passed in URL args as flags.
 // If any of the URLs are empty, the flags are not included.
-func WithTraces(tracesRead, tracesWrite string) ObservatoriumAPIOption {
+func WithTraces(t TracesBackend) ObservatoriumAPIOption {
 	return func(a *observatoriumAPI) {
-		a.tracesRead = tracesRead
-		a.tracesWrite = tracesWrite
-	}
-}
-
-// WithSidecars allows overriding default K8s Deployment and adding additional containers,
-// alongside Observatorium API.
-// Use SidecarConfig struct to attach additonal volumes, service ports and service monitor
-// scrape endpoints for these sidecars.
-func WithSidecars(s k8sutil.SidecarConfig) ObservatoriumAPIOption {
-	return func(a *observatoriumAPI) {
-		a.sidecars = s
-	}
-}
-
-// WithServiceMonitor enables generation of a ServiceMonitor to scrape Observatorium API.
-func WithServiceMonitor() ObservatoriumAPIOption {
-	return func(a *observatoriumAPI) {
-		a.enableServiceMonitor = true
+		a.traces = t
 	}
 }
 
@@ -194,23 +128,101 @@ var DefaultLabels map[string]string = map[string]string{
 // ServiceAccount
 // ConfigMap
 // Secret
+//
+// NOTE: You need to call K8sConfig() to customize k8s-native options.
 func NewObservatoriumAPI(opts ...ObservatoriumAPIOption) *observatoriumAPI {
 	c := &observatoriumAPI{
-		logLevel:        "info",
-		image:           "quay.io/observatorium/api:latest",
-		replicas:        1,
-		commonLabels:    DefaultLabels,
-		namespace:       "observatorium",
-		name:            "observatorium-api",
-		imagePullPolicy: corev1.PullIfNotPresent,
+		logLevel: "info",
+		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+			Image:           "quay.io/observatorium/api",
+			ImageTag:        "latest",
+			ImagePullPolicy: corev1.PullIfNotPresent,
+			Name:            "observatorium-api",
+			Namespace:       "observatorium",
+			CommonLabels:    DefaultLabels,
+			Replicas:        3,
+			DeploymentStrategy: appsv1.DeploymentStrategy{
+				RollingUpdate: &appsv1.RollingUpdateDeployment{
+					MaxSurge:       &[]intstr.IntOrString{intstr.FromInt(0)}[0],
+					MaxUnavailable: &[]intstr.IntOrString{intstr.FromInt(1)}[0],
+				},
+			},
+			PodResources: corev1.ResourceRequirements{
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("3"),
+					corev1.ResourceMemory: resource.MustParse("3000Mi"),
+				},
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("2"),
+					corev1.ResourceMemory: resource.MustParse("2000Mi"),
+				},
+			},
+			Affinity: corev1.Affinity{
+				PodAntiAffinity: &corev1.PodAntiAffinity{
+					PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
+						{
+							Weight: 100,
+							PodAffinityTerm: corev1.PodAffinityTerm{
+								LabelSelector: &metav1.LabelSelector{
+									MatchExpressions: []metav1.LabelSelectorRequirement{
+										{
+											Key:      k8sutil.NameLabel,
+											Operator: metav1.LabelSelectorOpIn,
+											Values:   []string{"observatorium-api"},
+										},
+									},
+								},
+								TopologyKey: "kubernetes.io/hostname",
+							},
+						},
+					},
+				},
+			},
+			LivenessProbe: corev1.Probe{
+				FailureThreshold: 10,
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path:   "/live",
+						Port:   intstr.FromInt(8080),
+						Scheme: corev1.URISchemeHTTP,
+					},
+				},
+				PeriodSeconds: 30,
+			},
+			ReadinessProbe: corev1.Probe{
+				FailureThreshold: 12,
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path:   "/ready",
+						Port:   intstr.FromInt(8081),
+						Scheme: corev1.URISchemeHTTP,
+					},
+				},
+				PeriodSeconds: 5,
+			},
+			SecurityContext: corev1.PodSecurityContext{
+				RunAsUser: &[]int64{65534}[0],
+				FSGroup:   &[]int64{65534}[0],
+			},
+			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		},
 	}
 
 	for _, o := range opts {
 		o(c)
 	}
 
-	c.commonLabels[k8sutil.InstanceLabel] = c.name
-	c.name = c.name + "-" + c.commonLabels[k8sutil.NameLabel]
+	return c
+}
+
+// K8sConfig overrides the default K8s options for Observatorium API.
+func (c *observatoriumAPI) K8sConfig(opts ...k8sutil.DeploymentOption) *observatoriumAPI {
+	for _, o := range opts {
+		o(&c.DeploymentGenericConfig)
+	}
+
+	c.CommonLabels[k8sutil.InstanceLabel] = c.Name
+	c.Name = c.Name + "-" + c.CommonLabels[k8sutil.NameLabel]
 
 	return c
 }
@@ -220,7 +232,7 @@ func NewObservatoriumAPI(opts ...ObservatoriumAPIOption) *observatoriumAPI {
 // This provides the ability to override options of the returned manifests
 // in a specific manner (in case the exported ObservatoriumAPIOption functions do not suffice).
 func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.ObjectMap {
-	if c.image == "" || c.logLevel == "" || c.name == "" {
+	if c.Image == "" || c.logLevel == "" || c.Name == "" {
 		mimic.Panicf("required params missing")
 	}
 
@@ -229,16 +241,16 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 	}
 
 	podLabelSelectors := make(map[string]string)
-	for k, v := range c.commonLabels {
+	for k, v := range c.CommonLabels {
 		podLabelSelectors[k] = v
 	}
 
-	podLabelSelectors[k8sutil.VersionLabel] = c.imageTag
+	podLabelSelectors[k8sutil.VersionLabel] = c.ImageTag
 
 	commonObjectMeta := metav1.ObjectMeta{
-		Name:      c.name,
-		Labels:    c.commonLabels,
-		Namespace: c.namespace,
+		Name:      c.Name,
+		Labels:    c.CommonLabels,
+		Namespace: c.Namespace,
 	}
 
 	// Instantiate service account.
@@ -263,7 +275,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 		StringData: c.tenantsSecret,
 	}
 
-	apiArgs := k8sutil.ArgList(
+	apiArgs := k8sutil.ArgList([]string{
 		k8sutil.FlagArg("web.listen", "0.0.0.0:8080"),
 		k8sutil.FlagArg("web.internal.listen", "0.0.0.0:8081"),
 		k8sutil.FlagArg("grpc.listen", "0.0.0.0:8090"),
@@ -274,18 +286,18 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 
 		k8sutil.FlagArg("middleware.rate-limiter.grpc-address", c.rateLimiter),
 
-		k8sutil.FlagArg("metrics.read.endpoint", c.metricsRead),
-		k8sutil.FlagArg("metrics.write.endpoint", c.metricsWrite),
-		k8sutil.FlagArg("metrics.rules.endpoint", c.metricsRules),
+		k8sutil.FlagArg("metrics.read.endpoint", c.metrics.ReadEndpoint),
+		k8sutil.FlagArg("metrics.write.endpoint", c.metrics.WriteEndpoint),
+		k8sutil.FlagArg("metrics.rules.endpoint", c.metrics.RulesEndpoint),
 
-		k8sutil.FlagArg("logs.read.endpoint", c.logsRead),
-		k8sutil.FlagArg("logs.tail.endpoint", c.logsTail),
-		k8sutil.FlagArg("logs.write.endpoint", c.logsWrite),
-		k8sutil.FlagArg("logs.rules.endpoint", c.logsRules),
+		k8sutil.FlagArg("logs.read.endpoint", c.logs.ReadEndpoint),
+		k8sutil.FlagArg("logs.tail.endpoint", c.logs.TailEndpoint),
+		k8sutil.FlagArg("logs.write.endpoint", c.logs.WriteEndpoint),
+		k8sutil.FlagArg("logs.rules.endpoint", c.logs.RulesEndpoint),
 
-		k8sutil.FlagArg("traces.write.endpoint", c.tracesWrite),
-		k8sutil.FlagArg("experimental.traces.read.endpoint-template", c.tracesRead),
-	)
+		k8sutil.FlagArg("traces.write.endpoint", c.traces.WriteEndpoint),
+		k8sutil.FlagArg("experimental.traces.read.endpoint-template", c.traces.ReadEndpoint),
+	})
 
 	apiArgs = append(apiArgs, c.additionalAPIArgs...)
 
@@ -293,8 +305,8 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 	observatoriumAPIContainer := corev1.Container{
 		Name:            "observatorium-api",
 		Args:            apiArgs,
-		Image:           fmt.Sprintf("%s:%s", c.image, c.imageTag),
-		ImagePullPolicy: c.imagePullPolicy,
+		Image:           fmt.Sprintf("%s:%s", c.Image, c.ImageTag),
+		ImagePullPolicy: c.ImagePullPolicy,
 		Ports: []corev1.ContainerPort{
 			{
 				Name:          "grpc-public",
@@ -309,29 +321,9 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 				ContainerPort: 8080,
 			},
 		},
-		Resources: c.apiPodResources,
-		LivenessProbe: &corev1.Probe{
-			FailureThreshold: 10,
-			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/live",
-					Port:   intstr.FromInt(8080),
-					Scheme: corev1.URISchemeHTTP,
-				},
-			},
-			PeriodSeconds: 30,
-		},
-		ReadinessProbe: &corev1.Probe{
-			FailureThreshold: 12,
-			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/ready",
-					Port:   intstr.FromInt(8081),
-					Scheme: corev1.URISchemeHTTP,
-				},
-			},
-			PeriodSeconds: 5,
-		},
+		Resources:      c.PodResources,
+		LivenessProbe:  &c.LivenessProbe,
+		ReadinessProbe: &c.ReadinessProbe,
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				MountPath: "/etc/observatorium/rbac.yaml",
@@ -350,7 +342,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 
 	// Attach any configured sidecars.
 	containers := []corev1.Container{observatoriumAPIContainer}
-	containers = append(containers, c.sidecars.Sidecars...)
+	containers = append(containers, c.Extras.Sidecars...)
 	// Attach any configured volumes.
 	volumes := []corev1.Volume{
 		{
@@ -372,31 +364,25 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 			},
 		},
 	}
-	volumes = append(volumes, c.sidecars.AdditionalPodVolumes...)
+	volumes = append(volumes, c.Extras.AdditionalPodVolumes...)
 
-	// Pointers for deployment strategy.
-	maxSurge := intstr.FromInt(0)
-	maxUnavail := intstr.FromInt(1)
 	apiDeployment := appsv1.Deployment{
 		TypeMeta:   k8sutil.DeploymentMeta,
 		ObjectMeta: commonObjectMeta,
 		Spec: appsv1.DeploymentSpec{
-			Replicas: swag.Int32(c.replicas),
+			Replicas: &[]int32{c.Replicas}[0],
 			Selector: &metav1.LabelSelector{
 				MatchLabels: podLabelSelectors,
 			},
-			Strategy: appsv1.DeploymentStrategy{
-				RollingUpdate: &appsv1.RollingUpdateDeployment{
-					MaxSurge:       &maxSurge,
-					MaxUnavailable: &maxUnavail,
-				},
-			},
+			Strategy: c.DeploymentStrategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:    c.commonLabels,
-					Namespace: c.namespace,
+					Labels:    c.CommonLabels,
+					Namespace: c.Namespace,
 				},
 				Spec: corev1.PodSpec{
+					SecurityContext:    &c.SecurityContext,
+					Affinity:           &c.Affinity,
 					Containers:         containers,
 					ServiceAccountName: apiServiceAccount.Name,
 					Volumes:            volumes,
@@ -405,32 +391,28 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 		},
 	}
 
-	// Pointers for app protocol. K8s does not have types for it.
-	h2cProtocol := "h2c"
-	httpProtocol := "http"
-
 	// Attach any configured ports.
 	ports := []corev1.ServicePort{
 		{
-			AppProtocol: &h2cProtocol,
+			AppProtocol: &[]string{"h2c"}[0],
 			Name:        "grpc-public",
 			Port:        8090,
 			TargetPort:  intstr.FromInt(8090),
 		},
 		{
-			AppProtocol: &httpProtocol,
+			AppProtocol: &[]string{"http"}[0],
 			Name:        "internal",
 			Port:        8081,
 			TargetPort:  intstr.FromInt(8081),
 		},
 		{
-			AppProtocol: &httpProtocol,
+			AppProtocol: &[]string{"http"}[0],
 			Name:        "public",
 			Port:        8080,
 			TargetPort:  intstr.FromInt(8080),
 		},
 	}
-	ports = append(ports, c.sidecars.AdditionalServicePorts...)
+	ports = append(ports, c.Extras.AdditionalServicePorts...)
 
 	// Instantiate API Service.
 	apiService := corev1.Service{
@@ -451,19 +433,19 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 	}
 
 	// If enabled, instantiate API Service.
-	if c.enableServiceMonitor {
+	if c.EnableServiceMonitor {
 		endpoints := []monv1.Endpoint{
 			{
 				Port: "internal",
 			},
 		}
-		endpoints = append(endpoints, c.sidecars.AdditionalServiceMonitorPorts...)
+		endpoints = append(endpoints, c.Extras.AdditionalServiceMonitorPorts...)
 
 		apiServiceMonitor := monv1.ServiceMonitor{
 			TypeMeta: k8sutil.ServiceMonitorMeta,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      c.name,
-				Namespace: c.namespace,
+				Name:      c.Name,
+				Namespace: c.Namespace,
 				Labels: map[string]string{
 					"name": "observatorium-api",
 				},
@@ -471,10 +453,10 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 			Spec: monv1.ServiceMonitorSpec{
 				Endpoints: endpoints,
 				NamespaceSelector: monv1.NamespaceSelector{
-					MatchNames: []string{c.namespace},
+					MatchNames: []string{c.Namespace},
 				},
 				Selector: metav1.LabelSelector{
-					MatchLabels: c.commonLabels,
+					MatchLabels: c.CommonLabels,
 				},
 			},
 		}
