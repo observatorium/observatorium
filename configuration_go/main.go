@@ -6,9 +6,11 @@ import (
 	"github.com/bwplotka/mimic"
 	"github.com/ghodss/yaml"
 	api "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/observatoriumapi"
+	"github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/thanos/compactor"
 	query "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/thanos/query"
 	"github.com/observatorium/observatorium/configuration_go/generator"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	k8sutilv2 "github.com/observatorium/observatorium/configuration_go/k8sutil/v2"
 	"github.com/observatorium/observatorium/configuration_go/openshift"
 	apiprovider "github.com/observatorium/observatorium/configuration_go/providers/api"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
@@ -288,6 +290,29 @@ func main() {
 			k8sutil.WithExtras(sidecar),
 		).Manifests(),
 		"config-w-sidecar",
+	)
+
+	// Thanos Compactor sample deployment.
+	compactorOptions := &compactor.CompactorOptions{
+		BlockViewerGlobalSyncBlockInterval: time.Second * 5,
+	}
+	kubeCfg := &k8sutilv2.CommonConfig{
+		Name:      "observatorium-thanos-compact",
+		Namespace: "observatorium",
+	}
+	cpt := compactor.NewCompactor(compactorOptions, kubeCfg)
+
+	cpt.AddServiceMonitor()
+	generator.GenerateWithMimic(
+		g,
+		cpt.K8sConfig(
+			k8sutilv2.WithImage("quay.io/thanos-io/thanos", "v0.31"),
+			k8sutilv2.WithReplicas(3),
+			k8sutilv2.WithCPUResources("2", "3"),
+			k8sutilv2.WithMemoryResources("2000Mi", "3000Mi"),
+			k8sutilv2.WithSideCars(dummyContainer),
+		).Manifests(),
+		"compactor-test",
 	)
 
 	// Example 3
