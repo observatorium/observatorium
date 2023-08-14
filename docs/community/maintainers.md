@@ -15,3 +15,4 @@
 | Saswata Mukherjee   | saswata.mukhe@gmail.com | `@Saswata Mukherjee` | [@saswatamcode](https://github.com/saswatamcode)   | Red Hat       |
 | Douglas Camata      | d.camata@gmail.com      | `@douglascamata`     | [@douglascamata](https://github.com/douglascamata) | Red Hat       |
 | Pavol Loffay        | p.loffay@gmail.com      | `@Pavol Loffay`      | [@pavolloffay](https://github.com/pavolloffay)     | Red Hat       |
+| Robert Jacob        | rojacob@redhat.com      | `@xperimental`       | [@xperimental](https://github.com/xperimental)     | Red Hat       |
