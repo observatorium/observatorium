@@ -16,3 +16,4 @@
 | Douglas Camata      | d.camata@gmail.com      | `@douglascamata`     | [@douglascamata](https://github.com/douglascamata) | Red Hat       |
 | Pavol Loffay        | p.loffay@gmail.com      | `@Pavol Loffay`      | [@pavolloffay](https://github.com/pavolloffay)     | Red Hat       |
 | Robert Jacob        | rojacob@redhat.com      | `@xperimental`       | [@xperimental](https://github.com/xperimental)     | Red Hat       |
+| Philip Gough        | pgough@redhat.com       | `@Philip Gough `     | [@pgough](https://github.com/philipgough)          | Red Hat       |
