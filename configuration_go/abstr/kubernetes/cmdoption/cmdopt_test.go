@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/clioption"
+	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 )
 
 type SubStruct struct {

@@ -295,23 +295,23 @@ func main() {
 	// Thanos Compactor sample deployment.
 	compactorOptions := &compactor.CompactorOptions{
 		BlockViewerGlobalSyncBlockInterval: time.Second * 5,
+		ObjstoreConfig:                     "$(OBJSTORE_CONFIG)",
 	}
-	kubeCfg := &k8sutilv2.CommonConfig{
-		Name:      "observatorium-thanos-compact",
-		Namespace: "observatorium",
+
+	kubeCfg := compactor.DefaultK8sConfig()
+	kubeCfg.Replicas = 3
+	kubeCfg.Env = []corev1.EnvVar{
+		k8sutilv2.NewEnvFromSecret("OBJSTORE_CONFIG", "object_store_config", "thanos.yaml"),
+		k8sutilv2.NewEnvFromSecret("AWS_ACCESS_KEY_ID", "aws_access_key_id", "name"),
+		k8sutilv2.NewEnvFromSecret("AWS_SECRET_ACCESS_KEY", "aws_secret_access_key", "name"),
+		k8sutilv2.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 	}
+	kubeCfg.ServiceMonitor.Labels["prometheus"] = "app-sre"
 	cpt := compactor.NewCompactor(compactorOptions, kubeCfg)
 
-	cpt.AddServiceMonitor()
 	generator.GenerateWithMimic(
 		g,
-		cpt.K8sConfig(
-			k8sutilv2.WithImage("quay.io/thanos-io/thanos", "v0.31"),
-			k8sutilv2.WithReplicas(3),
-			k8sutilv2.WithCPUResources("2", "3"),
-			k8sutilv2.WithMemoryResources("2000Mi", "3000Mi"),
-			k8sutilv2.WithSideCars(dummyContainer),
-		).Manifests(),
+		cpt.Manifests(),
 		"compactor-test",
 	)
 

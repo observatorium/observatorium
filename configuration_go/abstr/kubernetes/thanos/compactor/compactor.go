@@ -2,23 +2,28 @@ package compactor
 
 import (
 	"fmt"
+	"maps"
 	"net"
 	"time"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/clioption"
-	k8sutil "github.com/observatorium/observatorium/configuration_go/k8sutil"
+	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
+	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	k8sutilv2 "github.com/observatorium/observatorium/configuration_go/k8sutil/v2"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
-	DeploymentKey     string = "compactor-deployment"
-	ServiceKey        string = "compactor-service"
-	ServiceMonitorKey string = "compactor-service-monitor"
+	DeploymentKey       string = "compactor-statefulset"
+	ServiceKey          string = "compactor-service"
+	ServiceAccountKey   string = "compactor-serviceAccount"
+	ServiceMonitorKey   string = "compactor-service-monitor"
+	dataVolumeName      string = "data"
+	defaultHTTPPort     int    = 10902
+	thanosContainerName string = "thanos"
 )
 
 // CompactorOptions represents the options/flags for the compactor.
@@ -67,72 +72,201 @@ type CompactorOptions struct {
 	WebRoutePrefix                     string                 `opt:"web.route-prefix"`
 }
 
-type Compactor struct {
-	KubeCfg *k8sutilv2.CommonConfig
-	// Deployment *appsv1.Deployment
-	Options   *CompactorOptions
-	manifests k8sutil.ObjectMap
-	labels    map[string]string
+// Storage represents the storage configuration for the compactor.
+type Storage struct {
+	Quantity string
+	Class    string
 }
 
-func NewCompactor(options *CompactorOptions, kCfg *k8sutilv2.CommonConfig) *Compactor {
+// K8sConfig represents the Kubernetes configuration for the compactor.
+type K8sConfig struct {
+	Storage Storage
+	k8sutilv2.CommonConfig
+}
 
-	ret := &Compactor{
-		Options:   options,
-		KubeCfg:   kCfg,
-		manifests: k8sutil.ObjectMap{},
-		labels: map[string]string{
-			k8sutil.ComponentLabel: "database-compactor",
-			k8sutil.InstanceLabel:  "observatorium",
-			k8sutil.NameLabel:      "thanos-compact",
-			k8sutil.PartOfLabel:    "observatorium",
+// DefaultK8sConfig returns the default configuration for the compactor.
+// It can be used as a base for further customization.
+func DefaultK8sConfig() *K8sConfig {
+	labels := map[string]string{
+		k8sutil.ComponentLabel: "database-compactor",
+		k8sutil.InstanceLabel:  "observatorium",
+		k8sutil.NameLabel:      "thanos-compact",
+		k8sutil.PartOfLabel:    "observatorium",
+	}
+	ret := &K8sConfig{
+		Storage: Storage{
+			Quantity: "50Gi",
+			Class:    "gp2",
+		},
+		CommonConfig: k8sutilv2.CommonConfig{
+			Image:                         "quay.io/thanos/thanos",
+			ImageTag:                      "v0.31.0",
+			Name:                          "thanos-compact",
+			Namespace:                     "observatorium",
+			Labels:                        labels,
+			Replicas:                      1,
+			TerminationGracePeriodSeconds: 120,
+			ImagePullPolicy:               corev1.PullIfNotPresent,
+			SecurityContext:               *k8sutilv2.NewDefaultSecurityContext(),
+			ServiceMonitor:                k8sutilv2.ServiceMonitorConfig{Enabled: true, Namespace: "observatorium", Labels: maps.Clone(labels)},
+			LivenessProbe: k8sutilv2.ProbeConfig{
+				FailureThreshold: 4,
+				PeriodSeconds:    30,
+			},
+			ReadinessProbe: k8sutilv2.ProbeConfig{
+				FailureThreshold: 20,
+				PeriodSeconds:    5,
+			},
+			Resources: k8sutilv2.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
 		},
 	}
 
-	ret.makeDeployment()
+	ret.Affinity = k8sutilv2.NewAntiAffinity(
+		[]string{ret.Namespace},
+		map[string]string{
+			k8sutil.NameLabel:     ret.Labels[k8sutil.NameLabel],
+			k8sutil.InstanceLabel: ret.Labels[k8sutil.InstanceLabel],
+		},
+	)
 
 	return ret
 }
 
-// K8sConfig overrides the default K8s options for Thanos Query.
-func (c *Compactor) K8sConfig(opts ...k8sutilv2.DeploymentModifier) *Compactor {
-	for _, o := range opts {
-		o(c.getManifest(DeploymentKey).(*appsv1.Deployment))
+// Compactor represents the compactor. It contains both the compactor options and the Kubernetes configuration.
+type Compactor struct {
+	kubeCfg   *K8sConfig
+	options   *CompactorOptions
+	manifests k8sutil.ObjectMap
+}
+
+// NewCompactor returns a new compactor.
+// It is used to create the kubernetes manifests for deploying the compactor.
+func NewCompactor(options *CompactorOptions, kCfg *K8sConfig) *Compactor {
+	k8sCfg := kCfg
+	if k8sCfg == nil {
+		k8sCfg = DefaultK8sConfig()
 	}
 
-	return c
+	ret := &Compactor{
+		options:   options,
+		kubeCfg:   k8sCfg,
+		manifests: k8sutil.ObjectMap{},
+	}
+
+	return ret
 }
 
-func (c *Compactor) AddServiceMonitor() {
-	sm := k8sutilv2.NewServiceMonitor(c.KubeCfg, c.KubeCfg.Labels)
-	c.manifests[ServiceMonitorKey] = sm
-}
-
+// Manifests returns the kubernetes manifests for deploying the compactor.
 func (c *Compactor) Manifests() k8sutil.ObjectMap {
+	c.makeStatefulSet()
+	c.makeServiceAccount()
+	if c.kubeCfg.ServiceMonitor.Enabled {
+		sm := k8sutilv2.NewServiceMonitor(c.kubeCfg.Name, c.kubeCfg.ServiceMonitor.Namespace, c.kubeCfg.ServiceMonitor.Labels, c.kubeCfg.Labels)
+		c.manifests[ServiceMonitorKey] = sm
+	}
 	return c.manifests
 }
 
-func (c *Compactor) getManifest(key string) runtime.Object {
-	value, ok := c.manifests[key]
-	if !ok {
-		panic(fmt.Errorf("no manifest found for key %s", key))
+func (c *Compactor) makeServiceAccount() {
+	queryServiceAccount := corev1.ServiceAccount{
+		TypeMeta: k8sutil.ServiceAccountMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.kubeCfg.Name,
+			Labels:    c.kubeCfg.Labels,
+			Namespace: c.kubeCfg.Namespace,
+		},
 	}
 
-	return value
+	c.manifests[ServiceKey] = &queryServiceAccount
 }
 
-func (c *Compactor) makeDeployment() {
-	// dep := k8sutilv2.DeploymentGenericConfig{}
+func (c *Compactor) makeStatefulSet() {
+	podTemplateSpec := c.makePodTemplateSpec()
 
-	httpPort := 10902
-	if c.Options.HttpAddress.Port != 0 {
-		httpPort = c.Options.HttpAddress.Port
+	labelsWithVersion := maps.Clone(c.kubeCfg.Labels)
+	labelsWithVersion[k8sutil.VersionLabel] = c.kubeCfg.ImageTag
+
+	commonObjectMeta := metav1.ObjectMeta{
+		Name:      c.kubeCfg.Name,
+		Labels:    labelsWithVersion,
+		Namespace: c.kubeCfg.Namespace,
 	}
 
-	compactorContainer := corev1.Container{
-		Name:  "thanos",
-		Image: "quay.io/thanos/thanos:v0.31.0",
-		Args:  []string{"compact"},
+	volumeClaim := corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dataVolumeName,
+			Namespace: c.kubeCfg.Namespace,
+			Labels:    c.kubeCfg.Labels,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				"ReadWriteOnce",
+			},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					"storage": resource.MustParse(c.kubeCfg.Storage.Quantity),
+				},
+			},
+			StorageClassName: &c.kubeCfg.Storage.Class,
+		},
+	}
+
+	statefulSet := appsv1.StatefulSet{
+		TypeMeta:   k8sutil.StatefulSetMeta,
+		ObjectMeta: commonObjectMeta,
+		Spec: appsv1.StatefulSetSpec{
+			Replicas: int32Ptr(c.kubeCfg.Replicas),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: c.kubeCfg.Labels,
+			},
+			ServiceName:          c.kubeCfg.Name,
+			VolumeClaimTemplates: []corev1.PersistentVolumeClaim{volumeClaim},
+			Template:             podTemplateSpec,
+		},
+	}
+
+	c.manifests[DeploymentKey] = &statefulSet
+}
+
+func (c *Compactor) makePodTemplateSpec() corev1.PodTemplateSpec {
+	containers := []corev1.Container{c.makeCompactorContainer()}
+
+	labelsWithVersion := maps.Clone(c.kubeCfg.Labels)
+	labelsWithVersion[k8sutil.VersionLabel] = c.kubeCfg.ImageTag
+
+	return corev1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels:    labelsWithVersion,
+			Namespace: c.kubeCfg.Namespace,
+		},
+		Spec: corev1.PodSpec{
+			TerminationGracePeriodSeconds: int64Ptr(c.kubeCfg.TerminationGracePeriodSeconds),
+			Affinity:                      c.kubeCfg.Affinity,
+			Containers:                    containers,
+			ServiceAccountName:            c.kubeCfg.Name,
+			SecurityContext:               &c.kubeCfg.SecurityContext,
+			NodeSelector: map[string]string{
+				k8sutil.OsLabel: k8sutil.LinuxOs,
+			},
+		},
+	}
+}
+
+func (c *Compactor) makeCompactorContainer() corev1.Container {
+	httpPort := defaultHTTPPort
+	if c.options.HttpAddress.Port != 0 {
+		httpPort = c.options.HttpAddress.Port
+	}
+
+	args := []string{"compact"}
+	args = append(args, cmdopt.GetOpts(c.options)...)
+
+	ret := corev1.Container{
+		Name:                     thanosContainerName,
+		Image:                    fmt.Sprintf("%s:%s", c.kubeCfg.Image, c.kubeCfg.ImageTag),
+		ImagePullPolicy:          c.kubeCfg.ImagePullPolicy,
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		Args:                     args,
 		Ports: []corev1.ContainerPort{
 			{
 				Name:          "http",
@@ -140,41 +274,24 @@ func (c *Compactor) makeDeployment() {
 				Protocol:      corev1.ProtocolTCP,
 			},
 		},
-		LivenessProbe:  k8sutilv2.NewProb("/-/healthy", httpPort, 4, 30),
-		ReadinessProbe: k8sutilv2.NewProb("/-/ready", httpPort, 20, 5),
+		LivenessProbe:  k8sutilv2.NewProbe("/-/healthy", httpPort, c.kubeCfg.LivenessProbe),
+		ReadinessProbe: k8sutilv2.NewProbe("/-/ready", httpPort, c.kubeCfg.ReadinessProbe),
+		Resources:      c.kubeCfg.Resources,
+		Env:            c.kubeCfg.Env,
 	}
 
-	compactorContainer.Args = append(compactorContainer.Args, cmdopt.GetOpts(c.Options)...)
-
-	// Attach any configured sidecars.
-	containers := []corev1.Container{compactorContainer}
-
-	deployment := appsv1.Deployment{
-		TypeMeta: k8sutil.DeploymentMeta,
-		// ObjectMeta: commonObjectMeta,
-		Spec: appsv1.DeploymentSpec{
-			Replicas: int32Ptr(1),
-			Selector: &metav1.LabelSelector{
-				MatchLabels: c.labels,
+	// If a data directory is specified, mount the volume.
+	if c.options.DataDir != "" {
+		ret.VolumeMounts = []corev1.VolumeMount{
+			{
+				Name:      dataVolumeName,
+				MountPath: c.options.DataDir,
+				ReadOnly:  false,
 			},
-			// Strategy: q.DeploymentStrategy,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels:    c.KubeCfg.Labels,
-					Namespace: c.KubeCfg.Namespace,
-				},
-				Spec: corev1.PodSpec{
-					TerminationGracePeriodSeconds: int64Ptr(120),
-					// Affinity:           &q.Affinity,
-					Containers: containers,
-					// ServiceAccountName: queryServiceAccount.Name,
-					SecurityContext: k8sutilv2.NewSecurityContext(),
-				},
-			},
-		},
+		}
 	}
 
-	c.manifests[DeploymentKey] = &deployment
+	return ret
 }
 
 func int32Ptr(i int32) *int32 { return &i }

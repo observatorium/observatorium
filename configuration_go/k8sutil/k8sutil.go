@@ -27,6 +27,11 @@ var DeploymentMeta = metav1.TypeMeta{
 	APIVersion: "apps/v1",
 }
 
+var StatefulSetMeta = metav1.TypeMeta{
+	Kind:       "StatefulSet",
+	APIVersion: "apps/v1",
+}
+
 var SecretMeta = metav1.TypeMeta{
 	Kind:       "Secret",
 	APIVersion: "v1",
@@ -60,6 +65,9 @@ const NameLabel string = "app.kubernetes.io/name"
 const PartOfLabel string = "app.kubernetes.io/part-of"
 const VersionLabel string = "app.kubernetes.io/version"
 const ManagedByLabel string = "app.kubernetes.io/managed-by"
+const HostnameLabel string = "kubernetes.io/hostname"
+const OsLabel string = "kubernetes.io/os"
+const LinuxOs string = "linux"
 
 // FlagArg returns consistent pattern flags as args for Deployment/StatefulSet containers.
 // Returns empty string if flag name or value is empty or if flag value is a zero/default value.

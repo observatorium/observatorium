@@ -4,9 +4,12 @@ kind: ServiceMonitor
 metadata:
   creationTimestamp: null
   labels:
-    app.kubernetes.io/instance: observatorium-xyz
-    app.kubernetes.io/name: thanos
-  name: observatorium-thanos-compact
+    app.kubernetes.io/component: database-compactor
+    app.kubernetes.io/instance: observatorium
+    app.kubernetes.io/name: thanos-compact
+    app.kubernetes.io/part-of: observatorium
+    prometheus: app-sre
+  name: thanos-compact
   namespace: observatorium
 spec:
   endpoints:
@@ -23,5 +26,7 @@ spec:
   namespaceSelector: {}
   selector:
     matchLabels:
-      app.kubernetes.io/instance: observatorium-xyz
-      app.kubernetes.io/name: thanos
+      app.kubernetes.io/component: database-compactor
+      app.kubernetes.io/instance: observatorium
+      app.kubernetes.io/name: thanos-compact
+      app.kubernetes.io/part-of: observatorium
