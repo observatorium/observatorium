@@ -25,13 +25,6 @@ const (
 	thanosContainerName string = "thanos"
 )
 
-type manifestKeys struct {
-	Deployment     string
-	Service        string
-	ServiceAccount string
-	ServiceMonitor string
-}
-
 // CompactorOptions represents the options/flags for the compactor.
 // See https://thanos.io/tip/components/compact.md/#flags for details.
 type CompactorOptions struct {
@@ -145,6 +138,14 @@ func DefaultK8sConfig() *K8sConfig {
 	)
 
 	return ret
+}
+
+// manifestKeys represents the the filenames used to generate the kubernetes manifests.
+type manifestKeys struct {
+	Deployment     string
+	Service        string
+	ServiceAccount string
+	ServiceMonitor string
 }
 
 // Compactor represents the compactor. It contains both the compactor options and the Kubernetes configuration.
