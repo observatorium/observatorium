@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/bwplotka/mimic"
@@ -298,6 +299,8 @@ func main() {
 		ObjstoreConfig:                     "$(OBJSTORE_CONFIG)",
 	}
 
+	httpsPort := int32(8443)
+
 	kubeCfg := compactor.DefaultK8sConfig()
 	kubeCfg.Replicas = 3
 	kubeCfg.Env = []corev1.EnvVar{
@@ -307,7 +310,27 @@ func main() {
 		k8sutilv2.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 	}
 	kubeCfg.ServiceMonitor.Labels["prometheus"] = "app-sre"
+
+	// OAuth proxy side car.
+	oauthProxy := makeOauthProxyContainer(httpsPort, compactorOptions.HttpAddress.Port, "compactor")
+
+	kubeCfg.SideCars = []corev1.Container{oauthProxy}
+	kubeCfg.PodVolumes = []corev1.Volume{
+		k8sutilv2.NewPodVolumeFromSecret("compact-tls", "compact-tls"),
+		k8sutilv2.NewPodVolumeFromSecret("compact-proxy", "compact-proxy"),
+	}
+	kubeCfg.ServicePorts = []corev1.ServicePort{
+		{
+			Name:       "https",
+			Port:       httpsPort,
+			TargetPort: intstr.FromInt(int(httpsPort)),
+		},
+	}
+
 	cpt := compactor.NewCompactor(compactorOptions, kubeCfg)
+
+	serviceManifest := cpt.Manifests()[cpt.ManifestKeys.Service].(*corev1.Service)
+	addMapValue(serviceManifest.ObjectMeta.Annotations, "service.alpha.openshift.io/serving-cert-secret-name", "compact-tls")
 
 	generator.GenerateWithMimic(
 		g,
@@ -373,4 +396,51 @@ func main() {
 		),
 		"openshift-config",
 	)
+}
+
+func makeOauthProxyContainer(httpsPort int32, upstreamPort int, serviceAccount string) corev1.Container {
+	return corev1.Container{
+		Name:            "oauth-proxy",
+		Image:           "quay.io/openshift/origin-oauth-proxy:4.13.0",
+		ImagePullPolicy: corev1.PullIfNotPresent,
+		Args: []string{
+			"-provider=openshift",
+			fmt.Sprintf("-https-address=:%d", httpsPort),
+			fmt.Sprintf("-upstream=http://localhost:%d", upstreamPort),
+			fmt.Sprintf("-openshift-service-account=%s", serviceAccount),
+			"-tls-cert=/etc/tls/private/tls.crt",
+			"-tls-key=/etc/tls/private/tls.key",
+			"-client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token",
+			"-cookie-secret-file=/etc/proxy/secrets/session_secret",
+			"-openshift-ca=/etc/pki/tls/cert.pem",
+			"-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+		},
+		Ports: []corev1.ContainerPort{
+			{
+				Name:          "htttps",
+				ContainerPort: httpsPort,
+			},
+		},
+		Resources: k8sutilv2.NewResourcesRequirements("25m", "50m", "200Mi", "200Mi"),
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				MountPath: "/etc/tls/private",
+				Name:      "compact-tls",
+				ReadOnly:  false,
+			},
+			{
+				MountPath: "/etc/proxy/secrets",
+				Name:      "compact-proxy",
+				ReadOnly:  false,
+			},
+		},
+	}
+}
+
+func addMapValue(m map[string]string, key, value string) {
+	if m == nil {
+		m = make(map[string]string)
+	}
+
+	m[key] = value
 }

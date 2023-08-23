@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	tagName = "opt"
-	noVal   = "noval"
+	tagName              = "opt"
+	noValModifier        = "noval"
+	singleHyphenModifier = "single-hyphen"
 )
 
 type CmdOptions struct{}
@@ -35,7 +36,7 @@ func GetOpts(obj interface{}) []string {
 			continue
 		}
 
-		optName := getOptName(optTagVals[0])
+		optName := getOptName(optTagVals)
 		if optName == "" {
 			continue
 		}
@@ -61,14 +62,19 @@ func GetOpts(obj interface{}) []string {
 	return ret
 }
 
-func getOptName(opt string) string {
-	switch len(opt) {
+func getOptName(opt []string) string {
+
+	switch len(opt[0]) {
 	case 0:
 		return ""
 	case 1:
-		return "-" + opt
+		return "-" + opt[0]
 	default:
-		return "--" + opt
+		if isSingleHyphen(opt[1:]) {
+			return "-" + opt[0]
+		}
+
+		return "--" + opt[0]
 	}
 }
 
@@ -139,7 +145,17 @@ func getOptValue(kind reflect.Kind, field reflect.Value) []string {
 
 func isNoVal(optVals []string, kind reflect.Kind, v reflect.Value) bool {
 	for _, optVal := range optVals {
-		if optVal == noVal && kind == reflect.Bool && v.Bool() {
+		if optVal == noValModifier && kind == reflect.Bool && v.Bool() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isSingleHyphen(optVals []string) bool {
+	for _, optVal := range optVals {
+		if optVal == singleHyphenModifier {
 			return true
 		}
 	}

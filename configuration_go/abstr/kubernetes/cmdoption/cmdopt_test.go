@@ -16,14 +16,15 @@ func (s SubStruct) String() string {
 }
 
 type TestOptions struct {
-	String   string        `opt:"string"`
-	Int      int           `opt:"int"`
-	Float    float64       `opt:"float"`
-	Bool     bool          `opt:"bool"`
-	Duration time.Duration `opt:"duration"`
-	Sub      SubStruct     `opt:"sub"`
-	NoValue  bool          `opt:"no-value,noval"`
-	Repeat   []string      `opt:"repeat"`
+	String       string        `opt:"string"`
+	Int          int           `opt:"int"`
+	Float        float64       `opt:"float"`
+	Bool         bool          `opt:"bool"`
+	Duration     time.Duration `opt:"duration"`
+	Sub          SubStruct     `opt:"sub"`
+	NoValue      bool          `opt:"no-value,noval"`
+	Repeat       []string      `opt:"repeat"`
+	SingleHyphen int           `opt:"single,single-hyphen"`
 }
 
 func TestCmdOptions(t *testing.T) {
@@ -84,6 +85,12 @@ func TestCmdOptions(t *testing.T) {
 				Repeat: []string{"repeat1", "repeat2"},
 			},
 			expect: []string{"--repeat=repeat1", "--repeat=repeat2"},
+		},
+		"single-hyphen": {
+			options: TestOptions{
+				SingleHyphen: 1,
+			},
+			expect: []string{"-single=1"},
 		},
 		"many": {
 			options: TestOptions{

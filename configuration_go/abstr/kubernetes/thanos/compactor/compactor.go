@@ -14,17 +14,23 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
-	DeploymentKey       string = "compactor-statefulset"
-	ServiceKey          string = "compactor-service"
-	ServiceAccountKey   string = "compactor-serviceAccount"
-	ServiceMonitorKey   string = "compactor-service-monitor"
 	dataVolumeName      string = "data"
 	defaultHTTPPort     int    = 10902
+	defaultNamespace    string = "observatorium"
+	servicePortName     string = "http"
 	thanosContainerName string = "thanos"
 )
+
+type manifestKeys struct {
+	Deployment     string
+	Service        string
+	ServiceAccount string
+	ServiceMonitor string
+}
 
 // CompactorOptions represents the options/flags for the compactor.
 // See https://thanos.io/tip/components/compact.md/#flags for details.
@@ -72,15 +78,9 @@ type CompactorOptions struct {
 	WebRoutePrefix                     string                 `opt:"web.route-prefix"`
 }
 
-// Storage represents the storage configuration for the compactor.
-type Storage struct {
-	Quantity string
-	Class    string
-}
-
 // K8sConfig represents the Kubernetes configuration for the compactor.
 type K8sConfig struct {
-	Storage Storage
+	DataVolumeClaim *corev1.PersistentVolumeClaim
 	k8sutilv2.CommonConfig
 }
 
@@ -93,22 +93,37 @@ func DefaultK8sConfig() *K8sConfig {
 		k8sutil.NameLabel:      "thanos-compact",
 		k8sutil.PartOfLabel:    "observatorium",
 	}
+
 	ret := &K8sConfig{
-		Storage: Storage{
-			Quantity: "50Gi",
-			Class:    "gp2",
+		DataVolumeClaim: &corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      dataVolumeName,
+				Namespace: defaultNamespace,
+				Labels:    labels,
+			},
+			Spec: corev1.PersistentVolumeClaimSpec{
+				AccessModes: []corev1.PersistentVolumeAccessMode{
+					corev1.ReadWriteOnce,
+				},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceStorage: resource.MustParse("50Gi"),
+					},
+				},
+				StorageClassName: stringPtr("gp2-csi"),
+			},
 		},
 		CommonConfig: k8sutilv2.CommonConfig{
 			Image:                         "quay.io/thanos/thanos",
 			ImageTag:                      "v0.31.0",
 			Name:                          "thanos-compact",
-			Namespace:                     "observatorium",
+			Namespace:                     defaultNamespace,
 			Labels:                        labels,
 			Replicas:                      1,
 			TerminationGracePeriodSeconds: 120,
 			ImagePullPolicy:               corev1.PullIfNotPresent,
-			SecurityContext:               *k8sutilv2.NewDefaultSecurityContext(),
-			ServiceMonitor:                k8sutilv2.ServiceMonitorConfig{Enabled: true, Namespace: "observatorium", Labels: maps.Clone(labels)},
+			SecurityContext:               k8sutilv2.GetDefaultSecurityContext(),
+			ServiceMonitor:                k8sutilv2.ServiceMonitorConfig{Enabled: true, Namespace: defaultNamespace, Labels: maps.Clone(labels)},
 			LivenessProbe: k8sutilv2.ProbeConfig{
 				FailureThreshold: 4,
 				PeriodSeconds:    30,
@@ -134,6 +149,8 @@ func DefaultK8sConfig() *K8sConfig {
 
 // Compactor represents the compactor. It contains both the compactor options and the Kubernetes configuration.
 type Compactor struct {
+	ManifestKeys manifestKeys
+
 	kubeCfg   *K8sConfig
 	options   *CompactorOptions
 	manifests k8sutil.ObjectMap
@@ -148,6 +165,12 @@ func NewCompactor(options *CompactorOptions, kCfg *K8sConfig) *Compactor {
 	}
 
 	ret := &Compactor{
+		ManifestKeys: manifestKeys{
+			Deployment:     "compactor-statefulset",
+			Service:        "compactor-service",
+			ServiceAccount: "compactor-serviceAccount",
+			ServiceMonitor: "compactor-service-monitor",
+		},
 		options:   options,
 		kubeCfg:   k8sCfg,
 		manifests: k8sutil.ObjectMap{},
@@ -160,9 +183,10 @@ func NewCompactor(options *CompactorOptions, kCfg *K8sConfig) *Compactor {
 func (c *Compactor) Manifests() k8sutil.ObjectMap {
 	c.makeStatefulSet()
 	c.makeServiceAccount()
+	c.makeService()
+
 	if c.kubeCfg.ServiceMonitor.Enabled {
-		sm := k8sutilv2.NewServiceMonitor(c.kubeCfg.Name, c.kubeCfg.ServiceMonitor.Namespace, c.kubeCfg.ServiceMonitor.Labels, c.kubeCfg.Labels)
-		c.manifests[ServiceMonitorKey] = sm
+		c.makeServiceMonitor()
 	}
 	return c.manifests
 }
@@ -177,7 +201,67 @@ func (c *Compactor) makeServiceAccount() {
 		},
 	}
 
-	c.manifests[ServiceKey] = &queryServiceAccount
+	c.manifests[c.ManifestKeys.ServiceAccount] = &queryServiceAccount
+}
+
+func (c *Compactor) makeServiceMonitor() {
+	endpoints := []monv1.Endpoint{
+		{
+			Port:           servicePortName,
+			RelabelConfigs: k8sutilv2.GetDefaultServiceMonitorRelabelConfig(),
+		},
+	}
+
+	endpoints = append(endpoints, c.kubeCfg.ServiceMonitorEndpoints...)
+
+	serviceMonitor := monv1.ServiceMonitor{
+		TypeMeta: k8sutil.ServiceMonitorMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.kubeCfg.Name,
+			Namespace: c.kubeCfg.Namespace,
+			Labels:    c.kubeCfg.Labels,
+		},
+
+		Spec: monv1.ServiceMonitorSpec{
+			Endpoints: endpoints,
+			Selector: metav1.LabelSelector{
+				MatchLabels: c.kubeCfg.Labels,
+			},
+		},
+	}
+
+	c.manifests[c.ManifestKeys.ServiceMonitor] = &serviceMonitor
+}
+
+func (c *Compactor) makeService() {
+	httpPort := c.getHTTPPort()
+	ports := []corev1.ServicePort{
+		{
+			Name:       servicePortName,
+			Port:       int32(httpPort),
+			TargetPort: intstr.FromInt(httpPort),
+			Protocol:   corev1.ProtocolTCP,
+		},
+	}
+	ports = append(ports, c.kubeCfg.ServicePorts...)
+
+	labelsWithVersion := maps.Clone(c.kubeCfg.Labels)
+	labelsWithVersion[k8sutil.VersionLabel] = c.kubeCfg.ImageTag
+
+	service := corev1.Service{
+		TypeMeta: k8sutil.ServiceMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.kubeCfg.Name,
+			Labels:    labelsWithVersion,
+			Namespace: c.kubeCfg.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Ports:    ports,
+			Selector: c.kubeCfg.Labels,
+		},
+	}
+
+	c.manifests[c.ManifestKeys.Service] = &service
 }
 
 func (c *Compactor) makeStatefulSet() {
@@ -192,23 +276,9 @@ func (c *Compactor) makeStatefulSet() {
 		Namespace: c.kubeCfg.Namespace,
 	}
 
-	volumeClaim := corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      dataVolumeName,
-			Namespace: c.kubeCfg.Namespace,
-			Labels:    c.kubeCfg.Labels,
-		},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				"ReadWriteOnce",
-			},
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					"storage": resource.MustParse(c.kubeCfg.Storage.Quantity),
-				},
-			},
-			StorageClassName: &c.kubeCfg.Storage.Class,
-		},
+	var volumeClaims []corev1.PersistentVolumeClaim
+	if c.kubeCfg.DataVolumeClaim != nil {
+		volumeClaims = append(volumeClaims, *c.kubeCfg.DataVolumeClaim)
 	}
 
 	statefulSet := appsv1.StatefulSet{
@@ -220,16 +290,17 @@ func (c *Compactor) makeStatefulSet() {
 				MatchLabels: c.kubeCfg.Labels,
 			},
 			ServiceName:          c.kubeCfg.Name,
-			VolumeClaimTemplates: []corev1.PersistentVolumeClaim{volumeClaim},
+			VolumeClaimTemplates: volumeClaims,
 			Template:             podTemplateSpec,
 		},
 	}
 
-	c.manifests[DeploymentKey] = &statefulSet
+	c.manifests[c.ManifestKeys.Deployment] = &statefulSet
 }
 
 func (c *Compactor) makePodTemplateSpec() corev1.PodTemplateSpec {
 	containers := []corev1.Container{c.makeCompactorContainer()}
+	containers = append(containers, c.kubeCfg.SideCars...)
 
 	labelsWithVersion := maps.Clone(c.kubeCfg.Labels)
 	labelsWithVersion[k8sutil.VersionLabel] = c.kubeCfg.ImageTag
@@ -248,15 +319,13 @@ func (c *Compactor) makePodTemplateSpec() corev1.PodTemplateSpec {
 			NodeSelector: map[string]string{
 				k8sutil.OsLabel: k8sutil.LinuxOs,
 			},
+			Volumes: c.kubeCfg.PodVolumes,
 		},
 	}
 }
 
 func (c *Compactor) makeCompactorContainer() corev1.Container {
-	httpPort := defaultHTTPPort
-	if c.options.HttpAddress.Port != 0 {
-		httpPort = c.options.HttpAddress.Port
-	}
+	httpPort := c.getHTTPPort()
 
 	args := []string{"compact"}
 	args = append(args, cmdopt.GetOpts(c.options)...)
@@ -284,7 +353,7 @@ func (c *Compactor) makeCompactorContainer() corev1.Container {
 	if c.options.DataDir != "" {
 		ret.VolumeMounts = []corev1.VolumeMount{
 			{
-				Name:      dataVolumeName,
+				Name:      c.kubeCfg.DataVolumeClaim.Name,
 				MountPath: c.options.DataDir,
 				ReadOnly:  false,
 			},
@@ -294,5 +363,13 @@ func (c *Compactor) makeCompactorContainer() corev1.Container {
 	return ret
 }
 
-func int32Ptr(i int32) *int32 { return &i }
-func int64Ptr(i int64) *int64 { return &i }
+func (c *Compactor) getHTTPPort() int {
+	if c.options.HttpAddress.Port != 0 {
+		return c.options.HttpAddress.Port
+	}
+	return defaultHTTPPort
+}
+
+func int32Ptr(i int32) *int32    { return &i }
+func int64Ptr(i int64) *int64    { return &i }
+func stringPtr(s string) *string { return &s }

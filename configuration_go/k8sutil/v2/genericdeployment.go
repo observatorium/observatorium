@@ -50,13 +50,39 @@ type CommonConfig struct {
 	LivenessProbe                 ProbeConfig
 	ReadinessProbe                ProbeConfig
 	Env                           []corev1.EnvVar
+
+	// Configuration to add containers, volumes, service and servicemonitor ports in addition to the default ones.
+	SideCars                []corev1.Container
+	PodVolumes              []corev1.Volume
+	ServicePorts            []corev1.ServicePort
+	ServiceMonitorEndpoints []monv1.Endpoint
+}
+
+// GetDefaultServiceMonitorRelabelConfig returns the default relabel config for a ServiceMonitor.
+func GetDefaultServiceMonitorRelabelConfig() []*monv1.RelabelConfig {
+	return []*monv1.RelabelConfig{
+		{
+			Action:       "replace",
+			Separator:    "/",
+			SourceLabels: []monv1.LabelName{"namespace", "pod"},
+			TargetLabel:  "instance",
+		},
+	}
+}
+
+// GetDefaultSecurityContext returns the default security context for a container.
+func GetDefaultSecurityContext() corev1.PodSecurityContext {
+	return corev1.PodSecurityContext{
+		RunAsUser: int64Ptr(65534),
+		FSGroup:   int64Ptr(65534),
+	}
 }
 
 // NewServiceMonitor creates a new ServiceMonitor object.
-func NewServiceMonitor(name, namespace string, labels, matchLabels map[string]string) *monv1.ServiceMonitor {
+func NewServiceMonitor(name, servicePortName, namespace string, labels, matchLabels map[string]string) *monv1.ServiceMonitor {
 	endpoints := []monv1.Endpoint{
 		{
-			Port: "http",
+			Port: servicePortName,
 			RelabelConfigs: []*monv1.RelabelConfig{
 				{
 					Action:       "replace",
@@ -126,13 +152,6 @@ func NewProbe(path string, port int, cfg ProbeConfig) *corev1.Probe {
 	return ret
 }
 
-func NewDefaultSecurityContext() *corev1.PodSecurityContext {
-	return &corev1.PodSecurityContext{
-		RunAsUser: int64Ptr(65534),
-		FSGroup:   int64Ptr(65534),
-	}
-}
-
 func NewAntiAffinity(namespaces []string, labelSelectors map[string]string) *corev1.Affinity {
 	matchExpressions := []metav1.LabelSelectorRequirement{}
 
@@ -184,6 +203,17 @@ func NewEnvFromField(envName, fieldPath string) corev1.EnvVar {
 		ValueFrom: &corev1.EnvVarSource{
 			FieldRef: &corev1.ObjectFieldSelector{
 				FieldPath: fieldPath,
+			},
+		},
+	}
+}
+
+func NewPodVolumeFromSecret(name, secretName string) corev1.Volume {
+	return corev1.Volume{
+		Name: name,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: secretName,
 			},
 		},
 	}

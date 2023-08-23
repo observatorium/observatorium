@@ -8,7 +8,6 @@ metadata:
     app.kubernetes.io/instance: observatorium
     app.kubernetes.io/name: thanos-compact
     app.kubernetes.io/part-of: observatorium
-    prometheus: app-sre
   name: thanos-compact
   namespace: observatorium
 spec:
