@@ -105,7 +105,7 @@ spec:
         - -provider=openshift
         - -https-address=:8443
         - -upstream=http://localhost:0
-        - -openshift-service-account=thanos-compact
+        - -openshift-service-account=compactor
         - -tls-cert=/etc/tls/private/tls.crt
         - -tls-key=/etc/tls/private/tls.key
         - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token

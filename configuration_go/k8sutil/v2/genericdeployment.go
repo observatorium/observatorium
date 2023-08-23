@@ -9,11 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// Resource represents the resource requirements for a container.
-type Resource struct {
-	Requests, Limits string
-}
-
 // ProbeConfig represents the configuration of a container probe (liveness or readiness).
 type ProbeConfig struct {
 	InitialDelaySeconds int32
@@ -75,40 +70,6 @@ func GetDefaultSecurityContext() corev1.PodSecurityContext {
 	return corev1.PodSecurityContext{
 		RunAsUser: int64Ptr(65534),
 		FSGroup:   int64Ptr(65534),
-	}
-}
-
-// NewServiceMonitor creates a new ServiceMonitor object.
-func NewServiceMonitor(name, servicePortName, namespace string, labels, matchLabels map[string]string) *monv1.ServiceMonitor {
-	endpoints := []monv1.Endpoint{
-		{
-			Port: servicePortName,
-			RelabelConfigs: []*monv1.RelabelConfig{
-				{
-					Action:       "replace",
-					Separator:    "/",
-					SourceLabels: []monv1.LabelName{"namespace", "pod"},
-					TargetLabel:  "instance",
-				},
-			},
-		},
-	}
-
-	spec := monv1.ServiceMonitorSpec{
-		Endpoints: endpoints,
-		Selector: metav1.LabelSelector{
-			MatchLabels: matchLabels,
-		},
-	}
-
-	return &monv1.ServiceMonitor{
-		TypeMeta: k8sutil.ServiceMonitorMeta,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    labels,
-		},
-		Spec: spec,
 	}
 }
 
