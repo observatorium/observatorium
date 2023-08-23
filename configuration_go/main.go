@@ -293,14 +293,16 @@ func main() {
 		"config-w-sidecar",
 	)
 
-	// Thanos Compactor sample deployment.
+	// Example
+	// Thanos Compactor deployment.
+
+	// Set compactor options.
 	compactorOptions := &compactor.CompactorOptions{
 		BlockViewerGlobalSyncBlockInterval: time.Second * 5,
 		ObjstoreConfig:                     "$(OBJSTORE_CONFIG)",
 	}
 
-	httpsPort := int32(8443)
-
+	// Set kube config for the compactor.
 	kubeCfg := compactor.DefaultK8sConfig()
 	kubeCfg.Replicas = 3
 	kubeCfg.Env = []corev1.EnvVar{
@@ -311,9 +313,9 @@ func main() {
 	}
 	kubeCfg.ServiceMonitor.Labels["prometheus"] = "app-sre"
 
-	// OAuth proxy side car.
+	// Add oauth proxy sidecar.
+	httpsPort := int32(8443)
 	oauthProxy := makeOauthProxyContainer(httpsPort, compactorOptions.HttpAddress.Port, "compactor")
-
 	kubeCfg.SideCars = []corev1.Container{oauthProxy}
 	kubeCfg.PodVolumes = []corev1.Volume{
 		k8sutilv2.NewPodVolumeFromSecret("compact-tls", "compact-tls"),
@@ -327,16 +329,13 @@ func main() {
 		},
 	}
 
+	// Create compactor, generate manifests, add annotations as post processing, generate files.
 	cpt := compactor.NewCompactor(compactorOptions, kubeCfg)
 
 	serviceManifest := cpt.Manifests()[cpt.ManifestKeys.Service].(*corev1.Service)
 	addMapValue(serviceManifest.ObjectMeta.Annotations, "service.alpha.openshift.io/serving-cert-secret-name", "compact-tls")
 
-	generator.GenerateWithMimic(
-		g,
-		cpt.Manifests(),
-		"compactor-test",
-	)
+	generator.GenerateWithMimic(g, cpt.Manifests(), "compactor-test")
 
 	// Example 3
 	// Observatorium API with no sidecar, packaged as Observatorium template.
