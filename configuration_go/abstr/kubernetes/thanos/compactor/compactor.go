@@ -148,7 +148,7 @@ func DefaultK8sConfig() *K8sConfig {
 }
 
 // Compactor represents the compactor. It contains both the compactor options and the Kubernetes configuration.
-type Compactor struct {
+type compactor struct {
 	ManifestKeys manifestKeys
 
 	kubeCfg   *K8sConfig
@@ -158,13 +158,12 @@ type Compactor struct {
 
 // NewCompactor returns a new compactor.
 // It is used to create the kubernetes manifests for deploying the compactor.
-func NewCompactor(options *CompactorOptions, kCfg *K8sConfig) *Compactor {
-	k8sCfg := kCfg
+func NewCompactor(options *CompactorOptions, k8sCfg *K8sConfig) *compactor {
 	if k8sCfg == nil {
 		k8sCfg = DefaultK8sConfig()
 	}
 
-	ret := &Compactor{
+	ret := &compactor{
 		ManifestKeys: manifestKeys{
 			Deployment:     "compactor-statefulset",
 			Service:        "compactor-service",
@@ -180,7 +179,7 @@ func NewCompactor(options *CompactorOptions, kCfg *K8sConfig) *Compactor {
 }
 
 // Manifests returns the kubernetes manifests for deploying the compactor.
-func (c *Compactor) Manifests() k8sutil.ObjectMap {
+func (c *compactor) Manifests() k8sutil.ObjectMap {
 	c.makeStatefulSet()
 	c.makeServiceAccount()
 	c.makeService()
@@ -191,7 +190,7 @@ func (c *Compactor) Manifests() k8sutil.ObjectMap {
 	return c.manifests
 }
 
-func (c *Compactor) makeServiceAccount() {
+func (c *compactor) makeServiceAccount() {
 	queryServiceAccount := corev1.ServiceAccount{
 		TypeMeta: k8sutil.ServiceAccountMeta,
 		ObjectMeta: metav1.ObjectMeta{
@@ -204,7 +203,7 @@ func (c *Compactor) makeServiceAccount() {
 	c.manifests[c.ManifestKeys.ServiceAccount] = &queryServiceAccount
 }
 
-func (c *Compactor) makeServiceMonitor() {
+func (c *compactor) makeServiceMonitor() {
 	endpoints := []monv1.Endpoint{
 		{
 			Port:           servicePortName,
@@ -233,7 +232,7 @@ func (c *Compactor) makeServiceMonitor() {
 	c.manifests[c.ManifestKeys.ServiceMonitor] = &serviceMonitor
 }
 
-func (c *Compactor) makeService() {
+func (c *compactor) makeService() {
 	httpPort := c.getHTTPPort()
 	ports := []corev1.ServicePort{
 		{
@@ -264,7 +263,7 @@ func (c *Compactor) makeService() {
 	c.manifests[c.ManifestKeys.Service] = &service
 }
 
-func (c *Compactor) makeStatefulSet() {
+func (c *compactor) makeStatefulSet() {
 	podTemplateSpec := c.makePodTemplateSpec()
 
 	labelsWithVersion := maps.Clone(c.kubeCfg.Labels)
@@ -298,7 +297,7 @@ func (c *Compactor) makeStatefulSet() {
 	c.manifests[c.ManifestKeys.Deployment] = &statefulSet
 }
 
-func (c *Compactor) makePodTemplateSpec() corev1.PodTemplateSpec {
+func (c *compactor) makePodTemplateSpec() corev1.PodTemplateSpec {
 	containers := []corev1.Container{c.makeCompactorContainer()}
 	containers = append(containers, c.kubeCfg.SideCars...)
 
@@ -324,7 +323,7 @@ func (c *Compactor) makePodTemplateSpec() corev1.PodTemplateSpec {
 	}
 }
 
-func (c *Compactor) makeCompactorContainer() corev1.Container {
+func (c *compactor) makeCompactorContainer() corev1.Container {
 	httpPort := c.getHTTPPort()
 
 	args := []string{"compact"}
@@ -363,7 +362,7 @@ func (c *Compactor) makeCompactorContainer() corev1.Container {
 	return ret
 }
 
-func (c *Compactor) getHTTPPort() int {
+func (c *compactor) getHTTPPort() int {
 	if c.options.HttpAddress.Port != 0 {
 		return c.options.HttpAddress.Port
 	}
