@@ -1,4 +1,4 @@
-package k8sutil
+package v2
 
 import (
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
@@ -8,50 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
-
-// ProbeConfig represents the configuration of a container probe (liveness or readiness).
-type ProbeConfig struct {
-	InitialDelaySeconds int32
-	TimeoutSeconds      int32
-	PeriodSeconds       int32
-	SuccessThreshold    int32
-	FailureThreshold    int32
-}
-
-// ServiceMonitorConfig represents the configuration of a ServiceMonitor.
-type ServiceMonitorConfig struct {
-	Enabled   bool
-	Namespace string
-	Labels    map[string]string
-}
-
-// CommonConfig represents the common configuration for a container.
-// It is applicable to both Deployment and StatefulSet.
-type CommonConfig struct {
-	Name                          string
-	Namespace                     string
-	Labels                        map[string]string
-	Image                         string
-	ImageTag                      string
-	ImagePullPolicy               corev1.PullPolicy
-	Replicas                      int32
-	Affinity                      *corev1.Affinity
-	TerminationMessagePolicy      corev1.TerminationMessagePolicy
-	TerminationGracePeriodSeconds int64
-	SecurityContext               corev1.PodSecurityContext
-	ServiceAccountName            string
-	Resources                     corev1.ResourceRequirements
-	ServiceMonitor                ServiceMonitorConfig
-	LivenessProbe                 ProbeConfig
-	ReadinessProbe                ProbeConfig
-	Env                           []corev1.EnvVar
-
-	// Configuration to add containers, volumes, service and servicemonitor ports in addition to the default ones.
-	SideCars                []corev1.Container
-	PodVolumes              []corev1.Volume
-	ServicePorts            []corev1.ServicePort
-	ServiceMonitorEndpoints []monv1.Endpoint
-}
 
 // GetDefaultServiceMonitorRelabelConfig returns the default relabel config for a ServiceMonitor.
 func GetDefaultServiceMonitorRelabelConfig() []*monv1.RelabelConfig {
@@ -95,8 +51,18 @@ func setResourcesRequirements(resList corev1.ResourceList, reourceName corev1.Re
 	resList[reourceName] = resource.MustParse(value)
 }
 
+// ProbeConfig represents the configuration of a container probe (liveness or readiness).
+type ProbeConfig struct {
+	InitialDelaySeconds int32
+	TimeoutSeconds      int32
+	PeriodSeconds       int32
+	SuccessThreshold    int32
+	FailureThreshold    int32
+}
+
+// NewProbe returns a new probe.
 func NewProbe(path string, port int, cfg ProbeConfig) *corev1.Probe {
-	ret := &corev1.Probe{
+	return &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/-/healthy",
@@ -109,10 +75,9 @@ func NewProbe(path string, port int, cfg ProbeConfig) *corev1.Probe {
 		SuccessThreshold:    cfg.SuccessThreshold,
 		TimeoutSeconds:      cfg.TimeoutSeconds,
 	}
-
-	return ret
 }
 
+// NewAntiAffinity returns a new anti-affinity rule.
 func NewAntiAffinity(namespaces []string, labelSelectors map[string]string) *corev1.Affinity {
 	matchExpressions := []metav1.LabelSelectorRequirement{}
 
@@ -144,6 +109,7 @@ func NewAntiAffinity(namespaces []string, labelSelectors map[string]string) *cor
 	return ret
 }
 
+// NewEnvFromSecret returns a new environment variable from a secret.
 func NewEnvFromSecret(envName, secretKey, secretName string) corev1.EnvVar {
 	return corev1.EnvVar{
 		Name: envName,
@@ -158,6 +124,7 @@ func NewEnvFromSecret(envName, secretKey, secretName string) corev1.EnvVar {
 	}
 }
 
+// NewEnvFromField returns a new environment variable from a field.
 func NewEnvFromField(envName, fieldPath string) corev1.EnvVar {
 	return corev1.EnvVar{
 		Name: envName,
@@ -169,6 +136,7 @@ func NewEnvFromField(envName, fieldPath string) corev1.EnvVar {
 	}
 }
 
+// NewPodVolumeFromSecret returns a new pod volume from a secret.
 func NewPodVolumeFromSecret(name, secretName string) corev1.Volume {
 	return corev1.Volume{
 		Name: name,
@@ -180,4 +148,12 @@ func NewPodVolumeFromSecret(name, secretName string) corev1.Volume {
 	}
 }
 
-func int64Ptr(i int64) *int64 { return &i }
+// NewServicePort returns a new service port.
+func NewServicePort(name string, port, targetPort int) corev1.ServicePort {
+	return corev1.ServicePort{
+		Name:       name,
+		Port:       int32(port),
+		TargetPort: intstr.FromInt(port),
+		Protocol:   corev1.ProtocolTCP,
+	}
+}

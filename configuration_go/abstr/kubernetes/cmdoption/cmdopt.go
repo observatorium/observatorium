@@ -162,3 +162,19 @@ func isSingleHyphen(optVals []string) bool {
 
 	return false
 }
+
+// ExtraOpts is a struct that can be embedded in a struct to add extra options.
+// These options can be used without exposing them in the struct.
+type ExtraOpts struct {
+	opts []string
+}
+
+// AddOpts adds extra options to the struct.
+func (e *ExtraOpts) AddOpts(s ...string) {
+	e.opts = append(e.opts, s...)
+}
+
+// GetExtraOpts returns the extra options.
+func (e *ExtraOpts) GetExtraOpts() []string {
+	return e.opts
+}

@@ -294,48 +294,46 @@ func main() {
 	)
 
 	// Example
-	// Thanos Compactor deployment.
+	// Thanos Compactor deployment as statefulSet with sidecar.
 
-	// Set compactor options.
 	compactorOptions := &compactor.CompactorOptions{
-		BlockViewerGlobalSyncBlockInterval: time.Second * 5,
-		ObjstoreConfig:                     "$(OBJSTORE_CONFIG)",
+		ObjstoreConfig:            "$(OBJSTORE_CONFIG)",
+		Wait:                      true,
+		LogLevel:                  "warn",
+		LogFormat:                 "logfmt",
+		DataDir:                   "/var/thanos/compactor",
+		RetentionResolutionRaw:    time.Hour * 24 * 365,
+		DeleteDelay:               time.Hour * 24 * 2,
+		CompactConcurrency:        1,
+		DownsampleConcurrency:     1,
+		DeduplicationReplicaLabel: "replica",
 	}
+	compactorOptions.AddOpts("--debug.accept-malformed-index")
 
-	// Set kube config for the compactor.
-	kubeCfg := compactor.DefaultK8sConfig()
-	kubeCfg.Replicas = 3
-	kubeCfg.Env = []corev1.EnvVar{
+	compactorContainer := compactor.NewSSContainerProvider(compactorOptions)
+	compactorContainer.Env = []corev1.EnvVar{
 		k8sutilv2.NewEnvFromSecret("OBJSTORE_CONFIG", "object_store_config", "thanos.yaml"),
 		k8sutilv2.NewEnvFromSecret("AWS_ACCESS_KEY_ID", "aws_access_key_id", "name"),
 		k8sutilv2.NewEnvFromSecret("AWS_SECRET_ACCESS_KEY", "aws_secret_access_key", "name"),
 		k8sutilv2.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 	}
-	kubeCfg.ServiceMonitor.Labels["prometheus"] = "app-sre"
 
-	// Add oauth proxy sidecar.
-	httpsPort := int32(8443)
-	oauthProxy := makeOauthProxyContainer(httpsPort, compactorOptions.HttpAddress.Port, "compactor")
-	kubeCfg.SideCars = []corev1.Container{oauthProxy}
-	kubeCfg.PodVolumes = []corev1.Volume{
-		k8sutilv2.NewPodVolumeFromSecret("compact-tls", "compact-tls"),
-		k8sutilv2.NewPodVolumeFromSecret("compact-proxy", "compact-proxy"),
-	}
-	kubeCfg.ServicePorts = []corev1.ServicePort{
-		{
-			Name:       "https",
-			Port:       httpsPort,
-			TargetPort: intstr.FromInt(int(httpsPort)),
-		},
-	}
+	compactorServiceAccountName := "observatorium-xyz"
+	compactorSideCar := makeOauthProxyContainer(8443, 10902, compactorServiceAccountName)
 
-	// Create compactor, generate manifests, add annotations as post processing, generate files.
-	cpt := compactor.NewCompactor(compactorOptions, kubeCfg)
+	metaCfg := compactor.DefaultMetaConfig()
+	compactorPod := compactor.NewPodSpecProvider(metaCfg, []k8sutilv2.ContainerProvider{compactorContainer, compactorSideCar})
+	compactorPod.ServiceAccountName = compactorServiceAccountName
 
-	serviceManifest := cpt.Manifests()[cpt.ManifestKeys.Service].(*corev1.Service)
-	addMapValue(serviceManifest.ObjectMeta.Annotations, "service.alpha.openshift.io/serving-cert-secret-name", "compact-tls")
+	compactorStatefulSet := compactor.NewStatefulSet(metaCfg, compactorPod)
+	compactorStatefulSet.Replicas = 4
 
-	generator.GenerateWithMimic(g, cpt.Manifests(), "compactor-test")
+	compactorManifests := k8sutilv2.NewManifests()
+	compactorManifests.Add("compactor-statefulset", compactorStatefulSet)
+	compactorManifests.Add("compactor-service", k8sutilv2.NewService(metaCfg, compactorPod))
+	compactorManifests.Add("compactor-service-monitor", k8sutilv2.NewServiceMonitor(metaCfg, compactorPod))
+	compactorManifests.Add("compactor-serviceAccount", k8sutilv2.NewServiceAccount(metaCfg, compactorServiceAccountName))
+	generator.GenerateWithMimic(g, compactorManifests.Make(), "compactor-test")
 
 	// Example 3
 	// Observatorium API with no sidecar, packaged as Observatorium template.
@@ -397,13 +395,13 @@ func main() {
 	)
 }
 
-func makeOauthProxyContainer(httpsPort int32, upstreamPort int, serviceAccount string) corev1.Container {
-	return corev1.Container{
+func makeOauthProxyContainer(httpsPort, upstreamPort int, serviceAccount string) *k8sutilv2.Container {
+	return &k8sutilv2.Container{
 		Name:            "oauth-proxy",
-		Image:           "quay.io/openshift/origin-oauth-proxy:4.13.0",
+		Image:           "quay.io/oauth-proxy",
+		ImageTag:        "4.13.0",
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Args: []string{
-			"-provider=openshift",
 			fmt.Sprintf("-https-address=:%d", httpsPort),
 			fmt.Sprintf("-upstream=http://localhost:%d", upstreamPort),
 			fmt.Sprintf("-openshift-service-account=%s", serviceAccount),
@@ -416,8 +414,8 @@ func makeOauthProxyContainer(httpsPort int32, upstreamPort int, serviceAccount s
 		},
 		Ports: []corev1.ContainerPort{
 			{
-				Name:          "htttps",
-				ContainerPort: httpsPort,
+				Name:          "https",
+				ContainerPort: int32(httpsPort),
 			},
 		},
 		Resources: k8sutilv2.NewResourcesRequirements("25m", "50m", "200Mi", "200Mi"),
@@ -433,13 +431,12 @@ func makeOauthProxyContainer(httpsPort int32, upstreamPort int, serviceAccount s
 				ReadOnly:  false,
 			},
 		},
+		Volumes: []corev1.Volume{
+			k8sutilv2.NewPodVolumeFromSecret("compact-tls", "compact-tls"),
+			k8sutilv2.NewPodVolumeFromSecret("compact-proxy", "compact-proxy"),
+		},
+		ServicePorts: []corev1.ServicePort{
+			k8sutilv2.NewServicePort("https", httpsPort, httpsPort),
+		},
 	}
-}
-
-func addMapValue(m map[string]string, key, value string) {
-	if m == nil {
-		m = make(map[string]string)
-	}
-
-	m[key] = value
 }

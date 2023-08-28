@@ -9,17 +9,17 @@ metadata:
     app.kubernetes.io/name: thanos-compact
     app.kubernetes.io/part-of: observatorium
     app.kubernetes.io/version: v0.31.0
-  name: thanos-compact
+  name: observatorium-thanos-compact
   namespace: observatorium
 spec:
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels:
       app.kubernetes.io/component: database-compactor
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-compact
       app.kubernetes.io/part-of: observatorium
-  serviceName: thanos-compact
+  serviceName: observatorium-thanos-compact
   template:
     metadata:
       creationTimestamp: null
@@ -52,8 +52,17 @@ spec:
       containers:
       - args:
         - compact
-        - --block-viewer.global.sync-block-interval=5s
+        - --compact.concurrency=1
+        - --data-dir=/var/thanos/compactor
+        - --deduplication.replica-label=replica
+        - --delete-delay=48h0m0s
+        - --downsample.concurrency=1
+        - --log.format=logfmt
+        - --log.level=warn
         - --objstore.config=$(OBJSTORE_CONFIG)
+        - --retention.resolution-raw=8760h0m0s
+        - --wait
+        - --debug.accept-malformed-index
         env:
         - name: OBJSTORE_CONFIG
           valueFrom:
@@ -102,22 +111,21 @@ spec:
             memory: 2000Mi
         terminationMessagePolicy: FallbackToLogsOnError
       - args:
-        - -provider=openshift
         - -https-address=:8443
-        - -upstream=http://localhost:0
-        - -openshift-service-account=compactor
+        - -upstream=http://localhost:10902
+        - -openshift-service-account=observatorium-xyz
         - -tls-cert=/etc/tls/private/tls.crt
         - -tls-key=/etc/tls/private/tls.key
         - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
         - -cookie-secret-file=/etc/proxy/secrets/session_secret
         - -openshift-ca=/etc/pki/tls/cert.pem
         - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        image: quay.io/openshift/origin-oauth-proxy:4.13.0
+        image: quay.io/oauth-proxy:4.13.0
         imagePullPolicy: IfNotPresent
         name: oauth-proxy
         ports:
         - containerPort: 8443
-          name: htttps
+          name: https
         resources:
           limits:
             cpu: 50m
@@ -125,6 +133,7 @@ spec:
           requests:
             cpu: 25m
             memory: 200Mi
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /etc/tls/private
           name: compact-tls
@@ -135,7 +144,7 @@ spec:
       securityContext:
         fsGroup: 65534
         runAsUser: 65534
-      serviceAccountName: thanos-compact
+      serviceAccountName: observatorium-xyz
       terminationGracePeriodSeconds: 120
       volumes:
       - name: compact-tls
@@ -153,8 +162,8 @@ spec:
         app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-compact
         app.kubernetes.io/part-of: observatorium
+        app.kubernetes.io/version: v0.31.0
       name: data
-      namespace: observatorium
     spec:
       accessModes:
       - ReadWriteOnce
