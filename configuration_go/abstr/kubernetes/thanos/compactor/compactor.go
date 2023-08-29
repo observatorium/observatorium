@@ -165,38 +165,4 @@ func NewSSContainerProvider(c *CompactorOptions) *k8sutilv2.Container {
 	return container
 }
 
-// NewPodSpecProvider returns a new pod spec provider for the compactor.
-func NewPodSpecProvider(metaCfg k8sutilv2.MetaConfig, containers []k8sutilv2.ContainerProvider) *k8sutilv2.Pod {
-	// Check if all the required labels are present in the meta config.
-	for _, k := range []string{k8sutil.NameLabel, k8sutil.InstanceLabel} {
-		if _, ok := metaCfg.Labels[k]; !ok {
-			log.Printf("Warning: key %s not found in compactor meta labels", k)
-		}
-	}
-
-	labelSelectors := map[string]string{
-		k8sutil.NameLabel:     metaCfg.Labels[k8sutil.NameLabel],
-		k8sutil.InstanceLabel: metaCfg.Labels[k8sutil.InstanceLabel],
-	}
-
-	namespaces := []string{metaCfg.Namespace}
-
-	return &k8sutilv2.Pod{
-		TerminationGracePeriodSeconds: 120,
-		Affinity:                      k8sutilv2.NewAntiAffinity(namespaces, labelSelectors),
-		SecurityContext:               k8sutilv2.GetDefaultSecurityContext(),
-		ContainerProviders:            containers,
-	}
-}
-
-func NewStatefulSet(metaCfg k8sutilv2.MetaConfig, pod k8sutilv2.PodProvider) *k8sutilv2.StatefulSet {
-	ss := k8sutilv2.StatefulSet{
-		MetaConfig: metaCfg,
-		Replicas:   1,
-		Pod:        pod,
-	}
-
-	return &ss
-}
-
 func stringPtr(s string) *string { return &s }

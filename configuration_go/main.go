@@ -321,18 +321,18 @@ func main() {
 	compactorServiceAccountName := "observatorium-xyz"
 	compactorSideCar := makeOauthProxyContainer(8443, 10902, compactorServiceAccountName)
 
-	metaCfg := compactor.DefaultMetaConfig()
-	compactorPod := compactor.NewPodSpecProvider(metaCfg, []k8sutilv2.ContainerProvider{compactorContainer, compactorSideCar})
-	compactorPod.ServiceAccountName = compactorServiceAccountName
-
-	compactorStatefulSet := compactor.NewStatefulSet(metaCfg, compactorPod)
-	compactorStatefulSet.Replicas = 4
+	compactorStatefulSet := &k8sutilv2.StatefulSetBuilder{
+		Containers:         []k8sutilv2.ContainerProvider{compactorContainer, compactorSideCar},
+		Replicas:           4,
+		ServiceAccountName: compactorServiceAccountName,
+		MetaConfig:         compactor.DefaultMetaConfig(),
+	}
 
 	compactorManifests := k8sutilv2.NewManifests()
 	compactorManifests.Add("compactor-statefulset", compactorStatefulSet)
-	compactorManifests.Add("compactor-service", k8sutilv2.NewService(metaCfg, compactorPod))
-	compactorManifests.Add("compactor-service-monitor", k8sutilv2.NewServiceMonitor(metaCfg, compactorPod))
-	compactorManifests.Add("compactor-serviceAccount", k8sutilv2.NewServiceAccount(metaCfg, compactorServiceAccountName))
+	compactorManifests.Add("compactor-service", k8sutilv2.NewService(compactorStatefulSet.MetaConfig, compactorStatefulSet.MakePod()))
+	compactorManifests.Add("compactor-service-monitor", k8sutilv2.NewServiceMonitor(compactorStatefulSet.MetaConfig, compactorStatefulSet.MakePod()))
+	compactorManifests.Add("compactor-serviceAccount", k8sutilv2.NewServiceAccount(compactorStatefulSet.MetaConfig, compactorServiceAccountName))
 	generator.GenerateWithMimic(g, compactorManifests.Make(), "compactor-test")
 
 	// Example 3
