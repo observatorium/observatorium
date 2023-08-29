@@ -5,7 +5,6 @@ import (
 
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const defaultTerminationGracePeriodSeconds = 120
@@ -71,16 +70,6 @@ func (s *StatefulSetBuilder) MakePod() *Pod {
 	}
 
 	return pod
-}
-
-func (s *StatefulSetBuilder) MakeManifest() runtime.Object {
-	statefulSet := &StatefulSet{
-		MetaConfig: s.MetaConfig,
-		Replicas:   s.Replicas,
-		Pod:        s.MakePod(),
-	}
-
-	return statefulSet.MakeManifest()
 }
 
 func (s *StatefulSetBuilder) MakeManifests(filePrefix string) k8sutil.ObjectMap {
