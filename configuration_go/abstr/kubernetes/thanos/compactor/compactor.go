@@ -71,13 +71,6 @@ type CompactorOptions struct {
 	cmdopt.ExtraOpts
 }
 
-func (c *CompactorOptions) GetArgs() []string {
-	args := []string{"compact"}
-	args = append(args, cmdopt.GetOpts(c)...)
-	args = append(args, c.GetExtraOpts()...)
-	return args
-}
-
 // DefaultMetaConfig returns the default meta configuration for the compactor.
 func DefaultMetaConfig() k8sutilv2.MetaConfig {
 	return k8sutilv2.MetaConfig{
@@ -118,7 +111,7 @@ func NewBaseContainerProvider(c *CompactorOptions) *k8sutilv2.Container {
 		ImageTag:        defaultImageTag,
 		Name:            "thanos",
 		ImagePullPolicy: corev1.PullIfNotPresent,
-		Args:            c.GetArgs(),
+		Args:            append([]string{"compact"}, cmdopt.GetOpts(c)...),
 		Ports: []corev1.ContainerPort{
 			{
 				Name:          "http",

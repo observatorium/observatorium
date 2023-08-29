@@ -22,6 +22,17 @@ func GetOpts(obj interface{}) []string {
 		return ret
 	}
 
+	// Extract extra options using ExtraOpts interface if it is implemented.
+	// Append them to the result slice at the end.
+	var extraOpts []string
+	getExtraOptsMethod := reflect.ValueOf(obj).MethodByName("GetExtraOpts")
+	if getExtraOptsMethod.IsValid() {
+		result := getExtraOptsMethod.Call(nil)
+		if len(result) > 0 {
+			extraOpts, _ = result[0].Interface().([]string)
+		}
+	}
+
 	// if obj is a pointer, dereference it
 	if reflect.TypeOf(obj).Kind() == reflect.Ptr {
 		obj = reflect.ValueOf(obj).Elem().Interface()
@@ -58,6 +69,8 @@ func GetOpts(obj interface{}) []string {
 			ret = append(ret, fmt.Sprintf("%s=%s", optName, v))
 		}
 	}
+
+	ret = append(ret, extraOpts...)
 
 	return ret
 }

@@ -118,3 +118,27 @@ func TestCmdOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestCmdOptionsExtraOpts(t *testing.T) {
+	objWithExtraOpts := struct {
+		String string `opt:"string"`
+		cmdopt.ExtraOpts
+	}{
+		String: "string",
+	}
+
+	objWithExtraOpts.AddOpts("--extra1", "--extra2")
+
+	expected := []string{"--string=string", "--extra1", "--extra2"}
+
+	args := cmdopt.GetOpts(&objWithExtraOpts)
+	if len(args) != 3 {
+		t.Fatalf("expected 3 args, got %d: %s", len(args), args)
+	}
+
+	for i := range args {
+		if args[i] != expected[i] {
+			t.Fatalf("expected %s, got %s", expected[i], args[i])
+		}
+	}
+}
