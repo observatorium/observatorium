@@ -127,7 +127,7 @@ func TestCmdOptionsExtraOpts(t *testing.T) {
 		String: "string",
 	}
 
-	objWithExtraOpts.AddOpts("--extra1", "--extra2")
+	objWithExtraOpts.AddExtraOpts("--extra1", "--extra2")
 
 	expected := []string{"--string=string", "--extra1", "--extra2"}
 

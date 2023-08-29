@@ -14,6 +14,11 @@ const (
 
 type CmdOptions struct{}
 
+// GetOpts returns the options of the struct as a slice of strings.
+// It uses the opt tag to extract the options.
+// Additional tags can be added to the opt tag, separated by a comma:
+// - noval: the option is added without a value if the field is true.
+// - single-hyphen: the option is prefixed with a single hyphen instead of a double hyphen.
 func GetOpts(obj interface{}) []string {
 	ret := []string{}
 
@@ -183,7 +188,7 @@ type ExtraOpts struct {
 }
 
 // AddOpts adds extra options to the struct.
-func (e *ExtraOpts) AddOpts(s ...string) {
+func (e *ExtraOpts) AddExtraOpts(s ...string) {
 	e.opts = append(e.opts, s...)
 }
 

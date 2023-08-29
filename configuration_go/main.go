@@ -308,7 +308,7 @@ func main() {
 		DownsampleConcurrency:     1,
 		DeduplicationReplicaLabel: "replica",
 	}
-	compactorOptions.AddOpts("--debug.accept-malformed-index")
+	compactorOptions.AddExtraOpts("--debug.accept-malformed-index")
 
 	compactorContainer := compactor.NewSSContainerProvider(compactorOptions)
 	compactorContainer.Env = []corev1.EnvVar{
