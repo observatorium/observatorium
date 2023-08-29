@@ -82,3 +82,49 @@ func (s *StatefulSetBuilder) MakeManifest() runtime.Object {
 
 	return statefulSet.MakeManifest()
 }
+
+func (s *StatefulSetBuilder) MakeManifests(filePrefix string) k8sutil.ObjectMap {
+	ret := k8sutil.ObjectMap{}
+
+	pod := s.MakePod()
+
+	statefulSet := &StatefulSet{
+		MetaConfig: s.MetaConfig,
+		Replicas:   s.Replicas,
+		Pod:        pod,
+	}
+
+	ret[filePrefix+"-statefulSet"] = statefulSet.MakeManifest()
+
+	// Add a service if the pod exposes ports.
+	if len(pod.GetServicePorts()) > 0 {
+		service := &Service{
+			MetaConfig:   s.MetaConfig,
+			ServicePorts: pod,
+		}
+
+		ret[filePrefix+"-service"] = service.MakeManifest()
+	}
+
+	// Add a service monitor if the pod exposes ports for monitoring.
+	if len(pod.GetServiceMonitorEndpoints()) > 0 {
+		serviceMonitor := &ServiceMonitor{
+			MetaConfig:              s.MetaConfig,
+			ServiceMonitorEndpoints: pod,
+		}
+
+		ret[filePrefix+"-serviceMonitor"] = serviceMonitor.MakeManifest()
+	}
+
+	// Add service account if it is defined.
+	if pod.ServiceAccountName != "" {
+		serviceAccount := &ServiceAccount{
+			MetaConfig: s.MetaConfig,
+			Name:       pod.ServiceAccountName,
+		}
+
+		ret[filePrefix+"-serviceAccount"] = serviceAccount.MakeManifest()
+	}
+
+	return ret
+}

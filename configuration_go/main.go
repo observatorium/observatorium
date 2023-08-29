@@ -328,12 +328,7 @@ func main() {
 		MetaConfig:         compactor.DefaultMetaConfig(),
 	}
 
-	compactorManifests := k8sutilv2.NewManifests()
-	compactorManifests.Add("compactor-statefulset", compactorStatefulSet)
-	compactorManifests.Add("compactor-service", k8sutilv2.NewService(compactorStatefulSet.MetaConfig, compactorStatefulSet.MakePod()))
-	compactorManifests.Add("compactor-service-monitor", k8sutilv2.NewServiceMonitor(compactorStatefulSet.MetaConfig, compactorStatefulSet.MakePod()))
-	compactorManifests.Add("compactor-serviceAccount", k8sutilv2.NewServiceAccount(compactorStatefulSet.MetaConfig, compactorServiceAccountName))
-	generator.GenerateWithMimic(g, compactorManifests.Make(), "compactor-test")
+	generator.GenerateWithMimic(g, compactorStatefulSet.MakeManifests("compactor"), "compactor-test")
 
 	// Example 3
 	// Observatorium API with no sidecar, packaged as Observatorium template.
