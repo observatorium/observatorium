@@ -15,6 +15,17 @@ import (
 // to represent a collection of manifests.
 type ObjectMap map[string]runtime.Object
 
+// GetSuffix returns the first object in the map that has the given suffix.
+func (o ObjectMap) GetSuffix(suffix string) runtime.Object {
+	for k, v := range o {
+		if strings.HasSuffix(k, suffix) {
+			return v
+		}
+	}
+
+	return nil
+}
+
 // Reusable K8s metadata definitions.
 
 var ServiceMeta = metav1.TypeMeta{

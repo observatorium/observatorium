@@ -37,6 +37,46 @@ func (m *MetaConfig) Clone() MetaConfig {
 	}
 }
 
+type ConfigMap struct {
+	MetaConfig
+	Data map[string]string
+}
+
+func NewConfigMap(metaConfig MetaConfig, data map[string]string) *ConfigMap {
+	return &ConfigMap{
+		MetaConfig: metaConfig,
+		Data:       data,
+	}
+}
+
+func (c *ConfigMap) MakeManifest() runtime.Object {
+	return &corev1.ConfigMap{
+		TypeMeta:   k8sutil.ConfigMapMeta,
+		ObjectMeta: c.MetaConfig.MakeMeta(),
+		Data:       c.Data,
+	}
+}
+
+type Secret struct {
+	MetaConfig
+	Data map[string][]byte
+}
+
+func NewSecret(metaConfig MetaConfig, data map[string][]byte) *Secret {
+	return &Secret{
+		MetaConfig: metaConfig,
+		Data:       data,
+	}
+}
+
+func (s *Secret) MakeManifest() runtime.Object {
+	return &corev1.Secret{
+		TypeMeta:   k8sutil.SecretMeta,
+		ObjectMeta: s.MetaConfig.MakeMeta(),
+		Data:       s.Data,
+	}
+}
+
 // ContainerProvider is the interface that containers must implement to be added to a pod.
 type ContainerProvider interface {
 	GetContainer() corev1.Container
@@ -45,6 +85,7 @@ type ContainerProvider interface {
 	ServiceProvider
 	ServiceMonitorProvider
 	PersistentVolumeClaimProvider
+	ManifestsProvider
 }
 
 // Container represents a container in a pod.
@@ -66,6 +107,7 @@ type Container struct {
 	VolumeClaims []VolumeClaim
 	ServicePorts []corev1.ServicePort
 	MonitorPorts []monv1.Endpoint
+	Manifests    map[string]ManifestProvider
 }
 
 // GetContainer returns a Kubernetes Container.
@@ -103,6 +145,25 @@ func (c *Container) GetServiceMonitorEndpoints() []monv1.Endpoint {
 // GetVolumeClaims returns the volume claims that the container requires.
 func (c *Container) GetVolumeClaims() []VolumeClaim {
 	return c.VolumeClaims
+}
+
+// AddConfigMap adds a config map to the container.
+func (c *Container) AddManifest(filename string, mf ManifestProvider) {
+	if c.Manifests == nil {
+		c.Manifests = map[string]ManifestProvider{}
+	}
+
+	c.Manifests[filename] = mf
+}
+
+func (c *Container) MakeManifests() k8sutil.ObjectMap {
+	ret := k8sutil.ObjectMap{}
+
+	for filename, mf := range c.Manifests {
+		ret[filename] = mf.MakeManifest()
+	}
+
+	return ret
 }
 
 // VolumeClaim represents a volume claim.
@@ -336,6 +397,10 @@ type ManifestProvider interface {
 // Manifests represents a collection of manifests.
 type Manifests struct {
 	manifests map[string]ManifestProvider
+}
+
+type ManifestsProvider interface {
+	MakeManifests() k8sutil.ObjectMap
 }
 
 // NewManifests returns a new Manifests.

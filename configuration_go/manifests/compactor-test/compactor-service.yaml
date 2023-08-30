@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/part-of: observatorium
     app.kubernetes.io/version: v0.31.0
   name: observatorium-thanos-compact
-  namespace: observatorium
+  namespace: openshift-monitoring
 spec:
   ports:
   - name: http

@@ -7,7 +7,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-const defaultTerminationGracePeriodSeconds = 120
+const (
+	defaultTerminationGracePeriodSeconds = 120
+	ServiceManifestKey                   = "service"
+	ServiceMonitorManifestKey            = "serviceMonitor"
+	ServiceAccountManifestKey            = "serviceAccount"
+	StatefulSetManifestKey               = "statefulSet"
+)
 
 type StatefulSetBuilder struct {
 	MetaConfig                    MetaConfig
@@ -83,7 +89,7 @@ func (s *StatefulSetBuilder) MakeManifests(filePrefix string) k8sutil.ObjectMap 
 		Pod:        pod,
 	}
 
-	ret[filePrefix+"-statefulSet"] = statefulSet.MakeManifest()
+	ret[filePrefix+"-"+StatefulSetManifestKey] = statefulSet.MakeManifest()
 
 	// Add a service if the pod exposes ports.
 	if len(pod.GetServicePorts()) > 0 {
@@ -92,7 +98,7 @@ func (s *StatefulSetBuilder) MakeManifests(filePrefix string) k8sutil.ObjectMap 
 			ServicePorts: pod,
 		}
 
-		ret[filePrefix+"-service"] = service.MakeManifest()
+		ret[filePrefix+"-"+ServiceManifestKey] = service.MakeManifest()
 	}
 
 	// Add a service monitor if the pod exposes ports for monitoring.
@@ -102,7 +108,7 @@ func (s *StatefulSetBuilder) MakeManifests(filePrefix string) k8sutil.ObjectMap 
 			ServiceMonitorEndpoints: pod,
 		}
 
-		ret[filePrefix+"-serviceMonitor"] = serviceMonitor.MakeManifest()
+		ret[filePrefix+"-"+ServiceMonitorManifestKey] = serviceMonitor.MakeManifest()
 	}
 
 	// Add service account if it is defined.
@@ -112,7 +118,14 @@ func (s *StatefulSetBuilder) MakeManifests(filePrefix string) k8sutil.ObjectMap 
 			Name:       pod.ServiceAccountName,
 		}
 
-		ret[filePrefix+"-serviceAccount"] = serviceAccount.MakeManifest()
+		ret[filePrefix+"-"+ServiceAccountManifestKey] = serviceAccount.MakeManifest()
+	}
+
+	// Add manifests returned by the container providers.
+	for _, containerProvider := range s.Containers {
+		for k, v := range containerProvider.MakeManifests() {
+			ret[filePrefix+"-"+k] = v
+		}
 	}
 
 	return ret

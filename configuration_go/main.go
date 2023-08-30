@@ -311,12 +311,20 @@ func main() {
 	compactorOptions.AddExtraOpts("--debug.accept-malformed-index")
 
 	compactorContainer := compactor.NewSSContainerProvider(compactorOptions)
-	compactorContainer.Env = []corev1.EnvVar{
-		k8sutilv2.NewEnvFromSecret("OBJSTORE_CONFIG", "object_store_config", "thanos.yaml"),
+	compactorContainer.Env = append(compactorContainer.Env,
+		k8sutilv2.NewEnvFromSecret("OBJSTORE_CONFIG", "objectStore-secret", "thanos.yaml"),
+		k8sutilv2.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 		k8sutilv2.NewEnvFromSecret("AWS_ACCESS_KEY_ID", "aws_access_key_id", "name"),
 		k8sutilv2.NewEnvFromSecret("AWS_SECRET_ACCESS_KEY", "aws_secret_access_key", "name"),
-		k8sutilv2.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
+	)
+
+	objectStore := map[string][]byte{
+		"thanos.yaml": []byte("dummy: true"),
 	}
+	compactorMetaCfg := compactor.DefaultMetaConfig()
+	compactorSecret := k8sutilv2.NewSecret(compactorMetaCfg, objectStore)
+	compactorSecret.MetaConfig.Name = "objectStore-secret"
+	compactorContainer.AddManifest("objectStore-secret", compactorSecret)
 
 	compactorServiceAccountName := "observatorium-xyz"
 	compactorSideCar := makeOauthProxyContainer(8443, 10902, compactorServiceAccountName)
@@ -325,10 +333,15 @@ func main() {
 		Containers:         []k8sutilv2.ContainerProvider{compactorContainer, compactorSideCar},
 		Replicas:           4,
 		ServiceAccountName: compactorServiceAccountName,
-		MetaConfig:         compactor.DefaultMetaConfig(),
+		MetaConfig:         compactorMetaCfg,
 	}
 
-	generator.GenerateWithMimic(g, compactorStatefulSet.MakeManifests("compactor"), "compactor-test")
+	// Post process manifests.
+	manifests := compactorStatefulSet.MakeManifests("compactor")
+	// Change the service monitor namespace to openshift-monitoring.
+	manifests.GetSuffix(k8sutilv2.ServiceManifestKey).(*corev1.Service).ObjectMeta.Namespace = "openshift-monitoring"
+
+	generator.GenerateWithMimic(g, manifests, "compactor-test")
 
 	// Example 3
 	// Observatorium API with no sidecar, packaged as Observatorium template.

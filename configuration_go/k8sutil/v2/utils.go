@@ -110,7 +110,7 @@ func NewAntiAffinity(namespaces []string, labelSelectors map[string]string) *cor
 }
 
 // NewEnvFromSecret returns a new environment variable from a secret.
-func NewEnvFromSecret(envName, secretKey, secretName string) corev1.EnvVar {
+func NewEnvFromSecret(envName, secretName, secretKey string) corev1.EnvVar {
 	return corev1.EnvVar{
 		Name: envName,
 		ValueFrom: &corev1.EnvVarSource{
