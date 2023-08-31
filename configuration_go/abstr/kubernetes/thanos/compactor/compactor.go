@@ -83,8 +83,8 @@ func (c *CompactorStatefulSet) WithLogLevel(level string) *CompactorStatefulSet 
 	return c
 }
 
-// NewStatefulSet returns a new statefulset container for the compactor.
-// It includes the compactor container and the volume claims.
+// NewCompactor returns a new compactor statefulset with default values.
+// It allows generating the all the manifests for the compactor.
 func NewCompactor() *CompactorStatefulSet {
 	c := &CompactorOptions{
 		ObjstoreConfig:            "$(OBJSTORE_CONFIG)",
