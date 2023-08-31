@@ -226,3 +226,8 @@ func (e *ExtraOpts) AddExtraOpts(s ...string) {
 func (e *ExtraOpts) GetExtraOpts() []string {
 	return e.opts
 }
+
+// DeleteExtraOpts deletes the extra options.
+func (e *ExtraOpts) DeleteExtraOpts() {
+	e.opts = []string{}
+}

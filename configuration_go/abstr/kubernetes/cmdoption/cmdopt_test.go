@@ -223,4 +223,11 @@ func TestCmdOptionsExtraOpts(t *testing.T) {
 			t.Fatalf("expected %s, got %s", expected[i], args[i])
 		}
 	}
+
+	objWithExtraOpts.DeleteExtraOpts()
+
+	args = cmdopt.GetOpts(&objWithExtraOpts)
+	if len(args) != 1 {
+		t.Fatalf("expected 1 args, got %d: %s", len(args), args)
+	}
 }

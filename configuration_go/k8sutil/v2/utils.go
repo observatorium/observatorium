@@ -61,8 +61,8 @@ type ProbeConfig struct {
 }
 
 // NewProbe returns a new probe.
-func NewProbe(path string, port int, cfg ProbeConfig) *corev1.Probe {
-	return &corev1.Probe{
+func NewProbe(path string, port int, cfg ProbeConfig) corev1.Probe {
+	return corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/-/healthy",
@@ -155,5 +155,23 @@ func NewServicePort(name string, port, targetPort int) corev1.ServicePort {
 		Port:       int32(port),
 		TargetPort: intstr.FromInt(port),
 		Protocol:   corev1.ProtocolTCP,
+	}
+}
+
+// NewVolumeClaimProvider returns a new volume claim.
+func NewVolumeClaimProvider(name, volumeType, size string) VolumeClaim {
+	return VolumeClaim{
+		Name: name,
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.ReadWriteOnce,
+			},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse(size),
+				},
+			},
+			StorageClassName: &volumeType,
+		},
 	}
 }

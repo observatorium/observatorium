@@ -8,9 +8,9 @@ metadata:
     app.kubernetes.io/instance: observatorium
     app.kubernetes.io/name: thanos-compact
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: v0.31.0
-  name: observatorium-thanos-compact
-  namespace: openshift-monitoring
+    app.kubernetes.io/version: v0.32
+  name: compactor-tenant-a
+  namespace: observatorium
 spec:
   ports:
   - name: http

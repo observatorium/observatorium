@@ -22,9 +22,10 @@ type MetaConfig struct {
 // MakeMeta returns a Kubernetes ObjectMeta.
 func (m *MetaConfig) MakeMeta() metav1.ObjectMeta {
 	return metav1.ObjectMeta{
-		Name:      m.Name,
-		Namespace: m.Namespace,
-		Labels:    m.Labels,
+		Name:        m.Name,
+		Namespace:   m.Namespace,
+		Labels:      m.Labels,
+		Annotations: map[string]string{},
 	}
 }
 
@@ -78,6 +79,12 @@ func (s *Secret) MakeManifest() runtime.Object {
 }
 
 // ContainerProvider is the interface that containers must implement to be added to a pod.
+// It returns the list of config maps that the container requires.
+type ConfigMapsProvider interface {
+	GetConfigMaps() map[string]map[string]string
+}
+
+// ContainerProvider is the interface that containers must implement to be added to a pod.
 type ContainerProvider interface {
 	GetContainer() corev1.Container
 	GetVolumes() []corev1.Volume
@@ -85,7 +92,7 @@ type ContainerProvider interface {
 	ServiceProvider
 	ServiceMonitorProvider
 	PersistentVolumeClaimProvider
-	ManifestsProvider
+	ConfigMapsProvider
 }
 
 // Container represents a container in a pod.
@@ -107,7 +114,7 @@ type Container struct {
 	VolumeClaims []VolumeClaim
 	ServicePorts []corev1.ServicePort
 	MonitorPorts []monv1.Endpoint
-	Manifests    map[string]ManifestProvider
+	ConfigMaps   map[string]map[string]string
 }
 
 // GetContainer returns a Kubernetes Container.
@@ -147,23 +154,13 @@ func (c *Container) GetVolumeClaims() []VolumeClaim {
 	return c.VolumeClaims
 }
 
-// AddConfigMap adds a config map to the container.
-func (c *Container) AddManifest(filename string, mf ManifestProvider) {
-	if c.Manifests == nil {
-		c.Manifests = map[string]ManifestProvider{}
+// GetConfigMaps returns the config maps that the container requires.
+func (c *Container) GetConfigMaps() map[string]map[string]string {
+	if c.ConfigMaps == nil {
+		c.ConfigMaps = map[string]map[string]string{}
 	}
 
-	c.Manifests[filename] = mf
-}
-
-func (c *Container) MakeManifests() k8sutil.ObjectMap {
-	ret := k8sutil.ObjectMap{}
-
-	for filename, mf := range c.Manifests {
-		ret[filename] = mf.MakeManifest()
-	}
-
-	return ret
+	return c.ConfigMaps
 }
 
 // VolumeClaim represents a volume claim.
@@ -184,6 +181,7 @@ type PodProvider interface {
 	ServiceProvider
 	ServiceMonitorProvider
 	PersistentVolumeClaimProvider
+	ConfigMapsProvider
 }
 
 // Pod represents a pod.
@@ -248,6 +246,19 @@ func (s *Pod) GetVolumeClaims() []VolumeClaim {
 
 	for _, cp := range s.ContainerProviders {
 		ret = append(ret, cp.GetVolumeClaims()...)
+	}
+
+	return ret
+}
+
+// GetConfigMaps returns the config maps that the pod requires.
+func (s *Pod) GetConfigMaps() map[string]map[string]string {
+	ret := map[string]map[string]string{}
+
+	for _, cp := range s.ContainerProviders {
+		for k, v := range cp.GetConfigMaps() {
+			ret[k] = v
+		}
 	}
 
 	return ret

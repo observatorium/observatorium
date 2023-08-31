@@ -8,18 +8,18 @@ metadata:
     app.kubernetes.io/instance: observatorium
     app.kubernetes.io/name: thanos-compact
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: v0.31.0
-  name: observatorium-thanos-compact
+    app.kubernetes.io/version: v0.32
+  name: compactor-tenant-a
   namespace: observatorium
 spec:
-  replicas: 4
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: database-compactor
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: thanos-compact
       app.kubernetes.io/part-of: observatorium
-  serviceName: observatorium-thanos-compact
+  serviceName: compactor-tenant-a
   template:
     metadata:
       creationTimestamp: null
@@ -28,7 +28,7 @@ spec:
         app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-compact
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: v0.31.0
+        app.kubernetes.io/version: v0.32
       namespace: observatorium
     spec:
       affinity:
@@ -37,14 +37,14 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchExpressions:
-                - key: app.kubernetes.io/name
-                  operator: In
-                  values:
-                  - thanos-compact
                 - key: app.kubernetes.io/instance
                   operator: In
                   values:
                   - observatorium
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - thanos-compact
               namespaces:
               - observatorium
               topologyKey: kubernetes.io/hostname
@@ -58,11 +58,10 @@ spec:
         - --delete-delay=48h0m0s
         - --downsample.concurrency=1
         - --log.format=logfmt
-        - --log.level=warn
+        - --log.level=debug
         - --objstore.config=$(OBJSTORE_CONFIG)
         - --retention.resolution-raw=8760h0m0s
         - --wait
-        - --debug.accept-malformed-index
         env:
         - name: OBJSTORE_CONFIG
           valueFrom:
@@ -83,7 +82,7 @@ spec:
             secretKeyRef:
               key: name
               name: aws_secret_access_key
-        image: quay.io/thanos/thanos:v0.31.0
+        image: quay.io/thanos/thanos:v0.32
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 4
@@ -113,7 +112,7 @@ spec:
       - args:
         - -https-address=:8443
         - -upstream=http://localhost:10902
-        - -openshift-service-account=observatorium-xyz
+        - -openshift-service-account=observatorium-thanos-compact
         - -tls-cert=/etc/tls/private/tls.crt
         - -tls-key=/etc/tls/private/tls.key
         - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
@@ -144,8 +143,8 @@ spec:
       securityContext:
         fsGroup: 65534
         runAsUser: 65534
-      serviceAccountName: observatorium-xyz
-      terminationGracePeriodSeconds: 120
+      serviceAccountName: compactor-tenant-a
+      terminationGracePeriodSeconds: 1
       volumes:
       - name: compact-tls
         secret:
@@ -162,7 +161,7 @@ spec:
         app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: thanos-compact
         app.kubernetes.io/part-of: observatorium
-        app.kubernetes.io/version: v0.31.0
+        app.kubernetes.io/version: v0.32
       name: data
     spec:
       accessModes:
