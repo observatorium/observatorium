@@ -25,9 +25,22 @@ type TestOptions struct {
 	NoValue      bool          `opt:"no-value,noval"`
 	Repeat       []string      `opt:"repeat"`
 	SingleHyphen int           `opt:"single,single-hyphen"`
+
+	// Limits tests
+	DoubleType             string    `opt:"string,int"`
+	NovalWithoutBoolType   float64   `opt:"nobool,noval"`
+	PointerToSupportedType *string   `opt:"string"`
+	DoublePointer          **string  `opt:"string"`
+	RepeatToPointer        []*string `opt:"repeat"`
+	EmptyTag               string    `opt:""`
+	OtherTagName           string    `opts:"other"`
+
+	privateField string `opt:"string"`
 }
 
 func TestCmdOptions(t *testing.T) {
+	myStringPointer := &[]string{"string"}[0]
+
 	testCases := map[string]struct {
 		options TestOptions
 		expect  []string
@@ -99,6 +112,60 @@ func TestCmdOptions(t *testing.T) {
 			},
 			expect: []string{"--string=string", "--int=1"},
 		},
+		"double type ignored": {
+			options: TestOptions{
+				DoubleType: "string",
+			},
+			expect: []string{"--string=string"},
+		},
+		"noval without bool type ignored": {
+			options: TestOptions{
+				NovalWithoutBoolType: 1.1,
+			},
+			expect: []string{"--nobool=1.10"},
+		},
+		"pointer to supported type": {
+			options: TestOptions{
+				PointerToSupportedType: &[]string{"string"}[0],
+			},
+			expect: []string{"--string=string"},
+		},
+		"nil pointer to supported type": {
+			options: TestOptions{
+				PointerToSupportedType: nil,
+			},
+			expect: []string{},
+		},
+		"private field ignored": {
+			options: TestOptions{
+				privateField: "string",
+			},
+			expect: []string{},
+		},
+		"double pointer ignored": {
+			options: TestOptions{
+				DoublePointer: &myStringPointer,
+			},
+			expect: []string{},
+		},
+		"repeat to pointer": {
+			options: TestOptions{
+				RepeatToPointer: []*string{myStringPointer},
+			},
+			expect: []string{"--repeat=string"},
+		},
+		"empty tag ignored": {
+			options: TestOptions{
+				EmptyTag: "string",
+			},
+			expect: []string{},
+		},
+		"other tag ignored": {
+			options: TestOptions{
+				OtherTagName: "string",
+			},
+			expect: []string{},
+		},
 	}
 
 	t.Parallel()
@@ -116,6 +183,21 @@ func TestCmdOptions(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestUnsupportedType tests that usupported types are ignored.
+// Done in a separate test because it generates a log message.
+func TestUnsupportedType(t *testing.T) {
+	unsupportedType := struct {
+		Chan chan int `opt:"chan"`
+	}{
+		Chan: make(chan int),
+	}
+
+	args := cmdopt.GetOpts(&unsupportedType)
+	if len(args) != 0 {
+		t.Fatalf("expected 0 args, got %d: %s", len(args), args)
 	}
 }
 

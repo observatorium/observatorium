@@ -2,6 +2,7 @@ package cmdopt
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 )
@@ -14,9 +15,12 @@ const (
 
 type CmdOptions struct{}
 
-// GetOpts returns the options of the struct as a slice of strings.
-// It uses the opt tag to extract the options.
-// Additional tags can be added to the opt tag, separated by a comma:
+// GetOpts is used to generate command line options from a struct
+// by mapping the fields values to the option name defined in the opt tag (first position).
+// GetOpts returns a slice of strings, each string representing an option.
+// Following types are supported: string, int, bool, float64, time.Duration, slice of supported types, sub struct implementing the Stringer interface.
+// Pointer types are used if not nil. Private fields are ignored.
+// Additional tags can be added to the opt tag, separated by a comma, to modify its default behavior:
 // - noval: the option is added without a value if the field is true.
 // - single-hyphen: the option is prefixed with a single hyphen instead of a double hyphen.
 func GetOpts(obj interface{}) []string {
@@ -47,6 +51,14 @@ func GetOpts(obj interface{}) []string {
 	v := reflect.ValueOf(obj)
 
 	for i := 0; i < t.NumField(); i++ {
+		fieldKind := t.Field(i).Type.Kind()
+		fieldValue := v.Field(i)
+
+		// If the field is not exported, skip it.
+		if t.Field(i).PkgPath != "" {
+			continue
+		}
+
 		optTagVals := strings.Split(t.Field(i).Tag.Get(tagName), ",")
 		if len(optTagVals) == 0 {
 			continue
@@ -58,14 +70,12 @@ func GetOpts(obj interface{}) []string {
 		}
 
 		// Check if noval modifier is set.
-		kind := t.Field(i).Type.Kind()
-		value := v.Field(i)
-		if isNoVal(optTagVals[0:], kind, value) {
+		if isNoVal(optTagVals[0:], fieldKind, fieldValue) {
 			ret = append(ret, optName)
 			continue
 		}
 
-		optValue := getOptValue(kind, value)
+		optValue := getOptValue(fieldKind, fieldValue)
 		if len(optValue) == 0 || optValue[0] == "" {
 			continue
 		}
@@ -96,33 +106,43 @@ func getOptName(opt []string) string {
 	}
 }
 
-func getOptValue(kind reflect.Kind, field reflect.Value) []string {
+func getOptValue(kind reflect.Kind, rValue reflect.Value) []string {
 	ret := []string{}
+
+	// If pointer type and nil, skip it, otherwise dereference it.
+	if kind == reflect.Ptr {
+		if rValue.IsNil() {
+			return ret
+		}
+
+		rValue = rValue.Elem()
+		kind = rValue.Kind()
+	}
 
 	switch kind {
 	case reflect.String:
-		value := field.String()
+		value := rValue.String()
 		if value == "" {
 			return ret
 		}
 
 		ret = append(ret, value)
 	case reflect.Int:
-		value := field.Int()
+		value := rValue.Int()
 		if value == 0 {
 			return ret
 		}
 
 		ret = append(ret, fmt.Sprintf("%d", value))
 	case reflect.Bool:
-		value := field.Bool()
+		value := rValue.Bool()
 		if !value {
 			return ret
 		}
 
 		ret = append(ret, fmt.Sprintf("%t", value))
 	case reflect.Float64:
-		value := field.Float()
+		value := rValue.Float()
 		if value == 0 {
 			return ret
 		}
@@ -130,11 +150,11 @@ func getOptValue(kind reflect.Kind, field reflect.Value) []string {
 		ret = append(ret, fmt.Sprintf("%.2f", value))
 	case reflect.Struct, reflect.Int64: // Int64 for time.Duration
 		if kind == reflect.Int64 {
-			if field.Int() == 0 {
+			if rValue.Int() == 0 {
 				return ret
 			}
 		}
-		str, ok := field.Interface().(fmt.Stringer)
+		str, ok := rValue.Interface().(fmt.Stringer)
 		if !ok {
 			return ret
 		}
@@ -146,22 +166,32 @@ func getOptValue(kind reflect.Kind, field reflect.Value) []string {
 
 		ret = append(ret, value)
 	case reflect.Slice:
-		if field.Len() == 0 {
+		if rValue.Len() == 0 {
 			return ret
 		}
 
 		// get slice values recursively
-		for i := 0; i < field.Len(); i++ {
-			ret = append(ret, getOptValue(field.Index(i).Kind(), field.Index(i))...)
+		for i := 0; i < rValue.Len(); i++ {
+			ret = append(ret, getOptValue(rValue.Index(i).Kind(), rValue.Index(i))...)
 		}
 	default:
-		panic(fmt.Errorf("unsupported type: %s", kind))
+		log.Printf("unsupported type %q by cmdopt is ignored", kind)
 	}
 
 	return ret
 }
 
 func isNoVal(optVals []string, kind reflect.Kind, v reflect.Value) bool {
+	// If pointer type and nil, skip it, otherwise dereference it.
+	if kind == reflect.Ptr {
+		if v.IsNil() {
+			return false
+		}
+
+		v = v.Elem()
+		kind = v.Kind()
+	}
+
 	for _, optVal := range optVals {
 		if optVal == noValModifier && kind == reflect.Bool && v.Bool() {
 			return true
