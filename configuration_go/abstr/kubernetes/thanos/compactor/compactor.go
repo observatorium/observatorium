@@ -7,7 +7,6 @@ import (
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	k8sutilv2 "github.com/observatorium/observatorium/configuration_go/k8sutil/v2"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -75,7 +74,7 @@ type CompactorStatefulSet struct {
 	VolumeType string
 	VolumeSize string
 
-	k8sutilv2.DeploymentGenericConfig
+	k8sutil.DeploymentGenericConfig
 }
 
 func (c *CompactorStatefulSet) WithLogLevel(level string) *CompactorStatefulSet {
@@ -115,7 +114,7 @@ func NewCompactor() *CompactorStatefulSet {
 
 	return &CompactorStatefulSet{
 		Options: c,
-		DeploymentGenericConfig: k8sutilv2.DeploymentGenericConfig{
+		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
 			Image:                defaultImage,
 			ImageTag:             defaultImageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
@@ -123,23 +122,23 @@ func NewCompactor() *CompactorStatefulSet {
 			Namespace:            defaultNamespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutilv2.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
-			Affinity:             *k8sutilv2.NewAntiAffinity(namespaces, labelSelectors),
-			SecurityContext:      k8sutilv2.GetDefaultSecurityContext(),
+			PodResources:         k8sutil.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
+			Affinity:             *k8sutil.NewAntiAffinity(namespaces, labelSelectors),
+			SecurityContext:      k8sutil.GetDefaultSecurityContext(),
 			EnableServiceMonitor: true,
-			LivenessProbe: k8sutilv2.NewProbe("/-/healthy", defaultHTTPPort, k8sutilv2.ProbeConfig{
+			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
 				FailureThreshold: 4,
 				PeriodSeconds:    30,
 			}),
-			ReadinessProbe: k8sutilv2.NewProbe("/-/ready", defaultHTTPPort, k8sutilv2.ProbeConfig{
+			ReadinessProbe: k8sutil.NewProbe("/-/ready", defaultHTTPPort, k8sutil.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
-			TerminationGracePeriodSeconds: 1,
+			TerminationGracePeriodSeconds: 120,
 			ConfigMaps:                    make(map[string]map[string]string),
 			Env: []corev1.EnvVar{
-				k8sutilv2.NewEnvFromSecret("OBJSTORE_CONFIG", "objectStore-secret", "thanos.yaml"),
-				k8sutilv2.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
+				k8sutil.NewEnvFromSecret("OBJSTORE_CONFIG", "objectStore-secret", "thanos.yaml"),
+				k8sutil.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 			},
 		},
 		VolumeType: "gp2-csi",
@@ -152,22 +151,22 @@ func NewCompactor() *CompactorStatefulSet {
 func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	container := c.makeContainer()
 
-	commonObjectMeta := k8sutilv2.MetaConfig{
+	commonObjectMeta := k8sutil.MetaConfig{
 		Name:      c.Name,
 		Labels:    c.CommonLabels,
 		Namespace: c.Namespace,
 	}
 	commonObjectMeta.Labels[k8sutil.VersionLabel] = container.ImageTag
 
-	pod := &k8sutilv2.Pod{
-		TerminationGracePeriodSeconds: c.TerminationGracePeriodSeconds,
+	pod := &k8sutil.Pod{
+		TerminationGracePeriodSeconds: &c.TerminationGracePeriodSeconds,
 		Affinity:                      &c.Affinity,
 		SecurityContext:               c.SecurityContext,
 		ServiceAccountName:            commonObjectMeta.Name,
-		ContainerProviders:            append([]k8sutilv2.ContainerProvider{container}, c.Sidecars...),
+		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, c.Sidecars...),
 	}
 
-	statefulset := &k8sutilv2.StatefulSet{
+	statefulset := &k8sutil.StatefulSet{
 		MetaConfig: commonObjectMeta,
 		Replicas:   c.Replicas,
 		Pod:        pod,
@@ -177,21 +176,21 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 		"compactor-statefulSet": statefulset.MakeManifest(),
 	}
 
-	service := &k8sutilv2.Service{
+	service := &k8sutil.Service{
 		MetaConfig:   commonObjectMeta,
 		ServicePorts: pod,
 	}
 	ret["compactor-service"] = service.MakeManifest()
 
 	if c.EnableServiceMonitor {
-		serviceMonitor := &k8sutilv2.ServiceMonitor{
+		serviceMonitor := &k8sutil.ServiceMonitor{
 			MetaConfig:              commonObjectMeta,
 			ServiceMonitorEndpoints: pod,
 		}
 		ret["compactor-serviceMonitor"] = serviceMonitor.MakeManifest()
 	}
 
-	serviceAccount := &k8sutilv2.ServiceAccount{
+	serviceAccount := &k8sutil.ServiceAccount{
 		MetaConfig: commonObjectMeta,
 		Name:       pod.ServiceAccountName,
 	}
@@ -199,7 +198,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 
 	// Add needed configMaps
 	for k, v := range c.ConfigMaps {
-		configMap := &k8sutilv2.ConfigMap{
+		configMap := &k8sutil.ConfigMap{
 			MetaConfig: commonObjectMeta,
 			Data:       v,
 		}
@@ -209,7 +208,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 
 	// Create confiMaps required by the containers
 	for name, config := range pod.GetConfigMaps() {
-		configMap := &k8sutilv2.ConfigMap{
+		configMap := &k8sutil.ConfigMap{
 			MetaConfig: commonObjectMeta,
 			Data:       config,
 		}
@@ -220,7 +219,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	return ret
 }
 
-func (c *CompactorStatefulSet) makeContainer() *k8sutilv2.Container {
+func (c *CompactorStatefulSet) makeContainer() *k8sutil.Container {
 	if c.Options == nil {
 		c.Options = &CompactorOptions{}
 	}
@@ -254,16 +253,16 @@ func (c *CompactorStatefulSet) makeContainer() *k8sutilv2.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutilv2.NewServicePort("http", httpPort, httpPort),
+		k8sutil.NewServicePort("http", httpPort, httpPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
 			Port:           "http",
-			RelabelConfigs: k8sutilv2.GetDefaultServiceMonitorRelabelConfig(),
+			RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
 		},
 	}
-	ret.VolumeClaims = []k8sutilv2.VolumeClaim{
-		k8sutilv2.NewVolumeClaimProvider(dataVolumeName, c.VolumeType, c.VolumeSize),
+	ret.VolumeClaims = []k8sutil.VolumeClaim{
+		k8sutil.NewVolumeClaimProvider(dataVolumeName, c.VolumeType, c.VolumeSize),
 	}
 
 	return ret

@@ -23,7 +23,9 @@ spec:
       - namespace
       - pod
       targetLabel: instance
-  namespaceSelector: {}
+  namespaceSelector:
+    matchNames:
+    - observatorium
   selector:
     matchLabels:
       app.kubernetes.io/component: database-compactor

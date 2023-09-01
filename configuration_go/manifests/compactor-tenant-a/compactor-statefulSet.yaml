@@ -37,14 +37,14 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchExpressions:
-                - key: app.kubernetes.io/instance
-                  operator: In
-                  values:
-                  - observatorium
                 - key: app.kubernetes.io/name
                   operator: In
                   values:
                   - thanos-compact
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - observatorium
               namespaces:
               - observatorium
               topologyKey: kubernetes.io/hostname
@@ -144,7 +144,7 @@ spec:
         fsGroup: 65534
         runAsUser: 65534
       serviceAccountName: compactor-tenant-a
-      terminationGracePeriodSeconds: 1
+      terminationGracePeriodSeconds: 120
       volumes:
       - name: compact-tls
         secret:

@@ -1,9 +1,8 @@
-package v2
+package k8sutil
 
 import (
 	"fmt"
 
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
@@ -52,7 +51,7 @@ func NewConfigMap(metaConfig MetaConfig, data map[string]string) *ConfigMap {
 
 func (c *ConfigMap) MakeManifest() runtime.Object {
 	return &corev1.ConfigMap{
-		TypeMeta:   k8sutil.ConfigMapMeta,
+		TypeMeta:   ConfigMapMeta,
 		ObjectMeta: c.MetaConfig.MakeMeta(),
 		Data:       c.Data,
 	}
@@ -72,7 +71,7 @@ func NewSecret(metaConfig MetaConfig, data map[string][]byte) *Secret {
 
 func (s *Secret) MakeManifest() runtime.Object {
 	return &corev1.Secret{
-		TypeMeta:   k8sutil.SecretMeta,
+		TypeMeta:   SecretMeta,
 		ObjectMeta: s.MetaConfig.MakeMeta(),
 		Data:       s.Data,
 	}
@@ -187,7 +186,7 @@ type PodProvider interface {
 // Pod represents a pod.
 // It implements the PodProvider interface.
 type Pod struct {
-	TerminationGracePeriodSeconds int64
+	TerminationGracePeriodSeconds *int64
 	Affinity                      *corev1.Affinity
 	SecurityContext               corev1.PodSecurityContext
 	ServiceAccountName            string
@@ -196,33 +195,33 @@ type Pod struct {
 }
 
 // MakePodSpec returns a Kubernetes PodSpec.
-func (s *Pod) MakePodSpec() corev1.PodSpec {
+func (p *Pod) MakePodSpec() corev1.PodSpec {
 	containers := []corev1.Container{}
 	volumes := []corev1.Volume{}
 
-	for _, cp := range s.ContainerProviders {
+	for _, cp := range p.ContainerProviders {
 		containers = append(containers, cp.GetContainer())
 		volumes = append(volumes, cp.GetVolumes()...)
 	}
 
 	return corev1.PodSpec{
-		TerminationGracePeriodSeconds: int64Ptr(s.TerminationGracePeriodSeconds),
-		Affinity:                      s.Affinity,
+		TerminationGracePeriodSeconds: p.TerminationGracePeriodSeconds,
+		Affinity:                      p.Affinity,
 		Containers:                    containers,
-		ServiceAccountName:            s.ServiceAccountName,
-		SecurityContext:               &s.SecurityContext,
+		ServiceAccountName:            p.ServiceAccountName,
+		SecurityContext:               &p.SecurityContext,
 		NodeSelector: map[string]string{
-			k8sutil.OsLabel: k8sutil.LinuxOs,
+			OsLabel: LinuxOs,
 		},
 		Volumes: volumes,
 	}
 }
 
 // GetServicePorts returns the ports that the pod exposes.
-func (s *Pod) GetServicePorts() []corev1.ServicePort {
+func (p *Pod) GetServicePorts() []corev1.ServicePort {
 	ret := []corev1.ServicePort{}
 
-	for _, cp := range s.ContainerProviders {
+	for _, cp := range p.ContainerProviders {
 		ret = append(ret, cp.GetServicePorts()...)
 	}
 
@@ -230,10 +229,10 @@ func (s *Pod) GetServicePorts() []corev1.ServicePort {
 }
 
 // GetServiceMonitorEndpoints returns the endpoints to be monitored by Prometheus.
-func (s *Pod) GetServiceMonitorEndpoints() []monv1.Endpoint {
+func (p *Pod) GetServiceMonitorEndpoints() []monv1.Endpoint {
 	ret := []monv1.Endpoint{}
 
-	for _, cp := range s.ContainerProviders {
+	for _, cp := range p.ContainerProviders {
 		ret = append(ret, cp.GetServiceMonitorEndpoints()...)
 	}
 
@@ -241,10 +240,10 @@ func (s *Pod) GetServiceMonitorEndpoints() []monv1.Endpoint {
 }
 
 // GetVolumeClaims returns the volume claims that the pod requires.
-func (s *Pod) GetVolumeClaims() []VolumeClaim {
+func (p *Pod) GetVolumeClaims() []VolumeClaim {
 	ret := []VolumeClaim{}
 
-	for _, cp := range s.ContainerProviders {
+	for _, cp := range p.ContainerProviders {
 		ret = append(ret, cp.GetVolumeClaims()...)
 	}
 
@@ -252,10 +251,10 @@ func (s *Pod) GetVolumeClaims() []VolumeClaim {
 }
 
 // GetConfigMaps returns the config maps that the pod requires.
-func (s *Pod) GetConfigMaps() map[string]map[string]string {
+func (p *Pod) GetConfigMaps() map[string]map[string]string {
 	ret := map[string]map[string]string{}
 
-	for _, cp := range s.ContainerProviders {
+	for _, cp := range p.ContainerProviders {
 		for k, v := range cp.GetConfigMaps() {
 			ret[k] = v
 		}
@@ -285,13 +284,13 @@ func (s *StatefulSet) MakeManifest() runtime.Object {
 	}
 
 	selectorMatcheLabels := maps.Clone(s.MetaConfig.Labels)
-	delete(selectorMatcheLabels, k8sutil.VersionLabel)
+	delete(selectorMatcheLabels, VersionLabel)
 
 	return &appsv1.StatefulSet{
-		TypeMeta:   k8sutil.StatefulSetMeta,
+		TypeMeta:   StatefulSetMeta,
 		ObjectMeta: s.MetaConfig.MakeMeta(),
 		Spec: appsv1.StatefulSetSpec{
-			Replicas: int32Ptr(s.Replicas),
+			Replicas: &s.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: selectorMatcheLabels,
 			},
@@ -330,10 +329,10 @@ func NewService(metaConfig MetaConfig, servicePorts ServiceProvider) *Service {
 // MakeManifest returns a Kubernetes Service.
 func (s *Service) MakeManifest() runtime.Object {
 	selector := maps.Clone(s.MetaConfig.Labels)
-	delete(selector, k8sutil.VersionLabel)
+	delete(selector, VersionLabel)
 
 	return &corev1.Service{
-		TypeMeta:   k8sutil.ServiceMeta,
+		TypeMeta:   ServiceMeta,
 		ObjectMeta: s.MetaConfig.MakeMeta(),
 		Spec: corev1.ServiceSpec{
 			Ports:    s.ServicePorts.GetServicePorts(),
@@ -364,14 +363,18 @@ func NewServiceMonitor(metaConfig MetaConfig, serviceMonitorEndpoints ServiceMon
 // MakeManifest returns a Kubernetes ServiceMonitor.
 func (s *ServiceMonitor) MakeManifest() runtime.Object {
 	selector := maps.Clone(s.MetaConfig.Labels)
-	delete(selector, k8sutil.VersionLabel)
+	delete(selector, VersionLabel)
+	metaCfg := s.MetaConfig.MakeMeta()
 
 	return &monv1.ServiceMonitor{
-		TypeMeta:   k8sutil.ServiceMonitorMeta,
-		ObjectMeta: s.MetaConfig.MakeMeta(),
+		TypeMeta:   ServiceMonitorMeta,
+		ObjectMeta: metaCfg,
 		Spec: monv1.ServiceMonitorSpec{
 			Selector: metav1.LabelSelector{
 				MatchLabels: selector,
+			},
+			NamespaceSelector: monv1.NamespaceSelector{
+				MatchNames: []string{metaCfg.Namespace},
 			},
 			Endpoints: s.ServiceMonitorEndpoints.GetServiceMonitorEndpoints(),
 		},
@@ -395,7 +398,7 @@ func NewServiceAccount(metaConfig MetaConfig, name string) *ServiceAccount {
 // MakeManifest returns a Kubernetes ServiceAccount.
 func (s *ServiceAccount) MakeManifest() runtime.Object {
 	return &corev1.ServiceAccount{
-		TypeMeta:   k8sutil.ServiceAccountMeta,
+		TypeMeta:   ServiceAccountMeta,
 		ObjectMeta: s.MetaConfig.MakeMeta(),
 	}
 }
@@ -411,7 +414,7 @@ type Manifests struct {
 }
 
 type ManifestsProvider interface {
-	MakeManifests() k8sutil.ObjectMap
+	MakeManifests() ObjectMap
 }
 
 // NewManifests returns a new Manifests.
@@ -427,8 +430,8 @@ func (m *Manifests) Add(filename string, mf ManifestProvider) {
 }
 
 // Make returns an ObjectMap that maps filenames to Kubernetes manifests.
-func (m *Manifests) Make() k8sutil.ObjectMap {
-	ret := k8sutil.ObjectMap{}
+func (m *Manifests) Make() ObjectMap {
+	ret := ObjectMap{}
 
 	for filename, mf := range m.manifests {
 		ret[filename] = mf.MakeManifest()
@@ -436,6 +439,3 @@ func (m *Manifests) Make() k8sutil.ObjectMap {
 
 	return ret
 }
-
-func int64Ptr(i int64) *int64 { return &i }
-func int32Ptr(i int32) *int32 { return &i }

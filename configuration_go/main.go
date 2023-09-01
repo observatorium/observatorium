@@ -11,7 +11,6 @@ import (
 	query "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/thanos/query"
 	"github.com/observatorium/observatorium/configuration_go/generator"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	k8sutilv2 "github.com/observatorium/observatorium/configuration_go/k8sutil/v2"
 	"github.com/observatorium/observatorium/configuration_go/openshift"
 	apiprovider "github.com/observatorium/observatorium/configuration_go/providers/api"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
@@ -140,9 +139,10 @@ func main() {
 
 	// Example 2
 	// Create sidecar container.
-	dummyContainer := corev1.Container{
+	dummyContainer := k8sutil.Container{
 		Name:            "dummy-sidecar",
-		Image:           "docker.io/dummy:latest",
+		Image:           "docker.io/dummy",
+		ImageTag:        "latest",
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Args: []string{
 			"--start-dummy-sidecar",
@@ -176,24 +176,20 @@ func main() {
 				SubPath:   "config.yaml",
 			},
 		},
-	}
-
-	sidecar := k8sutil.ExtraConfig{
-		Sidecars: []corev1.Container{dummyContainer},
-		AdditionalServicePorts: []corev1.ServicePort{
+		ServicePorts: []corev1.ServicePort{
 			{
 				Name:       "dummy",
 				Port:       7080,
 				TargetPort: intstr.FromInt(7080),
 			},
 		},
-		AdditionalPodVolumes: []corev1.Volume{
+		Volumes: []corev1.Volume{
 			{
 				Name:         "config",
 				VolumeSource: corev1.VolumeSource{},
 			},
 		},
-		AdditionalServiceMonitorPorts: []monv1.Endpoint{
+		MonitorPorts: []monv1.Endpoint{
 			{
 				Port: "dummy-metrics",
 			},
@@ -231,7 +227,7 @@ func main() {
 			k8sutil.WithResources(apiResources),
 			k8sutil.WithServiceMonitor(),
 			// Add dummy-sidecar stuff
-			k8sutil.WithExtras(sidecar),
+			k8sutil.WithSidecars(&dummyContainer),
 		).Manifests(),
 		"config-w-sidecar",
 	)
@@ -288,7 +284,7 @@ func main() {
 			k8sutil.WithResources(apiResources),
 			k8sutil.WithServiceMonitor(),
 			// Add dummy-sidecar stuff
-			k8sutil.WithExtras(sidecar),
+			k8sutil.WithSidecars(&dummyContainer),
 		).Manifests(),
 		"config-w-sidecar",
 	)
@@ -303,8 +299,8 @@ func main() {
 
 	// Set the kube config.
 	compactorSatefulset.ImageTag = "v0.32"
-	compactorSatefulset.Env = append(compactorSatefulset.Env, k8sutilv2.NewEnvFromSecret("AWS_ACCESS_KEY_ID", "aws_access_key_id", "name"))
-	compactorSatefulset.Env = append(compactorSatefulset.Env, k8sutilv2.NewEnvFromSecret("AWS_SECRET_ACCESS_KEY", "aws_secret_access_key", "name"))
+	compactorSatefulset.Env = append(compactorSatefulset.Env, k8sutil.NewEnvFromSecret("AWS_ACCESS_KEY_ID", "aws_access_key_id", "name"))
+	compactorSatefulset.Env = append(compactorSatefulset.Env, k8sutil.NewEnvFromSecret("AWS_SECRET_ACCESS_KEY", "aws_secret_access_key", "name"))
 
 	// Add sidecar.
 	compactorSatefulset.Sidecars = append(compactorSatefulset.Sidecars, makeOauthProxyContainer(8443, 10902, compactorSatefulset.Name))
@@ -389,8 +385,8 @@ func main() {
 	)
 }
 
-func makeOauthProxyContainer(httpsPort, upstreamPort int, serviceAccount string) *k8sutilv2.Container {
-	return &k8sutilv2.Container{
+func makeOauthProxyContainer(httpsPort, upstreamPort int, serviceAccount string) *k8sutil.Container {
+	return &k8sutil.Container{
 		Name:            "oauth-proxy",
 		Image:           "quay.io/oauth-proxy",
 		ImageTag:        "4.13.0",
@@ -412,7 +408,7 @@ func makeOauthProxyContainer(httpsPort, upstreamPort int, serviceAccount string)
 				ContainerPort: int32(httpsPort),
 			},
 		},
-		Resources: k8sutilv2.NewResourcesRequirements("25m", "50m", "200Mi", "200Mi"),
+		Resources: k8sutil.NewResourcesRequirements("25m", "50m", "200Mi", "200Mi"),
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				MountPath: "/etc/tls/private",
@@ -426,11 +422,11 @@ func makeOauthProxyContainer(httpsPort, upstreamPort int, serviceAccount string)
 			},
 		},
 		Volumes: []corev1.Volume{
-			k8sutilv2.NewPodVolumeFromSecret("compact-tls", "compact-tls"),
-			k8sutilv2.NewPodVolumeFromSecret("compact-proxy", "compact-proxy"),
+			k8sutil.NewPodVolumeFromSecret("compact-tls", "compact-tls"),
+			k8sutil.NewPodVolumeFromSecret("compact-proxy", "compact-proxy"),
 		},
 		ServicePorts: []corev1.ServicePort{
-			k8sutilv2.NewServicePort("https", httpsPort, httpsPort),
+			k8sutil.NewServicePort("https", httpsPort, httpsPort),
 		},
 	}
 }

@@ -1,7 +1,6 @@
-package v2
+package k8sutil
 
 import (
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -23,9 +22,10 @@ func GetDefaultServiceMonitorRelabelConfig() []*monv1.RelabelConfig {
 
 // GetDefaultSecurityContext returns the default security context for a container.
 func GetDefaultSecurityContext() corev1.PodSecurityContext {
+	val := int64(65534)
 	return corev1.PodSecurityContext{
-		RunAsUser: int64Ptr(65534),
-		FSGroup:   int64Ptr(65534),
+		RunAsUser: &val,
+		FSGroup:   &val,
 	}
 }
 
@@ -95,7 +95,7 @@ func NewAntiAffinity(namespaces []string, labelSelectors map[string]string) *cor
 				{
 					Weight: 100,
 					PodAffinityTerm: corev1.PodAffinityTerm{
-						TopologyKey: k8sutil.HostnameLabel,
+						TopologyKey: HostnameLabel,
 						Namespaces:  namespaces,
 						LabelSelector: &metav1.LabelSelector{
 							MatchExpressions: matchExpressions,
