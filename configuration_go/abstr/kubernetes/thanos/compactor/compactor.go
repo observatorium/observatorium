@@ -17,7 +17,7 @@ const (
 	defaultNamespace string = "observatorium"
 	servicePortName  string = "http"
 	defaultImage     string = "quay.io/thanos/thanos"
-	defaultImageTag  string = "v0.31.0"
+	defaultImageTag  string = "v0.32.2"
 )
 
 // CompactorOptions represents the options/flags for the compactor.
@@ -135,11 +135,12 @@ func NewCompactor() *CompactorStatefulSet {
 				PeriodSeconds:    5,
 			}),
 			TerminationGracePeriodSeconds: 120,
-			ConfigMaps:                    make(map[string]map[string]string),
 			Env: []corev1.EnvVar{
 				k8sutil.NewEnvFromSecret("OBJSTORE_CONFIG", "objectStore-secret", "thanos.yaml"),
 				k8sutil.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 			},
+			ConfigMaps: make(map[string]map[string]string),
+			Secrets:    make(map[string]map[string][]byte),
 		},
 		VolumeType: "gp2-csi",
 		VolumeSize: "50Gi",
@@ -196,17 +197,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	}
 	ret["compactor-serviceAccount"] = serviceAccount.MakeManifest()
 
-	// Add needed configMaps
-	for k, v := range c.ConfigMaps {
-		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta,
-			Data:       v,
-		}
-		configMap.MetaConfig.Name = k
-		ret["compactor-configMap-"+k] = configMap.MakeManifest()
-	}
-
-	// Create confiMaps required by the containers
+	// Create configMaps required by the containers
 	for name, config := range pod.GetConfigMaps() {
 		configMap := &k8sutil.ConfigMap{
 			MetaConfig: commonObjectMeta,
@@ -214,6 +205,16 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 		}
 		configMap.MetaConfig.Name = name
 		ret["compactor-configMap-"+name] = configMap.MakeManifest()
+	}
+
+	// Create secrets required by the containers
+	for name, secret := range pod.GetSecrets() {
+		secret := &k8sutil.Secret{
+			MetaConfig: commonObjectMeta,
+			Data:       secret,
+		}
+		secret.MetaConfig.Name = name
+		ret["compactor-secret-"+name] = secret.MakeManifest()
 	}
 
 	return ret

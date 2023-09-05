@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/bwplotka/mimic"
@@ -13,6 +12,8 @@ import (
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/openshift"
 	apiprovider "github.com/observatorium/observatorium/configuration_go/providers/api"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore/s3"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	jaeger "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/jaeger"
 
@@ -183,15 +184,15 @@ func main() {
 				TargetPort: intstr.FromInt(7080),
 			},
 		},
-		Volumes: []corev1.Volume{
-			{
-				Name:         "config",
-				VolumeSource: corev1.VolumeSource{},
-			},
-		},
+		Volumes: []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config", "dummy-sidecar-config")},
 		MonitorPorts: []monv1.Endpoint{
 			{
 				Port: "dummy-metrics",
+			},
+		},
+		ConfigMaps: map[string]map[string]string{
+			"dummy-sidecar-config": {
+				"config.yaml": "dummy: true",
 			},
 		},
 	}
@@ -297,33 +298,32 @@ func main() {
 	compactorSatefulset.Options.LogLevel = "debug"
 	compactorSatefulset.Options.AddExtraOpts("--debug.accept-malformed-index")
 
-	// Set the kube config.
-	compactorSatefulset.ImageTag = "v0.32"
-	compactorSatefulset.Env = append(compactorSatefulset.Env, k8sutil.NewEnvFromSecret("AWS_ACCESS_KEY_ID", "aws_access_key_id", "name"))
-	compactorSatefulset.Env = append(compactorSatefulset.Env, k8sutil.NewEnvFromSecret("AWS_SECRET_ACCESS_KEY", "aws_secret_access_key", "name"))
-
-	// Add sidecar.
-	compactorSatefulset.Sidecars = append(compactorSatefulset.Sidecars, makeOauthProxyContainer(8443, 10902, compactorSatefulset.Name))
-
-	// Add configmap.
-	compactorSatefulset.ConfigMaps["objStore"] = map[string]string{
-		"data": "dummy",
+	// Add secrets.
+	bucketConfig := objstore.BucketConfig{
+		Type: objstore.S3,
+		Config: s3.Config{
+			Bucket:    "dummy",
+			Endpoint:  "s3.us-east-1.amazonaws.com",
+			Region:    "us-east-1",
+			AccessKey: "aws_access_key_id",
+			SecretKey: "aws_secret_access_key",
+		},
 	}
+
+	objstoreConfig, err := yaml.Marshal(bucketConfig)
+	mimic.PanicOnErr(err)
+
+	compactorSatefulset.Secrets["objectStore-secret"] = map[string][]byte{
+		"thanos.yaml": objstoreConfig,
+	}
+
+	// Add a dummy sidecar.
+	compactorSatefulset.Sidecars = append(compactorSatefulset.Sidecars, &dummyContainer)
 
 	// Generate manifests and do some post processing.
 	compactorManifests := compactorSatefulset.Manifests()
 	compactorManifests["compactor-serviceMonitor"].(*monv1.ServiceMonitor).ObjectMeta.Namespace = "openshift-monitoring"
-	compactorManifests["compactor-configMap-objStore"].(*corev1.ConfigMap).ObjectMeta.Annotations["tls"] = "platform-tls"
 	generator.GenerateWithMimic(g, compactorManifests, "compactor")
-
-	// Derive base configuration from the statefulset for another deployment.
-	compactorSatefulset.Name = "compactor-tenant-a"
-	compactorSatefulset.Options.RetentionResolutionRaw = time.Hour * 24 * 365
-	compactorSatefulset.Options.DeleteExtraOpts()
-	compactorSatefulset.ConfigMaps["objStore"] = map[string]string{
-		"data": "tenant-a",
-	}
-	generator.GenerateWithMimic(g, compactorSatefulset.Manifests(), "compactor-tenant-a")
 
 	// Example 3
 	// Observatorium API with no sidecar, packaged as Observatorium template.
@@ -383,50 +383,4 @@ func main() {
 		),
 		"openshift-config",
 	)
-}
-
-func makeOauthProxyContainer(httpsPort, upstreamPort int, serviceAccount string) *k8sutil.Container {
-	return &k8sutil.Container{
-		Name:            "oauth-proxy",
-		Image:           "quay.io/oauth-proxy",
-		ImageTag:        "4.13.0",
-		ImagePullPolicy: corev1.PullIfNotPresent,
-		Args: []string{
-			fmt.Sprintf("-https-address=:%d", httpsPort),
-			fmt.Sprintf("-upstream=http://localhost:%d", upstreamPort),
-			fmt.Sprintf("-openshift-service-account=%s", serviceAccount),
-			"-tls-cert=/etc/tls/private/tls.crt",
-			"-tls-key=/etc/tls/private/tls.key",
-			"-client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token",
-			"-cookie-secret-file=/etc/proxy/secrets/session_secret",
-			"-openshift-ca=/etc/pki/tls/cert.pem",
-			"-openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
-		},
-		Ports: []corev1.ContainerPort{
-			{
-				Name:          "https",
-				ContainerPort: int32(httpsPort),
-			},
-		},
-		Resources: k8sutil.NewResourcesRequirements("25m", "50m", "200Mi", "200Mi"),
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				MountPath: "/etc/tls/private",
-				Name:      "compact-tls",
-				ReadOnly:  false,
-			},
-			{
-				MountPath: "/etc/proxy/secrets",
-				Name:      "compact-proxy",
-				ReadOnly:  false,
-			},
-		},
-		Volumes: []corev1.Volume{
-			k8sutil.NewPodVolumeFromSecret("compact-tls", "compact-tls"),
-			k8sutil.NewPodVolumeFromSecret("compact-proxy", "compact-proxy"),
-		},
-		ServicePorts: []corev1.ServicePort{
-			k8sutil.NewServicePort("https", httpsPort, httpsPort),
-		},
-	}
 }

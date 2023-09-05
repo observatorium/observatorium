@@ -9,6 +9,7 @@ import (
 // that might be useful to add/override in a Deployment/StatefulSet. It contains
 // fields of both DeploymentSpec and PodSpec.
 type DeploymentGenericConfig struct {
+	// Container fields
 	Image                string
 	ImageTag             string
 	ImagePullPolicy      corev1.PullPolicy
@@ -22,15 +23,18 @@ type DeploymentGenericConfig struct {
 	SecurityContext      corev1.PodSecurityContext
 	EnableServiceMonitor bool
 	Env                  []corev1.EnvVar
+	LivenessProbe        corev1.Probe
+	ReadinessProbe       corev1.Probe
 
-	LivenessProbe  corev1.Probe
-	ReadinessProbe corev1.Probe
-
+	// Pod fields
 	TerminationMessagePolicy      corev1.TerminationMessagePolicy
 	TerminationGracePeriodSeconds int64
 
+	// Container dependencies
+	// ConfigMaps and Secrets are the ones required by the main container, others are directly defined in Sidecars
+	ConfigMaps map[string]map[string]string // maps a configmap name to its data of type map[string]string
+	Secrets    map[string]map[string][]byte // maps a secret name to its data of type map[string][]byte
 	Sidecars   []ContainerProvider
-	ConfigMaps map[string]map[string]string // Except the ones defined directly in sidecars
 }
 
 func (d DeploymentGenericConfig) ToContainer() *Container {
@@ -44,6 +48,7 @@ func (d DeploymentGenericConfig) ToContainer() *Container {
 		LivenessProbe:   &d.LivenessProbe,
 		ReadinessProbe:  &d.ReadinessProbe,
 		ConfigMaps:      d.ConfigMaps,
+		Secrets:         d.Secrets,
 	}
 }
 

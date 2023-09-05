@@ -148,6 +148,20 @@ func NewPodVolumeFromSecret(name, secretName string) corev1.Volume {
 	}
 }
 
+// NewPodVolumeFromConfigMap returns a new pod volume from a config map.
+func NewPodVolumeFromConfigMap(name, configMapName string) corev1.Volume {
+	return corev1.Volume{
+		Name: name,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: configMapName,
+				},
+			},
+		},
+	}
+}
+
 // NewServicePort returns a new service port.
 func NewServicePort(name string, port, targetPort int) corev1.ServicePort {
 	return corev1.ServicePort{

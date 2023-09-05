@@ -2,9 +2,9 @@ package k8sutil
 
 import (
 	"fmt"
+	"maps"
 
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,10 +77,11 @@ func (s *Secret) MakeManifest() runtime.Object {
 	}
 }
 
-// ContainerProvider is the interface that containers must implement to be added to a pod.
+// ConfigMapsAndSecretsProvider is the interface that containers must implement to be added to a pod.
 // It returns the list of config maps that the container requires.
-type ConfigMapsProvider interface {
+type ConfigMapsAndSecretsProvider interface {
 	GetConfigMaps() map[string]map[string]string
+	GetSecrets() map[string]map[string][]byte
 }
 
 // ContainerProvider is the interface that containers must implement to be added to a pod.
@@ -91,10 +92,11 @@ type ContainerProvider interface {
 	ServiceProvider
 	ServiceMonitorProvider
 	PersistentVolumeClaimProvider
-	ConfigMapsProvider
+	ConfigMapsAndSecretsProvider
 }
 
 // Container represents a container in a pod.
+// It encapsulates all the container's dependencies.
 // It implements the ContainerProvider interface.
 type Container struct {
 	Name            string
@@ -109,11 +111,13 @@ type Container struct {
 	Ports           []corev1.ContainerPort
 	VolumeMounts    []corev1.VolumeMount
 
+	// Dependencies
 	Volumes      []corev1.Volume
 	VolumeClaims []VolumeClaim
 	ServicePorts []corev1.ServicePort
 	MonitorPorts []monv1.Endpoint
 	ConfigMaps   map[string]map[string]string
+	Secrets      map[string]map[string][]byte
 }
 
 // GetContainer returns a Kubernetes Container.
@@ -162,6 +166,15 @@ func (c *Container) GetConfigMaps() map[string]map[string]string {
 	return c.ConfigMaps
 }
 
+// GetSecrets returns the secrets that the container requires.
+func (c *Container) GetSecrets() map[string]map[string][]byte {
+	if c.Secrets == nil {
+		c.Secrets = map[string]map[string][]byte{}
+	}
+
+	return c.Secrets
+}
+
 // VolumeClaim represents a volume claim.
 type VolumeClaim struct {
 	Name string
@@ -180,7 +193,7 @@ type PodProvider interface {
 	ServiceProvider
 	ServiceMonitorProvider
 	PersistentVolumeClaimProvider
-	ConfigMapsProvider
+	ConfigMapsAndSecretsProvider
 }
 
 // Pod represents a pod.
@@ -256,6 +269,19 @@ func (p *Pod) GetConfigMaps() map[string]map[string]string {
 
 	for _, cp := range p.ContainerProviders {
 		for k, v := range cp.GetConfigMaps() {
+			ret[k] = v
+		}
+	}
+
+	return ret
+}
+
+// GetSecrets returns the secrets that the pod requires.
+func (p *Pod) GetSecrets() map[string]map[string][]byte {
+	ret := map[string]map[string][]byte{}
+
+	for _, cp := range p.ContainerProviders {
+		for k, v := range cp.GetSecrets() {
 			ret[k] = v
 		}
 	}
@@ -406,36 +432,4 @@ func (s *ServiceAccount) MakeManifest() runtime.Object {
 // ManifestProvider is the interface to be implemented to generate a Kubernetes manifest for a resource.
 type ManifestProvider interface {
 	MakeManifest() runtime.Object
-}
-
-// Manifests represents a collection of manifests.
-type Manifests struct {
-	manifests map[string]ManifestProvider
-}
-
-type ManifestsProvider interface {
-	MakeManifests() ObjectMap
-}
-
-// NewManifests returns a new Manifests.
-func NewManifests() *Manifests {
-	return &Manifests{
-		manifests: map[string]ManifestProvider{},
-	}
-}
-
-// Add adds a manifest to the collection.
-func (m *Manifests) Add(filename string, mf ManifestProvider) {
-	m.manifests[filename] = mf
-}
-
-// Make returns an ObjectMap that maps filenames to Kubernetes manifests.
-func (m *Manifests) Make() ObjectMap {
-	ret := ObjectMap{}
-
-	for filename, mf := range m.manifests {
-		ret[filename] = mf.MakeManifest()
-	}
-
-	return ret
 }
