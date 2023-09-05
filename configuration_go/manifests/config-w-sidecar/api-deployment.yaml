@@ -142,5 +142,7 @@ spec:
       - name: tenants
         secret:
           secretName: observatorium-xyz-observatorium-api
-      - name: config
+      - configMap:
+          name: dummy-sidecar-config
+        name: config
 status: {}

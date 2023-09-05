@@ -155,5 +155,7 @@ spec:
       - configMap:
           name: observatorium-xyz-thanos-query
         name: file-sd
-      - name: config
+      - configMap:
+          name: dummy-sidecar-config
+        name: config
 status: {}

@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/instance: observatorium
     app.kubernetes.io/name: thanos-compact
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: v0.32
+    app.kubernetes.io/version: v0.32.2
   name: observatorium-thanos-compact
   namespace: observatorium
 spec:
@@ -17,10 +17,9 @@ spec:
     port: 10902
     protocol: TCP
     targetPort: 10902
-  - name: https
-    port: 8443
-    protocol: TCP
-    targetPort: 8443
+  - name: dummy
+    port: 7080
+    targetPort: 7080
   selector:
     app.kubernetes.io/component: database-compactor
     app.kubernetes.io/instance: observatorium

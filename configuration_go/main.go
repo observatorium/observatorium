@@ -310,7 +310,7 @@ func main() {
 		},
 	}
 
-	objstoreConfig, err := yaml.Marshal(bucketConfig)
+	objstoreConfig, err := yaml.Marshal(&bucketConfig)
 	mimic.PanicOnErr(err)
 
 	compactorSatefulset.Secrets["objectStore-secret"] = map[string][]byte{

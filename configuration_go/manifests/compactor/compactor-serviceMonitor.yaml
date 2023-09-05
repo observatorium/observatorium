@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/instance: observatorium
     app.kubernetes.io/name: thanos-compact
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: v0.32
+    app.kubernetes.io/version: v0.32.2
   name: observatorium-thanos-compact
   namespace: openshift-monitoring
 spec:
@@ -23,6 +23,9 @@ spec:
       - namespace
       - pod
       targetLabel: instance
+  - bearerTokenSecret:
+      key: ""
+    port: dummy-metrics
   namespaceSelector:
     matchNames:
     - observatorium
