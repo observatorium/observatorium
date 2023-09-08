@@ -124,6 +124,7 @@ function(params) {
         { name: 'GUBER_K8S_POD_PORT', value: std.toString(gubernator.config.ports.grpc) },
         { name: 'GUBER_K8S_ENDPOINTS_SELECTOR', value: 'app.kubernetes.io/name=gubernator' },
         { name: 'GUBER_PEER_DISCOVERY_TYPE', value: 'k8s' },
+        { name: 'GUBER_LOG_LEVEL', value: 'info' },
       ],
       ports: [
         { name: port.name, containerPort: port.port }
