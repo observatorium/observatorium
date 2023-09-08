@@ -8,6 +8,7 @@ local defaults = {
   version: error 'must provide version',
   image: error 'must provide image',
   imagePullPolicy: 'IfNotPresent',
+  logLevel: 'info',
   ports: {
     http: 8080,
     grpc: 8081,
@@ -124,7 +125,7 @@ function(params) {
         { name: 'GUBER_K8S_POD_PORT', value: std.toString(gubernator.config.ports.grpc) },
         { name: 'GUBER_K8S_ENDPOINTS_SELECTOR', value: 'app.kubernetes.io/name=gubernator' },
         { name: 'GUBER_PEER_DISCOVERY_TYPE', value: 'k8s' },
-        { name: 'GUBER_LOG_LEVEL', value: 'info' },
+        { name: 'GUBER_LOG_LEVEL', value: gubernator.config.logLevel },
       ],
       ports: [
         { name: port.name, containerPort: port.port }
