@@ -62,7 +62,7 @@ spec:
           value: app.kubernetes.io/name=gubernator
         - name: GUBER_PEER_DISCOVERY_TYPE
           value: k8s
-        - name: GUBER_LOG_LEVEL 
+        - name: GUBER_LOG_LEVEL
           value: info
         image: ghcr.io/mailgun/gubernator:v2.0.0-rc.36
         imagePullPolicy: IfNotPresent
