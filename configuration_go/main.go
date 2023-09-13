@@ -6,11 +6,14 @@ import (
 	"github.com/bwplotka/mimic"
 	"github.com/ghodss/yaml"
 	api "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/observatoriumapi"
+	"github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/thanos/compactor"
 	query "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/thanos/query"
 	"github.com/observatorium/observatorium/configuration_go/generator"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/openshift"
 	apiprovider "github.com/observatorium/observatorium/configuration_go/providers/api"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore/s3"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	jaeger "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/jaeger"
 
@@ -137,9 +140,10 @@ func main() {
 
 	// Example 2
 	// Create sidecar container.
-	dummyContainer := corev1.Container{
+	dummyContainer := k8sutil.Container{
 		Name:            "dummy-sidecar",
-		Image:           "docker.io/dummy:latest",
+		Image:           "docker.io/dummy",
+		ImageTag:        "latest",
 		ImagePullPolicy: corev1.PullIfNotPresent,
 		Args: []string{
 			"--start-dummy-sidecar",
@@ -173,26 +177,22 @@ func main() {
 				SubPath:   "config.yaml",
 			},
 		},
-	}
-
-	sidecar := k8sutil.ExtraConfig{
-		Sidecars: []corev1.Container{dummyContainer},
-		AdditionalServicePorts: []corev1.ServicePort{
+		ServicePorts: []corev1.ServicePort{
 			{
 				Name:       "dummy",
 				Port:       7080,
 				TargetPort: intstr.FromInt(7080),
 			},
 		},
-		AdditionalPodVolumes: []corev1.Volume{
-			{
-				Name:         "config",
-				VolumeSource: corev1.VolumeSource{},
-			},
-		},
-		AdditionalServiceMonitorPorts: []monv1.Endpoint{
+		Volumes: []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config", "dummy-sidecar-config")},
+		MonitorPorts: []monv1.Endpoint{
 			{
 				Port: "dummy-metrics",
+			},
+		},
+		ConfigMaps: map[string]map[string]string{
+			"dummy-sidecar-config": {
+				"config.yaml": "dummy: true",
 			},
 		},
 	}
@@ -228,7 +228,7 @@ func main() {
 			k8sutil.WithResources(apiResources),
 			k8sutil.WithServiceMonitor(),
 			// Add dummy-sidecar stuff
-			k8sutil.WithExtras(sidecar),
+			k8sutil.WithSidecars(&dummyContainer),
 		).Manifests(),
 		"config-w-sidecar",
 	)
@@ -285,10 +285,45 @@ func main() {
 			k8sutil.WithResources(apiResources),
 			k8sutil.WithServiceMonitor(),
 			// Add dummy-sidecar stuff
-			k8sutil.WithExtras(sidecar),
+			k8sutil.WithSidecars(&dummyContainer),
 		).Manifests(),
 		"config-w-sidecar",
 	)
+
+	// Example
+	// Thanos Compactor deployment as statefulSet with sidecar.
+
+	// Set the compactor options.
+	compactorSatefulset := compactor.NewCompactor()
+	compactorSatefulset.Options.LogLevel = "debug"
+	compactorSatefulset.Options.AddExtraOpts("--debug.accept-malformed-index")
+
+	// Add secrets.
+	bucketConfig := objstore.BucketConfig{
+		Type: objstore.S3,
+		Config: s3.Config{
+			Bucket:    "dummy",
+			Endpoint:  "s3.us-east-1.amazonaws.com",
+			Region:    "us-east-1",
+			AccessKey: "aws_access_key_id",
+			SecretKey: "aws_secret_access_key",
+		},
+	}
+
+	objstoreConfig, err := yaml.Marshal(&bucketConfig)
+	mimic.PanicOnErr(err)
+
+	compactorSatefulset.Secrets["objectStore-secret"] = map[string][]byte{
+		"thanos.yaml": objstoreConfig,
+	}
+
+	// Add a dummy sidecar.
+	compactorSatefulset.Sidecars = append(compactorSatefulset.Sidecars, &dummyContainer)
+
+	// Generate manifests and do some post processing.
+	compactorManifests := compactorSatefulset.Manifests()
+	compactorManifests["compactor-serviceMonitor"].(*monv1.ServiceMonitor).ObjectMeta.Namespace = "openshift-monitoring"
+	generator.GenerateWithMimic(g, compactorManifests, "compactor")
 
 	// Example 3
 	// Observatorium API with no sidecar, packaged as Observatorium template.

@@ -117,6 +117,7 @@ spec:
           requests:
             cpu: "2"
             memory: 2000Mi
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: etc/thanos/sd
           name: file-sd
@@ -138,11 +139,14 @@ spec:
         - containerPort: 7080
           name: dummy
         resources: {}
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /etc/dummy-sidecar/config.yaml
           name: config
           readOnly: true
           subPath: config.yaml
+      nodeSelector:
+        kubernetes.io/os: linux
       securityContext:
         fsGroup: 65534
         runAsUser: 65534
@@ -151,5 +155,7 @@ spec:
       - configMap:
           name: observatorium-xyz-thanos-query
         name: file-sd
-      - name: config
+      - configMap:
+          name: dummy-sidecar-config
+        name: config
 status: {}

@@ -95,6 +95,7 @@ spec:
           requests:
             cpu: "2"
             memory: 2000Mi
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /etc/observatorium/rbac.yaml
           name: rbac
@@ -104,6 +105,8 @@ spec:
           name: tenants
           readOnly: true
           subPath: tenants.yaml
+      nodeSelector:
+        kubernetes.io/os: linux
       securityContext:
         fsGroup: 65534
         runAsUser: 65534

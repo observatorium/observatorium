@@ -1,8 +1,6 @@
 package observatoriumapi
 
 import (
-	"fmt"
-
 	"github.com/bwplotka/mimic"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -302,10 +300,11 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 	apiArgs = append(apiArgs, c.additionalAPIArgs...)
 
 	// Instantiate Observatorium API container.
-	observatoriumAPIContainer := corev1.Container{
+	observatoriumAPIContainer := k8sutil.Container{
 		Name:            "observatorium-api",
 		Args:            apiArgs,
-		Image:           fmt.Sprintf("%s:%s", c.Image, c.ImageTag),
+		Image:           c.Image,
+		ImageTag:        c.ImageTag,
 		ImagePullPolicy: c.ImagePullPolicy,
 		Ports: []corev1.ContainerPort{
 			{
@@ -338,33 +337,63 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 				SubPath:   "tenants.yaml",
 			},
 		},
-	}
-
-	// Attach any configured sidecars.
-	containers := []corev1.Container{observatoriumAPIContainer}
-	containers = append(containers, c.Extras.Sidecars...)
-	// Attach any configured volumes.
-	volumes := []corev1.Volume{
-		{
-			Name: "rbac",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: rbacConfigMap.Name,
+		Volumes: []corev1.Volume{
+			{
+				Name: "rbac",
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: rbacConfigMap.Name,
+						},
+					},
+				},
+			},
+			{
+				Name: "tenants",
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: tenantsSecret.Name,
 					},
 				},
 			},
 		},
-		{
-			Name: "tenants",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: tenantsSecret.Name,
-				},
+		ServicePorts: []corev1.ServicePort{
+			{
+				AppProtocol: &[]string{"h2c"}[0],
+				Name:        "grpc-public",
+				Port:        8090,
+				TargetPort:  intstr.FromInt(8090),
+			},
+			{
+				AppProtocol: &[]string{"http"}[0],
+				Name:        "internal",
+				Port:        8081,
+				TargetPort:  intstr.FromInt(8081),
+			},
+			{
+				AppProtocol: &[]string{"http"}[0],
+				Name:        "public",
+				Port:        8080,
+				TargetPort:  intstr.FromInt(8080),
+			},
+		},
+		MonitorPorts: []monv1.Endpoint{
+			{
+				Port: "internal",
 			},
 		},
 	}
-	volumes = append(volumes, c.Extras.AdditionalPodVolumes...)
+
+	// Attach any configured sidecars.
+	containers := []k8sutil.ContainerProvider{&observatoriumAPIContainer}
+	containers = append(containers, c.Sidecars...)
+
+	pod := k8sutil.Pod{
+		ContainerProviders: containers,
+		SecurityContext:    c.SecurityContext,
+		Affinity:           &c.Affinity,
+		ServiceAccountName: apiServiceAccount.Name,
+	}
 
 	apiDeployment := appsv1.Deployment{
 		TypeMeta:   k8sutil.DeploymentMeta,
@@ -380,46 +409,17 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 					Labels:    c.CommonLabels,
 					Namespace: c.Namespace,
 				},
-				Spec: corev1.PodSpec{
-					SecurityContext:    &c.SecurityContext,
-					Affinity:           &c.Affinity,
-					Containers:         containers,
-					ServiceAccountName: apiServiceAccount.Name,
-					Volumes:            volumes,
-				},
+				Spec: pod.MakePodSpec(),
 			},
 		},
 	}
-
-	// Attach any configured ports.
-	ports := []corev1.ServicePort{
-		{
-			AppProtocol: &[]string{"h2c"}[0],
-			Name:        "grpc-public",
-			Port:        8090,
-			TargetPort:  intstr.FromInt(8090),
-		},
-		{
-			AppProtocol: &[]string{"http"}[0],
-			Name:        "internal",
-			Port:        8081,
-			TargetPort:  intstr.FromInt(8081),
-		},
-		{
-			AppProtocol: &[]string{"http"}[0],
-			Name:        "public",
-			Port:        8080,
-			TargetPort:  intstr.FromInt(8080),
-		},
-	}
-	ports = append(ports, c.Extras.AdditionalServicePorts...)
 
 	// Instantiate API Service.
 	apiService := corev1.Service{
 		TypeMeta:   k8sutil.ServiceMeta,
 		ObjectMeta: commonObjectMeta,
 		Spec: corev1.ServiceSpec{
-			Ports:    ports,
+			Ports:    pod.GetServicePorts(),
 			Selector: podLabelSelectors,
 		},
 	}
@@ -434,13 +434,6 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 
 	// If enabled, instantiate API Service.
 	if c.EnableServiceMonitor {
-		endpoints := []monv1.Endpoint{
-			{
-				Port: "internal",
-			},
-		}
-		endpoints = append(endpoints, c.Extras.AdditionalServiceMonitorPorts...)
-
 		apiServiceMonitor := monv1.ServiceMonitor{
 			TypeMeta: k8sutil.ServiceMonitorMeta,
 			ObjectMeta: metav1.ObjectMeta{
@@ -451,7 +444,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 				},
 			},
 			Spec: monv1.ServiceMonitorSpec{
-				Endpoints: endpoints,
+				Endpoints: pod.GetServiceMonitorEndpoints(),
 				NamespaceSelector: monv1.NamespaceSelector{
 					MatchNames: []string{c.Namespace},
 				},

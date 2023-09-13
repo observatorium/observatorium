@@ -1,25 +1,15 @@
 package k8sutil
 
 import (
-	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
-// ExtraConfig represents the configuration required to add extra containers, volumes
-// service and servicemonitor ports to a particular Deployment/StatefulSet.
-type ExtraConfig struct {
-	Sidecars                      []corev1.Container
-	AdditionalPodVolumes          []corev1.Volume
-	AdditionalServicePorts        []corev1.ServicePort
-	AdditionalServiceMonitorPorts []monv1.Endpoint
-}
-
 // DeploymentGenericConfig represents certain config fields
-// that might be useful to add/override in a Deployment. It contains
+// that might be useful to add/override in a Deployment/StatefulSet. It contains
 // fields of both DeploymentSpec and PodSpec.
-// It also has method defined for overriding any default values.
 type DeploymentGenericConfig struct {
+	// Container fields
 	Image                string
 	ImageTag             string
 	ImagePullPolicy      corev1.PullPolicy
@@ -27,19 +17,39 @@ type DeploymentGenericConfig struct {
 	Namespace            string
 	CommonLabels         map[string]string
 	Replicas             int32
-	DeploymentStrategy   appsv1.DeploymentStrategy
+	DeploymentStrategy   appsv1.DeploymentStrategy // Only applies to Deployment kind
 	PodResources         corev1.ResourceRequirements
 	Affinity             corev1.Affinity
 	SecurityContext      corev1.PodSecurityContext
 	EnableServiceMonitor bool
+	Env                  []corev1.EnvVar
+	LivenessProbe        corev1.Probe
+	ReadinessProbe       corev1.Probe
 
-	LivenessProbe  corev1.Probe
-	ReadinessProbe corev1.Probe
-
+	// Pod fields
 	TerminationMessagePolicy      corev1.TerminationMessagePolicy
 	TerminationGracePeriodSeconds int64
 
-	Extras ExtraConfig
+	// Container dependencies
+	// ConfigMaps and Secrets are the ones required by the main container, others are directly defined in Sidecars
+	ConfigMaps map[string]map[string]string // maps a configmap name to its data of type map[string]string
+	Secrets    map[string]map[string][]byte // maps a secret name to its data of type map[string][]byte
+	Sidecars   []ContainerProvider
+}
+
+func (d DeploymentGenericConfig) ToContainer() *Container {
+	return &Container{
+		Name:            d.Name,
+		Image:           d.Image,
+		ImageTag:        d.ImageTag,
+		ImagePullPolicy: d.ImagePullPolicy,
+		Env:             d.Env,
+		Resources:       d.PodResources,
+		LivenessProbe:   &d.LivenessProbe,
+		ReadinessProbe:  &d.ReadinessProbe,
+		ConfigMaps:      d.ConfigMaps,
+		Secrets:         d.Secrets,
+	}
 }
 
 type DeploymentOption func(d *DeploymentGenericConfig)
@@ -144,11 +154,9 @@ func WithTerminationGracePeriod(duration int64) DeploymentOption {
 	}
 }
 
-// WithExtra allows overriding default K8s Deployment and adding additional containers,
-// alongside the main deployment container, and allows attaching additonal volumes,
-// service ports and service monitor scrape endpoints to these deployments.
-func WithExtras(e ExtraConfig) DeploymentOption {
+// WithSideCars overrides the default pod sidecars.
+func WithSidecars(sidecars ...ContainerProvider) DeploymentOption {
 	return func(d *DeploymentGenericConfig) {
-		d.Extras = e
+		d.Sidecars = sidecars
 	}
 }
