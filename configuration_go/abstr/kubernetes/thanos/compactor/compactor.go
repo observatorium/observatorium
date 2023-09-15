@@ -15,7 +15,6 @@ const (
 	dataVolumeName   string = "data"
 	defaultHTTPPort  int    = 10902
 	defaultNamespace string = "observatorium"
-	servicePortName  string = "http"
 	defaultImage     string = "quay.io/thanos/thanos"
 	defaultImageTag  string = "v0.32.2"
 )

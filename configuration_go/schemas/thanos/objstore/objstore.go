@@ -1,6 +1,6 @@
 package objstore
 
-// Taken from https://github.com/thanos-io/objstore/client/factory.go
+// Taken from github.com/thanos-io/objstore/client/factory.go
 
 type BucketConfig struct {
 	Type   ObjProvider `yaml:"type"`
