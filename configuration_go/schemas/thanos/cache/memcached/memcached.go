@@ -6,7 +6,7 @@ import (
 	"github.com/thanos-io/thanos/pkg/model"
 )
 
-// Taken from github.com/thanos-io/thanos/pkg/cacheutil/memcached_client.go v0.32.2
+// Taken from https://github.com/thanos-io/thanos/blob/release-0.32/pkg/cacheutil/memcached_client.go#L106
 
 var DefaultMemcachedClientConfig = MemcachedClientConfig{
 	Timeout:                   500 * time.Millisecond,
