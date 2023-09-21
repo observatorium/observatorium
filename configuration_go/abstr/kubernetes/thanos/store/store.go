@@ -1,10 +1,10 @@
 package store
 
 import (
-	"log"
 	"net"
 	"time"
 
+	"github.com/bwplotka/mimic"
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/common"
@@ -44,17 +44,13 @@ type StoreOptions struct {
 	IgnoreDeletionMarksDelay         time.Duration              `opt:"ignore-deletion-marks-delay"`
 	IndexCacheSize                   string                     `opt:"index-cache-size"`
 	IndexCacheConfig                 string                     `opt:"index-cache.config"`
-	IndexCacheConfigFile             string                     `opt:"index-cache.config-file"`
 	LogFormat                        common.LogFormat           `opt:"log.format"`
 	LogLevel                         common.LogLevel            `opt:"log.level"`
 	MaxTime                          common.TimeOrDurationValue `opt:"max-time"`
 	MinTime                          common.TimeOrDurationValue `opt:"min-time"`
 	ObjstoreConfig                   string                     `opt:"objstore.config"`
-	ObjstoreConfigFile               string                     `opt:"objstore.config-file"`
 	RequestLoggingConfig             string                     `opt:"request.logging-config"`
-	RequestLoggingConfigFile         string                     `opt:"request.logging-config-file"`
 	SelectorRelabelConfig            relabel.Config             `opt:"selector.relabel-config"`
-	SelectorRelabelConfigFile        string                     `opt:"selector.relabel-config-file"`
 	StoreEnableIndexHeaderLazyReader bool                       `opt:"store.enable-index-header-lazy-reader"`
 	StoreGrpcDownloadedBytesLimit    int                        `opt:"store.grps.downloaded-bytes-limit"`
 	StoreGrpcSeriesMaxConcurrency    int                        `opt:"store.grps.series-max-concurrency"`
@@ -62,7 +58,6 @@ type StoreOptions struct {
 	StoreLimitsRequestSeries         int                        `opt:"store.limits.request-series"`
 	SyncBlockDuration                time.Duration              `opt:"sync-block-duration"`
 	TracingConfig                    trclient.TracingConfig     `opt:"tracing.config"`
-	TracingConfigFile                string                     `opt:"tracing.config-file"`
 	WebDisable                       bool                       `opt:"web.disable"`
 	WebDisableCors                   bool                       `opt:"web.disable-cors"`
 	WebExternalPrefix                string                     `opt:"web.external-prefix"`
@@ -232,16 +227,16 @@ func (s *StoreStatefulSet) makeContainer() *k8sutil.Container {
 
 	livenessPort := s.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
 	if livenessPort != int32(httpPort) {
-		log.Printf("Warning: liveness probe port %d does not match http port %d", livenessPort, httpPort)
+		mimic.Panicf(`liveness probe port %d does not match http port %d`, livenessPort, httpPort)
 	}
 
 	readinessPort := s.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal
 	if readinessPort != int32(httpPort) {
-		log.Printf("Warning: readiness probe port %d does not match http port %d", readinessPort, httpPort)
+		mimic.Panicf(`readiness probe port %d does not match http port %d`, readinessPort, httpPort)
 	}
 
 	if s.Options.DataDir == "" {
-		log.Println("Warning: data directory is not specified for the statefulset.")
+		mimic.Panicf(`data directory is not specified for the statefulset.`)
 	}
 
 	ret := s.ToContainer()
