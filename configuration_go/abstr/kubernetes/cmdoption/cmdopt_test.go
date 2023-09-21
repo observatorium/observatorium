@@ -15,6 +15,14 @@ func (s SubStruct) String() string {
 	return s.SubString
 }
 
+type SubStructPtr struct {
+	SubString string
+}
+
+func (s *SubStructPtr) String() string {
+	return s.SubString
+}
+
 type TestOptions struct {
 	String       string        `opt:"string"`
 	Int          int           `opt:"int"`
@@ -22,6 +30,7 @@ type TestOptions struct {
 	Bool         bool          `opt:"bool"`
 	Duration     time.Duration `opt:"duration"`
 	Sub          SubStruct     `opt:"sub"`
+	SubPtr       *SubStructPtr `opt:"subptr"`
 	NoValue      bool          `opt:"no-value,noval"`
 	Repeat       []string      `opt:"repeat"`
 	SingleHyphen int           `opt:"single,single-hyphen"`
@@ -86,6 +95,14 @@ func TestCmdOptions(t *testing.T) {
 				},
 			},
 			expect: []string{"--sub=sub"},
+		},
+		"sub with stringer interface on pointer receiver": {
+			options: TestOptions{
+				SubPtr: &SubStructPtr{
+					SubString: "sub",
+				},
+			},
+			expect: []string{"--subptr=sub"},
 		},
 		"no-value": {
 			options: TestOptions{

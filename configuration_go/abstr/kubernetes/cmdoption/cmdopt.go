@@ -115,6 +115,12 @@ func getOptValue(kind reflect.Kind, rValue reflect.Value) []string {
 			return ret
 		}
 
+		// Check if Stringer interface is implemented on pointer receiver.
+		if str := getStringerValue(kind, rValue); str != "" {
+			ret = append(ret, str)
+			return ret
+		}
+
 		rValue = rValue.Elem()
 		kind = rValue.Kind()
 	}
@@ -154,17 +160,15 @@ func getOptValue(kind reflect.Kind, rValue reflect.Value) []string {
 				return ret
 			}
 		}
-		str, ok := rValue.Interface().(fmt.Stringer)
-		if !ok {
+
+		// Check if Stringer interface is implemented on struct receiver.
+		str := getStringerValue(kind, rValue)
+		if str == "" {
 			return ret
 		}
 
-		value := str.String()
-		if value == "" {
-			return ret
-		}
+		ret = append(ret, str)
 
-		ret = append(ret, value)
 	case reflect.Slice:
 		if rValue.Len() == 0 {
 			return ret
@@ -179,6 +183,15 @@ func getOptValue(kind reflect.Kind, rValue reflect.Value) []string {
 	}
 
 	return ret
+}
+
+func getStringerValue(kind reflect.Kind, rValue reflect.Value) string {
+	str, ok := rValue.Interface().(fmt.Stringer)
+	if !ok {
+		return ""
+	}
+
+	return str.String()
 }
 
 func isNoVal(optVals []string, kind reflect.Kind, v reflect.Value) bool {
