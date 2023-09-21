@@ -7,10 +7,10 @@ import (
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/common"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/prometheus/model/relabel"
-	thanosmodel "github.com/thanos-io/thanos/pkg/model"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -25,48 +25,48 @@ const (
 // StoreOptions represents the options/flags for the store.
 // See https://thanos.io/tip/components/store.md/#flags for details.
 type StoreOptions struct {
-	BlockMetaFetchConcurrency        int                             `opt:"block-meta-fetch-concurrency"`
-	BlockSyncConcurrency             int                             `opt:"block-sync-concurrency"`
-	BucketWebLabel                   string                          `opt:"bucket-web-label"`
-	CacheIndexHeader                 bool                            `opt:"cache-index-header"`
-	ChunkPoolSize                    string                          `opt:"chunk-pool-size"`
-	ConsistencyDelay                 time.Duration                   `opt:"consistency-delay"`
-	DataDir                          string                          `opt:"data-dir"`
-	GrpcAddress                      net.TCPAddr                     `opt:"grpc-address"`
-	GrpcGracePeriod                  time.Duration                   `opt:"grpc-grace-period"`
-	GrpcServerMaxConnectionAge       time.Duration                   `opt:"grpc-server-max-connection-age"`
-	GrpcServerTlsCert                string                          `opt:"grpc-server-tls-cert"`
-	GrpcServerTlsClientCa            string                          `opt:"grpc-server-tls-client-ca"`
-	GrpcServerTlsKey                 string                          `opt:"grpc-server-tls-key"`
-	HttpAddress                      net.TCPAddr                     `opt:"http-address"`
-	HttpGracePeriod                  time.Duration                   `opt:"http-grace-period"`
-	HttpConfig                       string                          `opt:"http.config"`
-	IgnoreDeletionMarksDelay         time.Duration                   `opt:"ignore-deletion-marks-delay"`
-	IndexCacheSize                   string                          `opt:"index-cache-size"`
-	IndexCacheConfig                 string                          `opt:"index-cache.config"`
-	IndexCacheConfigFile             string                          `opt:"index-cache.config-file"`
-	LogFormat                        string                          `opt:"log.format"`
-	LogLevel                         string                          `opt:"log.level"`
-	MaxTime                          thanosmodel.TimeOrDurationValue `opt:"max-time"`
-	MinTime                          thanosmodel.TimeOrDurationValue `opt:"min-time"`
-	ObjstoreConfig                   string                          `opt:"objstore.config"`
-	ObjstoreConfigFile               string                          `opt:"objstore.config-file"`
-	RequestLoggingConfig             string                          `opt:"request.logging-config"`
-	RequestLoggingConfigFile         string                          `opt:"request.logging-config-file"`
-	SelectorRelabelConfig            relabel.Config                  `opt:"selector.relabel-config"`
-	SelectorRelabelConfigFile        string                          `opt:"selector.relabel-config-file"`
-	StoreEnableIndexHeaderLazyReader bool                            `opt:"store.enable-index-header-lazy-reader"`
-	StoreGrpcDownloadedBytesLimit    int                             `opt:"store.grps.downloaded-bytes-limit"`
-	StoreGrpcSeriesMaxConcurrency    int                             `opt:"store.grps.series-max-concurrency"`
-	StoreLimitsRequestSamples        int                             `opt:"store.limits.request-samples"`
-	StoreLimitsRequestSeries         int                             `opt:"store.limits.request-series"`
-	SyncBlockDuration                time.Duration                   `opt:"sync-block-duration"`
-	TracingConfig                    trclient.TracingConfig          `opt:"tracing.config"`
-	TracingConfigFile                string                          `opt:"tracing.config-file"`
-	WebDisable                       bool                            `opt:"web.disable"`
-	WebDisableCors                   bool                            `opt:"web.disable-cors"`
-	WebExternalPrefix                string                          `opt:"web.external-prefix"`
-	WebPrefixHeader                  string                          `opt:"web.prefix-header"`
+	BlockMetaFetchConcurrency        int                        `opt:"block-meta-fetch-concurrency"`
+	BlockSyncConcurrency             int                        `opt:"block-sync-concurrency"`
+	BucketWebLabel                   string                     `opt:"bucket-web-label"`
+	CacheIndexHeader                 bool                       `opt:"cache-index-header"`
+	ChunkPoolSize                    string                     `opt:"chunk-pool-size"`
+	ConsistencyDelay                 time.Duration              `opt:"consistency-delay"`
+	DataDir                          string                     `opt:"data-dir"`
+	GrpcAddress                      net.TCPAddr                `opt:"grpc-address"`
+	GrpcGracePeriod                  time.Duration              `opt:"grpc-grace-period"`
+	GrpcServerMaxConnectionAge       time.Duration              `opt:"grpc-server-max-connection-age"`
+	GrpcServerTlsCert                string                     `opt:"grpc-server-tls-cert"`
+	GrpcServerTlsClientCa            string                     `opt:"grpc-server-tls-client-ca"`
+	GrpcServerTlsKey                 string                     `opt:"grpc-server-tls-key"`
+	HttpAddress                      net.TCPAddr                `opt:"http-address"`
+	HttpGracePeriod                  time.Duration              `opt:"http-grace-period"`
+	HttpConfig                       string                     `opt:"http.config"`
+	IgnoreDeletionMarksDelay         time.Duration              `opt:"ignore-deletion-marks-delay"`
+	IndexCacheSize                   string                     `opt:"index-cache-size"`
+	IndexCacheConfig                 string                     `opt:"index-cache.config"`
+	IndexCacheConfigFile             string                     `opt:"index-cache.config-file"`
+	LogFormat                        common.LogFormat           `opt:"log.format"`
+	LogLevel                         common.LogLevel            `opt:"log.level"`
+	MaxTime                          common.TimeOrDurationValue `opt:"max-time"`
+	MinTime                          common.TimeOrDurationValue `opt:"min-time"`
+	ObjstoreConfig                   string                     `opt:"objstore.config"`
+	ObjstoreConfigFile               string                     `opt:"objstore.config-file"`
+	RequestLoggingConfig             string                     `opt:"request.logging-config"`
+	RequestLoggingConfigFile         string                     `opt:"request.logging-config-file"`
+	SelectorRelabelConfig            relabel.Config             `opt:"selector.relabel-config"`
+	SelectorRelabelConfigFile        string                     `opt:"selector.relabel-config-file"`
+	StoreEnableIndexHeaderLazyReader bool                       `opt:"store.enable-index-header-lazy-reader"`
+	StoreGrpcDownloadedBytesLimit    int                        `opt:"store.grps.downloaded-bytes-limit"`
+	StoreGrpcSeriesMaxConcurrency    int                        `opt:"store.grps.series-max-concurrency"`
+	StoreLimitsRequestSamples        int                        `opt:"store.limits.request-samples"`
+	StoreLimitsRequestSeries         int                        `opt:"store.limits.request-series"`
+	SyncBlockDuration                time.Duration              `opt:"sync-block-duration"`
+	TracingConfig                    trclient.TracingConfig     `opt:"tracing.config"`
+	TracingConfigFile                string                     `opt:"tracing.config-file"`
+	WebDisable                       bool                       `opt:"web.disable"`
+	WebDisableCors                   bool                       `opt:"web.disable-cors"`
+	WebExternalPrefix                string                     `opt:"web.external-prefix"`
+	WebPrefixHeader                  string                     `opt:"web.prefix-header"`
 
 	// Extra options not officially supported by the compactor.
 	cmdopt.ExtraOpts
