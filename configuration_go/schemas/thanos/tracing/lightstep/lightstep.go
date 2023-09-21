@@ -1,6 +1,6 @@
 package lightstep
 
-// Taken from github.com/thanos-io/thanos/pkg/tracing/lightstep v0.32.2
+// Taken from https://github.com/thanos-io/thanos/blob/release-0.32/pkg/tracing/lightstep/lightstep.go#L18
 
 // Config - YAML configuration.
 // This also omits most empty fields (unlike Thanos upstream.)
