@@ -61,3 +61,7 @@ type MemcachedClientConfig struct {
 	// AutoDiscovery configures memached client to perform auto-discovery instead of DNS resolution
 	AutoDiscovery bool `yaml:"auto_discovery,omitempty"`
 }
+
+func (c MemcachedClientConfig) Type() string {
+	return "MEMCACHED"
+}

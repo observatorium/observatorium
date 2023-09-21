@@ -84,6 +84,10 @@ type RedisClientConfig struct {
 	MaxAsyncConcurrency int `yaml:"max_async_concurrency,omitempty"`
 }
 
+func (c RedisClientConfig) Type() string {
+	return "REDIS"
+}
+
 // TLSConfig configures TLS connections.
 type TLSConfig struct {
 	// The CA cert to use for the targets.

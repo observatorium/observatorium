@@ -9,3 +9,7 @@ type MemoryCacheConfig struct {
 	MaxSize     model.Bytes `yaml:"max_size,omitempty"`
 	MaxItemSize model.Bytes `yaml:"max_item_size,omitempty"`
 }
+
+func (c MemoryCacheConfig) Type() string {
+	return "MEMORY"
+}
