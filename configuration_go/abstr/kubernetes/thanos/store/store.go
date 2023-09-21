@@ -7,8 +7,11 @@ import (
 	"github.com/bwplotka/mimic"
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/common"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/units"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/prometheus/model/relabel"
 	corev1 "k8s.io/api/core/v1"
@@ -25,43 +28,44 @@ const (
 // StoreOptions represents the options/flags for the store.
 // See https://thanos.io/tip/components/store.md/#flags for details.
 type StoreOptions struct {
-	BlockMetaFetchConcurrency        int                        `opt:"block-meta-fetch-concurrency"`
-	BlockSyncConcurrency             int                        `opt:"block-sync-concurrency"`
-	BucketWebLabel                   string                     `opt:"bucket-web-label"`
-	CacheIndexHeader                 bool                       `opt:"cache-index-header"`
-	ChunkPoolSize                    string                     `opt:"chunk-pool-size"`
-	ConsistencyDelay                 time.Duration              `opt:"consistency-delay"`
-	DataDir                          string                     `opt:"data-dir"`
-	GrpcAddress                      net.TCPAddr                `opt:"grpc-address"`
-	GrpcGracePeriod                  time.Duration              `opt:"grpc-grace-period"`
-	GrpcServerMaxConnectionAge       time.Duration              `opt:"grpc-server-max-connection-age"`
-	GrpcServerTlsCert                string                     `opt:"grpc-server-tls-cert"`
-	GrpcServerTlsClientCa            string                     `opt:"grpc-server-tls-client-ca"`
-	GrpcServerTlsKey                 string                     `opt:"grpc-server-tls-key"`
-	HttpAddress                      net.TCPAddr                `opt:"http-address"`
-	HttpGracePeriod                  time.Duration              `opt:"http-grace-period"`
-	HttpConfig                       string                     `opt:"http.config"`
-	IgnoreDeletionMarksDelay         time.Duration              `opt:"ignore-deletion-marks-delay"`
-	IndexCacheSize                   string                     `opt:"index-cache-size"`
-	IndexCacheConfig                 string                     `opt:"index-cache.config"`
-	LogFormat                        common.LogFormat           `opt:"log.format"`
-	LogLevel                         common.LogLevel            `opt:"log.level"`
-	MaxTime                          common.TimeOrDurationValue `opt:"max-time"`
-	MinTime                          common.TimeOrDurationValue `opt:"min-time"`
-	ObjstoreConfig                   string                     `opt:"objstore.config"`
-	RequestLoggingConfig             string                     `opt:"request.logging-config"`
-	SelectorRelabelConfig            relabel.Config             `opt:"selector.relabel-config"`
-	StoreEnableIndexHeaderLazyReader bool                       `opt:"store.enable-index-header-lazy-reader"`
-	StoreGrpcDownloadedBytesLimit    int                        `opt:"store.grps.downloaded-bytes-limit"`
-	StoreGrpcSeriesMaxConcurrency    int                        `opt:"store.grps.series-max-concurrency"`
-	StoreLimitsRequestSamples        int                        `opt:"store.limits.request-samples"`
-	StoreLimitsRequestSeries         int                        `opt:"store.limits.request-series"`
-	SyncBlockDuration                time.Duration              `opt:"sync-block-duration"`
-	TracingConfig                    trclient.TracingConfig     `opt:"tracing.config"`
-	WebDisable                       bool                       `opt:"web.disable"`
-	WebDisableCors                   bool                       `opt:"web.disable-cors"`
-	WebExternalPrefix                string                     `opt:"web.external-prefix"`
-	WebPrefixHeader                  string                     `opt:"web.prefix-header"`
+	BlockMetaFetchConcurrency        int                         `opt:"block-meta-fetch-concurrency"`
+	BlockSyncConcurrency             int                         `opt:"block-sync-concurrency"`
+	BucketWebLabel                   string                      `opt:"bucket-web-label"`
+	CacheIndexHeader                 bool                        `opt:"cache-index-header"`
+	ChunkPoolSize                    units.Bytes                 `opt:"chunk-pool-size"`
+	ConsistencyDelay                 time.Duration               `opt:"consistency-delay"`
+	DataDir                          string                      `opt:"data-dir"`
+	GrpcAddress                      *net.TCPAddr                `opt:"grpc-address"`
+	GrpcGracePeriod                  time.Duration               `opt:"grpc-grace-period"`
+	GrpcServerMaxConnectionAge       time.Duration               `opt:"grpc-server-max-connection-age"`
+	GrpcServerTlsCert                string                      `opt:"grpc-server-tls-cert"`
+	GrpcServerTlsClientCa            string                      `opt:"grpc-server-tls-client-ca"`
+	GrpcServerTlsKey                 string                      `opt:"grpc-server-tls-key"`
+	HttpAddress                      *net.TCPAddr                `opt:"http-address"`
+	HttpGracePeriod                  time.Duration               `opt:"http-grace-period"`
+	HttpConfig                       string                      `opt:"http.config"`
+	IgnoreDeletionMarksDelay         time.Duration               `opt:"ignore-deletion-marks-delay"`
+	IndexCacheSize                   units.Bytes                 `opt:"index-cache-size"`
+	IndexCacheConfig                 *cache.IndexCacheConfig     `opt:"index-cache.config"`
+	LogFormat                        common.LogFormat            `opt:"log.format"`
+	LogLevel                         common.LogLevel             `opt:"log.level"`
+	MaxTime                          *common.TimeOrDurationValue `opt:"max-time"`
+	MinTime                          *common.TimeOrDurationValue `opt:"min-time"`
+	ObjstoreConfig                   string                      `opt:"objstore.config"`
+	RequestLoggingConfig             *reqlogging.RequestConfig   `opt:"request.logging-config"`
+	SelectorRelabelConfig            *relabel.Config             `opt:"selector.relabel-config"`
+	StoreEnableIndexHeaderLazyReader bool                        `opt:"store.enable-index-header-lazy-reader"`
+	StoreEnableLazyExpandedPostings  bool                        `opt:"store.enable-lazy-expanded-postings"`
+	StoreGrpcDownloadedBytesLimit    units.Bytes                 `opt:"store.grps.downloaded-bytes-limit"`
+	StoreGrpcSeriesMaxConcurrency    int                         `opt:"store.grps.series-max-concurrency"`
+	StoreLimitsRequestSamples        int                         `opt:"store.limits.request-samples"`
+	StoreLimitsRequestSeries         int                         `opt:"store.limits.request-series"`
+	SyncBlockDuration                time.Duration               `opt:"sync-block-duration"`
+	TracingConfig                    *trclient.TracingConfig     `opt:"tracing.config"`
+	WebDisable                       bool                        `opt:"web.disable"`
+	WebDisableCors                   bool                        `opt:"web.disable-cors"`
+	WebExternalPrefix                string                      `opt:"web.external-prefix"`
+	WebPrefixHeader                  string                      `opt:"web.prefix-header"`
 
 	// Extra options not officially supported by the compactor.
 	cmdopt.ExtraOpts
@@ -77,12 +81,8 @@ type StoreStatefulSet struct {
 
 func NewStore() *StoreStatefulSet {
 	opts := &StoreOptions{
-		LogLevel:  "warn",
-		LogFormat: "logfmt",
-		HttpAddress: net.TCPAddr{
-			IP:   net.ParseIP("0.0.0.0"),
-			Port: defaultHTTPPort,
-		},
+		LogLevel:                 "warn",
+		LogFormat:                "logfmt",
 		DataDir:                  "/var/thanos/store",
 		ObjstoreConfig:           "$(OBJSTORE_CONFIG)",
 		IgnoreDeletionMarksDelay: 24 * time.Hour,
@@ -221,7 +221,7 @@ func (s *StoreStatefulSet) makeContainer() *k8sutil.Container {
 	}
 
 	httpPort := defaultHTTPPort
-	if s.Options.HttpAddress.Port != 0 {
+	if s.Options.HttpAddress != nil && s.Options.HttpAddress.Port != 0 {
 		httpPort = s.Options.HttpAddress.Port
 	}
 
@@ -260,6 +260,12 @@ func (s *StoreStatefulSet) makeContainer() *k8sutil.Container {
 	}
 	ret.VolumeClaims = []k8sutil.VolumeClaim{
 		k8sutil.NewVolumeClaimProvider(dataVolumeName, s.VolumeType, s.VolumeSize),
+	}
+	ret.VolumeMounts = []corev1.VolumeMount{
+		{
+			Name:      dataVolumeName,
+			MountPath: s.Options.DataDir,
+		},
 	}
 
 	return ret
