@@ -13,13 +13,13 @@ type cacheConfig interface {
 
 // IndexCacheConfig specifies the index cache config.
 type IndexCacheConfig[T cacheConfig] struct {
-	configType string `yaml:"type"`
-	config     T      `yaml:"config"`
+	ConfigType string `yaml:"type"`
+	Config     T      `yaml:"config"`
 }
 
 func NewConfig[T cacheConfig](c T) *IndexCacheConfig[T] {
 	return &IndexCacheConfig[T]{
-		configType: c.Type(),
-		config:     c,
+		ConfigType: c.Type(),
+		Config:     c,
 	}
 }
