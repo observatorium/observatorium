@@ -48,14 +48,11 @@ type CompactorOptions struct {
 	MaxTime                            string           `opt:"max-time"`
 	MinTime                            string           `opt:"min-time"`
 	ObjstoreConfig                     string           `opt:"objstore.config"`
-	ObjstoreConfigFile                 string           `opt:"objstore.config-file"`
 	RetentionResolution1h              time.Duration    `opt:"retention.resolution-1h"`
 	RetentionResolution5m              time.Duration    `opt:"retention.resolution-5m"`
 	RetentionResolutionRaw             time.Duration    `opt:"retention.resolution-raw"`
 	SelectorRelabelConfig              string           `opt:"selector.relabel-config"`
-	SelectorRelabelConfigFile          string           `opt:"selector.relabel-config-file"`
 	TracingConfig                      string           `opt:"tracing.config"`
-	TracingConfigFile                  string           `opt:"tracing.config-file"`
 	Version                            bool             `opt:"version,noval"`
 	Wait                               bool             `opt:"wait,noval"`
 	WaitInterval                       time.Duration    `opt:"wait-interval"`
