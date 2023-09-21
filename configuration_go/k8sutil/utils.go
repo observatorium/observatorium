@@ -65,7 +65,7 @@ func NewProbe(path string, port int, cfg ProbeConfig) corev1.Probe {
 	return corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
-				Path: "/-/healthy",
+				Path: path,
 				Port: intstr.FromInt(port),
 			},
 		},

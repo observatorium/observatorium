@@ -264,6 +264,12 @@ func (c *CompactorStatefulSet) makeContainer() *k8sutil.Container {
 	ret.VolumeClaims = []k8sutil.VolumeClaim{
 		k8sutil.NewVolumeClaimProvider(dataVolumeName, c.VolumeType, c.VolumeSize),
 	}
+	ret.VolumeMounts = []corev1.VolumeMount{
+		{
+			Name:      dataVolumeName,
+			MountPath: c.Options.DataDir,
+		},
+	}
 
 	return ret
 }
