@@ -3,6 +3,7 @@ package k8sutil
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // DeploymentGenericConfig represents certain config fields
@@ -35,6 +36,9 @@ type DeploymentGenericConfig struct {
 	ConfigMaps map[string]map[string]string // maps a configmap name to its data of type map[string]string
 	Secrets    map[string]map[string][]byte // maps a secret name to its data of type map[string][]byte
 	Sidecars   []ContainerProvider
+
+	// Post processing of the generated objects (e.g. for adding annotations, modifying monitor namespace, etc.)
+	PostProcess []ObjectProcessor
 }
 
 func (d DeploymentGenericConfig) ToContainer() *Container {
@@ -52,6 +56,7 @@ func (d DeploymentGenericConfig) ToContainer() *Container {
 	}
 }
 
+type ObjectProcessor func(obj runtime.Object)
 type DeploymentOption func(d *DeploymentGenericConfig)
 
 // WithImage overrides the default image.
