@@ -6,7 +6,7 @@ import (
 	"github.com/thanos-io/thanos/pkg/model"
 )
 
-// Taken from github.com/thanos-io/pkg/cacheutil/redis_client.go
+// Taken from github.com/thanos-io/thanos/pkg/cacheutil/redis_client.go v0.32.2
 
 var DefaultRedisClientConfig = RedisClientConfig{
 	DialTimeout:            time.Second * 5,

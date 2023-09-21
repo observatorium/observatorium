@@ -2,7 +2,7 @@ package memory
 
 import "github.com/thanos-io/thanos/pkg/model"
 
-// Taken from github.com/thanos-io/pkg/store/cache/inmemory.go
+// Taken from github.com/thanos-io/thanos/pkg/store/cache/inmemory.go v0.32.2
 
 // InMemoryIndexCacheConfig holds the in-memory index cache config.
 type MemoryCacheConfig struct {

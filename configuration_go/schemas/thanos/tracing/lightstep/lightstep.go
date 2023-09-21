@@ -1,6 +1,6 @@
 package lightstep
 
-// Taken from github.com/thanos-io/thanos/pkg/tracing/lightstep
+// Taken from github.com/thanos-io/thanos/pkg/tracing/lightstep v0.32.2
 
 // Config - YAML configuration.
 // This also omits most empty fields (unlike Thanos upstream.)

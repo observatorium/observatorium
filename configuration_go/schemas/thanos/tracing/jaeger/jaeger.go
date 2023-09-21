@@ -2,7 +2,7 @@ package jaeger
 
 import "time"
 
-// Taken from github.com/thanos-io/thanos/pkg/tracing/jaeger
+// Taken from github.com/thanos-io/thanos/pkg/tracing/jaeger v0.32.2
 
 const (
 	SamplerTypeRemote        = "remote"

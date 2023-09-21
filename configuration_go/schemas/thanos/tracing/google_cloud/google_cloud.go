@@ -1,6 +1,6 @@
 package google_cloud
 
-// Taken from github.com/thanos-io/thanos/pkg/tracing/google_cloud
+// Taken from github.com/thanos-io/thanos/pkg/tracing/google_cloud v0.32.2
 
 // Config - YAML configuration.
 type Config struct {

@@ -2,7 +2,7 @@ package s3
 
 import "time"
 
-// Taken from github.com/thanos-io/objstore/providers/s3/s3.go
+// Taken from github.com/thanos-io/objstore/providers/s3/s3.go eb06103887ab787f47d08e8a2f100264087319d5
 
 type Config struct {
 	Bucket             string            `yaml:"bucket"`
