@@ -206,12 +206,6 @@ func (s *StoreStatefulSet) Manifests() k8sutil.ObjectMap {
 		ret["store-secret-"+name] = secret.MakeManifest()
 	}
 
-	for _, object := range ret {
-		for _, process := range s.PostProcess {
-			process(object)
-		}
-	}
-
 	return ret
 }
 

@@ -209,12 +209,6 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 		ret["compactor-secret-"+name] = secret.MakeManifest()
 	}
 
-	for _, object := range ret {
-		for _, process := range c.PostProcess {
-			process(object)
-		}
-	}
-
 	return ret
 }
 

@@ -36,9 +36,6 @@ type DeploymentGenericConfig struct {
 	ConfigMaps map[string]map[string]string // maps a configmap name to its data of type map[string]string
 	Secrets    map[string]map[string][]byte // maps a secret name to its data of type map[string][]byte
 	Sidecars   []ContainerProvider
-
-	// Post processing of the generated objects (e.g. for adding annotations, modifying monitor namespace, etc.)
-	PostProcess []ObjectProcessor
 }
 
 func (d DeploymentGenericConfig) ToContainer() *Container {
