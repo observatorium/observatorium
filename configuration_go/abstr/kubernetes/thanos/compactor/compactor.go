@@ -105,8 +105,6 @@ func NewCompactor() *CompactorStatefulSet {
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
-	namespaces := []string{defaultNamespace}
-
 	return &CompactorStatefulSet{
 		Options: c,
 		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
@@ -118,7 +116,7 @@ func NewCompactor() *CompactorStatefulSet {
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			PodResources:         k8sutil.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
-			Affinity:             *k8sutil.NewAntiAffinity(namespaces, labelSelectors),
+			Affinity:             *k8sutil.NewAntiAffinity(nil, labelSelectors),
 			SecurityContext:      k8sutil.GetDefaultSecurityContext(),
 			EnableServiceMonitor: true,
 			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
@@ -163,7 +161,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	}
 
 	statefulset := &k8sutil.StatefulSet{
-		MetaConfig: commonObjectMeta,
+		MetaConfig: commonObjectMeta.Clone(),
 		Replicas:   c.Replicas,
 		Pod:        pod,
 	}
@@ -173,21 +171,21 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	}
 
 	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta,
+		MetaConfig:   commonObjectMeta.Clone(),
 		ServicePorts: pod,
 	}
 	ret["compactor-service"] = service.MakeManifest()
 
 	if c.EnableServiceMonitor {
 		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta,
+			MetaConfig:              commonObjectMeta.Clone(),
 			ServiceMonitorEndpoints: pod,
 		}
 		ret["compactor-serviceMonitor"] = serviceMonitor.MakeManifest()
 	}
 
 	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta,
+		MetaConfig: commonObjectMeta.Clone(),
 		Name:       pod.ServiceAccountName,
 	}
 	ret["compactor-serviceAccount"] = serviceAccount.MakeManifest()
@@ -195,7 +193,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	// Create configMaps required by the containers
 	for name, config := range pod.GetConfigMaps() {
 		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta,
+			MetaConfig: commonObjectMeta.Clone(),
 			Data:       config,
 		}
 		configMap.MetaConfig.Name = name
@@ -205,7 +203,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	// Create secrets required by the containers
 	for name, secret := range pod.GetSecrets() {
 		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta,
+			MetaConfig: commonObjectMeta.Clone(),
 			Data:       secret,
 		}
 		secret.MetaConfig.Name = name

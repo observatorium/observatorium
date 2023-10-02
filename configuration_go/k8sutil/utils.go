@@ -1,6 +1,8 @@
 package k8sutil
 
 import (
+	"sort"
+
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -89,6 +91,11 @@ func NewAntiAffinity(namespaces []string, labelSelectors map[string]string) *cor
 		})
 	}
 
+	// Sort to avoid random order in generated YAML which generates noisy diffs.
+	sort.Slice(matchExpressions, func(i, j int) bool {
+		return matchExpressions[i].Key < matchExpressions[j].Key
+	})
+
 	ret := &corev1.Affinity{
 		PodAntiAffinity: &corev1.PodAntiAffinity{
 			PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
@@ -96,7 +103,6 @@ func NewAntiAffinity(namespaces []string, labelSelectors map[string]string) *cor
 					Weight: 100,
 					PodAffinityTerm: corev1.PodAffinityTerm{
 						TopologyKey: HostnameLabel,
-						Namespaces:  namespaces,
 						LabelSelector: &metav1.LabelSelector{
 							MatchExpressions: matchExpressions,
 						},

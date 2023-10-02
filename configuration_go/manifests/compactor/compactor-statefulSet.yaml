@@ -45,8 +45,6 @@ spec:
                   operator: In
                   values:
                   - observatorium
-              namespaces:
-              - observatorium
               topologyKey: kubernetes.io/hostname
             weight: 100
       containers:

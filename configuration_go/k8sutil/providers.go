@@ -399,9 +399,6 @@ func (s *ServiceMonitor) MakeManifest() runtime.Object {
 			Selector: metav1.LabelSelector{
 				MatchLabels: selector,
 			},
-			NamespaceSelector: monv1.NamespaceSelector{
-				MatchNames: []string{metaCfg.Namespace},
-			},
 			Endpoints: s.ServiceMonitorEndpoints.GetServiceMonitorEndpoints(),
 		},
 	}

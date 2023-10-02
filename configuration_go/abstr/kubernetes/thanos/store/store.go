@@ -20,6 +20,7 @@ import (
 const (
 	dataVolumeName   string = "data"
 	defaultHTTPPort  int    = 10902
+	defaultGRPCPort  int    = 10901
 	defaultNamespace string = "observatorium"
 	defaultImage     string = "quay.io/thanos/thanos"
 	defaultImageTag  string = "v0.32.2"
@@ -105,8 +106,6 @@ func NewStore() *StoreStatefulSet {
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
-	namespaces := []string{defaultNamespace}
-
 	return &StoreStatefulSet{
 		Options: opts,
 		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
@@ -118,7 +117,7 @@ func NewStore() *StoreStatefulSet {
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			PodResources:         k8sutil.NewResourcesRequirements("500m", "1", "200Mi", "400Mi"),
-			Affinity:             *k8sutil.NewAntiAffinity(namespaces, labelSelectors),
+			Affinity:             *k8sutil.NewAntiAffinity(nil, labelSelectors),
 			SecurityContext:      k8sutil.GetDefaultSecurityContext(),
 			EnableServiceMonitor: true,
 
@@ -162,7 +161,7 @@ func (s *StoreStatefulSet) Manifests() k8sutil.ObjectMap {
 	}
 
 	statefulset := &k8sutil.StatefulSet{
-		MetaConfig: commonObjectMeta,
+		MetaConfig: commonObjectMeta.Clone(),
 		Replicas:   s.Replicas,
 		Pod:        pod,
 	}
@@ -172,21 +171,21 @@ func (s *StoreStatefulSet) Manifests() k8sutil.ObjectMap {
 	}
 
 	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta,
+		MetaConfig:   commonObjectMeta.Clone(),
 		ServicePorts: pod,
 	}
 	ret["store-service"] = service.MakeManifest()
 
 	if s.EnableServiceMonitor {
 		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta,
+			MetaConfig:              commonObjectMeta.Clone(),
 			ServiceMonitorEndpoints: pod,
 		}
 		ret["store-serviceMonitor"] = serviceMonitor.MakeManifest()
 	}
 
 	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta,
+		MetaConfig: commonObjectMeta.Clone(),
 		Name:       pod.ServiceAccountName,
 	}
 	ret["store-serviceAccount"] = serviceAccount.MakeManifest()
@@ -194,7 +193,7 @@ func (s *StoreStatefulSet) Manifests() k8sutil.ObjectMap {
 	// Create configMaps required by the containers
 	for name, config := range pod.GetConfigMaps() {
 		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta,
+			MetaConfig: commonObjectMeta.Clone(),
 			Data:       config,
 		}
 		configMap.MetaConfig.Name = name
@@ -204,7 +203,7 @@ func (s *StoreStatefulSet) Manifests() k8sutil.ObjectMap {
 	// Create secrets required by the containers
 	for name, secret := range pod.GetSecrets() {
 		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta,
+			MetaConfig: commonObjectMeta.Clone(),
 			Data:       secret,
 		}
 		secret.MetaConfig.Name = name
@@ -222,6 +221,11 @@ func (s *StoreStatefulSet) makeContainer() *k8sutil.Container {
 	httpPort := defaultHTTPPort
 	if s.Options.HttpAddress != nil && s.Options.HttpAddress.Port != 0 {
 		httpPort = s.Options.HttpAddress.Port
+	}
+
+	grpcPort := defaultGRPCPort
+	if s.Options.GrpcAddress != nil && s.Options.GrpcAddress.Port != 0 {
+		grpcPort = s.Options.GrpcAddress.Port
 	}
 
 	livenessPort := s.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
@@ -247,9 +251,15 @@ func (s *StoreStatefulSet) makeContainer() *k8sutil.Container {
 			ContainerPort: int32(httpPort),
 			Protocol:      corev1.ProtocolTCP,
 		},
+		{
+			Name:          "grpc",
+			ContainerPort: int32(grpcPort),
+			Protocol:      corev1.ProtocolTCP,
+		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
 		k8sutil.NewServicePort("http", httpPort, httpPort),
+		k8sutil.NewServicePort("grpc", grpcPort, grpcPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
