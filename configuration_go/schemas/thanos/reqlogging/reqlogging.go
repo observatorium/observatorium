@@ -1,5 +1,7 @@
 package reqlogging
 
+import "gopkg.in/yaml.v2"
+
 // Taken from https://github.com/thanos-io/thanos/blob/release-0.32/pkg/logging/yaml_parser.go
 
 type LogLevel string
@@ -15,6 +17,15 @@ type RequestConfig struct {
 	HTTP    HTTPProtocolConfigs `yaml:"http,omitempty"`
 	GRPC    GRPCProtocolConfigs `yaml:"grpc,omitempty"`
 	Options OptionsConfig       `yaml:"options,omitempty"`
+}
+
+func (c RequestConfig) String() string {
+	// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
+	ret, err := yaml.Marshal(c)
+	if err != nil {
+		panic(err)
+	}
+	return string(ret)
 }
 
 type HTTPProtocolConfigs struct {

@@ -289,6 +289,37 @@ func (p *Pod) GetSecrets() map[string]map[string][]byte {
 	return ret
 }
 
+// Deployment represents a Kubernetes Deployment.
+type Deployment struct {
+	Replicas   int32
+	MetaConfig MetaConfig
+	Pod        PodProvider
+}
+
+// MakeManifest returns a Kubernetes Deployment.
+func (d *Deployment) MakeManifest() runtime.Object {
+	selectorMatcheLabels := maps.Clone(d.MetaConfig.Labels)
+	delete(selectorMatcheLabels, VersionLabel)
+
+	return &appsv1.Deployment{
+		TypeMeta:   DeploymentMeta,
+		ObjectMeta: d.MetaConfig.MakeMeta(),
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &d.Replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: selectorMatcheLabels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:    d.MetaConfig.Labels,
+					Namespace: d.MetaConfig.Namespace,
+				},
+				Spec: d.Pod.MakePodSpec(),
+			},
+		},
+	}
+}
+
 // StatefulSet represents a Kubernetes StatefulSet.
 type StatefulSet struct {
 	Replicas   int32

@@ -7,6 +7,7 @@ import (
 	mon "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/prometheus/model/labels"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -55,6 +56,16 @@ var ServiceMonitorMeta = metav1.TypeMeta{
 var OpenShiftTemplateMeta = metav1.TypeMeta{
 	Kind:       "Template",
 	APIVersion: "template.openshift.io/v1",
+}
+
+var RoleMeta = metav1.TypeMeta{
+	Kind:       "Role",
+	APIVersion: rbacv1.SchemeGroupVersion.String(),
+}
+
+var RoleBindingMeta = metav1.TypeMeta{
+	Kind:       "RoleBinding",
+	APIVersion: rbacv1.SchemeGroupVersion.String(),
 }
 
 // K8s recommended label constants.
