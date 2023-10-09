@@ -1,7 +1,8 @@
 package cache
 
 import (
-	"github.com/bwplotka/mimic"
+	"fmt"
+
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache/memcached"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache/memory"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache/redis"
@@ -17,7 +18,7 @@ type IndexCacheConfig struct {
 func (c IndexCacheConfig) String() string {
 	ret, err := yaml.Marshal(c)
 	if err != nil {
-		mimic.Panicf("error mashalling IndexCacheConfig to yaml: %v", err)
+		panic(fmt.Sprintf("error mashalling IndexCacheConfig to yaml: %v", err))
 	}
 	return string(ret)
 }

@@ -1,10 +1,10 @@
 package compactor
 
 import (
+	"fmt"
 	"net"
 	"time"
 
-	"github.com/bwplotka/mimic"
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
@@ -226,17 +226,17 @@ func (c *CompactorStatefulSet) makeContainer() *k8sutil.Container {
 
 	livenessPort := c.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
 	if livenessPort != int32(httpPort) {
-		mimic.Panicf("liveness probe port %d does not match http port %d", livenessPort, httpPort)
+		panic(fmt.Sprintf("liveness probe port %d does not match http port %d", livenessPort, httpPort))
 	}
 
 	readinessPort := c.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal
 	if readinessPort != int32(httpPort) {
-		mimic.Panicf(`readiness probe port %d does not match http port %d`, readinessPort, httpPort)
+		panic(fmt.Sprintf(`readiness probe port %d does not match http port %d`, readinessPort, httpPort))
 	}
 
 	// Print warning if data directory is not specified.
 	if c.Options.DataDir == "" {
-		mimic.Panicf("data directory is not specified for the statefulset.")
+		panic(fmt.Sprintf("data directory is not specified for the statefulset."))
 	}
 
 	ret := c.ToContainer()
