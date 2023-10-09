@@ -8,8 +8,9 @@ import (
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/common"
+	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
+	thanostime "github.com/observatorium/observatorium/configuration_go/schemas/thanos/time"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/units"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -29,49 +30,49 @@ const (
 // StoreOptions represents the options/flags for the store.
 // See https://thanos.io/tip/components/store.md/#flags for details.
 type StoreOptions struct {
-	BlockMetaFetchConcurrency        int                         `opt:"block-meta-fetch-concurrency"`
-	BlockSyncConcurrency             int                         `opt:"block-sync-concurrency"`
-	BucketWebLabel                   string                      `opt:"bucket-web-label"`
-	CacheIndexHeader                 bool                        `opt:"cache-index-header"`
-	ChunkPoolSize                    units.Bytes                 `opt:"chunk-pool-size"`
-	ConsistencyDelay                 time.Duration               `opt:"consistency-delay"`
-	DataDir                          string                      `opt:"data-dir"`
-	GrpcAddress                      *net.TCPAddr                `opt:"grpc-address"`
-	GrpcGracePeriod                  time.Duration               `opt:"grpc-grace-period"`
-	GrpcServerMaxConnectionAge       time.Duration               `opt:"grpc-server-max-connection-age"`
-	GrpcServerTlsCert                string                      `opt:"grpc-server-tls-cert"`
-	GrpcServerTlsClientCa            string                      `opt:"grpc-server-tls-client-ca"`
-	GrpcServerTlsKey                 string                      `opt:"grpc-server-tls-key"`
-	HttpAddress                      *net.TCPAddr                `opt:"http-address"`
-	HttpGracePeriod                  time.Duration               `opt:"http-grace-period"`
-	HttpConfig                       string                      `opt:"http.config"`
-	IgnoreDeletionMarksDelay         time.Duration               `opt:"ignore-deletion-marks-delay"`
-	IndexCacheSize                   units.Bytes                 `opt:"index-cache-size"`
-	IndexCacheConfig                 *cache.IndexCacheConfig     `opt:"index-cache.config"`
-	IndexCacheConfigFile             string                      `opt:"index-cache.config-file"`
-	LogFormat                        common.LogFormat            `opt:"log.format"`
-	LogLevel                         common.LogLevel             `opt:"log.level"`
-	MaxTime                          *common.TimeOrDurationValue `opt:"max-time"`
-	MinTime                          *common.TimeOrDurationValue `opt:"min-time"`
-	ObjstoreConfig                   string                      `opt:"objstore.config"`
-	ObjstoreConfigFile               string                      `opt:"objstore.config-file"`
-	RequestLoggingConfig             *reqlogging.RequestConfig   `opt:"request.logging-config"`
-	RequestLoggingConfigFile         string                      `opt:"request.logging-config-file"`
-	SelectorRelabelConfig            *relabel.Config             `opt:"selector.relabel-config"`
-	SelectorRelabelConfigFile        string                      `opt:"selector.relabel-config-file"`
-	StoreEnableIndexHeaderLazyReader bool                        `opt:"store.enable-index-header-lazy-reader"`
-	StoreEnableLazyExpandedPostings  bool                        `opt:"store.enable-lazy-expanded-postings"`
-	StoreGrpcDownloadedBytesLimit    units.Bytes                 `opt:"store.grps.downloaded-bytes-limit"`
-	StoreGrpcSeriesMaxConcurrency    int                         `opt:"store.grps.series-max-concurrency"`
-	StoreLimitsRequestSamples        int                         `opt:"store.limits.request-samples"`
-	StoreLimitsRequestSeries         int                         `opt:"store.limits.request-series"`
-	SyncBlockDuration                time.Duration               `opt:"sync-block-duration"`
-	TracingConfig                    *trclient.TracingConfig     `opt:"tracing.config"`
-	TracingConfigFile                string                      `opt:"tracing.config-file"`
-	WebDisable                       bool                        `opt:"web.disable"`
-	WebDisableCors                   bool                        `opt:"web.disable-cors"`
-	WebExternalPrefix                string                      `opt:"web.external-prefix"`
-	WebPrefixHeader                  string                      `opt:"web.prefix-header"`
+	BlockMetaFetchConcurrency        int                             `opt:"block-meta-fetch-concurrency"`
+	BlockSyncConcurrency             int                             `opt:"block-sync-concurrency"`
+	BucketWebLabel                   string                          `opt:"bucket-web-label"`
+	CacheIndexHeader                 bool                            `opt:"cache-index-header"`
+	ChunkPoolSize                    units.Bytes                     `opt:"chunk-pool-size"`
+	ConsistencyDelay                 time.Duration                   `opt:"consistency-delay"`
+	DataDir                          string                          `opt:"data-dir"`
+	GrpcAddress                      *net.TCPAddr                    `opt:"grpc-address"`
+	GrpcGracePeriod                  time.Duration                   `opt:"grpc-grace-period"`
+	GrpcServerMaxConnectionAge       time.Duration                   `opt:"grpc-server-max-connection-age"`
+	GrpcServerTlsCert                string                          `opt:"grpc-server-tls-cert"`
+	GrpcServerTlsClientCa            string                          `opt:"grpc-server-tls-client-ca"`
+	GrpcServerTlsKey                 string                          `opt:"grpc-server-tls-key"`
+	HttpAddress                      *net.TCPAddr                    `opt:"http-address"`
+	HttpGracePeriod                  time.Duration                   `opt:"http-grace-period"`
+	HttpConfig                       string                          `opt:"http.config"`
+	IgnoreDeletionMarksDelay         time.Duration                   `opt:"ignore-deletion-marks-delay"`
+	IndexCacheSize                   units.Bytes                     `opt:"index-cache-size"`
+	IndexCacheConfig                 *cache.IndexCacheConfig         `opt:"index-cache.config"`
+	IndexCacheConfigFile             string                          `opt:"index-cache.config-file"`
+	LogFormat                        thanoslog.LogFormat             `opt:"log.format"`
+	LogLevel                         thanoslog.LogLevel              `opt:"log.level"`
+	MaxTime                          *thanostime.TimeOrDurationValue `opt:"max-time"`
+	MinTime                          *thanostime.TimeOrDurationValue `opt:"min-time"`
+	ObjstoreConfig                   string                          `opt:"objstore.config"`
+	ObjstoreConfigFile               string                          `opt:"objstore.config-file"`
+	RequestLoggingConfig             *reqlogging.RequestConfig       `opt:"request.logging-config"`
+	RequestLoggingConfigFile         string                          `opt:"request.logging-config-file"`
+	SelectorRelabelConfig            *relabel.Config                 `opt:"selector.relabel-config"`
+	SelectorRelabelConfigFile        string                          `opt:"selector.relabel-config-file"`
+	StoreEnableIndexHeaderLazyReader bool                            `opt:"store.enable-index-header-lazy-reader"`
+	StoreEnableLazyExpandedPostings  bool                            `opt:"store.enable-lazy-expanded-postings"`
+	StoreGrpcDownloadedBytesLimit    units.Bytes                     `opt:"store.grps.downloaded-bytes-limit"`
+	StoreGrpcSeriesMaxConcurrency    int                             `opt:"store.grps.series-max-concurrency"`
+	StoreLimitsRequestSamples        int                             `opt:"store.limits.request-samples"`
+	StoreLimitsRequestSeries         int                             `opt:"store.limits.request-series"`
+	SyncBlockDuration                time.Duration                   `opt:"sync-block-duration"`
+	TracingConfig                    *trclient.TracingConfig         `opt:"tracing.config"`
+	TracingConfigFile                string                          `opt:"tracing.config-file"`
+	WebDisable                       bool                            `opt:"web.disable"`
+	WebDisableCors                   bool                            `opt:"web.disable-cors"`
+	WebExternalPrefix                string                          `opt:"web.external-prefix"`
+	WebPrefixHeader                  string                          `opt:"web.prefix-header"`
 
 	// Extra options not officially supported by the store.
 	cmdopt.ExtraOpts

@@ -7,7 +7,8 @@ import (
 	"github.com/bwplotka/mimic"
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/common"
+	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
+	thanostime "github.com/observatorium/observatorium/configuration_go/schemas/thanos/time"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -23,47 +24,47 @@ const (
 // CompactorOptions represents the options/flags for the compactor.
 // See https://thanos.io/tip/components/compact.md/#flags for details.
 type CompactorOptions struct {
-	BlockFilesConcurrency              int                         `opt:"block-files-concurrency"`
-	BlockMetaFetchConcurrency          int                         `opt:"block-meta-fetch-concurrency"`
-	BlockViewerGlobalSyncBlockInterval time.Duration               `opt:"block-viewer.global.sync-block-interval"`
-	BlockViewerGlobalSyncBlockTimeout  time.Duration               `opt:"block-viewer.global.sync-block-timeout"`
-	BucketWebLabel                     string                      `opt:"bucket-web-label"`
-	CompactBlocksFetchConcurrency      int                         `opt:"compact.blocks-fetch-concurrency"`
-	CompactCleanupInterval             time.Duration               `opt:"compact.cleanup-interval"`
-	CompactConcurrency                 int                         `opt:"compact.concurrency"`
-	CompactProgressInterval            time.Duration               `opt:"compact.progress-interval"`
-	ConsistencyDelay                   time.Duration               `opt:"consistency-delay"`
-	DataDir                            string                      `opt:"data-dir"`
-	DeduplicationFunc                  string                      `opt:"deduplication.func"`
-	DeduplicationReplicaLabel          string                      `opt:"deduplication.replica-label"`
-	DeleteDelay                        time.Duration               `opt:"delete-delay"`
-	DownsampleConcurrency              int                         `opt:"downsample.concurrency"`
-	DownsamplingDisable                bool                        `opt:"downsampling.disable"`
-	HashFunc                           string                      `opt:"hash-func"`
-	HttpAddress                        *net.TCPAddr                `opt:"http-address"`
-	HttpGracePeriod                    time.Duration               `opt:"http-grace-period"`
-	HttpConfig                         string                      `opt:"http.config"`
-	LogFormat                          common.LogFormat            `opt:"log.format"`
-	LogLevel                           common.LogLevel             `opt:"log.level"`
-	MaxTime                            *common.TimeOrDurationValue `opt:"max-time"`
-	MinTime                            *common.TimeOrDurationValue `opt:"min-time"`
-	ObjstoreConfig                     string                      `opt:"objstore.config"`
-	ObjstoreConfigFile                 string                      `opt:"objstore.config-file"`
-	RetentionResolution1h              time.Duration               `opt:"retention.resolution-1h"`
-	RetentionResolution5m              time.Duration               `opt:"retention.resolution-5m"`
-	RetentionResolutionRaw             time.Duration               `opt:"retention.resolution-raw"`
-	SelectorRelabelConfig              string                      `opt:"selector.relabel-config"`
-	SelectorRelabelConfigFile          string                      `opt:"selector.relabel-config-file"`
-	TracingConfig                      string                      `opt:"tracing.config"`
-	TracingConfigFile                  string                      `opt:"tracing.config-file"`
-	Version                            bool                        `opt:"version,noval"`
-	Wait                               bool                        `opt:"wait,noval"`
-	WaitInterval                       time.Duration               `opt:"wait-interval"`
-	WebDisable                         bool                        `opt:"web.disable"`
-	WebDisableCors                     bool                        `opt:"web.disable-cors"`
-	WebExternalPrefix                  string                      `opt:"web.external-prefix"`
-	WebPrefixHeader                    string                      `opt:"web.prefix-header"`
-	WebRoutePrefix                     string                      `opt:"web.route-prefix"`
+	BlockFilesConcurrency              int                             `opt:"block-files-concurrency"`
+	BlockMetaFetchConcurrency          int                             `opt:"block-meta-fetch-concurrency"`
+	BlockViewerGlobalSyncBlockInterval time.Duration                   `opt:"block-viewer.global.sync-block-interval"`
+	BlockViewerGlobalSyncBlockTimeout  time.Duration                   `opt:"block-viewer.global.sync-block-timeout"`
+	BucketWebLabel                     string                          `opt:"bucket-web-label"`
+	CompactBlocksFetchConcurrency      int                             `opt:"compact.blocks-fetch-concurrency"`
+	CompactCleanupInterval             time.Duration                   `opt:"compact.cleanup-interval"`
+	CompactConcurrency                 int                             `opt:"compact.concurrency"`
+	CompactProgressInterval            time.Duration                   `opt:"compact.progress-interval"`
+	ConsistencyDelay                   time.Duration                   `opt:"consistency-delay"`
+	DataDir                            string                          `opt:"data-dir"`
+	DeduplicationFunc                  string                          `opt:"deduplication.func"`
+	DeduplicationReplicaLabel          string                          `opt:"deduplication.replica-label"`
+	DeleteDelay                        time.Duration                   `opt:"delete-delay"`
+	DownsampleConcurrency              int                             `opt:"downsample.concurrency"`
+	DownsamplingDisable                bool                            `opt:"downsampling.disable"`
+	HashFunc                           string                          `opt:"hash-func"`
+	HttpAddress                        *net.TCPAddr                    `opt:"http-address"`
+	HttpGracePeriod                    time.Duration                   `opt:"http-grace-period"`
+	HttpConfig                         string                          `opt:"http.config"`
+	LogFormat                          thanoslog.LogFormat             `opt:"log.format"`
+	LogLevel                           thanoslog.LogLevel              `opt:"log.level"`
+	MaxTime                            *thanostime.TimeOrDurationValue `opt:"max-time"`
+	MinTime                            *thanostime.TimeOrDurationValue `opt:"min-time"`
+	ObjstoreConfig                     string                          `opt:"objstore.config"`
+	ObjstoreConfigFile                 string                          `opt:"objstore.config-file"`
+	RetentionResolution1h              time.Duration                   `opt:"retention.resolution-1h"`
+	RetentionResolution5m              time.Duration                   `opt:"retention.resolution-5m"`
+	RetentionResolutionRaw             time.Duration                   `opt:"retention.resolution-raw"`
+	SelectorRelabelConfig              string                          `opt:"selector.relabel-config"`
+	SelectorRelabelConfigFile          string                          `opt:"selector.relabel-config-file"`
+	TracingConfig                      string                          `opt:"tracing.config"`
+	TracingConfigFile                  string                          `opt:"tracing.config-file"`
+	Version                            bool                            `opt:"version,noval"`
+	Wait                               bool                            `opt:"wait,noval"`
+	WaitInterval                       time.Duration                   `opt:"wait-interval"`
+	WebDisable                         bool                            `opt:"web.disable"`
+	WebDisableCors                     bool                            `opt:"web.disable-cors"`
+	WebExternalPrefix                  string                          `opt:"web.external-prefix"`
+	WebPrefixHeader                    string                          `opt:"web.prefix-header"`
+	WebRoutePrefix                     string                          `opt:"web.route-prefix"`
 
 	// Extra options not officially supported by the compactor.
 	cmdopt.ExtraOpts

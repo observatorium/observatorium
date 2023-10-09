@@ -26,9 +26,7 @@ spec:
   - bearerTokenSecret:
       key: ""
     port: dummy-metrics
-  namespaceSelector:
-    matchNames:
-    - observatorium
+  namespaceSelector: {}
   selector:
     matchLabels:
       app.kubernetes.io/component: database-compactor
