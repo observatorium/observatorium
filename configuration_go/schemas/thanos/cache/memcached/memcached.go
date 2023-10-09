@@ -3,7 +3,7 @@ package memcached
 import (
 	"time"
 
-	"github.com/thanos-io/thanos/pkg/model"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/units"
 )
 
 // Taken from https://github.com/thanos-io/thanos/blob/release-0.32/pkg/cacheutil/memcached_client.go#L106
@@ -13,7 +13,7 @@ var DefaultMemcachedClientConfig = MemcachedClientConfig{
 	MaxIdleConnections:        100,
 	MaxAsyncConcurrency:       20,
 	MaxAsyncBufferSize:        10000,
-	MaxItemSize:               model.Bytes(1024 * 1024),
+	MaxItemSize:               units.Bytes(1024 * 1024),
 	MaxGetMultiConcurrency:    100,
 	MaxGetMultiBatchSize:      0,
 	DNSProviderUpdateInterval: 10 * time.Second,
@@ -47,7 +47,7 @@ type MemcachedClientConfig struct {
 	// MaxItemSize specifies the maximum size of an item stored in memcached.
 	// Items bigger than MaxItemSize are skipped.
 	// If set to 0, no maximum size is enforced.
-	MaxItemSize model.Bytes `yaml:"max_item_size,omitempty"`
+	MaxItemSize units.Bytes `yaml:"max_item_size,omitempty"`
 
 	// MaxGetMultiBatchSize specifies the maximum number of keys a single underlying
 	// GetMulti() should run. If more keys are specified, internally keys are splitted

@@ -3,7 +3,7 @@ package redis
 import (
 	"time"
 
-	"github.com/thanos-io/thanos/pkg/model"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/units"
 )
 
 // Taken from https://github.com/thanos-io/thanos/blob/release-0.32/pkg/cacheutil/redis_client.go#L60
@@ -71,7 +71,7 @@ type RedisClientConfig struct {
 	// Client-side caching is when data is stored in memory
 	// instead of fetching data each time.
 	// See https://redis.io/docs/manual/client-side-caching/ for info.
-	CacheSize model.Bytes `yaml:"cache_size,omitempty"`
+	CacheSize units.Bytes `yaml:"cache_size,omitempty"`
 
 	// MasterName specifies the master's name. Must be not empty
 	// for Redis Sentinel.

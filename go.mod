@@ -11,7 +11,6 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
 	github.com/prometheus/common v0.44.0
 	github.com/prometheus/prometheus v0.44.1-0.20230524110021-37e5249e33e4
-	github.com/thanos-io/thanos v0.32.2
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.27.3
 	k8s.io/apimachinery v0.27.3
@@ -32,6 +31,7 @@ require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rodaine/hclencoder v0.0.1 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/net v0.12.0 // indirect
