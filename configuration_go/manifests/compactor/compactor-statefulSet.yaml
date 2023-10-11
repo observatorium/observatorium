@@ -37,16 +37,14 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchExpressions:
-                - key: app.kubernetes.io/name
-                  operator: In
-                  values:
-                  - thanos-compact
                 - key: app.kubernetes.io/instance
                   operator: In
                   values:
                   - observatorium
-              namespaces:
-              - observatorium
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - thanos-compact
               topologyKey: kubernetes.io/hostname
             weight: 100
       containers:
@@ -89,7 +87,7 @@ spec:
         readinessProbe:
           failureThreshold: 20
           httpGet:
-            path: /-/healthy
+            path: /-/ready
             port: 10902
           periodSeconds: 5
         resources:
@@ -100,6 +98,9 @@ spec:
             cpu: "2"
             memory: 2000Mi
         terminationMessagePolicy: FallbackToLogsOnError
+        volumeMounts:
+        - mountPath: /var/thanos/compactor
+          name: data
       - args:
         - --start-dummy-sidecar
         image: docker.io/dummy:latest

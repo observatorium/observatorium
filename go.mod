@@ -10,7 +10,7 @@ require (
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
 	github.com/prometheus/common v0.44.0
-	github.com/prometheus/prometheus v0.44.0
+	github.com/prometheus/prometheus v0.44.1-0.20230524110021-37e5249e33e4
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.27.3
 	k8s.io/apimachinery v0.27.3

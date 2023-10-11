@@ -1,6 +1,6 @@
 package client
 
-// Taken from github.com/thanos-io/thanos/pkg/tracing/client/client.go
+// Taken from github.com/thanos-io/thanos/pkg/tracing/client/client.go v0.32.2
 
 type TracingProvider string
 

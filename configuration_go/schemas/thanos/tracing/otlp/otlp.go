@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Taken from github.com/thanos-io/thanos/pkg/tracing/otlp
+// Taken from https://github.com/thanos-io/thanos/blob/release-0.32/pkg/tracing/otlp/config_yaml.go#L22
 
 type retryConfig struct {
 	RetryEnabled         bool          `yaml:"retry_enabled,omitempty"`

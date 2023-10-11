@@ -1,12 +1,14 @@
 package compactor
 
 import (
-	"log"
+	"fmt"
 	"net"
 	"time"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
+	thanostime "github.com/observatorium/observatorium/configuration_go/schemas/thanos/time"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -15,7 +17,6 @@ const (
 	dataVolumeName   string = "data"
 	defaultHTTPPort  int    = 10902
 	defaultNamespace string = "observatorium"
-	servicePortName  string = "http"
 	defaultImage     string = "quay.io/thanos/thanos"
 	defaultImageTag  string = "v0.32.2"
 )
@@ -23,47 +24,47 @@ const (
 // CompactorOptions represents the options/flags for the compactor.
 // See https://thanos.io/tip/components/compact.md/#flags for details.
 type CompactorOptions struct {
-	BlockFilesConcurrency              int           `opt:"block-files-concurrency"`
-	BlockMetaFetchConcurrency          int           `opt:"block-meta-fetch-concurrency"`
-	BlockViewerGlobalSyncBlockInterval time.Duration `opt:"block-viewer.global.sync-block-interval"`
-	BlockViewerGlobalSyncBlockTimeout  time.Duration `opt:"block-viewer.global.sync-block-timeout"`
-	BucketWebLabel                     string        `opt:"bucket-web-label"`
-	CompactBlocksFetchConcurrency      int           `opt:"compact.blocks-fetch-concurrency"`
-	CompactCleanupInterval             time.Duration `opt:"compact.cleanup-interval"`
-	CompactConcurrency                 int           `opt:"compact.concurrency"`
-	CompactProgressInterval            time.Duration `opt:"compact.progress-interval"`
-	ConsistencyDelay                   time.Duration `opt:"consistency-delay"`
-	DataDir                            string        `opt:"data-dir"`
-	DeduplicationFunc                  string        `opt:"deduplication.func"`
-	DeduplicationReplicaLabel          string        `opt:"deduplication.replica-label"`
-	DeleteDelay                        time.Duration `opt:"delete-delay"`
-	DownsampleConcurrency              int           `opt:"downsample.concurrency"`
-	DownsamplingDisable                bool          `opt:"downsampling.disable"`
-	HashFunc                           string        `opt:"hash-func"`
-	HttpAddress                        net.TCPAddr   `opt:"http-address"`
-	HttpGracePeriod                    time.Duration `opt:"http-grace-period"`
-	HttpConfig                         string        `opt:"http.config"`
-	LogFormat                          string        `opt:"log.format"`
-	LogLevel                           string        `opt:"log.level"`
-	MaxTime                            string        `opt:"max-time"`
-	MinTime                            string        `opt:"min-time"`
-	ObjstoreConfig                     string        `opt:"objstore.config"`
-	ObjstoreConfigFile                 string        `opt:"objstore.config-file"`
-	RetentionResolution1h              time.Duration `opt:"retention.resolution-1h"`
-	RetentionResolution5m              time.Duration `opt:"retention.resolution-5m"`
-	RetentionResolutionRaw             time.Duration `opt:"retention.resolution-raw"`
-	SelectorRelabelConfig              string        `opt:"selector.relabel-config"`
-	SelectorRelabelConfigFile          string        `opt:"selector.relabel-config-file"`
-	TracingConfig                      string        `opt:"tracing.config"`
-	TracingConfigFile                  string        `opt:"tracing.config-file"`
-	Version                            bool          `opt:"version,noval"`
-	Wait                               bool          `opt:"wait,noval"`
-	WaitInterval                       time.Duration `opt:"wait-interval"`
-	WebDisable                         bool          `opt:"web.disable"`
-	WebDisableCors                     bool          `opt:"web.disable-cors"`
-	WebExternalPrefix                  string        `opt:"web.external-prefix"`
-	WebPrefixHeader                    string        `opt:"web.prefix-header"`
-	WebRoutePrefix                     string        `opt:"web.route-prefix"`
+	BlockFilesConcurrency              int                             `opt:"block-files-concurrency"`
+	BlockMetaFetchConcurrency          int                             `opt:"block-meta-fetch-concurrency"`
+	BlockViewerGlobalSyncBlockInterval time.Duration                   `opt:"block-viewer.global.sync-block-interval"`
+	BlockViewerGlobalSyncBlockTimeout  time.Duration                   `opt:"block-viewer.global.sync-block-timeout"`
+	BucketWebLabel                     string                          `opt:"bucket-web-label"`
+	CompactBlocksFetchConcurrency      int                             `opt:"compact.blocks-fetch-concurrency"`
+	CompactCleanupInterval             time.Duration                   `opt:"compact.cleanup-interval"`
+	CompactConcurrency                 int                             `opt:"compact.concurrency"`
+	CompactProgressInterval            time.Duration                   `opt:"compact.progress-interval"`
+	ConsistencyDelay                   time.Duration                   `opt:"consistency-delay"`
+	DataDir                            string                          `opt:"data-dir"`
+	DeduplicationFunc                  string                          `opt:"deduplication.func"`
+	DeduplicationReplicaLabel          string                          `opt:"deduplication.replica-label"`
+	DeleteDelay                        time.Duration                   `opt:"delete-delay"`
+	DownsampleConcurrency              int                             `opt:"downsample.concurrency"`
+	DownsamplingDisable                bool                            `opt:"downsampling.disable"`
+	HashFunc                           string                          `opt:"hash-func"`
+	HttpAddress                        *net.TCPAddr                    `opt:"http-address"`
+	HttpGracePeriod                    time.Duration                   `opt:"http-grace-period"`
+	HttpConfig                         string                          `opt:"http.config"`
+	LogFormat                          thanoslog.LogFormat             `opt:"log.format"`
+	LogLevel                           thanoslog.LogLevel              `opt:"log.level"`
+	MaxTime                            *thanostime.TimeOrDurationValue `opt:"max-time"`
+	MinTime                            *thanostime.TimeOrDurationValue `opt:"min-time"`
+	ObjstoreConfig                     string                          `opt:"objstore.config"`
+	ObjstoreConfigFile                 string                          `opt:"objstore.config-file"`
+	RetentionResolution1h              time.Duration                   `opt:"retention.resolution-1h"`
+	RetentionResolution5m              time.Duration                   `opt:"retention.resolution-5m"`
+	RetentionResolutionRaw             time.Duration                   `opt:"retention.resolution-raw"`
+	SelectorRelabelConfig              string                          `opt:"selector.relabel-config"`
+	SelectorRelabelConfigFile          string                          `opt:"selector.relabel-config-file"`
+	TracingConfig                      string                          `opt:"tracing.config"`
+	TracingConfigFile                  string                          `opt:"tracing.config-file"`
+	Version                            bool                            `opt:"version,noval"`
+	Wait                               bool                            `opt:"wait,noval"`
+	WaitInterval                       time.Duration                   `opt:"wait-interval"`
+	WebDisable                         bool                            `opt:"web.disable"`
+	WebDisableCors                     bool                            `opt:"web.disable-cors"`
+	WebExternalPrefix                  string                          `opt:"web.external-prefix"`
+	WebPrefixHeader                    string                          `opt:"web.prefix-header"`
+	WebRoutePrefix                     string                          `opt:"web.route-prefix"`
 
 	// Extra options not officially supported by the compactor.
 	cmdopt.ExtraOpts
@@ -75,11 +76,6 @@ type CompactorStatefulSet struct {
 	VolumeSize string
 
 	k8sutil.DeploymentGenericConfig
-}
-
-func (c *CompactorStatefulSet) WithLogLevel(level string) *CompactorStatefulSet {
-	c.Options.LogLevel = level
-	return c
 }
 
 // NewCompactor returns a new compactor statefulset with default values.
@@ -110,8 +106,6 @@ func NewCompactor() *CompactorStatefulSet {
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
-	namespaces := []string{defaultNamespace}
-
 	return &CompactorStatefulSet{
 		Options: c,
 		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
@@ -123,7 +117,7 @@ func NewCompactor() *CompactorStatefulSet {
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			PodResources:         k8sutil.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
-			Affinity:             *k8sutil.NewAntiAffinity(namespaces, labelSelectors),
+			Affinity:             *k8sutil.NewAntiAffinity(nil, labelSelectors),
 			SecurityContext:      k8sutil.GetDefaultSecurityContext(),
 			EnableServiceMonitor: true,
 			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
@@ -168,7 +162,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	}
 
 	statefulset := &k8sutil.StatefulSet{
-		MetaConfig: commonObjectMeta,
+		MetaConfig: commonObjectMeta.Clone(),
 		Replicas:   c.Replicas,
 		Pod:        pod,
 	}
@@ -178,21 +172,21 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	}
 
 	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta,
+		MetaConfig:   commonObjectMeta.Clone(),
 		ServicePorts: pod,
 	}
 	ret["compactor-service"] = service.MakeManifest()
 
 	if c.EnableServiceMonitor {
 		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta,
+			MetaConfig:              commonObjectMeta.Clone(),
 			ServiceMonitorEndpoints: pod,
 		}
 		ret["compactor-serviceMonitor"] = serviceMonitor.MakeManifest()
 	}
 
 	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta,
+		MetaConfig: commonObjectMeta.Clone(),
 		Name:       pod.ServiceAccountName,
 	}
 	ret["compactor-serviceAccount"] = serviceAccount.MakeManifest()
@@ -200,7 +194,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	// Create configMaps required by the containers
 	for name, config := range pod.GetConfigMaps() {
 		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta,
+			MetaConfig: commonObjectMeta.Clone(),
 			Data:       config,
 		}
 		configMap.MetaConfig.Name = name
@@ -210,7 +204,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 	// Create secrets required by the containers
 	for name, secret := range pod.GetSecrets() {
 		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta,
+			MetaConfig: commonObjectMeta.Clone(),
 			Data:       secret,
 		}
 		secret.MetaConfig.Name = name
@@ -226,21 +220,23 @@ func (c *CompactorStatefulSet) makeContainer() *k8sutil.Container {
 	}
 
 	httpPort := defaultHTTPPort
-	if c.Options.HttpAddress.Port != 0 {
+	if c.Options.HttpAddress != nil && c.Options.HttpAddress.Port != 0 {
 		httpPort = c.Options.HttpAddress.Port
 	}
 
-	if c.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal != int32(httpPort) {
-		log.Printf("Warning: liveness probe port %d does not match http port %d", c.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal, httpPort)
+	livenessPort := c.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
+	if livenessPort != int32(httpPort) {
+		panic(fmt.Sprintf("liveness probe port %d does not match http port %d", livenessPort, httpPort))
 	}
 
-	if c.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal != int32(httpPort) {
-		log.Printf("Warning: readiness probe port %d does not match http port %d", c.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal, httpPort)
+	readinessPort := c.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal
+	if readinessPort != int32(httpPort) {
+		panic(fmt.Sprintf(`readiness probe port %d does not match http port %d`, readinessPort, httpPort))
 	}
 
 	// Print warning if data directory is not specified.
 	if c.Options.DataDir == "" {
-		log.Println("Warning: data directory is not specified for the statefulset.")
+		panic(fmt.Sprintf("data directory is not specified for the statefulset."))
 	}
 
 	ret := c.ToContainer()
@@ -264,6 +260,12 @@ func (c *CompactorStatefulSet) makeContainer() *k8sutil.Container {
 	}
 	ret.VolumeClaims = []k8sutil.VolumeClaim{
 		k8sutil.NewVolumeClaimProvider(dataVolumeName, c.VolumeType, c.VolumeSize),
+	}
+	ret.VolumeMounts = []corev1.VolumeMount{
+		{
+			Name:      dataVolumeName,
+			MountPath: c.Options.DataDir,
+		},
 	}
 
 	return ret

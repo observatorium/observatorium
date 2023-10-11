@@ -3,6 +3,7 @@ package k8sutil
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // DeploymentGenericConfig represents certain config fields
@@ -52,6 +53,7 @@ func (d DeploymentGenericConfig) ToContainer() *Container {
 	}
 }
 
+type ObjectProcessor func(obj runtime.Object)
 type DeploymentOption func(d *DeploymentGenericConfig)
 
 // WithImage overrides the default image.
