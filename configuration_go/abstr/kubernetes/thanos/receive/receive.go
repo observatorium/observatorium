@@ -8,7 +8,7 @@ import (
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/common"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -88,8 +88,8 @@ type ReceiveOptions struct {
 	HttpGracePeriod                     time.Duration             `opt:"http-grace-period"`
 	HttpConfig                          string                    `opt:"http.config"`
 	Label                               []Label                   `opt:"label"`
-	LogFormat                           common.LogFormat          `opt:"log.format"`
-	LogLevel                            common.LogLevel           `opt:"log.level"`
+	LogFormat                           log.LogFormat             `opt:"log.format"`
+	LogLevel                            log.LogLevel              `opt:"log.level"`
 	ObjstoreConfig                      string                    `opt:"objstore.config"`
 	ObjstoreConfigFile                  string                    `opt:"objstore.config-file"`
 	ReceiveDefaultTenantID              string                    `opt:"receive.default-tenant-id"`
@@ -244,8 +244,8 @@ type baseReceive struct {
 
 func newBaseReceive(commonLabels map[string]string) *baseReceive {
 	opts := &ReceiveOptions{
-		LogLevel:           "warn",
-		LogFormat:          "logfmt",
+		LogLevel:           log.LogLevelWarn,
+		LogFormat:          log.LogFormatLogfmt,
 		HttpAddress:        &net.TCPAddr{Port: defaultHTTPPort, IP: net.ParseIP("0.0.0.0")},
 		GrpcAddress:        &net.TCPAddr{Port: defaultGRPCPort, IP: net.ParseIP("0.0.0.0")},
 		RemoteWriteAddress: &net.TCPAddr{Port: defaultReceivePort, IP: net.ParseIP("0.0.0.0")},
