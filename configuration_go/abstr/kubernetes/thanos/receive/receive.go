@@ -9,6 +9,7 @@ import (
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/option"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -74,61 +75,75 @@ func (h HashRingsConfig) String() string {
 	return string(ret)
 }
 
+type receiveLimitsConfigFile = option.ConfigFile[ReceiveLimitsConfig]
+
+// NewReceiveLimitsConfigFile returns a new receive limits config file option.
+func NewReceiveLimitsConfigFile(name string, value ReceiveLimitsConfig) *receiveLimitsConfigFile {
+	return option.NewConfigFile("/etc/thanos/receive-limits", "limits.yaml", name, value)
+}
+
+type receiveHashringConfigFile = option.ConfigFile[HashRingsConfig]
+
+// NewReceiveHashringConfigFile returns a new receive hashring config file option.
+func NewReceiveHashringConfigFile(name string, value HashRingsConfig) *receiveHashringConfigFile {
+	return option.NewConfigFile("/etc/thanos/hashring", "hashring.json", name, value)
+}
+
 // ReceiveOptions represents the options/flags for the receive.
 // See https://thanos.io/tip/components/receive.md/#flags for details.
 type ReceiveOptions struct {
-	GrpcAddress                         *net.TCPAddr              `opt:"grpc-address"`
-	GrpcGracePeriod                     time.Duration             `opt:"grpc-grace-period"`
-	GrpcServerMaxConnectionAge          time.Duration             `opt:"grpc-server-max-connection-age"`
-	GrpcServerTlsCert                   string                    `opt:"grpc-server-tls-cert"`
-	GrpcServerTlsClientCa               string                    `opt:"grpc-server-tls-client-ca"`
-	GrpcServerTlsKey                    string                    `opt:"grpc-server-tls-key"`
-	HashFunc                            string                    `opt:"hash-func"`
-	HttpAddress                         *net.TCPAddr              `opt:"http-address"`
-	HttpGracePeriod                     time.Duration             `opt:"http-grace-period"`
-	HttpConfig                          string                    `opt:"http.config"`
-	Label                               []Label                   `opt:"label"`
-	LogFormat                           log.LogFormat             `opt:"log.format"`
-	LogLevel                            log.LogLevel              `opt:"log.level"`
-	ObjstoreConfig                      string                    `opt:"objstore.config"`
-	ObjstoreConfigFile                  string                    `opt:"objstore.config-file"`
-	ReceiveDefaultTenantID              string                    `opt:"receive.default-tenant-id"`
-	ReceiveGrpcCompression              GrpcCompressionType       `opt:"receive.grpc-compression"`
-	ReceiveHashringsAlgorithm           string                    `opt:"receive.hashrings-algorithm"`
-	ReceiveHashrings                    *HashRingsConfig          `opt:"receive.hashrings"`
-	ReceiveHashringsFile                string                    `opt:"receive.hashrings-file"`
-	ReceiveHashringsFileRefreshInterval time.Duration             `opt:"receive.hashrings-file-refresh-interval"`
-	ReceiveLimitsConfig                 *ReceiveLimitsConfig      `opt:"receive.limits-config"`
-	ReceiveLimitsConfigFile             string                    `opt:"receive.limits-config-file"`
-	ReceiveLocalEndpoint                string                    `opt:"receive.local-endpoint"`
-	ReceiveRelabelConfig                *relabel.Config           `opt:"receive.relabel-config"`
-	ReceiveRelabelConfigFile            string                    `opt:"receive.relabel-config-file"`
-	ReceiveReplicaHeader                string                    `opt:"receive.replica-header"`
-	ReceiveReplicationFactor            int                       `opt:"receive.replication-factor"`
-	ReceiveTenantCertificateField       string                    `opt:"receive.tenant-certificate-field"`
-	ReceiveTenantHeader                 string                    `opt:"receive.tenant-header"`
-	ReceiveTenantLabelName              string                    `opt:"receive.tenant-label-name"`
-	RemoteWriteAddress                  *net.TCPAddr              `opt:"remote-write.address"`
-	RemoteWriteClientServerName         string                    `opt:"remote-write.client-server-name"`
-	RemoteWriteClientTlsCa              string                    `opt:"remote-write.client-tls-ca"`
-	RemoteWriteClientTlsCert            string                    `opt:"remote-write.client-tls-cert"`
-	RemoteWriteClientTlsKey             string                    `opt:"remote-write.client-tls-key"`
-	RemoteWriteServerTlsCert            string                    `opt:"remote-write.server-tls-cert"`
-	RemoteWriteServerTlsClientCa        string                    `opt:"remote-write.server-tls-client-ca"`
-	RemoteWriteServerTlsKey             string                    `opt:"remote-write.server-tls-key"`
-	RequestLoggingConfig                *reqlogging.RequestConfig `opt:"request.logging-config"`
-	RequestLoggingConfigFile            string                    `opt:"request.logging-config-file"`
-	StoreLimitsRequestSamples           int                       `opt:"store.limits.request-samples"`
-	StoreLimitsRequestSeries            int                       `opt:"store.limits.request-series"`
-	TracingConfig                       *trclient.TracingConfig   `opt:"tracing.config"`
-	TracingConfigFile                   string                    `opt:"tracing.config-file"`
-	TsdbAllowOverlappingBlocks          bool                      `opt:"tsdb.allow-overlapping-blocks"`
-	TsdbMaxExemplars                    int                       `opt:"tsdb.max-exemplars"`
-	TsdbNoLockfile                      bool                      `opt:"tsdb.no-lockfile"`
-	TsdbPath                            string                    `opt:"tsdb.path"`
-	TsdbRetention                       time.Duration             `opt:"tsdb.retention"`
-	TsdbTooFarInFutureTimeWindow        time.Duration             `opt:"tsdb.too-far-in-future.time-window"`
-	TsdbWalCompression                  bool                      `opt:"tsdb.wal-compression"`
+	GrpcAddress                         *net.TCPAddr               `opt:"grpc-address"`
+	GrpcGracePeriod                     time.Duration              `opt:"grpc-grace-period"`
+	GrpcServerMaxConnectionAge          time.Duration              `opt:"grpc-server-max-connection-age"`
+	GrpcServerTlsCert                   string                     `opt:"grpc-server-tls-cert"`
+	GrpcServerTlsClientCa               string                     `opt:"grpc-server-tls-client-ca"`
+	GrpcServerTlsKey                    string                     `opt:"grpc-server-tls-key"`
+	HashFunc                            string                     `opt:"hash-func"`
+	HttpAddress                         *net.TCPAddr               `opt:"http-address"`
+	HttpGracePeriod                     time.Duration              `opt:"http-grace-period"`
+	HttpConfig                          string                     `opt:"http.config"`
+	Label                               []Label                    `opt:"label"`
+	LogFormat                           log.LogFormat              `opt:"log.format"`
+	LogLevel                            log.LogLevel               `opt:"log.level"`
+	ObjstoreConfig                      string                     `opt:"objstore.config"`
+	ObjstoreConfigFile                  string                     `opt:"objstore.config-file"`
+	ReceiveDefaultTenantID              string                     `opt:"receive.default-tenant-id"`
+	ReceiveGrpcCompression              GrpcCompressionType        `opt:"receive.grpc-compression"`
+	ReceiveHashringsAlgorithm           string                     `opt:"receive.hashrings-algorithm"`
+	ReceiveHashrings                    *HashRingsConfig           `opt:"receive.hashrings"`
+	ReceiveHashringsFile                *receiveHashringConfigFile `opt:"receive.hashrings-file"`
+	ReceiveHashringsFileRefreshInterval time.Duration              `opt:"receive.hashrings-file-refresh-interval"`
+	ReceiveLimitsConfig                 *ReceiveLimitsConfig       `opt:"receive.limits-config"`
+	ReceiveLimitsConfigFile             *receiveLimitsConfigFile   `opt:"receive.limits-config-file"`
+	ReceiveLocalEndpoint                string                     `opt:"receive.local-endpoint"`
+	ReceiveRelabelConfig                *relabel.Config            `opt:"receive.relabel-config"`
+	ReceiveRelabelConfigFile            string                     `opt:"receive.relabel-config-file"`
+	ReceiveReplicaHeader                string                     `opt:"receive.replica-header"`
+	ReceiveReplicationFactor            int                        `opt:"receive.replication-factor"`
+	ReceiveTenantCertificateField       string                     `opt:"receive.tenant-certificate-field"`
+	ReceiveTenantHeader                 string                     `opt:"receive.tenant-header"`
+	ReceiveTenantLabelName              string                     `opt:"receive.tenant-label-name"`
+	RemoteWriteAddress                  *net.TCPAddr               `opt:"remote-write.address"`
+	RemoteWriteClientServerName         string                     `opt:"remote-write.client-server-name"`
+	RemoteWriteClientTlsCa              string                     `opt:"remote-write.client-tls-ca"`
+	RemoteWriteClientTlsCert            string                     `opt:"remote-write.client-tls-cert"`
+	RemoteWriteClientTlsKey             string                     `opt:"remote-write.client-tls-key"`
+	RemoteWriteServerTlsCert            string                     `opt:"remote-write.server-tls-cert"`
+	RemoteWriteServerTlsClientCa        string                     `opt:"remote-write.server-tls-client-ca"`
+	RemoteWriteServerTlsKey             string                     `opt:"remote-write.server-tls-key"`
+	RequestLoggingConfig                *reqlogging.RequestConfig  `opt:"request.logging-config"`
+	RequestLoggingConfigFile            string                     `opt:"request.logging-config-file"`
+	StoreLimitsRequestSamples           int                        `opt:"store.limits.request-samples"`
+	StoreLimitsRequestSeries            int                        `opt:"store.limits.request-series"`
+	TracingConfig                       *trclient.TracingConfig    `opt:"tracing.config"`
+	TracingConfigFile                   string                     `opt:"tracing.config-file"`
+	TsdbAllowOverlappingBlocks          bool                       `opt:"tsdb.allow-overlapping-blocks"`
+	TsdbMaxExemplars                    int                        `opt:"tsdb.max-exemplars"`
+	TsdbNoLockfile                      bool                       `opt:"tsdb.no-lockfile"`
+	TsdbPath                            string                     `opt:"tsdb.path"`
+	TsdbRetention                       time.Duration              `opt:"tsdb.retention"`
+	TsdbTooFarInFutureTimeWindow        time.Duration              `opt:"tsdb.too-far-in-future.time-window"`
+	TsdbWalCompression                  bool                       `opt:"tsdb.wal-compression"`
 
 	// Extra options not officially supported by the receive.
 	cmdopt.ExtraOpts
@@ -287,27 +302,42 @@ func newBaseReceive(commonLabels map[string]string) *baseReceive {
 }
 
 func (br *baseReceive) withRouterConfig() {
-	br.Options.ReceiveHashringsFile = "/etc/thanos/hashring/hashring.json"
+	br.Options.ReceiveHashringsFile = NewReceiveHashringConfigFile(br.Name+"-hashring", HashRingsConfig{})
 	br.Options.ReceiveHashringsFileRefreshInterval = 5 * time.Second
 	br.Options.ReceiveHashringsAlgorithm = "ketama"
-	br.Options.ReceiveLimitsConfigFile = "/etc/thanos/receive-limits/limits.yaml"
 }
 
 func (br *baseReceive) withRouterContainer() {
-	container := br.makeContainer()
-	container.VolumeMounts = []corev1.VolumeMount{
-		{
-			Name:      "hashring-config",
-			MountPath: "/etc/thanos/hashring",
-		},
-		{
-			Name:      "receive-limits-config",
-			MountPath: "/etc/thanos/receive-limits",
-		},
+	if br.Options.ReceiveHashringsFile == nil {
+		panic(`hashrings file is not specified for the statefulset.`)
 	}
-	container.Volumes = []corev1.Volume{
-		k8sutil.NewPodVolumeFromConfigMap("hashring-config", "hashring-config"),
-		k8sutil.NewPodVolumeFromConfigMap("receive-limits-config", "receive-limits-config"),
+
+	container := br.makeContainer()
+
+	// The configmap can be dyamically generated by the controller
+	// We only create the config map if it is defined in the options.
+	if len(br.Options.ReceiveHashringsFile.Value) > 0 {
+		container.ConfigMaps[br.Options.ReceiveHashringsFile.Name] = map[string]string{
+			br.Options.ReceiveHashringsFile.FileName(): br.Options.ReceiveHashringsFile.Value.String(),
+		}
+	}
+
+	container.Volumes = append(container.Volumes, k8sutil.NewPodVolumeFromConfigMap("hashring-config", br.Options.ReceiveHashringsFile.Name))
+	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+		Name:      "hashring-config",
+		MountPath: br.Options.ReceiveHashringsFile.MountPath(),
+	})
+
+	if br.Options.ReceiveLimitsConfigFile != nil {
+		container.ConfigMaps[br.Options.ReceiveLimitsConfigFile.Name] = map[string]string{
+			br.Options.ReceiveLimitsConfigFile.FileName(): br.Options.ReceiveLimitsConfigFile.Value.String(),
+		}
+
+		container.Volumes = append(container.Volumes, k8sutil.NewPodVolumeFromConfigMap("receive-limits-config", br.Options.ReceiveLimitsConfigFile.Name))
+		container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+			Name:      "receive-limits-config",
+			MountPath: br.Options.ReceiveLimitsConfigFile.MountPath(),
+		})
 	}
 
 	br.container = container
