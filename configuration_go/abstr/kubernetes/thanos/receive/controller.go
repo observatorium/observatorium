@@ -15,10 +15,10 @@ const (
 )
 
 type ControllerOptions struct {
-	ConfigMapName          string `opt:"--configmap-name"`
-	ConfigMapGeneratedName string `opt:"--configmap-generated-name"`
-	FileName               string `opt:"--file-name"`
-	Namespace              string `opt:"--namespace"`
+	ConfigMapName          string `opt:"configmap-name"`
+	ConfigMapGeneratedName string `opt:"configmap-generated-name"`
+	FileName               string `opt:"file-name"`
+	Namespace              string `opt:"namespace"`
 }
 
 type Controller struct {
