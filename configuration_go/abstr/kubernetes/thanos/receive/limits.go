@@ -10,13 +10,13 @@ type ReceiveLimitsConfig struct {
 	WriteLimits WriteLimitsConfig `yaml:"write,omitempty"`
 }
 
-func NewReceiveLimitsConfig() *ReceiveLimitsConfig {
-	return &ReceiveLimitsConfig{}
+func NewReceiveLimitsConfig() ReceiveLimitsConfig {
+	return ReceiveLimitsConfig{}
 }
 
 // String returns a string representation of the RootLimitsConfig as JSON.
 // It implements the Stringer interface that is used by the cmdopt package.
-func (r *ReceiveLimitsConfig) String() string {
+func (r ReceiveLimitsConfig) String() string {
 	// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
 	ret, err := yaml.Marshal(r)
 	if err != nil {
@@ -26,14 +26,14 @@ func (r *ReceiveLimitsConfig) String() string {
 	return string(ret)
 }
 
-func (r *ReceiveLimitsConfig) WithGlobalLimits(concurrency int, monUrl, query string) *ReceiveLimitsConfig {
+func (r ReceiveLimitsConfig) WithGlobalLimits(concurrency int, monUrl, query string) ReceiveLimitsConfig {
 	r.WriteLimits.GlobalLimits.MaxConcurrency = concurrency
 	r.WriteLimits.GlobalLimits.MetaMonitoringURL = monUrl
 	r.WriteLimits.GlobalLimits.MetaMonitoringLimitQuery = query
 	return r
 }
 
-func (r *ReceiveLimitsConfig) WithDefaultLimits(sizeBytes, series, samples int, headSeries int) *ReceiveLimitsConfig {
+func (r ReceiveLimitsConfig) WithDefaultLimits(sizeBytes, series, samples int, headSeries int) ReceiveLimitsConfig {
 	r.WriteLimits.DefaultLimits.RequestLimits.SizeBytesLimit = sizeBytes
 	r.WriteLimits.DefaultLimits.RequestLimits.SeriesLimit = series
 	r.WriteLimits.DefaultLimits.RequestLimits.SamplesLimit = samples
@@ -41,7 +41,7 @@ func (r *ReceiveLimitsConfig) WithDefaultLimits(sizeBytes, series, samples int, 
 	return r
 }
 
-func (r *ReceiveLimitsConfig) WithTenantLimits(tenant string, sizeBytes, series, samples int, headSeries uint64) *ReceiveLimitsConfig {
+func (r ReceiveLimitsConfig) WithTenantLimits(tenant string, sizeBytes, series, samples int, headSeries uint64) ReceiveLimitsConfig {
 	r.WriteLimits.TenantsLimits[tenant] = WriteLimitConfig{
 		RequestLimits: RequestLimitsConfig{
 			SizeBytesLimit: sizeBytes,

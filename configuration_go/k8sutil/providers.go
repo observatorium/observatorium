@@ -311,7 +311,7 @@ func (d *Deployment) MakeManifest() runtime.Object {
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:    d.MetaConfig.Labels,
+					Labels:    maps.Clone(d.MetaConfig.Labels),
 					Namespace: d.MetaConfig.Namespace,
 				},
 				Spec: d.Pod.MakePodSpec(),
@@ -334,7 +334,7 @@ func (s *StatefulSet) MakeManifest() runtime.Object {
 		vcs = append(vcs, corev1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   vc.Name,
-				Labels: s.MetaConfig.Labels,
+				Labels: maps.Clone(s.MetaConfig.Labels),
 			},
 			Spec: vc.Spec,
 		})
@@ -354,7 +354,7 @@ func (s *StatefulSet) MakeManifest() runtime.Object {
 			ServiceName: s.MetaConfig.Name,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:    s.MetaConfig.Labels,
+					Labels:    maps.Clone(s.MetaConfig.Labels),
 					Namespace: s.MetaConfig.Namespace,
 				},
 				Spec: s.Pod.MakePodSpec(),

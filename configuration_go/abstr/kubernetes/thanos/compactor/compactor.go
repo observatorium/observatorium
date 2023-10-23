@@ -118,7 +118,6 @@ func NewCompactor() *CompactorStatefulSet {
 			Replicas:             1,
 			PodResources:         k8sutil.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
 			Affinity:             *k8sutil.NewAntiAffinity(nil, labelSelectors),
-			SecurityContext:      k8sutil.GetDefaultSecurityContext(),
 			EnableServiceMonitor: true,
 			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
 				FailureThreshold: 4,
