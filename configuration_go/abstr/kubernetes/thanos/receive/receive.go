@@ -206,7 +206,7 @@ func NewIngestor() *Ingestor {
 
 // Manifests returns the manifests for the Ingestor.
 func (i *Ingestor) Manifests() k8sutil.ObjectMap {
-	i.withIngestorContainer()
+	i.withIngestorContainer(i.VolumeType, i.VolumeSize)
 	return i.baseReceive.manifests()
 }
 
@@ -244,7 +244,7 @@ func (ir *IngestorRouter) Manifests() k8sutil.ObjectMap {
 	// Set the local endpoint at Manifests time, as it depends on the name of the resource and gRPC port.
 	// This option, in addition to the router and receive options, is required to be set for the IngestorRouter.
 	ir.Options.ReceiveLocalEndpoint = fmt.Sprintf("$(NAME).%s.$(NAMESPACE).svc.cluster.local:%d", ir.Name, ir.Options.GrpcAddress.Port)
-	ir.withIngestorContainer()
+	ir.withIngestorContainer(ir.VolumeType, ir.VolumeSize)
 	ir.withRouterContainer()
 	return ir.baseReceive.manifests()
 }
@@ -350,7 +350,7 @@ func (br *baseReceive) withIngestorConfig() {
 	br.Env = append(br.Env, k8sutil.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
 }
 
-func (br *baseReceive) withIngestorContainer() {
+func (br *baseReceive) withIngestorContainer(volumeType string, volumeSize string) {
 	if br.Options.TsdbPath == "" {
 		panic(`data directory is not specified for the statefulset.`)
 	}
@@ -363,7 +363,7 @@ func (br *baseReceive) withIngestorContainer() {
 		},
 	}
 	container.VolumeClaims = []k8sutil.VolumeClaim{
-		k8sutil.NewVolumeClaimProvider(dataVolumeName, "", "100Gi"),
+		k8sutil.NewVolumeClaimProvider(dataVolumeName, volumeType, volumeSize),
 	}
 
 	br.container = container

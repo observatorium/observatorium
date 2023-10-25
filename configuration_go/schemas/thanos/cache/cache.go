@@ -15,8 +15,9 @@ type IndexCacheConfig struct {
 	Config     interface{} `yaml:"config"`
 }
 
+// String returns a string representation of the IndexCacheConfig as YAML.
+// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
 func (c IndexCacheConfig) String() string {
-	// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
 	ret, err := yaml.Marshal(c)
 	if err != nil {
 		panic(fmt.Sprintf("error mashalling IndexCacheConfig to yaml: %v", err))

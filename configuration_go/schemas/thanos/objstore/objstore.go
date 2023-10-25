@@ -10,8 +10,9 @@ type BucketConfig struct {
 	Prefix string      `yaml:"prefix,omitempty"`
 }
 
+// String returns a string representation of the BucketConfig as YAML.
+// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
 func (c BucketConfig) String() string {
-	// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
 	ret, err := yaml.Marshal(c)
 	if err != nil {
 		panic(err)

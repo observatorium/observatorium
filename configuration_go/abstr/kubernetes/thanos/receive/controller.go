@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	thanosReceiveControllerImage string = "quay.io/observatorium/thanos-receive-controller"
+	ThanosReceiveControllerImage string = "quay.io/observatorium/thanos-receive-controller"
 )
 
 type ControllerOptions struct {
@@ -43,7 +43,7 @@ func NewController() *Controller {
 
 	genericDeployment := k8sutil.DeploymentGenericConfig{
 		Name:            fmt.Sprintf("%s-%s", commonLabels[k8sutil.InstanceLabel], commonLabels[k8sutil.NameLabel]),
-		Image:           thanosReceiveControllerImage,
+		Image:           ThanosReceiveControllerImage,
 		ImageTag:        "main",
 		Replicas:        1,
 		CommonLabels:    commonLabels,
