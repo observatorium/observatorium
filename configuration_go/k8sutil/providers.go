@@ -373,6 +373,7 @@ type ServiceProvider interface {
 type Service struct {
 	MetaConfig
 	ServicePorts ServiceProvider
+	ClusterIP    string
 }
 
 // NewService returns a new Service.
@@ -392,8 +393,9 @@ func (s *Service) MakeManifest() runtime.Object {
 		TypeMeta:   ServiceMeta,
 		ObjectMeta: s.MetaConfig.MakeMeta(),
 		Spec: corev1.ServiceSpec{
-			Ports:    s.ServicePorts.GetServicePorts(),
-			Selector: selector,
+			Ports:     s.ServicePorts.GetServicePorts(),
+			Selector:  selector,
+			ClusterIP: s.ClusterIP,
 		},
 	}
 }
