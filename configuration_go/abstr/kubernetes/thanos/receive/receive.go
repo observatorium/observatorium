@@ -93,7 +93,7 @@ type ReceiveOptions struct {
 	HttpAddress                         *net.TCPAddr               `opt:"http-address"`
 	HttpGracePeriod                     time.Duration              `opt:"http-grace-period"`
 	HttpConfig                          string                     `opt:"http.config"`
-	Label                               []labels.Label             `opt:"label"`
+	Label                               labels.Labels              `opt:"label"`
 	LogFormat                           log.LogFormat              `opt:"log.format"`
 	LogLevel                            log.LogLevel               `opt:"log.level"`
 	ObjstoreConfig                      string                     `opt:"objstore.config"`
@@ -335,7 +335,7 @@ func (br *baseReceive) withRouterContainer() {
 
 func (br *baseReceive) withIngestorConfig() {
 	br.Options.TsdbPath = "/var/thanos/receive"
-	br.Options.Label = []labels.Label{{Name: "receive", Value: "true"}, {Name: "receive-replica", Value: "$(NAME)"}}
+	br.Options.Label = labels.Labels{{Name: "receive", Value: "true"}, {Name: "receive-replica", Value: "$(NAME)"}}
 	br.Options.ObjstoreConfig = "$(OBJSTORE_CONFIG)"
 
 	br.Env = append(br.Env, k8sutil.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
