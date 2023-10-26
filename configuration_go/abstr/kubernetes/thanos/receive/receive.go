@@ -13,6 +13,7 @@ import (
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/model/relabel"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -35,16 +36,6 @@ const (
 	HashRingAlgorithmHashmod HashRingAlgorithm   = "hashmod"
 	HashRingAlgorithmKetama  HashRingAlgorithm   = "ketama"
 )
-
-// Label represents a single label configuration.
-type Label struct {
-	Key   string
-	Value string
-}
-
-func (l Label) String() string {
-	return l.Key + "=" + l.Value
-}
 
 // HashringConfig represents a single hashring configuration.
 type HashringConfig struct {
@@ -102,7 +93,7 @@ type ReceiveOptions struct {
 	HttpAddress                         *net.TCPAddr               `opt:"http-address"`
 	HttpGracePeriod                     time.Duration              `opt:"http-grace-period"`
 	HttpConfig                          string                     `opt:"http.config"`
-	Label                               []Label                    `opt:"label"`
+	Label                               []labels.Label             `opt:"label"`
 	LogFormat                           log.LogFormat              `opt:"log.format"`
 	LogLevel                            log.LogLevel               `opt:"log.level"`
 	ObjstoreConfig                      string                     `opt:"objstore.config"`
@@ -344,7 +335,7 @@ func (br *baseReceive) withRouterContainer() {
 
 func (br *baseReceive) withIngestorConfig() {
 	br.Options.TsdbPath = "/var/thanos/receive"
-	br.Options.Label = []Label{{Key: "receive", Value: "true"}, {Key: "receive-replica", Value: "$(NAME)"}}
+	br.Options.Label = []labels.Label{{Name: "receive", Value: "true"}, {Name: "receive-replica", Value: "$(NAME)"}}
 	br.Options.ObjstoreConfig = "$(OBJSTORE_CONFIG)"
 
 	br.Env = append(br.Env, k8sutil.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
