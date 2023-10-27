@@ -119,7 +119,6 @@ func NewStore() *StoreStatefulSet {
 			Replicas:             1,
 			PodResources:         k8sutil.NewResourcesRequirements("500m", "1", "200Mi", "400Mi"),
 			Affinity:             *k8sutil.NewAntiAffinity(nil, labelSelectors),
-			SecurityContext:      k8sutil.GetDefaultSecurityContext(),
 			EnableServiceMonitor: true,
 
 			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
