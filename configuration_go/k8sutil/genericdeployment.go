@@ -20,12 +20,12 @@ type DeploymentGenericConfig struct {
 	Replicas             int32
 	DeploymentStrategy   appsv1.DeploymentStrategy // Only applies to Deployment kind
 	PodResources         corev1.ResourceRequirements
-	Affinity             corev1.Affinity
-	SecurityContext      corev1.PodSecurityContext
+	Affinity             *corev1.Affinity
+	SecurityContext      *corev1.PodSecurityContext
 	EnableServiceMonitor bool
 	Env                  []corev1.EnvVar
-	LivenessProbe        corev1.Probe
-	ReadinessProbe       corev1.Probe
+	LivenessProbe        *corev1.Probe
+	ReadinessProbe       *corev1.Probe
 
 	// Pod fields
 	TerminationMessagePolicy      corev1.TerminationMessagePolicy
@@ -46,8 +46,8 @@ func (d DeploymentGenericConfig) ToContainer() *Container {
 		ImagePullPolicy: d.ImagePullPolicy,
 		Env:             d.Env,
 		Resources:       d.PodResources,
-		LivenessProbe:   &d.LivenessProbe,
-		ReadinessProbe:  &d.ReadinessProbe,
+		LivenessProbe:   d.LivenessProbe,
+		ReadinessProbe:  d.ReadinessProbe,
 		ConfigMaps:      d.ConfigMaps,
 		Secrets:         d.Secrets,
 	}
@@ -114,14 +114,14 @@ func WithResources(resource corev1.ResourceRequirements) DeploymentOption {
 }
 
 // WithAffinity overrides the default Pod scheduling affinity rules.
-func WithAffinity(affinity corev1.Affinity) DeploymentOption {
+func WithAffinity(affinity *corev1.Affinity) DeploymentOption {
 	return func(d *DeploymentGenericConfig) {
 		d.Affinity = affinity
 	}
 }
 
 // WithSecurityContext overrides the default Pod security context.
-func WithSecurityContext(sc corev1.PodSecurityContext) DeploymentOption {
+func WithSecurityContext(sc *corev1.PodSecurityContext) DeploymentOption {
 	return func(d *DeploymentGenericConfig) {
 		d.SecurityContext = sc
 	}
@@ -135,7 +135,7 @@ func WithServiceMonitor() DeploymentOption {
 }
 
 // WithProbe overrides the default K8s liveness and readiness probes of main deployment container.
-func WithProbes(livenessProbe, readinessProbe corev1.Probe) DeploymentOption {
+func WithProbes(livenessProbe, readinessProbe *corev1.Probe) DeploymentOption {
 	return func(d *DeploymentGenericConfig) {
 		d.LivenessProbe = livenessProbe
 		d.ReadinessProbe = readinessProbe

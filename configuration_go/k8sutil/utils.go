@@ -23,9 +23,9 @@ func GetDefaultServiceMonitorRelabelConfig() []*monv1.RelabelConfig {
 }
 
 // GetDefaultSecurityContext returns the default security context for a container.
-func GetDefaultSecurityContext() corev1.PodSecurityContext {
+func GetDefaultSecurityContext() *corev1.PodSecurityContext {
 	val := int64(65534)
-	return corev1.PodSecurityContext{
+	return &corev1.PodSecurityContext{
 		RunAsUser: &val,
 		FSGroup:   &val,
 	}
@@ -63,8 +63,8 @@ type ProbeConfig struct {
 }
 
 // NewProbe returns a new probe.
-func NewProbe(path string, port int, cfg ProbeConfig) corev1.Probe {
-	return corev1.Probe{
+func NewProbe(path string, port int, cfg ProbeConfig) *corev1.Probe {
+	return &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: path,

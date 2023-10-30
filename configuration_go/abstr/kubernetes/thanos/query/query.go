@@ -477,7 +477,7 @@ func NewThanosQuery(opts ...ThanosQueryOption) *query {
 					corev1.ResourceMemory: resource.MustParse("3Gi"),
 				},
 			},
-			Affinity: corev1.Affinity{
+			Affinity: &corev1.Affinity{
 				PodAntiAffinity: &corev1.PodAntiAffinity{
 					PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
 						{
@@ -498,7 +498,7 @@ func NewThanosQuery(opts ...ThanosQueryOption) *query {
 					},
 				},
 			},
-			LivenessProbe: corev1.Probe{
+			LivenessProbe: &corev1.Probe{
 				FailureThreshold: 4,
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
@@ -509,7 +509,7 @@ func NewThanosQuery(opts ...ThanosQueryOption) *query {
 				},
 				PeriodSeconds: 30,
 			},
-			ReadinessProbe: corev1.Probe{
+			ReadinessProbe: &corev1.Probe{
 				FailureThreshold: 20,
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
@@ -520,7 +520,7 @@ func NewThanosQuery(opts ...ThanosQueryOption) *query {
 				},
 				PeriodSeconds: 5,
 			},
-			SecurityContext: corev1.PodSecurityContext{
+			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser: &[]int64{65534}[0],
 				FSGroup:   &[]int64{65534}[0],
 			},
@@ -697,8 +697,8 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 			},
 		},
 		Resources:      q.PodResources,
-		LivenessProbe:  &q.LivenessProbe,
-		ReadinessProbe: &q.ReadinessProbe,
+		LivenessProbe:  q.LivenessProbe,
+		ReadinessProbe: q.ReadinessProbe,
 		ServicePorts: []corev1.ServicePort{
 			{
 				AppProtocol: &[]string{"h2c"}[0],
@@ -759,7 +759,7 @@ func (q *query) Manifests(opts ...ThanosQueryOption) k8sutil.ObjectMap {
 	pod := k8sutil.Pod{
 		ContainerProviders: containers,
 		SecurityContext:    q.SecurityContext,
-		Affinity:           &q.Affinity,
+		Affinity:           q.Affinity,
 		ServiceAccountName: queryServiceAccount.Name,
 	}
 

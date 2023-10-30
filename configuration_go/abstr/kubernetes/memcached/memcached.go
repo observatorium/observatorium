@@ -64,7 +64,7 @@ func NewMemcachedStatefulSet() *MemcachedDeployment {
 		Replicas:                      1,
 		Env:                           []corev1.EnvVar{},
 		PodResources:                  k8sutil.NewResourcesRequirements("500m", "3", "2Gi", "3Gi"),
-		Affinity:                      *k8sutil.NewAntiAffinity(nil, labelSelectors),
+		Affinity:                      k8sutil.NewAntiAffinity(nil, labelSelectors),
 		EnableServiceMonitor:          true,
 		TerminationGracePeriodSeconds: 120,
 		SecurityContext:               k8sutil.GetDefaultSecurityContext(),
@@ -93,7 +93,7 @@ func (s *MemcachedDeployment) Manifests() k8sutil.ObjectMap {
 
 	pod := &k8sutil.Pod{
 		TerminationGracePeriodSeconds: &s.TerminationGracePeriodSeconds,
-		Affinity:                      &s.Affinity,
+		Affinity:                      s.Affinity,
 		SecurityContext:               s.SecurityContext,
 		ServiceAccountName:            commonObjectMeta.Name,
 		ContainerProviders:            append([]k8sutil.ContainerProvider{container, s.makeExporterContainer()}, s.Sidecars...),

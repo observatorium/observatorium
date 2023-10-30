@@ -118,7 +118,7 @@ func NewStore() *StoreStatefulSet {
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			PodResources:         k8sutil.NewResourcesRequirements("500m", "1", "200Mi", "400Mi"),
-			Affinity:             *k8sutil.NewAntiAffinity(nil, labelSelectors),
+			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
 			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
@@ -154,7 +154,7 @@ func (s *StoreStatefulSet) Manifests() k8sutil.ObjectMap {
 
 	pod := &k8sutil.Pod{
 		TerminationGracePeriodSeconds: &s.TerminationGracePeriodSeconds,
-		Affinity:                      &s.Affinity,
+		Affinity:                      s.Affinity,
 		SecurityContext:               s.SecurityContext,
 		ServiceAccountName:            commonObjectMeta.Name,
 		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, s.Sidecars...),

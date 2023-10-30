@@ -281,7 +281,7 @@ func newBaseReceive(commonLabels map[string]string) *baseReceive {
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			PodResources:         k8sutil.NewResourcesRequirements("1", "2", "10Gi", "20Gi"),
-			Affinity:             *k8sutil.NewAntiAffinity(nil, labelSelectors),
+			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
 				FailureThreshold: 8,
@@ -384,7 +384,7 @@ func (br *baseReceive) manifests() k8sutil.ObjectMap {
 
 	pod := &k8sutil.Pod{
 		TerminationGracePeriodSeconds: &br.TerminationGracePeriodSeconds,
-		Affinity:                      &br.Affinity,
+		Affinity:                      br.Affinity,
 		SecurityContext:               br.SecurityContext,
 		ServiceAccountName:            commonObjectMeta.Name,
 		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, br.Sidecars...),
