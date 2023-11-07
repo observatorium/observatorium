@@ -188,13 +188,6 @@ func (c *Controller) makeContainer() *k8sutil.Container {
 	container.Env = append(container.Env, k8sutil.NewEnvFromField("NAMESPACE", "metadata.namespace"))
 
 	container.Args = cmdopt.GetOpts(c.Options)
-	container.Ports = []corev1.ContainerPort{
-		{
-			Name:          "http",
-			ContainerPort: 8080,
-			Protocol:      corev1.ProtocolTCP,
-		},
-	}
 
 	return container
 }
