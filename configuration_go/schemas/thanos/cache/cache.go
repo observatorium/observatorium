@@ -95,3 +95,18 @@ func (c BucketCacheConfig) String() string {
 	}
 	return string(ret)
 }
+
+type ResponseCacheConfig struct {
+	Type   string      `yaml:"type"`
+	Config interface{} `yaml:"config"`
+}
+
+// String returns a string representation of the ResponseCacheConfig as YAML.
+// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
+func (c ResponseCacheConfig) String() string {
+	ret, err := yaml.Marshal(c)
+	if err != nil {
+		panic(fmt.Sprintf("error mashalling ResponseCacheConfig to yaml: %v", err))
+	}
+	return string(ret)
+}

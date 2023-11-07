@@ -58,6 +58,9 @@ type MemcachedClientConfig struct {
 
 	// AutoDiscovery configures memached client to perform auto-discovery instead of DNS resolution
 	AutoDiscovery bool `yaml:"auto_discovery,omitempty"`
+
+	// Expiration specifies the default expiration time for items. Only valid for response cache type. Ignored otherwise.
+	Expiration time.Duration `yaml:"expiration,omitempty"`
 }
 
 func (c MemcachedClientConfig) Type() string {
