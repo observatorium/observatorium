@@ -7,7 +7,6 @@ import (
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache/memcached"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache/memory"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache/redis"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/units"
 	"gopkg.in/yaml.v2"
 )
 
@@ -72,7 +71,7 @@ type BucketCacheConfig struct {
 	// Maximum number of GetRange requests issued by this bucket for single GetRange call. Zero or negative value = unlimited.
 	MaxChunksGetRangeRequests int `yaml:"max_chunks_get_range_requests,omitempty"`
 
-	MetafileMaxSize units.Bytes `yaml:"metafile_max_size,omitempty"`
+	MetafileMaxSize string `yaml:"metafile_max_size,omitempty"`
 
 	// TTLs for various cache items.
 	ChunkObjectAttrsTTL time.Duration `yaml:"chunk_object_attrs_ttl,omitempty"`
