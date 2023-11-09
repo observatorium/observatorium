@@ -86,7 +86,7 @@ type receiveHashringConfigFile = option.ConfigFile[HashRingsConfig]
 
 // NewReceiveHashringConfigFile returns a new receive hashring config file option.
 func NewReceiveHashringConfigFile(name string, value HashRingsConfig) *receiveHashringConfigFile {
-	return option.NewConfigFile("/etc/thanos/hashring", "hashring.json", name, value)
+	return option.NewConfigFile("/etc/thanos/hashring", "hashrings.json", name, value) //
 }
 
 // ReceiveOptions represents the options/flags for the receive.
@@ -304,6 +304,7 @@ func (br *baseReceive) withRouterConfig() {
 	br.Options.ReceiveHashringsFile = NewReceiveHashringConfigFile(br.Name+"-hashring", HashRingsConfig{})
 	br.Options.ReceiveHashringsFileRefreshInterval = 5 * time.Second
 	br.Options.ReceiveHashringsAlgorithm = "ketama"
+	br.Options.Label = []Label{{Key: "receive", Value: "\"true\""}}
 }
 
 func (br *baseReceive) withRouterContainer() {
@@ -344,7 +345,7 @@ func (br *baseReceive) withRouterContainer() {
 
 func (br *baseReceive) withIngestorConfig() {
 	br.Options.TsdbPath = "/var/thanos/receive"
-	br.Options.Label = []Label{{Key: "receive", Value: "true"}, {Key: "receive-replica", Value: "$(NAME)"}}
+	br.Options.Label = []Label{{Key: "replica", Value: "\"$(POD_NAME)\""}}
 	br.Options.ObjstoreConfig = "$(OBJSTORE_CONFIG)"
 
 	br.Env = append(br.Env, k8sutil.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
@@ -365,7 +366,7 @@ func (br *baseReceive) withIngestorContainer(volumeType string, volumeSize strin
 	container.VolumeClaims = []k8sutil.VolumeClaim{
 		k8sutil.NewVolumeClaimProvider(dataVolumeName, volumeType, volumeSize),
 	}
-
+	container.Env = append(container.Env, k8sutil.NewEnvFromField("POD_NAME", "metadata.name"))
 	br.container = container
 }
 
