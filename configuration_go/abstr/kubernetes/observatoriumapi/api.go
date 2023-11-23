@@ -155,7 +155,7 @@ func NewObservatoriumAPI(opts ...ObservatoriumAPIOption) *observatoriumAPI {
 					corev1.ResourceMemory: resource.MustParse("2000Mi"),
 				},
 			},
-			Affinity: corev1.Affinity{
+			Affinity: &corev1.Affinity{
 				PodAntiAffinity: &corev1.PodAntiAffinity{
 					PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
 						{
@@ -176,7 +176,7 @@ func NewObservatoriumAPI(opts ...ObservatoriumAPIOption) *observatoriumAPI {
 					},
 				},
 			},
-			LivenessProbe: corev1.Probe{
+			LivenessProbe: &corev1.Probe{
 				FailureThreshold: 10,
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
@@ -187,7 +187,7 @@ func NewObservatoriumAPI(opts ...ObservatoriumAPIOption) *observatoriumAPI {
 				},
 				PeriodSeconds: 30,
 			},
-			ReadinessProbe: corev1.Probe{
+			ReadinessProbe: &corev1.Probe{
 				FailureThreshold: 12,
 				ProbeHandler: corev1.ProbeHandler{
 					HTTPGet: &corev1.HTTPGetAction{
@@ -198,7 +198,7 @@ func NewObservatoriumAPI(opts ...ObservatoriumAPIOption) *observatoriumAPI {
 				},
 				PeriodSeconds: 5,
 			},
-			SecurityContext: corev1.PodSecurityContext{
+			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser: &[]int64{65534}[0],
 				FSGroup:   &[]int64{65534}[0],
 			},
@@ -321,8 +321,8 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 			},
 		},
 		Resources:      c.PodResources,
-		LivenessProbe:  &c.LivenessProbe,
-		ReadinessProbe: &c.ReadinessProbe,
+		LivenessProbe:  c.LivenessProbe,
+		ReadinessProbe: c.ReadinessProbe,
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				MountPath: "/etc/observatorium/rbac.yaml",
@@ -391,7 +391,7 @@ func (c *observatoriumAPI) Manifests(opts ...ObservatoriumAPIOption) k8sutil.Obj
 	pod := k8sutil.Pod{
 		ContainerProviders: containers,
 		SecurityContext:    c.SecurityContext,
-		Affinity:           &c.Affinity,
+		Affinity:           c.Affinity,
 		ServiceAccountName: apiServiceAccount.Name,
 	}
 

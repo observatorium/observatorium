@@ -117,7 +117,7 @@ func NewCompactor() *CompactorStatefulSet {
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			PodResources:         k8sutil.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
-			Affinity:             *k8sutil.NewAntiAffinity(nil, labelSelectors),
+			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
 				FailureThreshold: 4,
@@ -154,7 +154,7 @@ func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
 
 	pod := &k8sutil.Pod{
 		TerminationGracePeriodSeconds: &c.TerminationGracePeriodSeconds,
-		Affinity:                      &c.Affinity,
+		Affinity:                      c.Affinity,
 		SecurityContext:               c.SecurityContext,
 		ServiceAccountName:            commonObjectMeta.Name,
 		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, c.Sidecars...),

@@ -201,7 +201,7 @@ type PodProvider interface {
 type Pod struct {
 	TerminationGracePeriodSeconds *int64
 	Affinity                      *corev1.Affinity
-	SecurityContext               corev1.PodSecurityContext
+	SecurityContext               *corev1.PodSecurityContext
 	ServiceAccountName            string
 
 	ContainerProviders []ContainerProvider
@@ -222,7 +222,7 @@ func (p *Pod) MakePodSpec() corev1.PodSpec {
 		Affinity:                      p.Affinity,
 		Containers:                    containers,
 		ServiceAccountName:            p.ServiceAccountName,
-		SecurityContext:               &p.SecurityContext,
+		SecurityContext:               p.SecurityContext,
 		NodeSelector: map[string]string{
 			OsLabel: LinuxOs,
 		},
@@ -373,6 +373,7 @@ type ServiceProvider interface {
 type Service struct {
 	MetaConfig
 	ServicePorts ServiceProvider
+	ClusterIP    string
 }
 
 // NewService returns a new Service.
@@ -392,8 +393,9 @@ func (s *Service) MakeManifest() runtime.Object {
 		TypeMeta:   ServiceMeta,
 		ObjectMeta: s.MetaConfig.MakeMeta(),
 		Spec: corev1.ServiceSpec{
-			Ports:    s.ServicePorts.GetServicePorts(),
-			Selector: selector,
+			Ports:     s.ServicePorts.GetServicePorts(),
+			Selector:  selector,
+			ClusterIP: s.ClusterIP,
 		},
 	}
 }

@@ -2,6 +2,7 @@ package receive
 
 import (
 	"fmt"
+	"strings"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
@@ -88,11 +89,11 @@ func (c *Controller) Manifests() k8sutil.ObjectMap {
 
 	ret["controller-deployment"] = deployment.MakeManifest()
 
-	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta.Clone(),
-		ServicePorts: pod,
-	}
-	ret["controller-service"] = service.MakeManifest()
+	// service := &k8sutil.Service{
+	// 	MetaConfig:   commonObjectMeta.Clone(),
+	// 	ServicePorts: pod,
+	// }
+	// ret["controller-service"] = service.MakeManifest()
 
 	if c.EnableServiceMonitor {
 		serviceMonitor := &k8sutil.ServiceMonitor{
@@ -157,6 +158,7 @@ func (c *Controller) Manifests() k8sutil.ObjectMap {
 	}
 
 	// create role binding
+	apiGroup := strings.Split(k8sutil.RoleMeta.APIVersion, "/")[0]
 	ret["controller-rolebinding"] = &rbacv1.RoleBinding{
 		TypeMeta: k8sutil.RoleBindingMeta,
 		ObjectMeta: metav1.ObjectMeta{
@@ -174,7 +176,7 @@ func (c *Controller) Manifests() k8sutil.ObjectMap {
 		RoleRef: rbacv1.RoleRef{
 			Kind:     k8sutil.RoleMeta.Kind,
 			Name:     c.Name,
-			APIGroup: k8sutil.RoleMeta.APIVersion,
+			APIGroup: apiGroup,
 		},
 	}
 
