@@ -52,8 +52,8 @@ type QueryOptions struct {
 	GrpcClientsTLSCA                              string                    `opt:"grpc-client-tls-ca"`
 	GrpcClientsTLSCert                            string                    `opt:"grpc-client-tls-cert"`
 	GrpcClientsTLSKey                             string                    `opt:"grpc-client-tls-key"`
-	GrpcClientsTLSSecure                          bool                      `opt:"grpc-client-tls-secure"`
-	GrpcClientsTLSSkipVerify                      bool                      `opt:"grpc-client-tls-skip-verify"`
+	GrpcClientsTLSSecure                          bool                      `opt:"grpc-client-tls-secure,noval"`
+	GrpcClientsTLSSkipVerify                      bool                      `opt:"grpc-client-tls-skip-verify,noval"`
 	GrpcClientsCompression                        GrpcCompressionType       `opt:"grpc-compression"`
 	GrpcGracePeriod                               model.Duration            `opt:"grpc-grace-period"`
 	GrpcMMaxConnectionAge                         model.Duration            `opt:"grpc-server-max-connection-age"`
@@ -75,7 +75,7 @@ type QueryOptions struct {
 	QueryMaxConcurrent                            int                       `opt:"query.max-concurrent"`
 	QueryMaxConcurrentSelect                      int                       `opt:"query.max-concurrent-select"`
 	QueryMetadataDefaultTimeRange                 model.Duration            `opt:"query.metadata.default-time-range"`
-	QueryPartialResponse                          bool                      `opt:"query.partial-response"`
+	QueryPartialResponse                          bool                      `opt:"query.partial-response,noval"`
 	QueryPromQLEngine                             string                    `opt:"query.promql-engine"`
 	QueryReplicaLabel                             []string                  `opt:"query.replica-label"`
 	QueryTelemetryRequestDurationSecondsQuantiles []float64                 `opt:"query.telemetry.request-duration-seconds-quantiles"`
@@ -176,7 +176,7 @@ func (s *QueryDeployment) Manifests() k8sutil.ObjectMap {
 		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, s.Sidecars...),
 	}
 
-	statefulset := &k8sutil.StatefulSet{
+	statefulset := &k8sutil.Deployment{
 		MetaConfig: commonObjectMeta.Clone(),
 		Replicas:   s.Replicas,
 		Pod:        pod,
