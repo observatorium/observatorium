@@ -76,7 +76,7 @@ func GetOpts(obj interface{}) []string {
 		}
 
 		optValue := getOptValue(fieldKind, fieldValue)
-		if len(optValue) == 0 || optValue[0] == "" {
+		if len(optValue) == 0 {
 			continue
 		}
 
@@ -108,6 +108,7 @@ func getOptName(opt []string) string {
 
 func getOptValue(kind reflect.Kind, rValue reflect.Value) []string {
 	ret := []string{}
+	wasPtr := false
 
 	// If pointer type and nil, skip it, otherwise dereference it.
 	if kind == reflect.Ptr {
@@ -123,40 +124,44 @@ func getOptValue(kind reflect.Kind, rValue reflect.Value) []string {
 
 		rValue = rValue.Elem()
 		kind = rValue.Kind()
+		wasPtr = true
 	}
 
 	switch kind {
 	case reflect.String:
 		value := rValue.String()
-		if value == "" {
+		if value == "" && !wasPtr {
 			return ret
 		}
 
 		ret = append(ret, value)
 	case reflect.Int:
 		value := rValue.Int()
-		if value == 0 {
+		if value == 0 && !wasPtr {
 			return ret
 		}
 
 		ret = append(ret, fmt.Sprintf("%d", value))
 	case reflect.Bool:
 		value := rValue.Bool()
-		if !value {
+		if !value && !wasPtr {
 			return ret
 		}
 
 		ret = append(ret, fmt.Sprintf("%t", value))
 	case reflect.Float64:
 		value := rValue.Float()
-		if value == 0 {
+		if value == 0 && !wasPtr {
 			return ret
 		}
 
-		ret = append(ret, fmt.Sprintf("%.2f", value))
+		res := fmt.Sprintf("%.2f", value)
+		res = strings.TrimRight(res, "0")
+		res = strings.TrimRight(res, ".")
+		ret = append(ret, res)
 	case reflect.Struct, reflect.Int64: // Int64 for time.Duration
 		if kind == reflect.Int64 {
-			if rValue.Int() == 0 {
+			if rValue.Int() == 0 && !wasPtr {
 				return ret
 			}
 		}

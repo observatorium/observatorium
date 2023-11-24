@@ -24,16 +24,20 @@ func (s *SubStructPtr) String() string {
 }
 
 type TestOptions struct {
-	String       string        `opt:"string"`
-	Int          int           `opt:"int"`
-	Float        float64       `opt:"float"`
-	Bool         bool          `opt:"bool"`
-	Duration     time.Duration `opt:"duration"`
-	Sub          SubStruct     `opt:"sub"`
-	SubPtr       *SubStructPtr `opt:"subptr"`
-	NoValue      bool          `opt:"no-value,noval"`
-	Repeat       []string      `opt:"repeat"`
-	SingleHyphen int           `opt:"single,single-hyphen"`
+	String       string         `opt:"string"`
+	Int          int            `opt:"int"`    // Zero value is ignored
+	IntPtr       *int           `opt:"intptr"` // Zero value is not ignored
+	Float        float64        `opt:"float"`
+	FloatPtr     *float64       `opt:"floatptr"`
+	Bool         bool           `opt:"bool"`
+	BoolPtr      *bool          `opt:"bool"`
+	Duration     time.Duration  `opt:"duration"`
+	DurationPtr  *time.Duration `opt:"duration"`
+	Sub          SubStruct      `opt:"sub"`
+	SubPtr       *SubStructPtr  `opt:"subptr"`
+	NoValue      bool           `opt:"no-value,noval"`
+	Repeat       []string       `opt:"repeat"`
+	SingleHyphen int            `opt:"single,single-hyphen"`
 
 	// Limits tests
 	DoubleType             string    `opt:"string,int"`
@@ -70,11 +74,35 @@ func TestCmdOptions(t *testing.T) {
 			},
 			expect: []string{"--int=1"},
 		},
+		"int-zero": {
+			options: TestOptions{
+				Int: 0,
+			},
+			expect: []string{},
+		},
+		"int-ptr-zero": {
+			options: TestOptions{
+				IntPtr: new(int),
+			},
+			expect: []string{"--intptr=0"},
+		},
 		"float": {
 			options: TestOptions{
 				Float: 1.1,
 			},
-			expect: []string{"--float=1.10"},
+			expect: []string{"--float=1.1"},
+		},
+		"float-zero": {
+			options: TestOptions{
+				Float: 0,
+			},
+			expect: []string{},
+		},
+		"float-ptr-zero": {
+			options: TestOptions{
+				FloatPtr: new(float64),
+			},
+			expect: []string{"--floatptr=0"},
 		},
 		"bool": {
 			options: TestOptions{
@@ -82,11 +110,35 @@ func TestCmdOptions(t *testing.T) {
 			},
 			expect: []string{"--bool=true"},
 		},
+		"bool-false": {
+			options: TestOptions{
+				Bool: false,
+			},
+			expect: []string{},
+		},
+		"bool-ptr-false": {
+			options: TestOptions{
+				BoolPtr: new(bool),
+			},
+			expect: []string{"--bool=false"},
+		},
 		"duration": {
 			options: TestOptions{
 				Duration: time.Second,
 			},
 			expect: []string{"--duration=1s"},
+		},
+		"duration-zero": {
+			options: TestOptions{
+				Duration: 0,
+			},
+			expect: []string{},
+		},
+		"duration-ptr-zero": {
+			options: TestOptions{
+				DurationPtr: new(time.Duration),
+			},
+			expect: []string{"--duration=0s"},
 		},
 		"sub": {
 			options: TestOptions{
@@ -95,6 +147,18 @@ func TestCmdOptions(t *testing.T) {
 				},
 			},
 			expect: []string{"--sub=sub"},
+		},
+		"sub-zero": {
+			options: TestOptions{
+				Sub: SubStruct{},
+			},
+			expect: []string{},
+		},
+		"sub-ptr-zero": {
+			options: TestOptions{
+				SubPtr: &SubStructPtr{},
+			},
+			expect: []string{},
 		},
 		"sub with stringer interface on pointer receiver": {
 			options: TestOptions{
@@ -139,7 +203,7 @@ func TestCmdOptions(t *testing.T) {
 			options: TestOptions{
 				NovalWithoutBoolType: 1.1,
 			},
-			expect: []string{"--nobool=1.10"},
+			expect: []string{"--nobool=1.1"},
 		},
 		"pointer to supported type": {
 			options: TestOptions{
