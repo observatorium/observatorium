@@ -63,28 +63,28 @@ type QueryFrontendOptions struct {
 	LabelsDefaultTimeRange               model.Duration                 `opt:"labels.default-time-range"`
 	LabelsMaxQueryParallelism            int                            `opt:"labels.max-query-parallelism"`
 	LabelsMaxRetriesPerRequest           int                            `opt:"labels.max-retries-per-request"`
-	LabelsPartialResponse                bool                           `opt:"labels.partial-response"`
+	LabelsPartialResponse                bool                           `opt:"labels.partial-response,noval"`
 	LabelsResponseCacheConfig            *cache.ResponseCacheConfig     `opt:"labels.response-cache-config"`
 	LabelsResponseCacheConfigFile        *labelsResponseCacheConfig     `opt:"labels.response-cache-config-file"`
 	LabelsResponseMaxFreshness           string                         `opt:"labels.response-cache-max-freshness"`
-	LabelsSplitInterval                  string                         `opt:"labels.split-interval"`
+	LabelsSplitInterval                  model.Duration                 `opt:"labels.split-interval"`
 	LogFormat                            thanoslog.LogFormat            `opt:"log.format"`
 	LogLevel                             thanoslog.LogLevel             `opt:"log.level"`
-	QueryFrontendCompressResponses       bool                           `opt:"query-frontend.compress-responses"`
+	QueryFrontendCompressResponses       bool                           `opt:"query-frontend.compress-responses,noval"`
 	QueryFrontendDownstreamTripperConfig *DownstreamTripperConfig       `opt:"query-frontend.downstream-tripper-config"`
 	QueryFrontendDownstreamURL           string                         `opt:"query-frontend.downstream-url"`
 	QueryFrontendForwardHeader           []string                       `opt:"query-frontend.forward-header"`
 	QueryFrontendLogQueriesLongerThan    model.Duration                 `opt:"query-frontend.log-queries-longer-than"`
 	QueryFrontendVerticalShards          int                            `opt:"query-frontend.vertical-shards"`
-	QueryRangeAlignRangeWithStep         bool                           `opt:"query-range.align-range-with-step"`
+	QueryRangeAlignRangeWithStep         bool                           `opt:"query-range.align-range-with-step,noval"`
 	QueryRangeHorizontalShards           int                            `opt:"query-range.horizontal-shards"`
 	QueryRangeMaxQueryLength             model.Duration                 `opt:"query-range.max-query-length"`
 	QueryRangeMaxQueryParallelism        int                            `opt:"query-range.max-query-parallelism"`
 	QueryRangeMaxRetriesPerRequest       int                            `opt:"query-range.max-retries-per-request"`
 	QueryRangeMaxSplitInterval           model.Duration                 `opt:"query-range.max-split-interval"`
 	QueryRangeMinSplitInterval           model.Duration                 `opt:"query-range.min-split-interval"`
-	QueryRangePartialResponse            bool                           `opt:"query-range.partial-response"`
-	QueryRangeRequestDownsampled         bool                           `opt:"query-range.request-downsampled"`
+	QueryRangePartialResponse            bool                           `opt:"query-range.partial-response,noval"`
+	QueryRangeRequestDownsampled         bool                           `opt:"query-range.request-downsampled,noval"`
 	QueryRangeResponseCacheConfig        *cache.ResponseCacheConfig     `opt:"query-range.response-cache-config"`
 	QueryRangeResponseCacheConfigFile    *queryRangeResponseCacheConfig `opt:"query-range.response-cache-config-file"`
 	QueryRangeResponseCacheMaxFreshness  model.Duration                 `opt:"query-range.response-cache-max-freshness"`
@@ -93,7 +93,7 @@ type QueryFrontendOptions struct {
 	RequestLoggingConfigFile             *requestLoggingConfigFile      `opt:"request.logging-config-file"`
 	TracingConfig                        *trclient.TracingConfig        `opt:"tracing.config"`
 	TracingConfigFile                    *tracingConfigFile             `opt:"tracing.config-file"`
-	WebDisableCORS                       bool                           `opt:"web.disable-cors"`
+	WebDisableCORS                       bool                           `opt:"web.disable-cors,noval"`
 }
 
 type QueryFrontendDeployment struct {
@@ -170,7 +170,7 @@ func (s *QueryFrontendDeployment) Manifests() k8sutil.ObjectMap {
 		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, s.Sidecars...),
 	}
 
-	statefulset := &k8sutil.StatefulSet{
+	statefulset := &k8sutil.Deployment{
 		MetaConfig: commonObjectMeta.Clone(),
 		Replicas:   s.Replicas,
 		Pod:        pod,
