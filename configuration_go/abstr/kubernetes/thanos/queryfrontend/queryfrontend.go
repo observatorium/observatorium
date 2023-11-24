@@ -62,7 +62,7 @@ type QueryFrontendOptions struct {
 	HttpConfig                           string                         `opt:"http.config"`
 	LabelsDefaultTimeRange               model.Duration                 `opt:"labels.default-time-range"`
 	LabelsMaxQueryParallelism            int                            `opt:"labels.max-query-parallelism"`
-	LabelsMaxRetriesPerRequest           int                            `opt:"labels.max-retries-per-request"`
+	LabelsMaxRetriesPerRequest           *int                           `opt:"labels.max-retries-per-request"`
 	LabelsPartialResponse                bool                           `opt:"labels.partial-response,noval"`
 	LabelsResponseCacheConfig            *cache.ResponseCacheConfig     `opt:"labels.response-cache-config"`
 	LabelsResponseCacheConfigFile        *labelsResponseCacheConfig     `opt:"labels.response-cache-config-file"`
@@ -80,7 +80,7 @@ type QueryFrontendOptions struct {
 	QueryRangeHorizontalShards           int                            `opt:"query-range.horizontal-shards"`
 	QueryRangeMaxQueryLength             model.Duration                 `opt:"query-range.max-query-length"`
 	QueryRangeMaxQueryParallelism        int                            `opt:"query-range.max-query-parallelism"`
-	QueryRangeMaxRetriesPerRequest       int                            `opt:"query-range.max-retries-per-request"`
+	QueryRangeMaxRetriesPerRequest       *int                           `opt:"query-range.max-retries-per-request"`
 	QueryRangeMaxSplitInterval           model.Duration                 `opt:"query-range.max-split-interval"`
 	QueryRangeMinSplitInterval           model.Duration                 `opt:"query-range.min-split-interval"`
 	QueryRangePartialResponse            bool                           `opt:"query-range.partial-response,noval"`
