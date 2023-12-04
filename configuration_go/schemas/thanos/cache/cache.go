@@ -18,6 +18,32 @@ const (
 	ExpandedPostings IndexCacheEnabledItem = "ExpandedPostings"
 )
 
+type CacheConfig interface {
+	redis.RedisClientConfig | memcached.MemcachedClientConfig | memory.MemoryCacheConfig
+	Type() string
+}
+
+func NewIndexCacheConfig[T CacheConfig](c T) *IndexCacheConfig {
+	return &IndexCacheConfig{
+		ConfigType: c.Type(),
+		Config:     c,
+	}
+}
+
+func NewBucketCacheConfig[T CacheConfig](c T) *BucketCacheConfig {
+	return &BucketCacheConfig{
+		Type:   c.Type(),
+		Config: c,
+	}
+}
+
+func NewResponseCacheConfig[T CacheConfig](c T) *ResponseCacheConfig {
+	return &ResponseCacheConfig{
+		Type:   c.Type(),
+		Config: c,
+	}
+}
+
 // IndexCacheConfig specifies the index cache config.
 type IndexCacheConfig struct {
 	ConfigType string      `yaml:"type"`
@@ -37,25 +63,6 @@ func (c IndexCacheConfig) String() string {
 		panic(fmt.Sprintf("error mashalling IndexCacheConfig to yaml: %v", err))
 	}
 	return string(ret)
-}
-
-type CacheConfig interface {
-	redis.RedisClientConfig | memcached.MemcachedClientConfig | memory.MemoryCacheConfig
-	Type() string
-}
-
-func NewIndexCacheConfig[T CacheConfig](c T) *IndexCacheConfig {
-	return &IndexCacheConfig{
-		ConfigType: c.Type(),
-		Config:     c,
-	}
-}
-
-func NewBucketCacheConfig[T CacheConfig](c T) *BucketCacheConfig {
-	return &BucketCacheConfig{
-		Type:   c.Type(),
-		Config: c,
-	}
 }
 
 // Taken from https://github.com/thanos-io/thanos/blob/release-0.32/pkg/store/cache/caching_bucket_factory.go#L37
