@@ -3,6 +3,8 @@ package ruler
 import (
 	"fmt"
 	"net"
+	"path/filepath"
+	"strings"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
@@ -15,251 +17,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// --alert.label-drop=ALERT.LABEL-DROP ...
-//                                  Labels by name to drop before sending
-//                                  to alertmanager. This allows alert to be
-//                                  deduplicated on replica label (repeated).
-//                                  Similar Prometheus alert relabelling
-//       --alert.query-template="/graph?g0.expr={{.Expr}}&g0.tab=1"
-//                                  Template to use in alerts source field.
-//                                  Need only include {{.Expr}} parameter
-//       --alert.query-url=ALERT.QUERY-URL
-//                                  The external Thanos Query URL that would be set
-//                                  in all alerts 'Source' field
-//       --alert.relabel-config=<content>
-//                                  Alternative to 'alert.relabel-config-file' flag
-//                                  (mutually exclusive). Content of YAML file that
-//                                  contains alert relabelling configuration.
-//       --alert.relabel-config-file=<file-path>
-//                                  Path to YAML file that contains alert
-//                                  relabelling configuration.
-//       --alertmanagers.config=<content>
-//                                  Alternative to 'alertmanagers.config-file'
-//                                  flag (mutually exclusive). Content
-//                                  of YAML file that contains alerting
-//                                  configuration. See format details:
-//                                  https://thanos.io/tip/components/rule.md/#configuration.
-//                                  If defined, it takes precedence
-//                                  over the '--alertmanagers.url' and
-//                                  '--alertmanagers.send-timeout' flags.
-//       --alertmanagers.config-file=<file-path>
-//                                  Path to YAML file that contains alerting
-//                                  configuration. See format details:
-//                                  https://thanos.io/tip/components/rule.md/#configuration.
-//                                  If defined, it takes precedence
-//                                  over the '--alertmanagers.url' and
-//                                  '--alertmanagers.send-timeout' flags.
-//       --alertmanagers.sd-dns-interval=30s
-//                                  Interval between DNS resolutions of
-//                                  Alertmanager hosts.
-//       --alertmanagers.send-timeout=10s
-//                                  Timeout for sending alerts to Alertmanager
-//       --alertmanagers.url=ALERTMANAGERS.URL ...
-//                                  Alertmanager replica URLs to push firing
-//                                  alerts. Ruler claims success if push to
-//                                  at least one alertmanager from discovered
-//                                  succeeds. The scheme should not be empty
-//                                  e.g `http` might be used. The scheme may be
-//                                  prefixed with 'dns+' or 'dnssrv+' to detect
-//                                  Alertmanager IPs through respective DNS
-//                                  lookups. The port defaults to 9093 or the
-//                                  SRV record's value. The URL path is used as a
-//                                  prefix for the regular Alertmanager API path.
-//       --data-dir="data/"         data directory
-//       --eval-interval=1m         The default evaluation interval to use.
-//       --for-grace-period=10m     Minimum duration between alert and restored
-//                                  "for" state. This is maintained only for alerts
-//                                  with configured "for" time greater than grace
-//                                  period.
-//       --for-outage-tolerance=1h  Max time to tolerate prometheus outage for
-//                                  restoring "for" state of alert.
-//       --grpc-address="0.0.0.0:10901"
-//                                  Listen ip:port address for gRPC endpoints
-//                                  (StoreAPI). Make sure this address is routable
-//                                  from other components.
-//       --grpc-grace-period=2m     Time to wait after an interrupt received for
-//                                  GRPC Server.
-//       --grpc-server-max-connection-age=60m
-//                                  The grpc server max connection age. This
-//                                  controls how often to re-establish connections
-//                                  and redo TLS handshakes.
-//       --grpc-server-tls-cert=""  TLS Certificate for gRPC server, leave blank to
-//                                  disable TLS
-//       --grpc-server-tls-client-ca=""
-//                                  TLS CA to verify clients against. If no
-//                                  client CA is specified, there is no client
-//                                  verification on server side. (tls.NoClientCert)
-//       --grpc-server-tls-key=""   TLS Key for the gRPC server, leave blank to
-//                                  disable TLS
-//       --hash-func=               Specify which hash function to use when
-//                                  calculating the hashes of produced files.
-//                                  If no function has been specified, it does not
-//                                  happen. This permits avoiding downloading some
-//                                  files twice albeit at some performance cost.
-//                                  Possible values are: "", "SHA256".
-//   -h, --help                     Show context-sensitive help (also try
-//                                  --help-long and --help-man).
-//       --http-address="0.0.0.0:10902"
-//                                  Listen host:port for HTTP endpoints.
-//       --http-grace-period=2m     Time to wait after an interrupt received for
-//                                  HTTP Server.
-//       --http.config=""           [EXPERIMENTAL] Path to the configuration file
-//                                  that can enable TLS or authentication for all
-//                                  HTTP endpoints.
-//       --label=<name>="<value>" ...
-//                                  Labels to be applied to all generated metrics
-//                                  (repeated). Similar to external labels for
-//                                  Prometheus, used to identify ruler and its
-//                                  blocks as unique source.
-//       --log.format=logfmt        Log format to use. Possible options: logfmt or
-//                                  json.
-//       --log.level=info           Log filtering level.
-//       --objstore.config=<content>
-//                                  Alternative to 'objstore.config-file'
-//                                  flag (mutually exclusive). Content of
-//                                  YAML file that contains object store
-//                                  configuration. See format details:
-//                                  https://thanos.io/tip/thanos/storage.md/#configuration
-//       --objstore.config-file=<file-path>
-//                                  Path to YAML file that contains object
-//                                  store configuration. See format details:
-//                                  https://thanos.io/tip/thanos/storage.md/#configuration
-//       --query=<query> ...        Addresses of statically configured query
-//                                  API servers (repeatable). The scheme may be
-//                                  prefixed with 'dns+' or 'dnssrv+' to detect
-//                                  query API servers through respective DNS
-//                                  lookups.
-//       --query.config=<content>   Alternative to 'query.config-file' flag
-//                                  (mutually exclusive). Content of YAML
-//                                  file that contains query API servers
-//                                  configuration. See format details:
-//                                  https://thanos.io/tip/components/rule.md/#configuration.
-//                                  If defined, it takes precedence over the
-//                                  '--query' and '--query.sd-files' flags.
-//       --query.config-file=<file-path>
-//                                  Path to YAML file that contains query API
-//                                  servers configuration. See format details:
-//                                  https://thanos.io/tip/components/rule.md/#configuration.
-//                                  If defined, it takes precedence over the
-//                                  '--query' and '--query.sd-files' flags.
-//       --query.default-step=1s    Default range query step to use. This is
-//                                  only used in stateless Ruler and alert state
-//                                  restoration.
-//       --query.http-method=POST   HTTP method to use when sending queries.
-//                                  Possible options: [GET, POST]
-//       --query.sd-dns-interval=30s
-//                                  Interval between DNS resolutions.
-//       --query.sd-files=<path> ...
-//                                  Path to file that contains addresses of query
-//                                  API servers. The path can be a glob pattern
-//                                  (repeatable).
-//       --query.sd-interval=5m     Refresh interval to re-read file SD files.
-//                                  (used as a fallback)
-//       --remote-write.config=<content>
-//                                  Alternative to 'remote-write.config-file'
-//                                  flag (mutually exclusive). Content
-//                                  of YAML config for the remote-write
-//                                  configurations, that specify servers
-//                                  where samples should be sent to (see
-//                                  https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write).
-//                                  This automatically enables stateless mode
-//                                  for ruler and no series will be stored in the
-//                                  ruler's TSDB. If an empty config (or file) is
-//                                  provided, the flag is ignored and ruler is run
-//                                  with its own TSDB.
-//       --remote-write.config-file=<file-path>
-//                                  Path to YAML config for the remote-write
-//                                  configurations, that specify servers
-//                                  where samples should be sent to (see
-//                                  https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write).
-//                                  This automatically enables stateless mode
-//                                  for ruler and no series will be stored in the
-//                                  ruler's TSDB. If an empty config (or file) is
-//                                  provided, the flag is ignored and ruler is run
-//                                  with its own TSDB.
-//       --request.logging-config=<content>
-//                                  Alternative to 'request.logging-config-file'
-//                                  flag (mutually exclusive). Content
-//                                  of YAML file with request logging
-//                                  configuration. See format details:
-//                                  https://thanos.io/tip/thanos/logging.md/#configuration
-//       --request.logging-config-file=<file-path>
-//                                  Path to YAML file with request logging
-//                                  configuration. See format details:
-//                                  https://thanos.io/tip/thanos/logging.md/#configuration
-//       --resend-delay=1m          Minimum amount of time to wait before resending
-//                                  an alert to Alertmanager.
-//       --restore-ignored-label=RESTORE-IGNORED-LABEL ...
-//                                  Label names to be ignored when restoring alerts
-//                                  from the remote storage. This is only used in
-//                                  stateless mode.
-//       --rule-file=rules/ ...     Rule files that should be used by rule
-//                                  manager. Can be in glob format (repeated).
-//                                  Note that rules are not automatically detected,
-//                                  use SIGHUP or do HTTP POST /-/reload to re-read
-//                                  them.
-//       --shipper.meta-file-name="thanos.shipper.json"
-//                                  the file to store shipper metadata in
-//       --shipper.upload-compacted
-//                                  If true shipper will try to upload compacted
-//                                  blocks as well. Useful for migration purposes.
-//                                  Works only if compaction is disabled on
-//                                  Prometheus. Do it once and then disable the
-//                                  flag when done.
-//       --store.limits.request-samples=0
-//                                  The maximum samples allowed for a single
-//                                  Series request, The Series call fails if
-//                                  this limit is exceeded. 0 means no limit.
-//                                  NOTE: For efficiency the limit is internally
-//                                  implemented as 'chunks limit' considering each
-//                                  chunk contains a maximum of 120 samples.
-//       --store.limits.request-series=0
-//                                  The maximum series allowed for a single Series
-//                                  request. The Series call fails if this limit is
-//                                  exceeded. 0 means no limit.
-//       --tracing.config=<content>
-//                                  Alternative to 'tracing.config-file' flag
-//                                  (mutually exclusive). Content of YAML file
-//                                  with tracing configuration. See format details:
-//                                  https://thanos.io/tip/thanos/tracing.md/#configuration
-//       --tracing.config-file=<file-path>
-//                                  Path to YAML file with tracing
-//                                  configuration. See format details:
-//                                  https://thanos.io/tip/thanos/tracing.md/#configuration
-//       --tsdb.block-duration=2h   Block duration for TSDB block.
-//       --tsdb.no-lockfile         Do not create lockfile in TSDB data directory.
-//                                  In any case, the lockfiles will be deleted on
-//                                  next startup.
-//       --tsdb.retention=48h       Block retention time on local disk.
-//       --tsdb.wal-compression     Compress the tsdb WAL.
-//       --version                  Show application version.
-//       --web.disable-cors         Whether to disable CORS headers to be set by
-//                                  Thanos. By default Thanos sets CORS headers to
-//                                  be allowed by all.
-//       --web.external-prefix=""   Static prefix for all HTML links and redirect
-//                                  URLs in the bucket web UI interface.
-//                                  Actual endpoints are still served on / or the
-//                                  web.route-prefix. This allows thanos bucket
-//                                  web UI to be served behind a reverse proxy that
-//                                  strips a URL sub-path.
-//       --web.prefix-header=""     Name of HTTP request header used for dynamic
-//                                  prefixing of UI links and redirects.
-//                                  This option is ignored if web.external-prefix
-//                                  argument is set. Security risk: enable
-//                                  this option only if a reverse proxy in
-//                                  front of thanos is resetting the header.
-//                                  The --web.prefix-header=X-Forwarded-Prefix
-//                                  option can be useful, for example, if Thanos
-//                                  UI is served via Traefik reverse proxy with
-//                                  PathPrefixStrip option enabled, which sends the
-//                                  stripped prefix value in X-Forwarded-Prefix
-//                                  header. This allows thanos UI to be served on a
-//                                  sub-path.
-//       --web.route-prefix=""      Prefix for API and UI endpoints. This allows
-//                                  thanos UI to be served on a sub-path. This
-//                                  option is analogous to --web.route-prefix of
-//                                  Prometheus.
-
 type HashFunc string
 type QueryHttpMethod string
 
@@ -271,6 +28,7 @@ const (
 	HashFuncSHA256      HashFunc        = "SHA256"
 	QueryHttpMethodGET  QueryHttpMethod = "GET"
 	QueryHttpMethodPOST QueryHttpMethod = "POST"
+	baseRulesDir        string          = "/etc/thanos/rules"
 )
 
 type alertRelabelConfigFile = option.ConfigFile[relabel.Config]
@@ -292,6 +50,29 @@ type tracingConfigFile = option.ConfigFile[trclient.TracingConfig]
 // NewReceiveLimitsConfigFile returns a new tracing config file option.
 func NewTracingConfigFile(name string, value trclient.TracingConfig) *tracingConfigFile {
 	return option.NewConfigFile("/etc/thanos/tracing", "config.yaml", name, value)
+}
+
+type RuleFileOption struct {
+	FileName string
+	// If the rules are contained in a shared volume, specify the volume name.
+	VolumeName string
+	// If the rules are in a configMap, specify the configMap name.
+	ConfigMapName string
+	// Optionally specify the parent directory of the rule file to avoid path conflicts.
+	ParentDir string
+}
+
+func (r RuleFileOption) FilePath() string {
+	parentDir := r.ParentDir
+	if parentDir == "" {
+		parentDir = strings.TrimSuffix(r.FileName, filepath.Ext(r.FileName))
+	}
+
+	return filepath.Join(baseRulesDir, parentDir)
+}
+
+func (r RuleFileOption) String() string {
+	return filepath.Join(r.FilePath(), r.FileName)
 }
 
 // type objstoreConfigFile = option.ConfigFile[objstore.Config]
@@ -345,7 +126,7 @@ type RulerOptions struct {
 	RequestLoggingConfigFile   string                   `opt:"request.logging-config-file"` //todo
 	ResendDelay                model.Duration           `opt:"resend-delay"`
 	RestoreIgnoredLabel        []string                 `opt:"restore-ignored-label"`
-	RuleFile                   []string                 `opt:"rule-file"`
+	RuleFile                   []RuleFileOption         `opt:"rule-file"`
 	ShipperMetaFileName        string                   `opt:"shipper.meta-file-name"`
 	ShipperUploadCompacted     bool                     `opt:"shipper.upload-compacted,noval"`
 	StoreLimitsRequestSamples  int                      `opt:"store.limits.request-samples"`
@@ -556,6 +337,23 @@ func (s *RulerStatefulSet) makeContainer() *k8sutil.Container {
 			Name:      dataVolumeName,
 			MountPath: s.Options.DataDir,
 		},
+	}
+
+	for _, ruleFile := range s.Options.RuleFile {
+		if ruleFile.VolumeName != "" {
+			ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
+				Name:      ruleFile.VolumeName,
+				MountPath: ruleFile.FilePath(),
+				ReadOnly:  true,
+			})
+		} else if ruleFile.ConfigMapName != "" {
+			ret.Volumes = append(ret.Volumes, k8sutil.NewPodVolumeFromConfigMap(ruleFile.ConfigMapName, ruleFile.ConfigMapName))
+
+			ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
+				Name:      ruleFile.ConfigMapName,
+				MountPath: ruleFile.FilePath(),
+			})
+		}
 	}
 
 	return ret
