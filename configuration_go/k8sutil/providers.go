@@ -369,6 +369,12 @@ type ServiceProvider interface {
 	GetServicePorts() []corev1.ServicePort
 }
 
+type ServiceProviderFunc func() []corev1.ServicePort
+
+func (f ServiceProviderFunc) GetServicePorts() []corev1.ServicePort {
+	return f()
+}
+
 // Service represents a Kubernetes Service.
 type Service struct {
 	MetaConfig
