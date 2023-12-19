@@ -2,11 +2,11 @@ package k8sutil
 
 import (
 	"fmt"
-	"strings"
 
 	mon "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/prometheus/prometheus/model/labels"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,6 +15,66 @@ import (
 // ObjectMap represents a map of string to runtime.Objects. Usually used
 // to represent a collection of manifests.
 type ObjectMap map[string]runtime.Object
+
+func (o ObjectMap) Add(obj runtime.Object) {
+	metaObj, ok := obj.(metav1.Object)
+	if !ok {
+		panic(fmt.Sprintf("object %v has no name", obj))
+	}
+
+	objName := metaObj.GetName()
+	if objName == "" {
+		panic(fmt.Sprintf("object %v has no name", obj))
+	}
+
+	objType := obj.GetObjectKind().GroupVersionKind().Kind
+
+	if _, ok := o[objName]; ok {
+		panic(fmt.Sprintf("object %s/%s already exists", objType, objName))
+	}
+
+	o[o.makeKey(objType, objName)] = obj
+}
+
+func (o ObjectMap) makeKey(objType, objName string) string {
+	return fmt.Sprintf("%s/%s", objName, objType)
+}
+
+func (o ObjectMap) AddAll(objs []runtime.Object) {
+	for _, obj := range objs {
+		o.Add(obj)
+	}
+}
+
+type kubeObject interface {
+	*corev1.Service | *appsv1.StatefulSet | *appsv1.Deployment | *monv1.ServiceMonitor | *corev1.ServiceAccount
+	metav1.Object
+}
+
+// GetObject returns the object of type T from the given map of kubernetes objects.
+// When specifying a name, it will return the object with the given name.
+// This helper can be used for doing post processing on the objects.
+func GetObject[T kubeObject](manifests ObjectMap, name string) T {
+	var ret T
+	for _, obj := range manifests {
+		if service, ok := obj.(T); ok {
+			if name != "" && service.GetName() != name {
+				continue
+			}
+
+			if ret != nil {
+				panic(fmt.Sprintf("found multiple objects of type %T", *new(T)))
+			}
+			ret = service
+		}
+	}
+
+	if ret == nil {
+		panic(fmt.Sprintf("could not find object of type %T", *new(T)))
+	}
+
+	return ret
+}
 
 // Reusable K8s metadata definitions.
 
@@ -80,83 +140,83 @@ const HostnameLabel string = "kubernetes.io/hostname"
 const OsLabel string = "kubernetes.io/os"
 const LinuxOs string = "linux"
 
-// FlagArg returns consistent pattern flags as args for Deployment/StatefulSet containers.
-// Returns empty string if flag name or value is empty or if flag value is a zero/default value.
-// Not to be used for commands or bool args.
-func FlagArg(flagName, flagValue string) string {
-	if flagName == "" || flagValue == "" || flagValue == "0" || flagValue == "0s" {
-		return ""
-	}
+// // FlagArg returns consistent pattern flags as args for Deployment/StatefulSet containers.
+// // Returns empty string if flag name or value is empty or if flag value is a zero/default value.
+// // Not to be used for commands or bool args.
+// func FlagArg(flagName, flagValue string) string {
+// 	if flagName == "" || flagValue == "" || flagValue == "0" || flagValue == "0s" {
+// 		return ""
+// 	}
 
-	return fmt.Sprintf("--%s=%s", flagName, flagValue)
-}
+// 	return fmt.Sprintf("--%s=%s", flagName, flagValue)
+// }
 
-// BoolFlagArg returns consistent pattern bool flags as args for Deployment/StatefulSet containers.
-// Returns empty string if flag name is empty or value is false.
-func BoolFlagArg(flagName string, flagValue bool) string {
-	if flagName == "" || !flagValue {
-		return ""
-	}
+// // BoolFlagArg returns consistent pattern bool flags as args for Deployment/StatefulSet containers.
+// // Returns empty string if flag name is empty or value is false.
+// func BoolFlagArg(flagName string, flagValue bool) string {
+// 	if flagName == "" || !flagValue {
+// 		return ""
+// 	}
 
-	return fmt.Sprintf("--%s", flagName)
-}
+// 	return fmt.Sprintf("--%s", flagName)
+// }
 
-// RepeatableFloatFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
-func RepeatableFloatFlagArg(flagName string, flagValues []float64) []string {
-	if flagName == "" || len(flagValues) == 0 {
-		return []string{}
-	}
+// // RepeatableFloatFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
+// func RepeatableFloatFlagArg(flagName string, flagValues []float64) []string {
+// 	if flagName == "" || len(flagValues) == 0 {
+// 		return []string{}
+// 	}
 
-	result := []string{}
-	for _, v := range flagValues {
-		result = append(result, fmt.Sprintf("--%s=%f", flagName, v))
-	}
+// 	result := []string{}
+// 	for _, v := range flagValues {
+// 		result = append(result, fmt.Sprintf("--%s=%f", flagName, v))
+// 	}
 
-	return result
-}
+// 	return result
+// }
 
-// RepeatableFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
-func RepeatableFlagArg(flagName string, flagValues []string) []string {
-	if flagName == "" || len(flagValues) == 0 {
-		return []string{}
-	}
+// // RepeatableFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
+// func RepeatableFlagArg(flagName string, flagValues []string) []string {
+// 	if flagName == "" || len(flagValues) == 0 {
+// 		return []string{}
+// 	}
 
-	result := []string{}
-	for _, v := range flagValues {
-		result = append(result, fmt.Sprintf("--%s=%s", flagName, v))
-	}
+// 	result := []string{}
+// 	for _, v := range flagValues {
+// 		result = append(result, fmt.Sprintf("--%s=%s", flagName, v))
+// 	}
 
-	return result
-}
+// 	return result
+// }
 
-// RepeatableFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
-func RepeatableLabelFlagArg(flagName string, flagValues labels.Labels) []string {
-	if flagName == "" || len(flagValues) == 0 {
-		return []string{}
-	}
+// // RepeatableFlagArg returns consistent pattern repeatable flags as args for Deployment/StatefulSet containers.
+// func RepeatableLabelFlagArg(flagName string, flagValues labels.Labels) []string {
+// 	if flagName == "" || len(flagValues) == 0 {
+// 		return []string{}
+// 	}
 
-	result := []string{}
+// 	result := []string{}
 
-	fs := flagValues.String()
-	fs = fs[1 : len(fs)-2]
-	ls := strings.Split(fs, ", ")
+// 	fs := flagValues.String()
+// 	fs = fs[1 : len(fs)-2]
+// 	ls := strings.Split(fs, ", ")
 
-	for _, v := range ls {
-		result = append(result, fmt.Sprintf("--%s=%s", flagName, v))
-	}
+// 	for _, v := range ls {
+// 		result = append(result, fmt.Sprintf("--%s=%s", flagName, v))
+// 	}
 
-	return result
-}
+// 	return result
+// }
 
-// ArgList prunes any empty flags.
-func ArgList(args []string) []string {
-	n := 0
-	for _, x := range args {
-		if x != "" {
-			args[n] = x
-			n++
-		}
-	}
-	args = args[:n]
-	return args
-}
+// // ArgList prunes any empty flags.
+// func ArgList(args []string) []string {
+// 	n := 0
+// 	for _, x := range args {
+// 		if x != "" {
+// 			args[n] = x
+// 			n++
+// 		}
+// 	}
+// 	args = args[:n]
+// 	return args
+// }

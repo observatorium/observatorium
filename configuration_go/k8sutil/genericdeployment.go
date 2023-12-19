@@ -1,8 +1,12 @@
 package k8sutil
 
 import (
+	"maps"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -53,7 +57,148 @@ func (d DeploymentGenericConfig) ToContainer() *Container {
 	}
 }
 
-type ObjectProcessor func(obj runtime.Object)
+func (d DeploymentGenericConfig) ObjectMeta() *MetaConfig {
+	labels := maps.Clone(d.CommonLabels)
+	if d.ImageTag != "" {
+		labels[VersionLabel] = d.ImageTag
+	}
+
+	return &MetaConfig{
+		Name:      d.Name,
+		Namespace: d.Namespace,
+		Labels:    labels,
+	}
+}
+
+func (d DeploymentGenericConfig) Pod(container *Container) *Pod {
+	return &Pod{
+		TerminationGracePeriodSeconds: &d.TerminationGracePeriodSeconds,
+		Affinity:                      d.Affinity,
+		SecurityContext:               d.SecurityContext,
+		ServiceAccountName:            d.Name,
+		ContainerProviders:            append([]ContainerProvider{container}, d.Sidecars...),
+	}
+}
+
+func (d DeploymentGenericConfig) Deployment(pod *Pod) runtime.Object {
+	dep := &Deployment{
+		MetaConfig: *d.ObjectMeta(),
+		Replicas:   int32(d.Replicas),
+		Pod:        pod,
+	}
+
+	return dep.MakeManifest()
+}
+
+func (d DeploymentGenericConfig) Service(pod *Pod) runtime.Object {
+	service := &Service{
+		MetaConfig:   *d.ObjectMeta(),
+		ServicePorts: pod,
+	}
+
+	return service.MakeManifest()
+}
+
+func (d DeploymentGenericConfig) ServiceMonitor(pod *Pod) runtime.Object {
+	serviceMonitor := &ServiceMonitor{
+		MetaConfig:              *d.ObjectMeta(),
+		ServiceMonitorEndpoints: pod,
+	}
+
+	return serviceMonitor.MakeManifest()
+}
+
+func (d DeploymentGenericConfig) ServiceAccount() runtime.Object {
+	serviceAccount := &ServiceAccount{
+		MetaConfig: *d.ObjectMeta(),
+		Name:       d.Name,
+	}
+
+	return serviceAccount.MakeManifest()
+}
+
+func (d DeploymentGenericConfig) RBACRole(rules []rbacv1.PolicyRule) runtime.Object {
+	return &rbacv1.Role{
+		TypeMeta:   RoleMeta,
+		ObjectMeta: d.ObjectMeta().MakeMeta(),
+		Rules:      rules,
+	}
+}
+
+func (d DeploymentGenericConfig) RBACRoleBinding(subjects []runtime.Object, role runtime.Object) runtime.Object {
+	subs := make([]rbacv1.Subject, len(subjects))
+	for i, s := range subjects {
+		subMeta, ok := s.(metav1.Object)
+		if !ok {
+			panic("subject does not implement metav1.Object")
+		}
+
+		subs[i] = rbacv1.Subject{
+			Kind:      s.GetObjectKind().GroupVersionKind().Kind,
+			Name:      subMeta.GetName(),
+			Namespace: subMeta.GetNamespace(),
+		}
+	}
+
+	return &rbacv1.RoleBinding{
+		TypeMeta:   RoleBindingMeta,
+		ObjectMeta: d.ObjectMeta().MakeMeta(),
+		Subjects:   subs,
+		RoleRef: rbacv1.RoleRef{
+			Kind:     role.GetObjectKind().GroupVersionKind().Kind,
+			APIGroup: role.GetObjectKind().GroupVersionKind().Group,
+			Name:     role.(metav1.Object).GetName(),
+		},
+	}
+}
+
+func (d DeploymentGenericConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object {
+	ret := []runtime.Object{}
+	for name, data := range d.ConfigMaps {
+		cm := &corev1.ConfigMap{
+			TypeMeta:   ConfigMapMeta,
+			ObjectMeta: d.ObjectMeta().MakeMeta(),
+			Data:       data,
+		}
+		cm.Name = name
+		ret = append(ret, cm)
+	}
+
+	for name, data := range d.Secrets {
+		secret := &corev1.Secret{
+			TypeMeta:   SecretMeta,
+			ObjectMeta: d.ObjectMeta().MakeMeta(),
+			Data:       data,
+		}
+		secret.Name = name
+		ret = append(ret, secret)
+	}
+
+	return ret
+}
+
+func (d DeploymentGenericConfig) GenerateObjects(container *Container) []runtime.Object {
+	pod := d.Pod(container)
+
+	ret := []runtime.Object{
+		d.Deployment(pod),
+		d.ServiceAccount(),
+	}
+
+	if len(pod.GetServicePorts()) > 0 {
+		ret = append(ret, d.Service(pod))
+	}
+
+	if d.EnableServiceMonitor && len(pod.GetServiceMonitorEndpoints()) > 0 {
+		ret = append(ret, d.ServiceMonitor(pod))
+	}
+
+	ret = append(ret, d.ConfigMapsAndSecrets(pod)...)
+
+	return ret
+}
+
+// type ObjectProcessor func(obj runtime.Object)
 type DeploymentOption func(d *DeploymentGenericConfig)
 
 // WithImage overrides the default image.

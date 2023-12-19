@@ -40,7 +40,7 @@ type MemcachedDeployment struct {
 }
 
 // NewMemcachedStatefulSet returns a new memcached deployment.
-func NewMemcachedStatefulSet() *MemcachedDeployment {
+func NewMemcached() *MemcachedDeployment {
 	options := MemcachedOptions{}
 
 	commonLabels := map[string]string{
@@ -82,75 +82,17 @@ func NewMemcachedStatefulSet() *MemcachedDeployment {
 
 // Manifests returns the manifests for the memcached deployment.
 func (s *MemcachedDeployment) Manifests() k8sutil.ObjectMap {
-	container := s.makeContainer()
-
-	commonObjectMeta := k8sutil.MetaConfig{
-		Name:      s.Name,
-		Labels:    s.CommonLabels,
-		Namespace: s.Namespace,
-	}
-	commonObjectMeta.Labels[k8sutil.VersionLabel] = container.ImageTag
-
-	pod := &k8sutil.Pod{
-		TerminationGracePeriodSeconds: &s.TerminationGracePeriodSeconds,
-		Affinity:                      s.Affinity,
-		SecurityContext:               s.SecurityContext,
-		ServiceAccountName:            commonObjectMeta.Name,
-		ContainerProviders:            append([]k8sutil.ContainerProvider{container, s.makeExporterContainer()}, s.Sidecars...),
-	}
-
-	deployment := &k8sutil.Deployment{
-		MetaConfig: commonObjectMeta.Clone(),
-		Replicas:   s.Replicas,
-		Pod:        pod,
-	}
-
-	ret := k8sutil.ObjectMap{
-		"memcached-deployment": deployment.MakeManifest(),
-	}
-
-	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta.Clone(),
-		ServicePorts: pod,
-		// As memcached is deployed as a deployment, we use a headless service.
-		// Combined with DNS discovery, this ensures direct access to the pods.
-		ClusterIP: "None",
-	}
-	ret["memcached-service"] = service.MakeManifest()
-
 	if s.EnableServiceMonitor {
-		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta.Clone(),
-			ServiceMonitorEndpoints: pod,
-		}
-		ret["memcached-serviceMonitor"] = serviceMonitor.MakeManifest()
+		s.Sidecars = append(s.Sidecars, s.makeExporterContainer())
 	}
 
-	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta.Clone(),
-		Name:       pod.ServiceAccountName,
-	}
-	ret["memcached-serviceAccount"] = serviceAccount.MakeManifest()
+	container := s.makeContainer()
+	ret := k8sutil.ObjectMap{}
+	ret.AddAll(s.GenerateObjects(container))
 
-	// Create configMaps required by the containers
-	for name, config := range pod.GetConfigMaps() {
-		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       config,
-		}
-		configMap.MetaConfig.Name = name
-		ret["memcached-configMap-"+name] = configMap.MakeManifest()
-	}
-
-	// Create secrets required by the containers
-	for name, secret := range pod.GetSecrets() {
-		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       secret,
-		}
-		secret.MetaConfig.Name = name
-		ret["memcached-secret-"+name] = secret.MakeManifest()
-	}
+	// Set headless service to get stable network ID.
+	service := k8sutil.GetObject[*corev1.Service](ret, "")
+	service.Spec.ClusterIP = corev1.ClusterIPNone
 
 	return ret
 }
@@ -166,6 +108,7 @@ func (s *MemcachedDeployment) makeContainer() *k8sutil.Container {
 	}
 
 	ret := s.ToContainer()
+	ret.Name = "memcached"
 	ret.Args = cmdopt.GetOpts(s.Options)
 	ret.Ports = []corev1.ContainerPort{
 		{
