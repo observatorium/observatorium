@@ -3,6 +3,7 @@ package queryfrontend
 import (
 	"fmt"
 	"net"
+	"time"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
@@ -12,7 +13,6 @@ import (
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/prometheus/common/model"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -58,37 +58,37 @@ func NewQueryRangeResponseCacheConfigFile(name string, value cache.ResponseCache
 type QueryFrontendOptions struct {
 	CacheCompressionType                 CacheCompressionType           `opt:"cache-compression-type"`
 	HttpAddress                          *net.TCPAddr                   `opt:"http-address"`
-	HttpGracePeriod                      model.Duration                 `opt:"http-grace-period"`
+	HttpGracePeriod                      time.Duration                  `opt:"http-grace-period"`
 	HttpConfig                           string                         `opt:"http.config"`
-	LabelsDefaultTimeRange               model.Duration                 `opt:"labels.default-time-range"`
+	LabelsDefaultTimeRange               time.Duration                  `opt:"labels.default-time-range"`
 	LabelsMaxQueryParallelism            int                            `opt:"labels.max-query-parallelism"`
 	LabelsMaxRetriesPerRequest           *int                           `opt:"labels.max-retries-per-request"`
 	LabelsPartialResponse                bool                           `opt:"labels.partial-response,noval"`
 	LabelsResponseCacheConfig            *cache.ResponseCacheConfig     `opt:"labels.response-cache-config"`
 	LabelsResponseCacheConfigFile        *labelsResponseCacheConfig     `opt:"labels.response-cache-config-file"`
 	LabelsResponseMaxFreshness           string                         `opt:"labels.response-cache-max-freshness"`
-	LabelsSplitInterval                  model.Duration                 `opt:"labels.split-interval"`
+	LabelsSplitInterval                  time.Duration                  `opt:"labels.split-interval"`
 	LogFormat                            thanoslog.LogFormat            `opt:"log.format"`
 	LogLevel                             thanoslog.LogLevel             `opt:"log.level"`
 	QueryFrontendCompressResponses       bool                           `opt:"query-frontend.compress-responses,noval"`
 	QueryFrontendDownstreamTripperConfig *DownstreamTripperConfig       `opt:"query-frontend.downstream-tripper-config"`
 	QueryFrontendDownstreamURL           string                         `opt:"query-frontend.downstream-url"`
 	QueryFrontendForwardHeader           []string                       `opt:"query-frontend.forward-header"`
-	QueryFrontendLogQueriesLongerThan    model.Duration                 `opt:"query-frontend.log-queries-longer-than"`
+	QueryFrontendLogQueriesLongerThan    time.Duration                  `opt:"query-frontend.log-queries-longer-than"`
 	QueryFrontendVerticalShards          int                            `opt:"query-frontend.vertical-shards"`
 	QueryRangeAlignRangeWithStep         bool                           `opt:"query-range.align-range-with-step,noval"`
 	QueryRangeHorizontalShards           int                            `opt:"query-range.horizontal-shards"`
-	QueryRangeMaxQueryLength             model.Duration                 `opt:"query-range.max-query-length"`
+	QueryRangeMaxQueryLength             time.Duration                  `opt:"query-range.max-query-length"`
 	QueryRangeMaxQueryParallelism        int                            `opt:"query-range.max-query-parallelism"`
 	QueryRangeMaxRetriesPerRequest       *int                           `opt:"query-range.max-retries-per-request"`
-	QueryRangeMaxSplitInterval           model.Duration                 `opt:"query-range.max-split-interval"`
-	QueryRangeMinSplitInterval           model.Duration                 `opt:"query-range.min-split-interval"`
+	QueryRangeMaxSplitInterval           time.Duration                  `opt:"query-range.max-split-interval"`
+	QueryRangeMinSplitInterval           time.Duration                  `opt:"query-range.min-split-interval"`
 	QueryRangePartialResponse            bool                           `opt:"query-range.partial-response,noval"`
 	QueryRangeRequestDownsampled         bool                           `opt:"query-range.request-downsampled,noval"`
 	QueryRangeResponseCacheConfig        *cache.ResponseCacheConfig     `opt:"query-range.response-cache-config"`
 	QueryRangeResponseCacheConfigFile    *queryRangeResponseCacheConfig `opt:"query-range.response-cache-config-file"`
-	QueryRangeResponseCacheMaxFreshness  model.Duration                 `opt:"query-range.response-cache-max-freshness"`
-	QueryRangeSplitInterval              model.Duration                 `opt:"query-range.split-interval"`
+	QueryRangeResponseCacheMaxFreshness  time.Duration                  `opt:"query-range.response-cache-max-freshness"`
+	QueryRangeSplitInterval              time.Duration                  `opt:"query-range.split-interval"`
 	RequestLoggingConfig                 *reqlogging.RequestConfig      `opt:"request.logging-config"`
 	RequestLoggingConfigFile             *requestLoggingConfigFile      `opt:"request.logging-config-file"`
 	TracingConfig                        *trclient.TracingConfig        `opt:"tracing.config"`
