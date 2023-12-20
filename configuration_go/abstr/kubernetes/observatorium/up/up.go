@@ -82,6 +82,10 @@ type UpDeployment struct {
 
 // NewUp creates a new UpDeployment with standard defaults.
 func NewUp(opts *UpOptions, namespace, imageTag string) *UpDeployment {
+	if opts == nil {
+		opts = &UpOptions{}
+	}
+
 	commonLabels := map[string]string{
 		k8sutil.NameLabel:      "observatorium-up",
 		k8sutil.InstanceLabel:  "observatorium",

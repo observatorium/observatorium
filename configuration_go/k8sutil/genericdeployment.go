@@ -90,6 +90,16 @@ func (d DeploymentGenericConfig) Deployment(pod *Pod) runtime.Object {
 	return dep.MakeManifest()
 }
 
+func (d DeploymentGenericConfig) StatefulSet(pod *Pod) runtime.Object {
+	statefulset := &StatefulSet{
+		MetaConfig: *d.ObjectMeta(),
+		Replicas:   int32(d.Replicas),
+		Pod:        pod,
+	}
+
+	return statefulset.MakeManifest()
+}
+
 func (d DeploymentGenericConfig) Service(pod *Pod) runtime.Object {
 	service := &Service{
 		MetaConfig:   *d.ObjectMeta(),
@@ -179,9 +189,22 @@ func (d DeploymentGenericConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object
 
 func (d DeploymentGenericConfig) GenerateObjects(container *Container) []runtime.Object {
 	pod := d.Pod(container)
+	ret := d.generateCommonObjects(pod)
+	ret = append(ret, d.Deployment(pod))
 
+	return ret
+}
+
+func (d DeploymentGenericConfig) GenerateObjectsStatefulSet(container *Container) []runtime.Object {
+	pod := d.Pod(container)
+	ret := d.generateCommonObjects(pod)
+	ret = append(ret, d.StatefulSet(pod))
+
+	return ret
+}
+
+func (d DeploymentGenericConfig) generateCommonObjects(pod *Pod) []runtime.Object {
 	ret := []runtime.Object{
-		d.Deployment(pod),
 		d.ServiceAccount(),
 	}
 

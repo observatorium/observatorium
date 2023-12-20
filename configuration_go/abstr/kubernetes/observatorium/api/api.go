@@ -7,28 +7,26 @@ import (
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/option"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/common/model"
 	corev1 "k8s.io/api/core/v1"
 )
 
 const (
-	defaultNamespace        string = "observatorium"
-	defaultHTTPPublicPort   int    = 8080
-	defaultHTTPInternalPort int    = 8081
-	defaultGRPCPort         int    = 8090
+	defaultHTTPPublicPort   int = 8080
+	defaultHTTPInternalPort int = 8081
+	defaultGRPCPort         int = 8090
 )
 
-type rbacConfig = option.ConfigFile[string]
+type rbacConfig = k8sutil.ConfigFile
 
-func NewRbacConfig(name string, value string) *rbacConfig {
-	return option.NewConfigFile("/etc/observatorium/rbac", "config.yaml", name, value)
+func NewRbacConfig() *rbacConfig {
+	return k8sutil.NewConfigFile("/etc/observatorium/rbac", "config.yaml", "rbac-config", "observatorium-rbac")
 }
 
 type tenantsConfig = k8sutil.ConfigFileWithType[Tenants]
 
-func NewTenantsConfig(name string, value Tenants) *tenantsConfig {
+func NewTenantsConfig() *tenantsConfig {
 	return k8sutil.NewConfigFileWithType[Tenants]("/etc/observatorium/tenants", "config.yaml", "tenants", "observatorium-tenants")
 }
 
@@ -100,18 +98,21 @@ type ObservatoriumAPIOptions struct {
 }
 
 type ObservatoriumAPIDeployment struct {
-	Options *ObservatoriumAPIOptions
+	options *ObservatoriumAPIOptions
 	k8sutil.DeploymentGenericConfig
 }
 
-func NewObservatoriumAPI() *ObservatoriumAPIDeployment {
-	opts := &ObservatoriumAPIOptions{}
+func NewObservatoriumAPI(opts *ObservatoriumAPIOptions, namespace, imageTag string) *ObservatoriumAPIDeployment {
+	if opts == nil {
+		opts = &ObservatoriumAPIOptions{}
+	}
 
 	commonLabels := map[string]string{
 		k8sutil.NameLabel:      "observatorium-api",
 		k8sutil.InstanceLabel:  "observatorium",
 		k8sutil.PartOfLabel:    "observatorium",
 		k8sutil.ComponentLabel: "api",
+		k8sutil.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
@@ -119,25 +120,28 @@ func NewObservatoriumAPI() *ObservatoriumAPIDeployment {
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
+	httpInternalPort := getPort(defaultHTTPInternalPort, opts.WebInternalListen)
+
 	return &ObservatoriumAPIDeployment{
-		Options: opts,
+		options: opts,
 		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
 			Image:                "quay.io/observatorium/api",
+			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-api",
-			Namespace:            defaultNamespace,
+			Namespace:            namespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			PodResources:         k8sutil.NewResourcesRequirements("100m", "1", "1Gi", "4Gi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/live", defaultHTTPInternalPort, k8sutil.ProbeConfig{
+			LivenessProbe: k8sutil.NewProbe("/live", httpInternalPort, k8sutil.ProbeConfig{
 				FailureThreshold: 8,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/ready", defaultHTTPInternalPort, k8sutil.ProbeConfig{
+			ReadinessProbe: k8sutil.NewProbe("/ready", httpInternalPort, k8sutil.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
@@ -153,108 +157,23 @@ func NewObservatoriumAPI() *ObservatoriumAPIDeployment {
 
 func (s *ObservatoriumAPIDeployment) Manifests() k8sutil.ObjectMap {
 	container := s.makeContainer()
-
-	commonObjectMeta := k8sutil.MetaConfig{
-		Name:      s.Name,
-		Labels:    s.CommonLabels,
-		Namespace: s.Namespace,
-	}
-	commonObjectMeta.Labels[k8sutil.VersionLabel] = container.ImageTag
-
-	pod := &k8sutil.Pod{
-		TerminationGracePeriodSeconds: &s.TerminationGracePeriodSeconds,
-		Affinity:                      s.Affinity,
-		SecurityContext:               s.SecurityContext,
-		ServiceAccountName:            commonObjectMeta.Name,
-		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, s.Sidecars...),
-	}
-
-	deployment := &k8sutil.Deployment{
-		MetaConfig: commonObjectMeta.Clone(),
-		Replicas:   s.Replicas,
-		Pod:        pod,
-	}
-
-	ret := k8sutil.ObjectMap{
-		"obs-api-statefulSet": deployment.MakeManifest(),
-	}
-
-	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta.Clone(),
-		ServicePorts: pod,
-	}
-	ret["obs-api-service"] = service.MakeManifest()
-
-	if s.EnableServiceMonitor {
-		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta.Clone(),
-			ServiceMonitorEndpoints: pod,
-		}
-		ret["obs-api-serviceMonitor"] = serviceMonitor.MakeManifest()
-	}
-
-	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta.Clone(),
-		Name:       pod.ServiceAccountName,
-	}
-	ret["obs-api-serviceAccount"] = serviceAccount.MakeManifest()
-
-	// Create configMaps required by the containers
-	for name, config := range pod.GetConfigMaps() {
-		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       config,
-		}
-		configMap.MetaConfig.Name = name
-		ret["obs-api-configMap-"+name] = configMap.MakeManifest()
-	}
-
-	// Create secrets required by the containers
-	for name, secret := range pod.GetSecrets() {
-		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       secret,
-		}
-		secret.MetaConfig.Name = name
-		ret["obs-api-secret-"+name] = secret.MakeManifest()
-	}
+	ret := k8sutil.ObjectMap{}
+	ret.AddAll(s.GenerateObjects(container))
 
 	return ret
 }
 
 func (s *ObservatoriumAPIDeployment) makeContainer() *k8sutil.Container {
-	if s.Options == nil {
-		s.Options = &ObservatoriumAPIOptions{}
-	}
+	httpPublicPort := getPort(defaultHTTPPublicPort, s.options.WebListen)
+	httpInternalPort := getPort(defaultHTTPInternalPort, s.options.WebInternalListen)
+	grpcPort := getPort(defaultGRPCPort, s.options.GrpcListen)
 
-	httpPublicPort := defaultHTTPPublicPort
-	if s.Options.WebListen != nil && s.Options.WebListen.Port != 0 {
-		httpPublicPort = s.Options.WebListen.Port
-	}
-
-	httpInternalPort := defaultHTTPInternalPort
-	if s.Options.WebInternalListen != nil && s.Options.WebInternalListen.Port != 0 {
-		httpInternalPort = s.Options.WebInternalListen.Port
-	}
-
-	grpcPort := defaultGRPCPort
-	if s.Options.GrpcListen != nil && s.Options.GrpcListen.Port != 0 {
-		grpcPort = s.Options.GrpcListen.Port
-	}
-
-	livenessPort := s.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if livenessPort != int32(httpInternalPort) {
-		panic(fmt.Sprintf(`liveness probe port %d does not match http port %d`, livenessPort, httpInternalPort))
-	}
-
-	readinessPort := s.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if readinessPort != int32(httpInternalPort) {
-		panic(fmt.Sprintf(`readiness probe port %d does not match http port %d`, readinessPort, httpInternalPort))
-	}
+	checkProbePort(httpInternalPort, s.LivenessProbe)
+	checkProbePort(httpInternalPort, s.ReadinessProbe)
 
 	ret := s.ToContainer()
 	ret.Name = "observatorium-api"
-	ret.Args = cmdopt.GetOpts(s.Options)
+	ret.Args = cmdopt.GetOpts(s.options)
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "http-public",
@@ -284,23 +203,35 @@ func (s *ObservatoriumAPIDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 
-	if s.Options.RbacConfig != nil {
-		ret.ConfigMaps[s.Options.RbacConfig.Name] = map[string]string{
-			s.Options.RbacConfig.FileName(): s.Options.RbacConfig.Value,
-		}
-
-		ret.Volumes = append(ret.Volumes, k8sutil.NewPodVolumeFromConfigMap("rbac-config", s.Options.RbacConfig.FileName()))
-
-		ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
-			Name:      "rbac-config",
-			MountPath: s.Options.RbacConfig.MountPath(),
-			ReadOnly:  true,
-		})
+	if s.options.RbacConfig != nil {
+		s.options.RbacConfig.AddToContainer(ret)
 	}
 
-	if s.Options.TenantsConfig != nil {
-		s.Options.TenantsConfig.AddToContainer(ret)
+	if s.options.TenantsConfig != nil {
+		s.options.TenantsConfig.AddToContainer(ret)
 	}
 
 	return ret
+}
+
+func getPort(defaultValue int, addr *net.TCPAddr) int {
+	if addr != nil {
+		return addr.Port
+	}
+	return defaultValue
+}
+
+func checkProbePort(port int, probe *corev1.Probe) {
+	if probe == nil {
+		return
+	}
+
+	if probe.ProbeHandler.HTTPGet == nil {
+		return
+	}
+
+	probePort := probe.ProbeHandler.HTTPGet.Port.IntVal
+	if int(probePort) != port {
+		panic(fmt.Sprintf(`probe port %d does not match http port %d`, probePort, port))
+	}
 }
