@@ -46,6 +46,7 @@ func NewRulesSyncerContainer(opts *RulesSyncerOptions) *k8sutil.Container {
 	}
 
 	ret := &k8sutil.Container{}
+	ret.Image = "quay.io/observatorium/observatorium-rules-syncer"
 	ret.Name = "observatorium-rules-syncer"
 	ret.Args = cmdopt.GetOpts(opts)
 	ret.Resources = k8sutil.NewResourcesRequirements("32m", "128m", "64Mi", "128Mi")

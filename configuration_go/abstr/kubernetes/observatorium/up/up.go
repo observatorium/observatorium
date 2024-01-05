@@ -35,18 +35,26 @@ func (q QueriesFile) String() string {
 	return string(res)
 }
 
-type queriesFileOption = k8sutil.ConfigFileWithType[QueriesFile]
+type queriesFileOption = k8sutil.ConfigFile
 
 // NewQueriesFileOption creates a new queries file option with the given value.
 // If the related configmap already exists, you can pass nil to val and call WithExistingCM.
-func NewQueriesFileOption() *queriesFileOption {
-	return k8sutil.NewConfigFileWithType[QueriesFile]("/etc/up/config/queries", "queries.yaml", "queries-file", "observatorium-up-queries")
+func NewQueriesFileOption(value *QueriesFile) *queriesFileOption {
+	ret := k8sutil.NewConfigFile("/etc/up/config/queries", "queries.yaml", "queries-file", "observatorium-up-queries")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
 type tokenFileOption = k8sutil.ConfigFile
 
-func NewTokenFileOption() *tokenFileOption {
-	return k8sutil.NewConfigFile("/etc/up/config/token", "token", "token-file", "observatorium-up-token")
+func NewTokenFileOption(value *string) *tokenFileOption {
+	ret := k8sutil.NewConfigFile("/etc/up/config/token", "token", "token-file", "observatorium-up-token")
+	if value != nil {
+		ret.WithValue(*value)
+	}
+	return ret
 }
 
 type UpOptions struct {

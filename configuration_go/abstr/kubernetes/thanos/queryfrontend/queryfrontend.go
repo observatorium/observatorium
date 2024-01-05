@@ -18,7 +18,7 @@ import (
 
 const (
 	defaultNamespace string = "observatorium"
-	defaultHTTPPort  int    = 9090
+	defaultHTTPPort  int    = 10902
 )
 
 type CacheCompressionType string

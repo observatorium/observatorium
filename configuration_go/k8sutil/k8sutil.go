@@ -5,8 +5,6 @@ import (
 
 	mon "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,30 +44,30 @@ func (o ObjectMap) AddAll(objs []runtime.Object) {
 	}
 }
 
-type kubeObject interface {
-	*corev1.Service | *appsv1.StatefulSet | *appsv1.Deployment | *monv1.ServiceMonitor | *corev1.ServiceAccount
-	metav1.Object
-}
-
 // GetObject returns the object of type T from the given map of kubernetes objects.
 // When specifying a name, it will return the object with the given name.
 // This helper can be used for doing post processing on the objects.
-func GetObject[T kubeObject](manifests ObjectMap, name string) T {
+func GetObject[T metav1.Object](manifests ObjectMap, name string) T {
 	var ret T
+	found := false
+
 	for _, obj := range manifests {
 		if service, ok := obj.(T); ok {
 			if name != "" && service.GetName() != name {
 				continue
 			}
 
-			if ret != nil {
+			// Check if we already found an object of this type. If so, panic.
+			if found {
 				panic(fmt.Sprintf("found multiple objects of type %T", *new(T)))
 			}
+
 			ret = service
+			found = true
 		}
 	}
 
-	if ret == nil {
+	if !found {
 		panic(fmt.Sprintf("could not find object of type %T", *new(T)))
 	}
 

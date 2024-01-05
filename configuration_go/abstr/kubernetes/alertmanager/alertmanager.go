@@ -11,6 +11,7 @@ import (
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/common/model"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -22,8 +23,12 @@ const (
 
 type configFileOption = k8sutil.ConfigFile
 
-func NewConfigFile() *configFileOption {
-	return k8sutil.NewConfigFile("/etc/alertmanager/config", "config.yaml", "config-file", "alertmanager-config")
+func NewConfigFile(value *string) *configFileOption {
+	ret := k8sutil.NewConfigFile("/etc/alertmanager/config", "config.yaml", "config-file", "alertmanager-config")
+	if value != nil {
+		ret.WithValue(*value)
+	}
+	return ret
 }
 
 type AlertManagerOptions struct {
@@ -138,6 +143,9 @@ func (s *AlertManagerStatefulSet) Manifests() k8sutil.ObjectMap {
 		}
 		headlessService.MetaConfig.Name = fmt.Sprintf("%s-cluster", headlessService.MetaConfig.Name)
 		ret.Add(headlessService.MakeManifest())
+
+		ss := k8sutil.GetObject[*appsv1.StatefulSet](ret, s.Name)
+		ss.Spec.ServiceName = headlessService.MetaConfig.Name
 	}
 
 	return ret

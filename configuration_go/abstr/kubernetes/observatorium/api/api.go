@@ -20,14 +20,22 @@ const (
 
 type rbacConfig = k8sutil.ConfigFile
 
-func NewRbacConfig() *rbacConfig {
-	return k8sutil.NewConfigFile("/etc/observatorium/rbac", "config.yaml", "rbac-config", "observatorium-rbac")
+func NewRbacConfig(value *string) *rbacConfig {
+	ret := k8sutil.NewConfigFile("/etc/observatorium/rbac", "config.yaml", "rbac-config", "observatorium-rbac")
+	if value != nil {
+		ret.WithValue(*value)
+	}
+	return ret
 }
 
-type tenantsConfig = k8sutil.ConfigFileWithType[Tenants]
+type tenantsConfig = k8sutil.ConfigFile
 
-func NewTenantsConfig() *tenantsConfig {
-	return k8sutil.NewConfigFileWithType[Tenants]("/etc/observatorium/tenants", "config.yaml", "tenants", "observatorium-tenants")
+func NewTenantsConfig(value *Tenants) *tenantsConfig {
+	ret := k8sutil.NewConfigFile("/etc/observatorium/tenants", "config.yaml", "tenants", "observatorium-tenants")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
 type ObservatoriumAPIOptions struct {

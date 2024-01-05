@@ -28,7 +28,7 @@ type RulesObjstoreOptions struct {
 	DebugName          string              `opt:"debug.name,single-hyphen"`
 	LogFormat          string              `opt:"log.format,single-hyphen"`
 	LogLevel           string              `opt:"log.level,single-hyphen"`
-	ObjstoreConfigFile *objstoreConfigFile `opt:"objstore.config-file,single-hyphen"` //todo
+	ObjstoreConfigFile *objstoreConfigFile `opt:"objstore.config-file,single-hyphen"`
 	WebHealthchecksURL string              `opt:"web.healthchecks.url,single-hyphen"`
 	WebInternalListen  *net.TCPAddr        `opt:"web.internal.listen,single-hyphen"`
 	WebListen          *net.TCPAddr        `opt:"web.listen,single-hyphen"`

@@ -2,6 +2,7 @@ package k8sutil
 
 import (
 	"maps"
+	"unicode/utf8"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -164,7 +165,7 @@ func (d DeploymentGenericConfig) RBACRoleBinding(subjects []runtime.Object, role
 
 func (d DeploymentGenericConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object {
 	ret := []runtime.Object{}
-	for name, data := range d.ConfigMaps {
+	for name, data := range pod.GetConfigMaps() {
 		cm := &corev1.ConfigMap{
 			TypeMeta:   ConfigMapMeta,
 			ObjectMeta: d.ObjectMeta().MakeMeta(),
@@ -174,13 +175,30 @@ func (d DeploymentGenericConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object
 		ret = append(ret, cm)
 	}
 
-	for name, data := range d.Secrets {
+	for name, data := range pod.GetSecrets() {
 		secret := &corev1.Secret{
 			TypeMeta:   SecretMeta,
 			ObjectMeta: d.ObjectMeta().MakeMeta(),
-			Data:       data,
 		}
 		secret.Name = name
+
+		// check if data is a string and store it as a stringData if possible for better readability
+		stringData := map[string]string{}
+		isStringData := true
+		for k, v := range data {
+			if utf8.Valid(v) {
+				stringData[k] = string(v)
+			} else {
+				isStringData = false
+				break
+			}
+		}
+
+		if isStringData {
+			secret.StringData = stringData
+		} else {
+			secret.Data = data
+		}
 		ret = append(ret, secret)
 	}
 
