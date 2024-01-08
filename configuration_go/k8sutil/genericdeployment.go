@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// DeploymentGenericConfig represents a generic deployment configuration with common options.
+// DeploymentGenericConfig represents a generic deployment configuration with common options set by end users.
 // It groups those option fields in a flat structure for all the different Kubernetes objects that are created.
 // It also provides helpers to generate the runtime objects from the configuration.
 //
@@ -158,12 +158,10 @@ func (d DeploymentGenericConfig) ServiceMonitor(pod *Pod) runtime.Object {
 
 // ServiceAccount returns a ServiceAccount object.
 func (d DeploymentGenericConfig) ServiceAccount() runtime.Object {
-	serviceAccount := &ServiceAccount{
-		MetaConfig: *d.ObjectMeta(),
-		Name:       d.Name,
+	return &corev1.ServiceAccount{
+		TypeMeta:   ServiceAccountMeta,
+		ObjectMeta: d.ObjectMeta().MakeMeta(),
 	}
-
-	return serviceAccount.MakeManifest()
 }
 
 func (d DeploymentGenericConfig) RBACRole(rules []rbacv1.PolicyRule) runtime.Object {

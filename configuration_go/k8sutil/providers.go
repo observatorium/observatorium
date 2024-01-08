@@ -1,6 +1,6 @@
 /*
 This file contains the Kubernetes manifest providers.
-These providers are simplified versions of the Kubernetes objects used to generate the manifests.
+These providers are simplified versions of some Kubernetes objects used to generate the manifests.
 They implement the ManifestProvider interface, which allows generating the Kubernetes manifests.
 
 Subcomponents provide methods required by higher-level components to generate their manifests.
@@ -45,46 +45,6 @@ func (m *MetaConfig) Clone() MetaConfig {
 		Name:      m.Name,
 		Namespace: m.Namespace,
 		Labels:    maps.Clone(m.Labels),
-	}
-}
-
-type ConfigMap struct {
-	MetaConfig
-	Data map[string]string
-}
-
-func NewConfigMap(metaConfig MetaConfig, data map[string]string) *ConfigMap {
-	return &ConfigMap{
-		MetaConfig: metaConfig,
-		Data:       data,
-	}
-}
-
-func (c *ConfigMap) MakeManifest() runtime.Object {
-	return &corev1.ConfigMap{
-		TypeMeta:   ConfigMapMeta,
-		ObjectMeta: c.MetaConfig.MakeMeta(),
-		Data:       c.Data,
-	}
-}
-
-type Secret struct {
-	MetaConfig
-	Data map[string][]byte
-}
-
-func NewSecret(metaConfig MetaConfig, data map[string][]byte) *Secret {
-	return &Secret{
-		MetaConfig: metaConfig,
-		Data:       data,
-	}
-}
-
-func (s *Secret) MakeManifest() runtime.Object {
-	return &corev1.Secret{
-		TypeMeta:   SecretMeta,
-		ObjectMeta: s.MetaConfig.MakeMeta(),
-		Data:       s.Data,
 	}
 }
 
@@ -451,28 +411,6 @@ func (s *ServiceMonitor) MakeManifest() runtime.Object {
 			},
 			Endpoints: s.ServiceMonitorEndpoints.GetServiceMonitorEndpoints(),
 		},
-	}
-}
-
-// ServiceAccount represents a Kubernetes ServiceAccount.
-type ServiceAccount struct {
-	MetaConfig
-	Name string
-}
-
-// NewServiceAccount returns a new ServiceAccount.
-func NewServiceAccount(metaConfig MetaConfig, name string) *ServiceAccount {
-	return &ServiceAccount{
-		MetaConfig: metaConfig,
-		Name:       name,
-	}
-}
-
-// MakeManifest returns a Kubernetes ServiceAccount.
-func (s *ServiceAccount) MakeManifest() runtime.Object {
-	return &corev1.ServiceAccount{
-		TypeMeta:   ServiceAccountMeta,
-		ObjectMeta: s.MetaConfig.MakeMeta(),
 	}
 }
 

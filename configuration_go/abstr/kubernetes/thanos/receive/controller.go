@@ -23,16 +23,23 @@ type ControllerOptions struct {
 }
 
 type Controller struct {
-	Options ControllerOptions
+	options *ControllerOptions
+
 	k8sutil.DeploymentGenericConfig
 }
 
-func NewController() *Controller {
-	options := ControllerOptions{
+func NewControllerOptions() *ControllerOptions {
+	return &ControllerOptions{
 		ConfigMapName:          "observatorium-thanos-receive-controller",
 		ConfigMapGeneratedName: "observatorium-thanos-receive-controller-generated",
 		FileName:               "hashrings.json",
 		Namespace:              "observatorium",
+	}
+}
+
+func NewController(opts *ControllerOptions, namespace, imageTag string) *Controller {
+	if opts == nil {
+		opts = NewControllerOptions()
 	}
 
 	commonLabels := map[string]string{
@@ -40,97 +47,36 @@ func NewController() *Controller {
 		k8sutil.InstanceLabel:  "observatorium",
 		k8sutil.PartOfLabel:    "observatorium",
 		k8sutil.ComponentLabel: "kubernetes-controller",
-	}
-
-	genericDeployment := k8sutil.DeploymentGenericConfig{
-		Name:            fmt.Sprintf("%s-%s", commonLabels[k8sutil.InstanceLabel], commonLabels[k8sutil.NameLabel]),
-		Image:           ThanosReceiveControllerImage,
-		ImageTag:        "main",
-		Replicas:        1,
-		CommonLabels:    commonLabels,
-		ImagePullPolicy: corev1.PullIfNotPresent,
-		Env: []corev1.EnvVar{
-			k8sutil.NewEnvFromField("NAMESPACE", "metadata.namespace"),
-		},
-		ContainerResources: k8sutil.NewResourcesRequirements("10m", "24Mi", "64m", "128Mi"),
-		ConfigMaps:         map[string]map[string]string{},
-		Secrets:            map[string]map[string][]byte{},
+		k8sutil.VersionLabel:   imageTag,
 	}
 
 	return &Controller{
-		options,
-		genericDeployment,
+		options: opts,
+		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+			Name:            fmt.Sprintf("%s-%s", commonLabels[k8sutil.InstanceLabel], commonLabels[k8sutil.NameLabel]),
+			Image:           ThanosReceiveControllerImage,
+			ImageTag:        imageTag,
+			Replicas:        1,
+			CommonLabels:    commonLabels,
+			ImagePullPolicy: corev1.PullIfNotPresent,
+			Env: []corev1.EnvVar{
+				k8sutil.NewEnvFromField("NAMESPACE", "metadata.namespace"),
+			},
+			ContainerResources: k8sutil.NewResourcesRequirements("10m", "24Mi", "64m", "128Mi"),
+			ConfigMaps:         map[string]map[string]string{},
+			Secrets:            map[string]map[string][]byte{},
+		},
 	}
 }
 
 func (c *Controller) Manifests() k8sutil.ObjectMap {
 	container := c.makeContainer()
+
 	ret := k8sutil.ObjectMap{}
-
-	commonObjectMeta := k8sutil.MetaConfig{
-		Name:      c.Name,
-		Labels:    c.CommonLabels,
-		Namespace: c.Namespace,
-	}
-	commonObjectMeta.Labels[k8sutil.VersionLabel] = container.ImageTag
-
-	pod := &k8sutil.Pod{
-		TerminationGracePeriodSeconds: &c.TerminationGracePeriodSeconds,
-		SecurityContext:               c.SecurityContext,
-		ServiceAccountName:            c.Name,
-		ContainerProviders:            []k8sutil.ContainerProvider{container},
-	}
-
-	deployment := &k8sutil.Deployment{
-		MetaConfig: commonObjectMeta,
-		Replicas:   1,
-		Pod:        pod,
-	}
-
-	ret["controller-deployment"] = deployment.MakeManifest()
-
-	// service := &k8sutil.Service{
-	// 	MetaConfig:   commonObjectMeta.Clone(),
-	// 	ServicePorts: pod,
-	// }
-	// ret["controller-service"] = service.MakeManifest()
-
-	if c.EnableServiceMonitor {
-		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta.Clone(),
-			ServiceMonitorEndpoints: pod,
-		}
-		ret["controller-serviceMonitor"] = serviceMonitor.MakeManifest()
-	}
-
-	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta.Clone(),
-		Name:       pod.ServiceAccountName,
-	}
-	ret["controller-serviceAccount"] = serviceAccount.MakeManifest()
-
-	// Create configMaps required by the containers
-	for name, config := range pod.GetConfigMaps() {
-		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       config,
-		}
-		configMap.MetaConfig.Name = name
-		ret["controller-configMap-"+name] = configMap.MakeManifest()
-	}
-
-	// Create secrets required by the containers
-	for name, secret := range pod.GetSecrets() {
-		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       secret,
-		}
-		secret.MetaConfig.Name = name
-		ret["controller-secret-"+name] = secret.MakeManifest()
-	}
+	ret.AddAll(c.GenerateObjects(container))
 
 	// create role
-	ret["controller-role"] = &rbacv1.Role{
+	ret.Add(&rbacv1.Role{
 		TypeMeta: k8sutil.RoleMeta,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.Name,
@@ -155,11 +101,11 @@ func (c *Controller) Manifests() k8sutil.ObjectMap {
 				Verbs:     []string{"list", "watch", "get"},
 			},
 		},
-	}
+	})
 
 	// create role binding
 	apiGroup := strings.Split(k8sutil.RoleMeta.APIVersion, "/")[0]
-	ret["controller-rolebinding"] = &rbacv1.RoleBinding{
+	ret.Add(&rbacv1.RoleBinding{
 		TypeMeta: k8sutil.RoleBindingMeta,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.Name,
@@ -178,7 +124,7 @@ func (c *Controller) Manifests() k8sutil.ObjectMap {
 			Name:     c.Name,
 			APIGroup: apiGroup,
 		},
-	}
+	})
 
 	return ret
 }
@@ -187,7 +133,7 @@ func (c *Controller) makeContainer() *k8sutil.Container {
 	container := c.DeploymentGenericConfig.ToContainer()
 	container.Env = append(container.Env, k8sutil.NewEnvFromField("NAMESPACE", "metadata.namespace"))
 
-	container.Args = cmdopt.GetOpts(c.Options)
+	container.Args = cmdopt.GetOpts(c.options)
 
 	return container
 }
