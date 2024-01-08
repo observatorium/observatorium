@@ -1,7 +1,6 @@
 package queryfrontend
 
 import (
-	"fmt"
 	"net"
 	"time"
 
@@ -16,8 +15,7 @@ import (
 )
 
 const (
-	defaultNamespace string = "observatorium"
-	defaultHTTPPort  int    = 10902
+	defaultHTTPPort int = 10902
 )
 
 type CacheCompressionType string
@@ -112,22 +110,29 @@ type QueryFrontendOptions struct {
 }
 
 type QueryFrontendDeployment struct {
-	Options *QueryFrontendOptions
+	options *QueryFrontendOptions
 
 	k8sutil.DeploymentGenericConfig
 }
 
-func NewQueryFrontend() *QueryFrontendDeployment {
-	opts := &QueryFrontendOptions{
+func NewDefaultOptions() *QueryFrontendOptions {
+	return &QueryFrontendOptions{
 		LogLevel:  "warn",
 		LogFormat: "logfmt",
+	}
+}
+
+func NewQueryFrontend(opts *QueryFrontendOptions, namespace, imageTag string) *QueryFrontendDeployment {
+	if opts == nil {
+		opts = NewDefaultOptions()
 	}
 
 	commonLabels := map[string]string{
 		k8sutil.NameLabel:      "thanos-query-frontend",
 		k8sutil.InstanceLabel:  "observatorium",
 		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "query-cache", // TODO
+		k8sutil.ComponentLabel: "query-cache",
+		k8sutil.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
@@ -135,25 +140,28 @@ func NewQueryFrontend() *QueryFrontendDeployment {
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
+	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
+
 	return &QueryFrontendDeployment{
-		Options: opts,
+		options: opts,
 		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
 			Image:                "quay.io/thanos/thanos",
+			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-thanos-query-frontend",
-			Namespace:            defaultNamespace,
+			Namespace:            namespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "2", "1Gi", "2Gi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
+			LivenessProbe: k8sutil.NewProbe("/-/healthy", probePort, k8sutil.ProbeConfig{
 				FailureThreshold: 8,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/-/ready", defaultHTTPPort, k8sutil.ProbeConfig{
+			ReadinessProbe: k8sutil.NewProbe("/-/ready", probePort, k8sutil.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
@@ -167,100 +175,24 @@ func NewQueryFrontend() *QueryFrontendDeployment {
 	}
 }
 
-func (s *QueryFrontendDeployment) Manifests() k8sutil.ObjectMap {
-	container := s.makeContainer()
+func (q *QueryFrontendDeployment) Manifests() k8sutil.ObjectMap {
 
-	commonObjectMeta := k8sutil.MetaConfig{
-		Name:      s.Name,
-		Labels:    s.CommonLabels,
-		Namespace: s.Namespace,
-	}
-	commonObjectMeta.Labels[k8sutil.VersionLabel] = container.ImageTag
+	container := q.makeContainer()
 
-	pod := &k8sutil.Pod{
-		TerminationGracePeriodSeconds: &s.TerminationGracePeriodSeconds,
-		Affinity:                      s.Affinity,
-		SecurityContext:               s.SecurityContext,
-		ServiceAccountName:            commonObjectMeta.Name,
-		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, s.Sidecars...),
-	}
-
-	statefulset := &k8sutil.Deployment{
-		MetaConfig: commonObjectMeta.Clone(),
-		Replicas:   s.Replicas,
-		Pod:        pod,
-	}
-
-	ret := k8sutil.ObjectMap{
-		"query-fe-statefulSet": statefulset.MakeManifest(),
-	}
-
-	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta.Clone(),
-		ServicePorts: pod,
-	}
-	ret["query-fe-service"] = service.MakeManifest()
-
-	if s.EnableServiceMonitor {
-		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta.Clone(),
-			ServiceMonitorEndpoints: pod,
-		}
-		ret["query-fe-serviceMonitor"] = serviceMonitor.MakeManifest()
-	}
-
-	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta.Clone(),
-		Name:       pod.ServiceAccountName,
-	}
-	ret["query-fe-serviceAccount"] = serviceAccount.MakeManifest()
-
-	// Create configMaps required by the containers
-	for name, config := range pod.GetConfigMaps() {
-		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       config,
-		}
-		configMap.MetaConfig.Name = name
-		ret["query-fe-configMap-"+name] = configMap.MakeManifest()
-	}
-
-	// Create secrets required by the containers
-	for name, secret := range pod.GetSecrets() {
-		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       secret,
-		}
-		secret.MetaConfig.Name = name
-		ret["query-fe-secret-"+name] = secret.MakeManifest()
-	}
+	ret := k8sutil.ObjectMap{}
+	ret.AddAll(q.GenerateObjectsStatefulSet(container))
 
 	return ret
 }
 
-func (s *QueryFrontendDeployment) makeContainer() *k8sutil.Container {
-	if s.Options == nil {
-		s.Options = &QueryFrontendOptions{}
-	}
+func (q *QueryFrontendDeployment) makeContainer() *k8sutil.Container {
+	httpPort := k8sutil.GetPortOrDefault(defaultHTTPPort, q.options.HttpAddress)
+	k8sutil.CheckProbePort(httpPort, q.LivenessProbe)
+	k8sutil.CheckProbePort(httpPort, q.ReadinessProbe)
 
-	httpPort := defaultHTTPPort
-	if s.Options.HttpAddress != nil && s.Options.HttpAddress.Port != 0 {
-		httpPort = s.Options.HttpAddress.Port
-	}
-
-	livenessPort := s.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if livenessPort != int32(httpPort) {
-		panic(fmt.Sprintf(`liveness probe port %d does not match http port %d`, livenessPort, httpPort))
-	}
-
-	readinessPort := s.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if readinessPort != int32(httpPort) {
-		panic(fmt.Sprintf(`readiness probe port %d does not match http port %d`, readinessPort, httpPort))
-	}
-
-	ret := s.ToContainer()
+	ret := q.ToContainer()
 	ret.Name = "thanos"
-	ret.Args = append([]string{"query-frontend"}, cmdopt.GetOpts(s.Options)...)
+	ret.Args = append([]string{"query-frontend"}, cmdopt.GetOpts(q.options)...)
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "http",
@@ -278,20 +210,20 @@ func (s *QueryFrontendDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 
-	if s.Options.RequestLoggingConfigFile != nil {
-		s.Options.RequestLoggingConfigFile.AddToContainer(ret)
+	if q.options.RequestLoggingConfigFile != nil {
+		q.options.RequestLoggingConfigFile.AddToContainer(ret)
 	}
 
-	if s.Options.TracingConfigFile != nil {
-		s.Options.TracingConfigFile.AddToContainer(ret)
+	if q.options.TracingConfigFile != nil {
+		q.options.TracingConfigFile.AddToContainer(ret)
 	}
 
-	if s.Options.LabelsResponseCacheConfigFile != nil {
-		s.Options.LabelsResponseCacheConfigFile.AddToContainer(ret)
+	if q.options.LabelsResponseCacheConfigFile != nil {
+		q.options.LabelsResponseCacheConfigFile.AddToContainer(ret)
 	}
 
-	if s.Options.QueryRangeResponseCacheConfigFile != nil {
-		s.Options.QueryRangeResponseCacheConfigFile.AddToContainer(ret)
+	if q.options.QueryRangeResponseCacheConfigFile != nil {
+		q.options.QueryRangeResponseCacheConfigFile.AddToContainer(ret)
 	}
 
 	return ret
