@@ -6,7 +6,7 @@ import (
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
+	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	thanostime "github.com/observatorium/observatorium/configuration_go/schemas/thanos/time"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -40,8 +40,8 @@ type CompactorOptions struct {
 	HttpAddress                        *net.TCPAddr                    `opt:"http-address"`
 	HttpGracePeriod                    time.Duration                   `opt:"http-grace-period"`
 	HttpConfig                         string                          `opt:"http.config"`
-	LogFormat                          thanoslog.LogFormat             `opt:"log.format"`
-	LogLevel                           thanoslog.LogLevel              `opt:"log.level"`
+	LogFormat                          log.LogFormat                   `opt:"log.format"`
+	LogLevel                           log.LogLevel                    `opt:"log.level"`
 	MaxTime                            *thanostime.TimeOrDurationValue `opt:"max-time"`
 	MinTime                            *thanostime.TimeOrDurationValue `opt:"min-time"`
 	ObjstoreConfig                     string                          `opt:"objstore.config"`

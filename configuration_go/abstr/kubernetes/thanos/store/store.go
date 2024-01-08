@@ -6,8 +6,8 @@ import (
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache"
-	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	thanostime "github.com/observatorium/observatorium/configuration_go/schemas/thanos/time"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
@@ -46,8 +46,8 @@ type StoreOptions struct {
 	IndexCacheSize                   units.Bytes                     `opt:"index-cache-size"`
 	IndexCacheConfig                 *cache.IndexCacheConfig         `opt:"index-cache.config"`
 	IndexCacheConfigFile             string                          `opt:"index-cache.config-file"`
-	LogFormat                        thanoslog.LogFormat             `opt:"log.format"`
-	LogLevel                         thanoslog.LogLevel              `opt:"log.level"`
+	LogFormat                        log.LogFormat                   `opt:"log.format"`
+	LogLevel                         log.LogLevel                    `opt:"log.level"`
 	MaxTime                          *thanostime.TimeOrDurationValue `opt:"max-time"`
 	MinTime                          *thanostime.TimeOrDurationValue `opt:"min-time"`
 	ObjstoreConfig                   string                          `opt:"objstore.config"`

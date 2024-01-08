@@ -7,7 +7,7 @@ import (
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/prometheus/common/model"
 
-	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
+	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -68,8 +68,8 @@ type QueryOptions struct {
 	HttpAddress                                   *net.TCPAddr              `opt:"http-address"`
 	HttpGracePeriod                               model.Duration            `opt:"http-grace-period"`
 	HttpConfig                                    string                    `opt:"http-config"`
-	LogFormat                                     thanoslog.LogFormat       `opt:"log.format"`
-	LogLevel                                      thanoslog.LogLevel        `opt:"log.level"`
+	LogFormat                                     log.LogFormat             `opt:"log.format"`
+	LogLevel                                      log.LogLevel              `opt:"log.level"`
 	QueryActiveQueryPath                          string                    `opt:"query.active-query-path"`
 	QueryAutoDownsampling                         bool                      `opt:"query.auto-downsampling,noval"`
 	QueryConnMetricLabel                          []string                  `opt:"query.conn-metric.label"`

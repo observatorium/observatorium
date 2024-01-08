@@ -8,7 +8,7 @@ import (
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
+	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"

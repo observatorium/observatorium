@@ -8,7 +8,7 @@ import (
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
+	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -123,8 +123,8 @@ type RulerOptions struct {
 	HttpGracePeriod            model.Duration           `opt:"http-grace-period"`
 	HttpConfig                 string                   `opt:"http.config"`
 	Label                      []Label                  `opt:"label"`
-	LogFormat                  thanoslog.LogFormat      `opt:"log.format"`
-	LogLevel                   thanoslog.LogLevel       `opt:"log.level"`
+	LogFormat                  log.LogFormat            `opt:"log.format"`
+	LogLevel                   log.LogLevel             `opt:"log.level"`
 	ObjstoreConfig             string                   `opt:"objstore.config"`
 	ObjstoreConfigFile         *objstoreConfigFile      `opt:"objstore.config-file"`
 	Query                      []string                 `opt:"query"`
