@@ -73,7 +73,7 @@ func NewDefaultOptions() *AlertManagerOptions {
 	}
 }
 
-func NewAlertManager(opts *AlertManagerOptions, namespacce, imageTag string) *AlertManagerStatefulSet {
+func NewAlertManager(opts *AlertManagerOptions, namespace, imageTag string) *AlertManagerStatefulSet {
 	if opts == nil {
 		opts = NewDefaultOptions()
 	}
@@ -100,7 +100,7 @@ func NewAlertManager(opts *AlertManagerOptions, namespacce, imageTag string) *Al
 			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-alertmanager",
-			Namespace:            namespacce,
+			Namespace:            namespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "1", "500Mi", "4Gi"),
