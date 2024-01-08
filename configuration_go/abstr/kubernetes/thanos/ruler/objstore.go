@@ -1,7 +1,6 @@
 package ruler
 
 import (
-	"fmt"
 	"net"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
@@ -38,15 +37,21 @@ type RulesObjstoreOptions struct {
 }
 
 type RulesObjstoreDeployment struct {
-	Options *RulesObjstoreOptions
+	options *RulesObjstoreOptions
 
 	k8sutil.DeploymentGenericConfig
 }
 
-func NewRulesObjstore() *RulesObjstoreDeployment {
-	opts := &RulesObjstoreOptions{
+func NewRulesObjstoreDefaultOptions() *RulesObjstoreOptions {
+	return &RulesObjstoreOptions{
 		LogLevel:  "warn",
 		LogFormat: "logfmt",
+	}
+}
+
+func NewRulesObjstore(opts *RulesObjstoreOptions, namespace, imageTag string) *RulesObjstoreDeployment {
+	if opts == nil {
+		opts = NewRulesObjstoreDefaultOptions()
 	}
 
 	commonLabels := map[string]string{
@@ -54,6 +59,7 @@ func NewRulesObjstore() *RulesObjstoreDeployment {
 		k8sutil.InstanceLabel:  "observatorium",
 		k8sutil.PartOfLabel:    "observatorium",
 		k8sutil.ComponentLabel: "rules-storage",
+		k8sutil.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
@@ -61,26 +67,29 @@ func NewRulesObjstore() *RulesObjstoreDeployment {
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
+	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.WebInternalListen)
+
 	return &RulesObjstoreDeployment{
-		Options: opts,
+		options: opts,
 		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
 			Image:                "quay.io/observatorium/rules-objstore",
+			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-rules-objstore",
-			Namespace:            defaultNamespace,
+			Namespace:            namespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			ContainerResources:   k8sutil.NewResourcesRequirements("50m", "1", "200Mi", "400Mi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/live", defaultInternalPort, k8sutil.ProbeConfig{
+			LivenessProbe: k8sutil.NewProbe("/live", probePort, k8sutil.ProbeConfig{
 				FailureThreshold: 10,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 				SuccessThreshold: 1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/ready", defaultInternalPort, k8sutil.ProbeConfig{
+			ReadinessProbe: k8sutil.NewProbe("/ready", probePort, k8sutil.ProbeConfig{
 				FailureThreshold: 12,
 				PeriodSeconds:    5,
 				TimeoutSeconds:   1,
@@ -97,102 +106,22 @@ func NewRulesObjstore() *RulesObjstoreDeployment {
 func (r *RulesObjstoreDeployment) Manifests() k8sutil.ObjectMap {
 	container := r.makeContainer()
 
-	commonObjectMeta := k8sutil.MetaConfig{
-		Name:      r.Name,
-		Labels:    r.CommonLabels,
-		Namespace: r.Namespace,
-	}
-	commonObjectMeta.Labels[k8sutil.VersionLabel] = container.ImageTag
-
-	pod := &k8sutil.Pod{
-		TerminationGracePeriodSeconds: &r.TerminationGracePeriodSeconds,
-		Affinity:                      r.Affinity,
-		SecurityContext:               r.SecurityContext,
-		ServiceAccountName:            commonObjectMeta.Name,
-		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, r.Sidecars...),
-	}
-
-	deployment := &k8sutil.Deployment{
-		MetaConfig: commonObjectMeta.Clone(),
-		Replicas:   r.Replicas,
-		Pod:        pod,
-	}
-
-	ret := k8sutil.ObjectMap{
-		"rules-objstore-deployment": deployment.MakeManifest(),
-	}
-
-	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta.Clone(),
-		ServicePorts: pod,
-	}
-	ret["rules-objstore-service"] = service.MakeManifest()
-
-	if r.EnableServiceMonitor {
-		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta.Clone(),
-			ServiceMonitorEndpoints: pod,
-		}
-		ret["rules-objstore-serviceMonitor"] = serviceMonitor.MakeManifest()
-	}
-
-	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta.Clone(),
-		Name:       pod.ServiceAccountName,
-	}
-	ret["rules-objstore-serviceAccount"] = serviceAccount.MakeManifest()
-
-	// Create configMaps required by the containers
-	for name, config := range pod.GetConfigMaps() {
-		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       config,
-		}
-		configMap.MetaConfig.Name = name
-		ret["rules-objstore-configMap-"+name] = configMap.MakeManifest()
-	}
-
-	// Create secrets required by the containers
-	for name, secret := range pod.GetSecrets() {
-		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       secret,
-		}
-		secret.MetaConfig.Name = name
-		ret["rules-objstore-secret-"+name] = secret.MakeManifest()
-	}
+	ret := k8sutil.ObjectMap{}
+	ret.AddAll(r.GenerateObjects(container))
 
 	return ret
 }
 
 func (r *RulesObjstoreDeployment) makeContainer() *k8sutil.Container {
-	if r.Options == nil {
-		r.Options = &RulesObjstoreOptions{}
-	}
+	internalPort := k8sutil.GetPortOrDefault(defaultInternalPort, r.options.WebInternalListen)
+	k8sutil.CheckProbePort(internalPort, r.LivenessProbe)
+	k8sutil.CheckProbePort(internalPort, r.ReadinessProbe)
 
-	internalPort := defaultInternalPort
-	if r.Options.WebInternalListen != nil && r.Options.WebInternalListen.Port != 0 {
-		internalPort = r.Options.WebInternalListen.Port
-	}
-
-	publicPort := defaultPublicPort
-	if r.Options.WebListen != nil && r.Options.WebListen.Port != 0 {
-		internalPort = r.Options.WebListen.Port
-	}
-
-	livenessPort := r.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if livenessPort != int32(internalPort) {
-		panic(fmt.Sprintf(`liveness probe port %d does not match http port %d`, livenessPort, internalPort))
-	}
-
-	readinessPort := r.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if readinessPort != int32(internalPort) {
-		panic(fmt.Sprintf(`readiness probe port %d does not match http port %d`, readinessPort, internalPort))
-	}
+	publicPort := k8sutil.GetPortOrDefault(defaultPublicPort, r.options.WebListen)
 
 	ret := r.ToContainer()
 	ret.Name = "thanos"
-	ret.Args = cmdopt.GetOpts(r.Options)
+	ret.Args = cmdopt.GetOpts(r.options)
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "internal",
@@ -216,8 +145,8 @@ func (r *RulesObjstoreDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 
-	if r.Options.ObjstoreConfigFile != nil {
-		r.Options.ObjstoreConfigFile.AddToContainer(ret)
+	if r.options.ObjstoreConfigFile != nil {
+		r.options.ObjstoreConfigFile.AddToContainer(ret)
 	}
 
 	return ret
