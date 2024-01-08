@@ -9,7 +9,7 @@ import (
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/option"
+	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/common/model"
@@ -31,25 +31,48 @@ const (
 	baseRulesDir        string          = "/etc/thanos/rules"
 )
 
-type alertRelabelConfigFile = option.ConfigFile[relabel.Config]
+type alertRelabelConfigFile = k8sutil.ConfigFile
 
 // NewAlertRelabelConfigFile returns a new alertRelabelConfigFile option
-func NewAlertRelabelConfigFile(name string, value relabel.Config) *alertRelabelConfigFile {
-	return option.NewConfigFile("/etc/thanos/relabel", "config.yaml", name, value)
+func NewAlertRelabelConfigFile(value *relabel.Config) *alertRelabelConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/relabel", "config.yaml", "relabel", "observatorium-rule-relabel")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
-type alertmanagersConfigFile = option.ConfigFile[AlertingConfig]
+type alertmanagersConfigFile = k8sutil.ConfigFile
 
 // NewAlertmanagersConfigFile returns a new alertmanagersConfigFile option
-func NewAlertmanagersConfigFile(name string, value AlertingConfig) *alertmanagersConfigFile {
-	return option.NewConfigFile("/etc/thanos/alertmanagers", "config.yaml", name, value)
+func NewAlertmanagersConfigFile(value *AlertingConfig) *alertmanagersConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/alertmanagers", "config.yaml", "alertmanagers", "observatorium-rule-alertmanagers")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
-type tracingConfigFile = option.ConfigFile[trclient.TracingConfig]
+type tracingConfigFile = k8sutil.ConfigFile
 
-// NewReceiveLimitsConfigFile returns a new tracing config file option.
-func NewTracingConfigFile(name string, value trclient.TracingConfig) *tracingConfigFile {
-	return option.NewConfigFile("/etc/thanos/tracing", "config.yaml", name, value)
+// NewTracingConfigFile returns a new tracing config file k8sutil.
+func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-rule-tracing")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
+}
+
+type objstoreConfigFile = k8sutil.ConfigFile
+
+// NewObjstoreConfigFile returns a new alertRelabelConfigFile option
+func NewObjstoreConfigFile(value *objstore.BucketConfig) *objstoreConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/objstore", "config.yaml", "objstore", "observatorium-rule-objstore")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
 type RuleFileOption struct {
@@ -74,13 +97,6 @@ func (r RuleFileOption) FilePath() string {
 func (r RuleFileOption) String() string {
 	return filepath.Join(r.FilePath(), r.FileName)
 }
-
-// type objstoreConfigFile = option.ConfigFile[objstore.Config]
-
-// // NewObjstoreConfigFile returns a new objstoreConfigFile option
-// func NewObjstoreConfigFile(name string, value objstore.Config) objstoreConfigFile {
-// 	return option.NewConfigFile("/etc/thanos/objstore", value)
-// }
 
 type RulerOptions struct {
 	AlertLabelDrop             []string                 `opt:"alert.label-drop"`
@@ -111,7 +127,7 @@ type RulerOptions struct {
 	LogFormat                  thanoslog.LogFormat      `opt:"log.format"`
 	LogLevel                   thanoslog.LogLevel       `opt:"log.level"`
 	ObjstoreConfig             string                   `opt:"objstore.config"`
-	ObjstoreConfigFile         string                   `opt:"objstore.config-file"`
+	ObjstoreConfigFile         *objstoreConfigFile      `opt:"objstore.config-file"`
 	Query                      []string                 `opt:"query"`
 	QueryConfig                string                   `opt:"query.config"`      //todo
 	QueryConfigFile            string                   `opt:"query.config-file"` //todo
@@ -337,6 +353,22 @@ func (s *RulerStatefulSet) makeContainer() *k8sutil.Container {
 			Name:      dataVolumeName,
 			MountPath: s.Options.DataDir,
 		},
+	}
+
+	if s.Options.AlertRelabelConfigFile != nil {
+		s.Options.AlertRelabelConfigFile.AddToContainer(ret)
+	}
+
+	if s.Options.AlertmanagersConfigFile != nil {
+		s.Options.AlertmanagersConfigFile.AddToContainer(ret)
+	}
+
+	if s.Options.TracingConfigFile != nil {
+		s.Options.TracingConfigFile.AddToContainer(ret)
+	}
+
+	if s.Options.ObjstoreConfigFile != nil {
+		s.Options.ObjstoreConfigFile.AddToContainer(ret)
 	}
 
 	for _, ruleFile := range s.Options.RuleFile {

@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/option"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -26,18 +25,26 @@ const (
 	GrpcCompressionNone   GrpcCompressionType = "none"
 )
 
-type tracingConfigFile = option.ConfigFile[trclient.TracingConfig]
+type tracingConfigFile = k8sutil.ConfigFile
 
-// NewReceiveLimitsConfigFile returns a new tracing config file option.
-func NewTracingConfigFile(name string, value trclient.TracingConfig) *tracingConfigFile {
-	return option.NewConfigFile("/etc/thanos/tracing", "config.yaml", name, value)
+// NewTracingConfigFile returns a new tracing config file option.
+func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-thanos-query-tracing")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
-type requestLoggingConfigFile = option.ConfigFile[reqlogging.RequestConfig]
+type requestLoggingConfigFile = k8sutil.ConfigFile
 
 // NewRequestLoggingConfigFile returns a new request logging config file option.
-func NewRequestLoggingConfigFile(name string, value reqlogging.RequestConfig) *requestLoggingConfigFile {
-	return option.NewConfigFile("/etc/thanos/request-logging", "config.yaml", name, value)
+func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *requestLoggingConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/request-logging", "config.yaml", "request-logging", "observatorium-thanos-query-request-logging")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
 type QueryOptions struct {
@@ -96,7 +103,7 @@ type QueryOptions struct {
 	StoreUnhealthyTimeout                         model.Duration            `opt:"store.unhealthy-timeout"`
 	TracingConfig                                 *trclient.TracingConfig   `opt:"tracing.config"`
 	TracingConfigFile                             *tracingConfigFile        `opt:"tracing.config-file"`
-	WebDisableCORS                                bool                      `opt:"web.disable-cors"`
+	WebDisableCORS                                bool                      `opt:"web.disable-cors,noval"`
 	WebExternalPrefix                             string                    `opt:"web.external-prefix"`
 	WebPrefixHeader                               string                    `opt:"web.prefix-header"`
 	WebRoutePrefix                                string                    `opt:"web.route-prefix"`
@@ -280,28 +287,12 @@ func (s *QueryDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 
-	if s.Options.RequestLoggingConfigFile != nil {
-		ret.ConfigMaps[s.Options.RequestLoggingConfigFile.Name] = map[string]string{
-			s.Options.RequestLoggingConfigFile.FileName(): s.Options.RequestLoggingConfigFile.Value.String(),
-		}
-
-		ret.Volumes = append(ret.Volumes, k8sutil.NewPodVolumeFromConfigMap("request-logging-config", s.Options.RequestLoggingConfigFile.Name))
-		ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
-			Name:      "request-logging-config",
-			MountPath: s.Options.RequestLoggingConfigFile.MountPath(),
-		})
+	if s.Options.RequestLoggingConfig != nil {
+		s.Options.RequestLoggingConfigFile.AddToContainer(ret)
 	}
 
-	if s.Options.TracingConfigFile != nil {
-		ret.ConfigMaps[s.Options.TracingConfigFile.Name] = map[string]string{
-			s.Options.TracingConfigFile.FileName(): s.Options.TracingConfigFile.Value.String(),
-		}
-
-		ret.Volumes = append(ret.Volumes, k8sutil.NewPodVolumeFromConfigMap("tracing-config", s.Options.TracingConfigFile.Name))
-		ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
-			Name:      "tracing-config",
-			MountPath: s.Options.TracingConfigFile.MountPath(),
-		})
+	if s.Options.TracingConfig != nil {
+		s.Options.TracingConfigFile.AddToContainer(ret)
 	}
 
 	return ret

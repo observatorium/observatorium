@@ -9,7 +9,6 @@ import (
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache"
 	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/option"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -27,32 +26,48 @@ const (
 	CacheCompressionTypeSnappy CacheCompressionType = "snappy"
 )
 
-type tracingConfigFile = option.ConfigFile[trclient.TracingConfig]
+type tracingConfigFile = k8sutil.ConfigFile
 
 // NewReceiveLimitsConfigFile returns a new tracing config file option.
-func NewTracingConfigFile(name string, value trclient.TracingConfig) *tracingConfigFile {
-	return option.NewConfigFile("/etc/thanos/tracing", "config.yaml", name, value)
+func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-thanos-query-tracing")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
-type requestLoggingConfigFile = option.ConfigFile[reqlogging.RequestConfig]
+type requestLoggingConfigFile = k8sutil.ConfigFile
 
 // NewRequestLoggingConfigFile returns a new request logging config file option.
-func NewRequestLoggingConfigFile(name string, value reqlogging.RequestConfig) *requestLoggingConfigFile {
-	return option.NewConfigFile("/etc/thanos/request-logging", "config.yaml", name, value)
+func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *requestLoggingConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/request-logging", "config.yaml", "request-logging", "observatorium-thanos-query-request-logging")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
-type labelsResponseCacheConfig = option.ConfigFile[cache.ResponseCacheConfig]
+type labelsResponseCacheConfig = k8sutil.ConfigFile
 
 // NewLabelsResponseCacheConfigFile returns a new labels response cache config file option.
-func NewLabelsResponseCacheConfigFile(name string, value cache.ResponseCacheConfig) *labelsResponseCacheConfig {
-	return option.NewConfigFile("/etc/thanos/labels-response-cache", "config.yaml", name, value)
+func NewLabelsResponseCacheConfigFile(value *cache.ResponseCacheConfig) *labelsResponseCacheConfig {
+	ret := k8sutil.NewConfigFile("/etc/thanos/labels-response-cache", "config.yaml", "labels-response-cache", "observatorium-thanos-query-labels-response-cache")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
-type queryRangeResponseCacheConfig = option.ConfigFile[cache.ResponseCacheConfig]
+type queryRangeResponseCacheConfig = k8sutil.ConfigFile
 
 // NewQueryRangeResponseCacheConfigFile returns a new query range response cache config file option.
-func NewQueryRangeResponseCacheConfigFile(name string, value cache.ResponseCacheConfig) *queryRangeResponseCacheConfig {
-	return option.NewConfigFile("/etc/thanos/query-range-response-cache", "config.yaml", name, value)
+func NewQueryRangeResponseCacheConfigFile(value *cache.ResponseCacheConfig) *queryRangeResponseCacheConfig {
+	ret := k8sutil.NewConfigFile("/etc/thanos/query-range-response-cache", "config.yaml", "query-range-response-cache", "observatorium-thanos-query-query-range-response-cache")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
 type QueryFrontendOptions struct {
@@ -264,51 +279,19 @@ func (s *QueryFrontendDeployment) makeContainer() *k8sutil.Container {
 	}
 
 	if s.Options.RequestLoggingConfigFile != nil {
-		ret.ConfigMaps[s.Options.RequestLoggingConfigFile.Name] = map[string]string{
-			s.Options.RequestLoggingConfigFile.FileName(): s.Options.RequestLoggingConfigFile.Value.String(),
-		}
-
-		ret.Volumes = append(ret.Volumes, k8sutil.NewPodVolumeFromConfigMap("request-logging-config", s.Options.RequestLoggingConfigFile.Name))
-		ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
-			Name:      "request-logging-config",
-			MountPath: s.Options.RequestLoggingConfigFile.MountPath(),
-		})
+		s.Options.RequestLoggingConfigFile.AddToContainer(ret)
 	}
 
 	if s.Options.TracingConfigFile != nil {
-		ret.ConfigMaps[s.Options.TracingConfigFile.Name] = map[string]string{
-			s.Options.TracingConfigFile.FileName(): s.Options.TracingConfigFile.Value.String(),
-		}
-
-		ret.Volumes = append(ret.Volumes, k8sutil.NewPodVolumeFromConfigMap("tracing-config", s.Options.TracingConfigFile.Name))
-		ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
-			Name:      "tracing-config",
-			MountPath: s.Options.TracingConfigFile.MountPath(),
-		})
+		s.Options.TracingConfigFile.AddToContainer(ret)
 	}
 
 	if s.Options.LabelsResponseCacheConfigFile != nil {
-		ret.ConfigMaps[s.Options.LabelsResponseCacheConfigFile.Name] = map[string]string{
-			s.Options.LabelsResponseCacheConfigFile.FileName(): s.Options.LabelsResponseCacheConfigFile.Value.String(),
-		}
-
-		ret.Volumes = append(ret.Volumes, k8sutil.NewPodVolumeFromConfigMap("labels-response-cache-config", s.Options.LabelsResponseCacheConfigFile.Name))
-		ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
-			Name:      "labels-response-cache-config",
-			MountPath: s.Options.LabelsResponseCacheConfigFile.MountPath(),
-		})
+		s.Options.LabelsResponseCacheConfigFile.AddToContainer(ret)
 	}
 
 	if s.Options.QueryRangeResponseCacheConfigFile != nil {
-		ret.ConfigMaps[s.Options.QueryRangeResponseCacheConfigFile.Name] = map[string]string{
-			s.Options.QueryRangeResponseCacheConfigFile.FileName(): s.Options.QueryRangeResponseCacheConfigFile.Value.String(),
-		}
-
-		ret.Volumes = append(ret.Volumes, k8sutil.NewPodVolumeFromConfigMap("query-range-response-cache-config", s.Options.QueryRangeResponseCacheConfigFile.Name))
-		ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
-			Name:      "query-range-response-cache-config",
-			MountPath: s.Options.QueryRangeResponseCacheConfigFile.MountPath(),
-		})
+		s.Options.QueryRangeResponseCacheConfigFile.AddToContainer(ret)
 	}
 
 	return ret

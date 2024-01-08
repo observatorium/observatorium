@@ -7,7 +7,6 @@ import (
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/option"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -17,21 +16,25 @@ const (
 	defaultPublicPort   = 8080
 )
 
-type objstoreConfigFile = option.ConfigFile[objstore.BucketConfig]
+type rulesObjstoreConfigFile = k8sutil.ConfigFile
 
 // NewAlertRelabelConfigFile returns a new alertRelabelConfigFile option
-func NewObjstoreConfigFile(name string, value objstore.BucketConfig) *objstoreConfigFile {
-	return option.NewConfigFile("/etc/rules-objstore/objstore", "config.yaml", name, value)
+func NewRulesObjstoreConfigFile(value *objstore.BucketConfig) *rulesObjstoreConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/rules-objstore/objstore", "config.yaml", "objstore", "observatorium-rules-objstore")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
 type RulesObjstoreOptions struct {
-	DebugName          string              `opt:"debug.name,single-hyphen"`
-	LogFormat          string              `opt:"log.format,single-hyphen"`
-	LogLevel           string              `opt:"log.level,single-hyphen"`
-	ObjstoreConfigFile *objstoreConfigFile `opt:"objstore.config-file,single-hyphen"`
-	WebHealthchecksURL string              `opt:"web.healthchecks.url,single-hyphen"`
-	WebInternalListen  *net.TCPAddr        `opt:"web.internal.listen,single-hyphen"`
-	WebListen          *net.TCPAddr        `opt:"web.listen,single-hyphen"`
+	DebugName          string                   `opt:"debug.name,single-hyphen"`
+	LogFormat          string                   `opt:"log.format,single-hyphen"`
+	LogLevel           string                   `opt:"log.level,single-hyphen"`
+	ObjstoreConfigFile *rulesObjstoreConfigFile `opt:"objstore.config-file,single-hyphen"`
+	WebHealthchecksURL string                   `opt:"web.healthchecks.url,single-hyphen"`
+	WebInternalListen  *net.TCPAddr             `opt:"web.internal.listen,single-hyphen"`
+	WebListen          *net.TCPAddr             `opt:"web.listen,single-hyphen"`
 }
 
 type RulesObjstoreDeployment struct {
@@ -214,15 +217,7 @@ func (r *RulesObjstoreDeployment) makeContainer() *k8sutil.Container {
 	}
 
 	if r.Options.ObjstoreConfigFile != nil {
-		ret.ConfigMaps[r.Options.ObjstoreConfigFile.Name] = map[string]string{
-			r.Options.ObjstoreConfigFile.FileName(): r.Options.ObjstoreConfigFile.Value.String(),
-		}
-
-		ret.Volumes = append(ret.Volumes, k8sutil.NewPodVolumeFromConfigMap("objstore", r.Options.ObjstoreConfigFile.Name))
-		ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
-			Name:      "objstore",
-			MountPath: r.Options.ObjstoreConfigFile.MountPath(),
-		})
+		r.Options.ObjstoreConfigFile.AddToContainer(ret)
 	}
 
 	return ret

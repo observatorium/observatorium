@@ -33,7 +33,7 @@ type StoreOptions struct {
 	BlockMetaFetchConcurrency        int                             `opt:"block-meta-fetch-concurrency"`
 	BlockSyncConcurrency             int                             `opt:"block-sync-concurrency"`
 	BucketWebLabel                   string                          `opt:"bucket-web-label"`
-	CacheIndexHeader                 bool                            `opt:"cache-index-header"`
+	CacheIndexHeader                 bool                            `opt:"cache-index-header,noval"`
 	ChunkPoolSize                    units.Bytes                     `opt:"chunk-pool-size"`
 	ConsistencyDelay                 time.Duration                   `opt:"consistency-delay"`
 	DataDir                          string                          `opt:"data-dir"`
@@ -60,8 +60,8 @@ type StoreOptions struct {
 	RequestLoggingConfigFile         string                          `opt:"request.logging-config-file"`
 	SelectorRelabelConfig            *relabel.Config                 `opt:"selector.relabel-config"`
 	SelectorRelabelConfigFile        string                          `opt:"selector.relabel-config-file"`
-	StoreEnableIndexHeaderLazyReader bool                            `opt:"store.enable-index-header-lazy-reader"`
-	StoreEnableLazyExpandedPostings  bool                            `opt:"store.enable-lazy-expanded-postings"`
+	StoreEnableIndexHeaderLazyReader bool                            `opt:"store.enable-index-header-lazy-reader,noval"`
+	StoreEnableLazyExpandedPostings  bool                            `opt:"store.enable-lazy-expanded-postings,noval"`
 	StoreGrpcDownloadedBytesLimit    units.Bytes                     `opt:"store.grps.downloaded-bytes-limit"`
 	StoreGrpcSeriesMaxConcurrency    int                             `opt:"store.grps.series-max-concurrency"`
 	StoreLimitsRequestSamples        int                             `opt:"store.limits.request-samples"`
@@ -69,8 +69,8 @@ type StoreOptions struct {
 	SyncBlockDuration                time.Duration                   `opt:"sync-block-duration"`
 	TracingConfig                    *trclient.TracingConfig         `opt:"tracing.config"`
 	TracingConfigFile                string                          `opt:"tracing.config-file"`
-	WebDisable                       bool                            `opt:"web.disable"`
-	WebDisableCors                   bool                            `opt:"web.disable-cors"`
+	WebDisable                       bool                            `opt:"web.disable,noval"`
+	WebDisableCors                   bool                            `opt:"web.disable-cors,noval"`
 	WebExternalPrefix                string                          `opt:"web.external-prefix"`
 	WebPrefixHeader                  string                          `opt:"web.prefix-header"`
 

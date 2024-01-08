@@ -1,9 +1,24 @@
 package ruler
 
-import "github.com/prometheus/common/model"
+import (
+	"fmt"
+
+	"github.com/prometheus/common/model"
+	"gopkg.in/yaml.v2"
+)
 
 type AlertingConfig struct {
 	Alertmanagers []AlertmanagerConfig `yaml:"alertmanagers"`
+}
+
+// String returns a string representation of the AlertingConfig as YAML.
+// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
+func (a AlertingConfig) String() string {
+	ret, err := yaml.Marshal(a)
+	if err != nil {
+		panic(fmt.Sprintf("error mashalling DownstreamTripperConfig to yaml: %v", err))
+	}
+	return string(ret)
 }
 
 // AlertmanagerConfig represents a client to a cluster of Alertmanager endpoints.
