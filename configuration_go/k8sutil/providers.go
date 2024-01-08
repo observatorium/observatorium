@@ -1,3 +1,14 @@
+/*
+This file contains the Kubernetes manifest providers.
+These providers are simplified versions of the Kubernetes objects used to generate the manifests.
+They implement the ManifestProvider interface, which allows generating the Kubernetes manifests.
+
+Subcomponents provide methods required by higher-level components to generate their manifests.
+For example, a pod implements the PodProvider interface, which provides methods to retrieve required volumes,
+volume claims, config maps and secrets. These are, in turn, provided by the containers that are part of the pod.
+This design groups the dependencies of each container in a single place for better code organization.
+*/
+
 package k8sutil
 
 import (

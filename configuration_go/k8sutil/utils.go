@@ -33,6 +33,7 @@ func GetDefaultSecurityContext() *corev1.PodSecurityContext {
 	}
 }
 
+// NewResourcesRequirements returns a new resource requirements object for a container.
 func NewResourcesRequirements(cpuRequest, cpuLimit, memoryRequest, memoryLimit string) corev1.ResourceRequirements {
 	ret := corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{},
