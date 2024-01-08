@@ -2,8 +2,8 @@ package api
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v2"
 )
 
@@ -68,9 +68,9 @@ type TenantOPA struct {
 }
 
 type TenantRateLimits struct {
-	Endpoint string         `yaml:"endpoint"`
-	Limit    int            `yaml:"limit"`
-	Window   model.Duration `yaml:"window"`
+	Endpoint string        `yaml:"endpoint"`
+	Limit    int           `yaml:"limit"`
+	Window   time.Duration `yaml:"window"`
 	// The remaining fields in this struct are optional and only apply to the remote rate limiter.
 	// FailOpen determines the behavior of the rate limiter when a remote rate limiter is unavailable.
 	// If true, requests will be accepted when the remote rate limiter decision is unavailable or returns an error.
@@ -82,8 +82,8 @@ type TenantRateLimits struct {
 	// As requests get rejected the header is set and the value doubled each time until RetryAfterMaxSeconds.
 	// Zero or unset values will result in no Retry-After header being set.
 	// RetryAfterMin is the minimum value for the Retry-After header.
-	RetryAfterMin model.Duration `yaml:"retryAfterMin,omitempty,omitempty"`
+	RetryAfterMin time.Duration `yaml:"retryAfterMin,omitempty,omitempty"`
 	// RetryAfterMax is the maximum value for the Retry-After header.
 	// If RetryAfterMax is zero and RetryAfterMin is non-zero, the Retry-After header will grow indefinitely.
-	RetryAfterMax model.Duration `yaml:"retryAfterMax,omitempty"`
+	RetryAfterMax time.Duration `yaml:"retryAfterMax,omitempty"`
 }

@@ -2,10 +2,10 @@ package query
 
 import (
 	"net"
+	"time"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	"github.com/prometheus/common/model"
 
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
@@ -60,26 +60,26 @@ type QueryOptions struct {
 	GrpcClientsTLSSecure                          bool                      `opt:"grpc-client-tls-secure,noval"`
 	GrpcClientsTLSSkipVerify                      bool                      `opt:"grpc-client-tls-skip-verify,noval"`
 	GrpcClientsCompression                        GrpcCompressionType       `opt:"grpc-compression"`
-	GrpcGracePeriod                               model.Duration            `opt:"grpc-grace-period"`
-	GrpcMMaxConnectionAge                         model.Duration            `opt:"grpc-server-max-connection-age"`
+	GrpcGracePeriod                               time.Duration             `opt:"grpc-grace-period"`
+	GrpcMMaxConnectionAge                         time.Duration             `opt:"grpc-server-max-connection-age"`
 	GrpcServerTLSCert                             string                    `opt:"grpc-server-tls-cert"`
 	GrpcServerTLSClientCA                         string                    `opt:"grpc-server-tls-client-ca"`
 	GrpcServerTLSKey                              string                    `opt:"grpc-server-tls-key"`
 	HttpAddress                                   *net.TCPAddr              `opt:"http-address"`
-	HttpGracePeriod                               model.Duration            `opt:"http-grace-period"`
+	HttpGracePeriod                               time.Duration             `opt:"http-grace-period"`
 	HttpConfig                                    string                    `opt:"http-config"`
 	LogFormat                                     log.LogFormat             `opt:"log.format"`
 	LogLevel                                      log.LogLevel              `opt:"log.level"`
 	QueryActiveQueryPath                          string                    `opt:"query.active-query-path"`
 	QueryAutoDownsampling                         bool                      `opt:"query.auto-downsampling,noval"`
 	QueryConnMetricLabel                          []string                  `opt:"query.conn-metric.label"`
-	QueryDefaultEvaluationInterval                model.Duration            `opt:"query.default-evaluation-interval"`
-	QueryDefaultStep                              model.Duration            `opt:"query.default-step"`
+	QueryDefaultEvaluationInterval                time.Duration             `opt:"query.default-evaluation-interval"`
+	QueryDefaultStep                              time.Duration             `opt:"query.default-step"`
 	QueryDefaultTenantID                          string                    `opt:"query.default-tenant-id"`
-	QueryLookbackDelta                            model.Duration            `opt:"query.lookback-delta"`
+	QueryLookbackDelta                            time.Duration             `opt:"query.lookback-delta"`
 	QueryMaxConcurrent                            int                       `opt:"query.max-concurrent"`
 	QueryMaxConcurrentSelect                      int                       `opt:"query.max-concurrent-select"`
-	QueryMetadataDefaultTimeRange                 model.Duration            `opt:"query.metadata.default-time-range"`
+	QueryMetadataDefaultTimeRange                 time.Duration             `opt:"query.metadata.default-time-range"`
 	QueryPartialResponse                          bool                      `opt:"query.partial-response,noval"`
 	QueryPromQLEngine                             string                    `opt:"query.promql-engine"`
 	QueryReplicaLabel                             []string                  `opt:"query.replica-label"`
@@ -88,17 +88,17 @@ type QueryOptions struct {
 	QueryTelemetryRequestSeriesSecondsQuantiles   []float64                 `opt:"query.telemetry.request-series-seconds-quantiles"`
 	QueryTenantCertificateField                   string                    `opt:"query.tenant-certificate-field"`
 	QueryTenantHeader                             string                    `opt:"query.tenant-header"`
-	QueryTimeout                                  model.Duration            `opt:"query.timeout"`
+	QueryTimeout                                  time.Duration             `opt:"query.timeout"`
 	RequestLoggingConfig                          *reqlogging.RequestConfig `opt:"request.logging-config"`
 	RequestLoggingConfigFile                      *requestLoggingConfigFile `opt:"request.logging-config-file"`
 	SelectorLabel                                 []string                  `opt:"selector-label"`
 	StoreLimitsRequestSamples                     int                       `opt:"store.limits.request-samples"`
 	StoreLimitsRequestSeries                      int                       `opt:"store.limits.request-series"`
-	StoreResponseTimeout                          model.Duration            `opt:"store.response-timeout"`
-	StoreSDDNSInterval                            model.Duration            `opt:"store.sd-dns-interval"`
+	StoreResponseTimeout                          time.Duration             `opt:"store.response-timeout"`
+	StoreSDDNSInterval                            time.Duration             `opt:"store.sd-dns-interval"`
 	StoreSDFiles                                  []string                  `opt:"store.sd-files"`
-	StoreSDInterval                               model.Duration            `opt:"store.sd-interval"`
-	StoreUnhealthyTimeout                         model.Duration            `opt:"store.unhealthy-timeout"`
+	StoreSDInterval                               time.Duration             `opt:"store.sd-interval"`
+	StoreUnhealthyTimeout                         time.Duration             `opt:"store.unhealthy-timeout"`
 	TracingConfig                                 *trclient.TracingConfig   `opt:"tracing.config"`
 	TracingConfigFile                             *tracingConfigFile        `opt:"tracing.config-file"`
 	WebDisableCORS                                bool                      `opt:"web.disable-cors,noval"`

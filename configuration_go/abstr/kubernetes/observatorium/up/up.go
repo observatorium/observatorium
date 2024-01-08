@@ -3,13 +3,13 @@ package up
 import (
 	"fmt"
 	"net"
+	"time"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	upoptions "github.com/observatorium/up/pkg/options"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -58,21 +58,21 @@ func NewTokenFileOption(value *string) *tokenFileOption {
 }
 
 type UpOptions struct {
-	Duration                *model.Duration    `opt:"duration"`
+	Duration                *time.Duration     `opt:"duration"`
 	EndpointRead            string             `opt:"endpoint-read"`
 	EndpointType            EndpointType       `opt:"endpoint-type"`
 	EndpointWrite           string             `opt:"endpoint-write"`
-	InitialQueryDelay       *model.Duration    `opt:"initial-query-delay"`
+	InitialQueryDelay       *time.Duration     `opt:"initial-query-delay"`
 	Labels                  []string           `opt:"labels"`
-	Latency                 model.Duration     `opt:"latency"`
+	Latency                 time.Duration      `opt:"latency"`
 	Listen                  *net.TCPAddr       `opt:"listen"`
 	LogLevel                log.LogLevel       `opt:"log.level"`
 	Logs                    []string           `opt:"logs"`
 	LogsFile                string             `opt:"logs-file"` // TODO: support this
 	Name                    string             `opt:"name"`
-	Period                  model.Duration     `opt:"period"`
+	Period                  time.Duration      `opt:"period"`
 	QueriesFile             *queriesFileOption `opt:"queries-file"`
-	Step                    model.Duration     `opt:"step"`
+	Step                    time.Duration      `opt:"step"`
 	Tenant                  string             `opt:"tenant"`
 	TenantHeader            string             `opt:"tenant-header"`
 	Threshold               float64            `opt:"threshold"`

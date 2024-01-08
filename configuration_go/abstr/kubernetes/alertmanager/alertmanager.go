@@ -5,12 +5,12 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/prometheus/common/model"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -34,25 +34,25 @@ func NewConfigFile(value *string) *configFileOption {
 type AlertManagerOptions struct {
 	ConfigFile               *configFileOption `opt:"config.file"`
 	StoragePath              string            `opt:"storage.path"`
-	DataRetention            model.Duration    `opt:"data.retention"`
-	DataMaintenanceInterval  model.Duration    `opt:"data.maintenance-interval"`
-	AlertsGCInterval         model.Duration    `opt:"alerts.gc-interval"`
+	DataRetention            time.Duration     `opt:"data.retention"`
+	DataMaintenanceInterval  time.Duration     `opt:"data.maintenance-interval"`
+	AlertsGCInterval         time.Duration     `opt:"alerts.gc-interval"`
 	WebListenAddress         *net.TCPAddr      `opt:"web.listen-address"`
 	WebExternalURL           string            `opt:"web.external-url"`
 	WebRoutePrefix           string            `opt:"web.route-prefix"`
 	WebGetConcurrency        int               `opt:"web.get-concurrency"`
-	WebTimeout               model.Duration    `opt:"web.timeout"`
+	WebTimeout               time.Duration     `opt:"web.timeout"`
 	ClusterListenAddress     string            `opt:"cluster.listen-address"`
 	ClusterPeer              []string          `opt:"cluster.peer"`
-	ClusterPeerTimeout       model.Duration    `opt:"cluster.peer-timeout"`
-	ClusterGossipInterval    model.Duration    `opt:"cluster.gossip-interval"`
-	ClusterPushPullInterval  model.Duration    `opt:"cluster.pushpull-interval"`
-	ClusterTCPTimeout        model.Duration    `opt:"cluster.tcp-timeout"`
-	ClusterProbeTimeout      model.Duration    `opt:"cluster.probe-timeout"`
-	ClusterProbeInterval     model.Duration    `opt:"cluster.probe-interval"`
-	ClusterSettleTimeout     model.Duration    `opt:"cluster.settle-timeout"`
-	ClusterReconnectInterval model.Duration    `opt:"cluster.reconnect-interval"`
-	ClusterReconnectTimeout  model.Duration    `opt:"cluster.reconnect-timeout"`
+	ClusterPeerTimeout       time.Duration     `opt:"cluster.peer-timeout"`
+	ClusterGossipInterval    time.Duration     `opt:"cluster.gossip-interval"`
+	ClusterPushPullInterval  time.Duration     `opt:"cluster.pushpull-interval"`
+	ClusterTCPTimeout        time.Duration     `opt:"cluster.tcp-timeout"`
+	ClusterProbeTimeout      time.Duration     `opt:"cluster.probe-timeout"`
+	ClusterProbeInterval     time.Duration     `opt:"cluster.probe-interval"`
+	ClusterSettleTimeout     time.Duration     `opt:"cluster.settle-timeout"`
+	ClusterReconnectInterval time.Duration     `opt:"cluster.reconnect-interval"`
+	ClusterReconnectTimeout  time.Duration     `opt:"cluster.reconnect-timeout"`
 	LogLevel                 log.LogLevel      `opt:"log.level"`
 	LogFormat                log.LogFormat     `opt:"log.format"`
 }

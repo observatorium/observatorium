@@ -5,6 +5,7 @@ import (
 	"net"
 	"path/filepath"
 	"strings"
+	"time"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
@@ -12,7 +13,6 @@ import (
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/relabel"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -105,22 +105,22 @@ type RulerOptions struct {
 	AlertRelabelConfigFile     *alertRelabelConfigFile  `opt:"alert.relabel-config-file"`
 	AlertmanagersConfig        *AlertingConfig          `opt:"alertmanagers.config"` // check
 	AlertmanagersConfigFile    *alertmanagersConfigFile `opt:"alertmanagers.config-file"`
-	AlertmanagersSdDnsInterval model.Duration           `opt:"alertmanagers.sd-dns-interval"`
-	AlertmanagersSendTimeout   model.Duration           `opt:"alertmanagers.send-timeout"`
+	AlertmanagersSdDnsInterval time.Duration            `opt:"alertmanagers.sd-dns-interval"`
+	AlertmanagersSendTimeout   time.Duration            `opt:"alertmanagers.send-timeout"`
 	AlertmanagersUrl           []string                 `opt:"alertmanagers.url"`
 	DataDir                    string                   `opt:"data-dir"`
-	EvalInterval               model.Duration           `opt:"eval-interval"`
-	ForGracePeriod             model.Duration           `opt:"for-grace-period"`
-	ForOutageTolerance         model.Duration           `opt:"for-outage-tolerance"`
+	EvalInterval               time.Duration            `opt:"eval-interval"`
+	ForGracePeriod             time.Duration            `opt:"for-grace-period"`
+	ForOutageTolerance         time.Duration            `opt:"for-outage-tolerance"`
 	GrpcAddress                *net.TCPAddr             `opt:"grpc-address"`
-	GrpcGracePeriod            model.Duration           `opt:"grpc-grace-period"`
-	GrpcServerMaxConnectionAge model.Duration           `opt:"grpc-server-max-connection-age"`
+	GrpcGracePeriod            time.Duration            `opt:"grpc-grace-period"`
+	GrpcServerMaxConnectionAge time.Duration            `opt:"grpc-server-max-connection-age"`
 	GrpcServerTlsCert          string                   `opt:"grpc-server-tls-cert"`
 	GrpcServerTlsClientCa      string                   `opt:"grpc-server-tls-client-ca"`
 	GrpcServerTlsKey           string                   `opt:"grpc-server-tls-key"`
 	HashFunc                   HashFunc                 `opt:"hash-func"`
 	HttpAddress                *net.TCPAddr             `opt:"http-address"`
-	HttpGracePeriod            model.Duration           `opt:"http-grace-period"`
+	HttpGracePeriod            time.Duration            `opt:"http-grace-period"`
 	HttpConfig                 string                   `opt:"http.config"`
 	Label                      []Label                  `opt:"label"`
 	LogFormat                  log.LogFormat            `opt:"log.format"`
@@ -130,16 +130,16 @@ type RulerOptions struct {
 	Query                      []string                 `opt:"query"`
 	QueryConfig                string                   `opt:"query.config"`      //todo
 	QueryConfigFile            string                   `opt:"query.config-file"` //todo
-	QueryDefaultStep           model.Duration           `opt:"query.default-step"`
+	QueryDefaultStep           time.Duration            `opt:"query.default-step"`
 	QueryHttpMethod            QueryHttpMethod          `opt:"query.http-method"`
-	QuerySdDnsInterval         model.Duration           `opt:"query.sd-dns-interval"`
+	QuerySdDnsInterval         time.Duration            `opt:"query.sd-dns-interval"`
 	QuerySdFiles               []string                 `opt:"query.sd-files"`
-	QuerySdInterval            model.Duration           `opt:"query.sd-interval"`
+	QuerySdInterval            time.Duration            `opt:"query.sd-interval"`
 	RemoteWriteConfig          string                   `opt:"remote-write.config"`         //todo
 	RemoteWriteConfigFile      string                   `opt:"remote-write.config-file"`    //todo
 	RequestLoggingConfig       string                   `opt:"request.logging-config"`      //todo
 	RequestLoggingConfigFile   string                   `opt:"request.logging-config-file"` //todo
-	ResendDelay                model.Duration           `opt:"resend-delay"`
+	ResendDelay                time.Duration            `opt:"resend-delay"`
 	RestoreIgnoredLabel        []string                 `opt:"restore-ignored-label"`
 	RuleFile                   []RuleFileOption         `opt:"rule-file"`
 	ShipperMetaFileName        string                   `opt:"shipper.meta-file-name"`
@@ -148,9 +148,9 @@ type RulerOptions struct {
 	StoreLimitsRequestSeries   int                      `opt:"store.limits.request-series"`
 	TracingConfig              *trclient.TracingConfig  `opt:"tracing.config"`      //todo
 	TracingConfigFile          *tracingConfigFile       `opt:"tracing.config-file"` //todo
-	TsdbBlockDuration          model.Duration           `opt:"tsdb.block-duration"`
+	TsdbBlockDuration          time.Duration            `opt:"tsdb.block-duration"`
 	TsdbNoLockfile             bool                     `opt:"tsdb.no-lockfile,noval"`
-	TsdbRetention              model.Duration           `opt:"tsdb.retention"`
+	TsdbRetention              time.Duration            `opt:"tsdb.retention"`
 	TsdbWalCompression         bool                     `opt:"tsdb.wal-compression,noval"`
 	WebDisableCors             bool                     `opt:"web.disable-cors,noval"`
 	WebExternalPrefix          string                   `opt:"web.external-prefix"`

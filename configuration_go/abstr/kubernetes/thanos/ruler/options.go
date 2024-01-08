@@ -2,8 +2,8 @@ package ruler
 
 import (
 	"fmt"
+	"time"
 
-	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v2"
 )
 
@@ -33,9 +33,9 @@ type AlertmanagerConfig struct {
 	Scheme string `yaml:"scheme,omitempty"`
 
 	// Path prefix to add in front of the endpoint path.
-	PathPrefix string         `yaml:"path_prefix,omitempty"`
-	Timeout    model.Duration `yaml:"timeout,omitempty"`
-	APIVersion APIVersion     `yaml:"api_version,omitempty"`
+	PathPrefix string        `yaml:"path_prefix,omitempty"`
+	Timeout    time.Duration `yaml:"timeout,omitempty"`
+	APIVersion APIVersion    `yaml:"api_version,omitempty"`
 }
 
 // APIVersion represents the API version of the Alertmanager endpoint.
@@ -48,8 +48,8 @@ const (
 
 // FileSDConfig represents a file service discovery configuration.
 type FileSDConfig struct {
-	Files           []string       `yaml:"files,omitempty"`
-	RefreshInterval model.Duration `yaml:"refresh_interval,omitempty"`
+	Files           []string      `yaml:"files,omitempty"`
+	RefreshInterval time.Duration `yaml:"refresh_interval,omitempty"`
 }
 
 // ClientConfig configures an HTTP client.

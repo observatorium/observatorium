@@ -3,12 +3,12 @@ package api
 import (
 	"fmt"
 	"net"
+	"time"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/prometheus/common/model"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -60,7 +60,7 @@ type ObservatoriumAPIOptions struct {
 	LogsTlsCaFile                               string         `opt:"logs.tls.ca-file"`
 	LogsTlsCertFile                             string         `opt:"logs.tls.cert-file"`
 	LogsTlsKeyFile                              string         `opt:"logs.tls.key-file"`
-	LogsWriteTimeout                            model.Duration `opt:"logs.write-timeout"`
+	LogsWriteTimeout                            time.Duration  `opt:"logs.write-timeout"`
 	LogsWriteEndpoint                           string         `opt:"logs.write.endpoint"`
 	MetricsAlertmanagerEndpoint                 string         `opt:"metrics.alertmanager.endpoint"`
 	MetricsReadEndpoint                         string         `opt:"metrics.read.endpoint"`
@@ -70,16 +70,16 @@ type ObservatoriumAPIOptions struct {
 	MetricsTlsCaFile                            string         `opt:"metrics.tls.ca-file"`
 	MetricsTlsCertFile                          string         `opt:"metrics.tls.cert-file"`
 	MetricsTlsKeyFile                           string         `opt:"metrics.tls.key-file"`
-	MetricsWriteTimeout                         model.Duration `opt:"metrics.write-timeout"`
+	MetricsWriteTimeout                         time.Duration  `opt:"metrics.write-timeout"`
 	MetricsWriteEndpoint                        string         `opt:"metrics.write.endpoint"`
-	MiddlewareBacklogDurationConcurrentRequests model.Duration `opt:"middleware.backlog-duration-concurrent-requests"`
+	MiddlewareBacklogDurationConcurrentRequests time.Duration  `opt:"middleware.backlog-duration-concurrent-requests"`
 	MiddlewareBacklogLimitConcurrentRequests    int            `opt:"middleware.backlog-limit-concurrent-requests"`
 	MiddlewareConcurrentRequestLimit            int            `opt:"middleware.concurrent-request-limit"`
 	MiddlewareRateLimiterGrpcAddress            string         `opt:"middleware.rate-limiter.grpc-address"`
 	RbacConfig                                  *rbacConfig    `opt:"rbac.config"`
-	ServerReadHeaderTimeout                     model.Duration `opt:"server.read-header-timeout"`
-	ServerReadTimeout                           model.Duration `opt:"server.read-timeout"`
-	ServerWriteTimeout                          model.Duration `opt:"server.write-timeout"`
+	ServerReadHeaderTimeout                     time.Duration  `opt:"server.read-header-timeout"`
+	ServerReadTimeout                           time.Duration  `opt:"server.read-timeout"`
+	ServerWriteTimeout                          time.Duration  `opt:"server.write-timeout"`
 	TenantsConfig                               *tenantsConfig `opt:"tenants.config"`
 	TlsCipherSuites                             string         `opt:"tls.cipher-suites"`
 	TlsClientAuthType                           string         `opt:"tls.client-auth-type"`
@@ -89,7 +89,7 @@ type ObservatoriumAPIOptions struct {
 	TlsInternalServerKeyFile                    string         `opt:"tls.internal.server.key-file"`
 	TlsMaxVersion                               string         `opt:"tls.max-version"`
 	TlsMinVersion                               string         `opt:"tls.min-version"`
-	TlsReloadInterval                           model.Duration `opt:"tls.reload-interval"`
+	TlsReloadInterval                           time.Duration  `opt:"tls.reload-interval"`
 	TlsServerCertFile                           string         `opt:"tls.server.cert-file"`
 	TlsServerKeyFile                            string         `opt:"tls.server.key-file"`
 	TracesReadEndpoint                          string         `opt:"traces.read.endpoint"`
@@ -98,7 +98,7 @@ type ObservatoriumAPIOptions struct {
 	TracesTlsCaFile                             string         `opt:"traces.tls.ca-file"`
 	TracesTlsCertFile                           string         `opt:"traces.tls.cert-file"`
 	TracesTlsKeyFile                            string         `opt:"traces.tls.key-file"`
-	TracesWriteTimeout                          model.Duration `opt:"traces.write-timeout"`
+	TracesWriteTimeout                          time.Duration  `opt:"traces.write-timeout"`
 	TracesWriteEndpoint                         string         `opt:"traces.write.endpoint"`
 	WebHealthchecksURL                          string         `opt:"web.healthchecks.url"`
 	WebInternalListen                           *net.TCPAddr   `opt:"web.internal.listen"`
