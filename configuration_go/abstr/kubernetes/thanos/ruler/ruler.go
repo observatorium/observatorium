@@ -21,7 +21,6 @@ type HashFunc string
 type QueryHttpMethod string
 
 const (
-	defaultNamespace    string          = "observatorium"
 	defaultHTTPPort     int             = 10902
 	defaultGRPCPort     int             = 10901
 	dataVolumeName      string          = "data"
@@ -160,19 +159,25 @@ type RulerOptions struct {
 }
 
 type RulerStatefulSet struct {
-	Options    *RulerOptions
+	options    *RulerOptions
 	VolumeType string
 	VolumeSize string
 
 	k8sutil.DeploymentGenericConfig
 }
 
-func NewRuler() *RulerStatefulSet {
-	opts := &RulerOptions{
+func NewDefaultOptions() *RulerOptions {
+	return &RulerOptions{
 		LogLevel:       "warn",
 		LogFormat:      "logfmt",
 		DataDir:        "/var/thanos/ruler",
 		ObjstoreConfig: "$(OBJSTORE_CONFIG)",
+	}
+}
+
+func NewRuler(opts *RulerOptions, namespace, imageTag string) *RulerStatefulSet {
+	if opts == nil {
+		opts = NewDefaultOptions()
 	}
 
 	commonLabels := map[string]string{
@@ -180,6 +185,7 @@ func NewRuler() *RulerStatefulSet {
 		k8sutil.InstanceLabel:  "observatorium",
 		k8sutil.PartOfLabel:    "observatorium",
 		k8sutil.ComponentLabel: "rule-evaluation-engine",
+		k8sutil.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
@@ -187,25 +193,28 @@ func NewRuler() *RulerStatefulSet {
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
+	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
+
 	return &RulerStatefulSet{
-		Options: opts,
+		options: opts,
 		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
 			Image:                "quay.io/thanos/thanos",
+			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-thanos-ruler",
-			Namespace:            defaultNamespace,
+			Namespace:            namespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
 			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "1", "200Mi", "400Mi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
+			LivenessProbe: k8sutil.NewProbe("/-/healthy", probePort, k8sutil.ProbeConfig{
 				FailureThreshold: 8,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/-/ready", defaultHTTPPort, k8sutil.ProbeConfig{
+			ReadinessProbe: k8sutil.NewProbe("/-/ready", probePort, k8sutil.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
@@ -220,90 +229,28 @@ func NewRuler() *RulerStatefulSet {
 	}
 }
 
-func (s *RulerStatefulSet) Manifests() k8sutil.ObjectMap {
-	container := s.makeContainer()
+func (r *RulerStatefulSet) Manifests() k8sutil.ObjectMap {
+	container := r.makeContainer()
 
-	commonObjectMeta := k8sutil.MetaConfig{
-		Name:      s.Name,
-		Labels:    s.CommonLabels,
-		Namespace: s.Namespace,
-	}
-	commonObjectMeta.Labels[k8sutil.VersionLabel] = container.ImageTag
-
-	pod := &k8sutil.Pod{
-		TerminationGracePeriodSeconds: &s.TerminationGracePeriodSeconds,
-		Affinity:                      s.Affinity,
-		SecurityContext:               s.SecurityContext,
-		ServiceAccountName:            commonObjectMeta.Name,
-		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, s.Sidecars...),
-	}
-
-	statefulset := &k8sutil.StatefulSet{
-		MetaConfig: commonObjectMeta.Clone(),
-		Replicas:   s.Replicas,
-		Pod:        pod,
-	}
-
-	ret := k8sutil.ObjectMap{
-		"ruler-statefulSet": statefulset.MakeManifest(),
-	}
-
-	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta.Clone(),
-		ServicePorts: pod,
-	}
-	ret["ruler-service"] = service.MakeManifest()
-
-	if s.EnableServiceMonitor {
-		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta.Clone(),
-			ServiceMonitorEndpoints: pod,
-		}
-		ret["ruler-serviceMonitor"] = serviceMonitor.MakeManifest()
-	}
-
-	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta.Clone(),
-		Name:       pod.ServiceAccountName,
-	}
-	ret["ruler-serviceAccount"] = serviceAccount.MakeManifest()
-
-	// Create configMaps required by the containers
-	for name, config := range pod.GetConfigMaps() {
-		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       config,
-		}
-		configMap.MetaConfig.Name = name
-		ret["ruler-configMap-"+name] = configMap.MakeManifest()
-	}
-
-	// Create secrets required by the containers
-	for name, secret := range pod.GetSecrets() {
-		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       secret,
-		}
-		secret.MetaConfig.Name = name
-		ret["ruler-secret-"+name] = secret.MakeManifest()
-	}
+	ret := k8sutil.ObjectMap{}
+	ret.AddAll(r.GenerateObjectsStatefulSet(container))
 
 	return ret
 }
 
 func (s *RulerStatefulSet) makeContainer() *k8sutil.Container {
-	if s.Options == nil {
-		s.Options = &RulerOptions{}
+	if s.options == nil {
+		s.options = &RulerOptions{}
 	}
 
 	httpPort := defaultHTTPPort
-	if s.Options.HttpAddress != nil && s.Options.HttpAddress.Port != 0 {
-		httpPort = s.Options.HttpAddress.Port
+	if s.options.HttpAddress != nil && s.options.HttpAddress.Port != 0 {
+		httpPort = s.options.HttpAddress.Port
 	}
 
 	grpcPort := defaultGRPCPort
-	if s.Options.GrpcAddress != nil && s.Options.GrpcAddress.Port != 0 {
-		grpcPort = s.Options.GrpcAddress.Port
+	if s.options.GrpcAddress != nil && s.options.GrpcAddress.Port != 0 {
+		grpcPort = s.options.GrpcAddress.Port
 	}
 
 	livenessPort := s.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
@@ -316,13 +263,13 @@ func (s *RulerStatefulSet) makeContainer() *k8sutil.Container {
 		panic(fmt.Sprintf(`readiness probe port %d does not match http port %d`, readinessPort, httpPort))
 	}
 
-	if s.Options.DataDir == "" {
+	if s.options.DataDir == "" {
 		panic(`data directory is not specified for the statefulset.`)
 	}
 
 	ret := s.ToContainer()
 	ret.Name = "thanos"
-	ret.Args = append([]string{"rule"}, cmdopt.GetOpts(s.Options)...)
+	ret.Args = append([]string{"rule"}, cmdopt.GetOpts(s.options)...)
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "http",
@@ -351,27 +298,27 @@ func (s *RulerStatefulSet) makeContainer() *k8sutil.Container {
 	ret.VolumeMounts = []corev1.VolumeMount{
 		{
 			Name:      dataVolumeName,
-			MountPath: s.Options.DataDir,
+			MountPath: s.options.DataDir,
 		},
 	}
 
-	if s.Options.AlertRelabelConfigFile != nil {
-		s.Options.AlertRelabelConfigFile.AddToContainer(ret)
+	if s.options.AlertRelabelConfigFile != nil {
+		s.options.AlertRelabelConfigFile.AddToContainer(ret)
 	}
 
-	if s.Options.AlertmanagersConfigFile != nil {
-		s.Options.AlertmanagersConfigFile.AddToContainer(ret)
+	if s.options.AlertmanagersConfigFile != nil {
+		s.options.AlertmanagersConfigFile.AddToContainer(ret)
 	}
 
-	if s.Options.TracingConfigFile != nil {
-		s.Options.TracingConfigFile.AddToContainer(ret)
+	if s.options.TracingConfigFile != nil {
+		s.options.TracingConfigFile.AddToContainer(ret)
 	}
 
-	if s.Options.ObjstoreConfigFile != nil {
-		s.Options.ObjstoreConfigFile.AddToContainer(ret)
+	if s.options.ObjstoreConfigFile != nil {
+		s.options.ObjstoreConfigFile.AddToContainer(ret)
 	}
 
-	for _, ruleFile := range s.Options.RuleFile {
+	for _, ruleFile := range s.options.RuleFile {
 		if ruleFile.VolumeName != "" {
 			ret.VolumeMounts = append(ret.VolumeMounts, corev1.VolumeMount{
 				Name:      ruleFile.VolumeName,
