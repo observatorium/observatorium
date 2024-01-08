@@ -11,30 +11,44 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// DeploymentGenericConfig represents certain config fields
-// that might be useful to add/override in a Deployment/StatefulSet. It contains
-// fields of both DeploymentSpec and PodSpec.
+// DeploymentGenericConfig represents a generic deployment configuration with common options.
+// It groups those option fields in a flat structure for all the different Kubernetes objects that are created.
+// It also provides helpers to generate the runtime objects from the configuration.
+//
+// Usage example:
+//
+//	// Create a new DeploymentGenericConfig object with your desired options
+//	deploymentConfig := k8sutil.DeploymentGenericConfig{}
+//
+//	// Create the main container from the DeploymentGenericConfig object
+//	// Customize the container if needed (e.g., add volumes, ports)
+//	container := deploymentConfig.ToContainer()
+//
+//	// Generate the runtime objects from the DeploymentGenericConfig object
+//	runtimeObjects := deploymentConfig.GenerateObjects(container)
 type DeploymentGenericConfig struct {
 	// Container fields
-	Image                string
-	ImageTag             string
-	ImagePullPolicy      corev1.PullPolicy
-	Name                 string
-	Namespace            string
-	CommonLabels         map[string]string
-	Replicas             int32
-	DeploymentStrategy   appsv1.DeploymentStrategy // Only applies to Deployment kind
-	PodResources         corev1.ResourceRequirements
-	Affinity             *corev1.Affinity
-	SecurityContext      *corev1.PodSecurityContext
-	EnableServiceMonitor bool
-	Env                  []corev1.EnvVar
-	LivenessProbe        *corev1.Probe
-	ReadinessProbe       *corev1.Probe
+	ContainerResources corev1.ResourceRequirements
+	Env                []corev1.EnvVar
+	Image              string
+	ImageTag           string
+	ImagePullPolicy    corev1.PullPolicy
+	LivenessProbe      *corev1.Probe
+	ReadinessProbe     *corev1.Probe
 
 	// Pod fields
-	TerminationMessagePolicy      corev1.TerminationMessagePolicy
+	Affinity                      *corev1.Affinity
+	SecurityContext               *corev1.PodSecurityContext
 	TerminationGracePeriodSeconds int64
+
+	// Deployment fields
+	CommonLabels       map[string]string
+	DeploymentStrategy appsv1.DeploymentStrategy // Only applies to Deployment kind
+	Name               string
+	Namespace          string
+	Replicas           int32
+
+	EnableServiceMonitor bool
 
 	// Container dependencies
 	// ConfigMaps and Secrets are the ones required by the main container, others are directly defined in Sidecars
@@ -50,12 +64,30 @@ func (d DeploymentGenericConfig) ToContainer() *Container {
 		ImageTag:        d.ImageTag,
 		ImagePullPolicy: d.ImagePullPolicy,
 		Env:             d.Env,
-		Resources:       d.PodResources,
+		Resources:       d.ContainerResources,
 		LivenessProbe:   d.LivenessProbe,
 		ReadinessProbe:  d.ReadinessProbe,
 		ConfigMaps:      d.ConfigMaps,
 		Secrets:         d.Secrets,
 	}
+}
+
+// GenerateObjects returns the list of runtime objects for the given container in a Deployment.
+func (d DeploymentGenericConfig) GenerateObjects(container *Container) []runtime.Object {
+	pod := d.Pod(container)
+	ret := d.generateCommonObjects(pod)
+	ret = append(ret, d.Deployment(pod))
+
+	return ret
+}
+
+// GenerateObjectsStatefulSet returns the list of runtime objects for the given container in a StatefulSet.
+func (d DeploymentGenericConfig) GenerateObjectsStatefulSet(container *Container) []runtime.Object {
+	pod := d.Pod(container)
+	ret := d.generateCommonObjects(pod)
+	ret = append(ret, d.StatefulSet(pod))
+
+	return ret
 }
 
 func (d DeploymentGenericConfig) ObjectMeta() *MetaConfig {
@@ -71,6 +103,7 @@ func (d DeploymentGenericConfig) ObjectMeta() *MetaConfig {
 	}
 }
 
+// Pod returns a Pod object with the given container and sidecars.
 func (d DeploymentGenericConfig) Pod(container *Container) *Pod {
 	return &Pod{
 		TerminationGracePeriodSeconds: &d.TerminationGracePeriodSeconds,
@@ -81,6 +114,7 @@ func (d DeploymentGenericConfig) Pod(container *Container) *Pod {
 	}
 }
 
+// Deployment returns a Deployment object with the given pod.
 func (d DeploymentGenericConfig) Deployment(pod *Pod) runtime.Object {
 	dep := &Deployment{
 		MetaConfig: *d.ObjectMeta(),
@@ -91,6 +125,7 @@ func (d DeploymentGenericConfig) Deployment(pod *Pod) runtime.Object {
 	return dep.MakeManifest()
 }
 
+// StatefulSet returns a StatefulSet object with the given pod.
 func (d DeploymentGenericConfig) StatefulSet(pod *Pod) runtime.Object {
 	statefulset := &StatefulSet{
 		MetaConfig: *d.ObjectMeta(),
@@ -101,6 +136,7 @@ func (d DeploymentGenericConfig) StatefulSet(pod *Pod) runtime.Object {
 	return statefulset.MakeManifest()
 }
 
+// Service returns a Service object for the given pod.
 func (d DeploymentGenericConfig) Service(pod *Pod) runtime.Object {
 	service := &Service{
 		MetaConfig:   *d.ObjectMeta(),
@@ -110,6 +146,7 @@ func (d DeploymentGenericConfig) Service(pod *Pod) runtime.Object {
 	return service.MakeManifest()
 }
 
+// ServiceMonitor returns a ServiceMonitor object for the given pod.
 func (d DeploymentGenericConfig) ServiceMonitor(pod *Pod) runtime.Object {
 	serviceMonitor := &ServiceMonitor{
 		MetaConfig:              *d.ObjectMeta(),
@@ -119,6 +156,7 @@ func (d DeploymentGenericConfig) ServiceMonitor(pod *Pod) runtime.Object {
 	return serviceMonitor.MakeManifest()
 }
 
+// ServiceAccount returns a ServiceAccount object.
 func (d DeploymentGenericConfig) ServiceAccount() runtime.Object {
 	serviceAccount := &ServiceAccount{
 		MetaConfig: *d.ObjectMeta(),
@@ -163,6 +201,7 @@ func (d DeploymentGenericConfig) RBACRoleBinding(subjects []runtime.Object, role
 	}
 }
 
+// ConfigMapsAndSecrets returns the list of ConfigMap and Secret objects for the given pod.
 func (d DeploymentGenericConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object {
 	ret := []runtime.Object{}
 	for name, data := range pod.GetConfigMaps() {
@@ -205,22 +244,6 @@ func (d DeploymentGenericConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object
 	return ret
 }
 
-func (d DeploymentGenericConfig) GenerateObjects(container *Container) []runtime.Object {
-	pod := d.Pod(container)
-	ret := d.generateCommonObjects(pod)
-	ret = append(ret, d.Deployment(pod))
-
-	return ret
-}
-
-func (d DeploymentGenericConfig) GenerateObjectsStatefulSet(container *Container) []runtime.Object {
-	pod := d.Pod(container)
-	ret := d.generateCommonObjects(pod)
-	ret = append(ret, d.StatefulSet(pod))
-
-	return ret
-}
-
 func (d DeploymentGenericConfig) generateCommonObjects(pod *Pod) []runtime.Object {
 	ret := []runtime.Object{
 		d.ServiceAccount(),
@@ -237,114 +260,4 @@ func (d DeploymentGenericConfig) generateCommonObjects(pod *Pod) []runtime.Objec
 	ret = append(ret, d.ConfigMapsAndSecrets(pod)...)
 
 	return ret
-}
-
-// type ObjectProcessor func(obj runtime.Object)
-type DeploymentOption func(d *DeploymentGenericConfig)
-
-// WithImage overrides the default image.
-func WithImage(image, imageTag string) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.Image = image
-		d.ImageTag = imageTag
-	}
-}
-
-// WithImagePullPolicy overrides default image pull policy.
-func WithImagePullPolicy(imagePullPolicy corev1.PullPolicy) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.ImagePullPolicy = imagePullPolicy
-	}
-}
-
-// WithName overrides the default name of all the individual objects.
-func WithName(name string) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.Name = name
-	}
-}
-
-// WithNamespace overrides the default namespace of all the individual objects.
-func WithNamespace(namespace string) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.Namespace = namespace
-	}
-}
-
-// WithCommonLabels overrides the default K8s metadata labels and selectors.
-func WithCommonLabels(commonLabels map[string]string) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.CommonLabels = commonLabels
-	}
-}
-
-// WithReplicas overrides the default number of replicas to run.
-func WithReplicas(replicas int32) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.Replicas = replicas
-	}
-}
-
-// WithDeploymentStrategy overrides the default deployment strategy of pods.
-func WithDeploymentStrategy(ds appsv1.DeploymentStrategy) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.DeploymentStrategy = ds
-	}
-}
-
-// WithResources overrides the default Pod resource config.
-func WithResources(resource corev1.ResourceRequirements) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.PodResources = resource
-	}
-}
-
-// WithAffinity overrides the default Pod scheduling affinity rules.
-func WithAffinity(affinity *corev1.Affinity) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.Affinity = affinity
-	}
-}
-
-// WithSecurityContext overrides the default Pod security context.
-func WithSecurityContext(sc *corev1.PodSecurityContext) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.SecurityContext = sc
-	}
-}
-
-// WithServiceMonitor enables generation of a ServiceMonitor to scrape the deployment.
-func WithServiceMonitor() DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.EnableServiceMonitor = true
-	}
-}
-
-// WithProbe overrides the default K8s liveness and readiness probes of main deployment container.
-func WithProbes(livenessProbe, readinessProbe *corev1.Probe) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.LivenessProbe = livenessProbe
-		d.ReadinessProbe = readinessProbe
-	}
-}
-
-// WithTerminationMessagePolicy overrides the default termination message policy of main deployment container.
-func WithTerminationMessagePolicy(terminationMessagePolicy corev1.TerminationMessagePolicy) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.TerminationMessagePolicy = terminationMessagePolicy
-	}
-}
-
-// WithTerminationGracePeriod overrides the default termination grace period of main deployment container.
-func WithTerminationGracePeriod(duration int64) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.TerminationGracePeriodSeconds = duration
-	}
-}
-
-// WithSideCars overrides the default pod sidecars.
-func WithSidecars(sidecars ...ContainerProvider) DeploymentOption {
-	return func(d *DeploymentGenericConfig) {
-		d.Sidecars = sidecars
-	}
 }

@@ -287,7 +287,7 @@ func newBaseReceive(commonLabels map[string]string) *baseReceive {
 			Namespace:            defaultNamespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("1", "2", "10Gi", "20Gi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("1", "2", "10Gi", "20Gi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{

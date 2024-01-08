@@ -116,7 +116,7 @@ func NewCompactor() *CompactorStatefulSet {
 			Namespace:            defaultNamespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{

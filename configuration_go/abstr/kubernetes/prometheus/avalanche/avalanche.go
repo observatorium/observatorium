@@ -55,7 +55,7 @@ func NewAvalanche(opts *AvalancheOptions, namespace, imageTag string) *Avalanche
 			Namespace:                     namespace,
 			CommonLabels:                  commonLabels,
 			Replicas:                      1,
-			PodResources:                  k8sutil.NewResourcesRequirements("100m", "500m", "1Gi", "2Gi"),
+			ContainerResources:            k8sutil.NewResourcesRequirements("100m", "500m", "1Gi", "2Gi"),
 			EnableServiceMonitor:          true,
 			TerminationGracePeriodSeconds: 30,
 			Env:                           []corev1.EnvVar{},

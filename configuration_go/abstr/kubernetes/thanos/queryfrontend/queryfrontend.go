@@ -28,7 +28,7 @@ const (
 
 type tracingConfigFile = k8sutil.ConfigFile
 
-// NewReceiveLimitsConfigFile returns a new tracing config file option.
+// NewTracingConfigFile returns a new tracing config file option.
 func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-thanos-query-tracing")
 	if value != nil {
@@ -144,7 +144,7 @@ func NewQueryFrontend() *QueryFrontendDeployment {
 			Namespace:            defaultNamespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("500m", "2", "1Gi", "2Gi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "2", "1Gi", "2Gi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 

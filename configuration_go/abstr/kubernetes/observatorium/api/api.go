@@ -140,7 +140,7 @@ func NewObservatoriumAPI(opts *ObservatoriumAPIOptions, namespace, imageTag stri
 			Namespace:            namespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("100m", "1", "1Gi", "4Gi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("100m", "1", "1Gi", "4Gi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 

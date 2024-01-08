@@ -142,7 +142,7 @@ func NewQuery() *QueryDeployment {
 			Namespace:            defaultNamespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("500m", "2", "1Gi", "8Gi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "2", "1Gi", "8Gi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 

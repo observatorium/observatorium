@@ -52,9 +52,9 @@ func NewController() *Controller {
 		Env: []corev1.EnvVar{
 			k8sutil.NewEnvFromField("NAMESPACE", "metadata.namespace"),
 		},
-		PodResources: k8sutil.NewResourcesRequirements("10m", "24Mi", "64m", "128Mi"),
-		ConfigMaps:   map[string]map[string]string{},
-		Secrets:      map[string]map[string][]byte{},
+		ContainerResources: k8sutil.NewResourcesRequirements("10m", "24Mi", "64m", "128Mi"),
+		ConfigMaps:         map[string]map[string]string{},
+		Secrets:            map[string]map[string][]byte{},
 	}
 
 	return &Controller{

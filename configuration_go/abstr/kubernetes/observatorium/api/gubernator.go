@@ -42,7 +42,7 @@ func NewGubernatorDeployment(namespace, imageTag string) *GubernatorDeployment {
 			Namespace:            namespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("300m", "600m", "100Mi", "200Mi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("300m", "600m", "100Mi", "200Mi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 

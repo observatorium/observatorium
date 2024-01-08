@@ -70,7 +70,7 @@ func NewRulesObjstore() *RulesObjstoreDeployment {
 			Namespace:            defaultNamespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("50m", "1", "200Mi", "400Mi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("50m", "1", "200Mi", "400Mi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 

@@ -63,7 +63,7 @@ func NewMemcached() *MemcachedDeployment {
 		CommonLabels:                  commonLabels,
 		Replicas:                      1,
 		Env:                           []corev1.EnvVar{},
-		PodResources:                  k8sutil.NewResourcesRequirements("500m", "3", "2Gi", "3Gi"),
+		ContainerResources:            k8sutil.NewResourcesRequirements("500m", "3", "2Gi", "3Gi"),
 		Affinity:                      k8sutil.NewAntiAffinity(nil, labelSelectors),
 		EnableServiceMonitor:          true,
 		TerminationGracePeriodSeconds: 120,

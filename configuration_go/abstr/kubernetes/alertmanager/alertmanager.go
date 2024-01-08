@@ -103,7 +103,7 @@ func NewAlertManager(opts *AlertManagerOptions, namespacce, imageTag string) *Al
 			Namespace:            namespacce,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("500m", "1", "500Mi", "4Gi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "1", "500Mi", "4Gi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
