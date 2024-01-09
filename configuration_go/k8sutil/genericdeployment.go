@@ -6,8 +6,6 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -161,41 +159,6 @@ func (d DeploymentGenericConfig) ServiceAccount() runtime.Object {
 	return &corev1.ServiceAccount{
 		TypeMeta:   ServiceAccountMeta,
 		ObjectMeta: d.ObjectMeta().MakeMeta(),
-	}
-}
-
-func (d DeploymentGenericConfig) RBACRole(rules []rbacv1.PolicyRule) runtime.Object {
-	return &rbacv1.Role{
-		TypeMeta:   RoleMeta,
-		ObjectMeta: d.ObjectMeta().MakeMeta(),
-		Rules:      rules,
-	}
-}
-
-func (d DeploymentGenericConfig) RBACRoleBinding(subjects []runtime.Object, role runtime.Object) runtime.Object {
-	subs := make([]rbacv1.Subject, len(subjects))
-	for i, s := range subjects {
-		subMeta, ok := s.(metav1.Object)
-		if !ok {
-			panic("subject does not implement metav1.Object")
-		}
-
-		subs[i] = rbacv1.Subject{
-			Kind:      s.GetObjectKind().GroupVersionKind().Kind,
-			Name:      subMeta.GetName(),
-			Namespace: subMeta.GetNamespace(),
-		}
-	}
-
-	return &rbacv1.RoleBinding{
-		TypeMeta:   RoleBindingMeta,
-		ObjectMeta: d.ObjectMeta().MakeMeta(),
-		Subjects:   subs,
-		RoleRef: rbacv1.RoleRef{
-			Kind:     role.GetObjectKind().GroupVersionKind().Kind,
-			APIGroup: role.GetObjectKind().GroupVersionKind().Group,
-			Name:     role.(metav1.Object).GetName(),
-		},
 	}
 }
 

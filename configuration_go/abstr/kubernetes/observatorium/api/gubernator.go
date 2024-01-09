@@ -7,7 +7,6 @@ import (
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -98,17 +97,38 @@ func (g *GubernatorDeployment) Manifests() k8sutil.ObjectMap {
 	ret.AddAll(g.GenerateObjects(container))
 	k8sutil.GetObject[*corev1.Service](ret, g.Name).Spec.ClusterIP = corev1.ClusterIPNone
 
-	rbacRules := []rbacv1.PolicyRule{
-		{
-			APIGroups: []string{""},
-			Resources: []string{"endpoints"},
-			Verbs:     []string{"list", "watch", "get"},
+	rbacRole := &rbacv1.Role{
+		TypeMeta:   k8sutil.RoleMeta,
+		ObjectMeta: g.ObjectMeta().MakeMeta(),
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{""},
+				Resources: []string{"endpoints"},
+				Verbs:     []string{"list", "watch", "get"},
+			},
 		},
 	}
-	rbacRole := g.RBACRole(rbacRules)
-	ret.Add(rbacRole)
+
 	sa := k8sutil.GetObject[*corev1.ServiceAccount](ret, g.Name)
-	ret.Add(g.RBACRoleBinding([]runtime.Object{sa}, rbacRole))
+	roleBinding := &rbacv1.RoleBinding{
+		TypeMeta:   k8sutil.RoleBindingMeta,
+		ObjectMeta: g.ObjectMeta().MakeMeta(),
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      sa.GetObjectKind().GroupVersionKind().Kind,
+				Name:      sa.GetName(),
+				Namespace: sa.GetNamespace(),
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			Kind:     rbacRole.GetObjectKind().GroupVersionKind().Kind,
+			APIGroup: rbacRole.GetObjectKind().GroupVersionKind().Group,
+			Name:     rbacRole.GetName(),
+		},
+	}
+
+	ret.Add(rbacRole)
+	ret.Add(roleBinding)
 
 	return ret
 }
