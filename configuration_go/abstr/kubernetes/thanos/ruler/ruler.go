@@ -14,6 +14,7 @@ import (
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/prometheus/model/relabel"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -36,7 +37,12 @@ type alertRelabelConfigFile = k8sutil.ConfigFile
 func NewAlertRelabelConfigFile(value *relabel.Config) *alertRelabelConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/relabel", "config.yaml", "relabel", "observatorium-rule-relabel")
 	if value != nil {
-		ret.WithValue(value.String())
+		valueYaml, err := yaml.Marshal(value)
+		if err != nil {
+			panic(err)
+		}
+
+		ret.WithValue(string(valueYaml))
 	}
 	return ret
 }

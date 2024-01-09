@@ -82,7 +82,7 @@ type StoreStatefulSet struct {
 	k8sutil.DeploymentGenericConfig
 }
 
-func NewDefaultOptions() ç {
+func NewDefaultOptions() *StoreOptions {
 	return &StoreOptions{
 		LogLevel:                 "warn",
 		LogFormat:                "logfmt",
