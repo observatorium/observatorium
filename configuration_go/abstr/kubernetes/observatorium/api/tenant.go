@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	obsrbac "github.com/observatorium/api/rbac"
 	"gopkg.in/yaml.v2"
 )
 
@@ -38,8 +39,8 @@ type TenantOIDC struct {
 	GroupClaim    string `yaml:"groupClaim,omitempty"`
 	IssuerRawCA   []byte `yaml:"issuerCA,omitempty"`
 	IssuerCAPath  string `yaml:"issuerCAPath,omitempty"`
-	IssuerURL     string `yaml:"issuerURL"`
-	RedirectURL   string `yaml:"redirectURL"`
+	IssuerURL     string `yaml:"issuerURL,omitempty"`
+	RedirectURL   string `yaml:"redirectURL,omitempty"`
 	UsernameClaim string `yaml:"usernameClaim,omitempty"`
 }
 
@@ -86,4 +87,17 @@ type TenantRateLimits struct {
 	// RetryAfterMax is the maximum value for the Retry-After header.
 	// If RetryAfterMax is zero and RetryAfterMin is non-zero, the Retry-After header will grow indefinitely.
 	RetryAfterMax time.Duration `yaml:"retryAfterMax,omitempty"`
+}
+
+type RBAC struct {
+	Roles        []obsrbac.Role        `json:"roles"`
+	RoleBindings []obsrbac.RoleBinding `json:"roleBindings"`
+}
+
+func (r RBAC) String() string {
+	res, err := yaml.Marshal(r)
+	if err != nil {
+		panic(fmt.Sprintf("failed to marshal rbac file: %v", err))
+	}
+	return string(res)
 }

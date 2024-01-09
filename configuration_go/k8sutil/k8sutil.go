@@ -28,14 +28,14 @@ func (o ObjectMap) Add(obj runtime.Object) {
 	objType := obj.GetObjectKind().GroupVersionKind().Kind
 
 	if _, ok := o[objName]; ok {
-		panic(fmt.Sprintf("object %s/%s already exists", objType, objName))
+		panic(fmt.Sprintf("object %s_%s already exists", objType, objName))
 	}
 
 	o[o.makeKey(objType, objName)] = obj
 }
 
 func (o ObjectMap) makeKey(objType, objName string) string {
-	return fmt.Sprintf("%s/%s", objName, objType)
+	return fmt.Sprintf("%s_%s", objName, objType)
 }
 
 func (o ObjectMap) AddAll(objs []runtime.Object) {

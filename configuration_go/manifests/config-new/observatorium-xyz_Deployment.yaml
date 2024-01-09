@@ -5,32 +5,30 @@ metadata:
   creationTimestamp: null
   labels:
     app.kubernetes.io/component: api
-    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/instance: observatorium
     app.kubernetes.io/name: observatorium-api
     app.kubernetes.io/part-of: observatorium
-  name: observatorium-xyz-observatorium-api
+    app.kubernetes.io/version: latest
+  name: observatorium-xyz
   namespace: observatorium
 spec:
   replicas: 3
   selector:
     matchLabels:
       app.kubernetes.io/component: api
-      app.kubernetes.io/instance: observatorium-xyz
+      app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: observatorium-api
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: main-2023-01-24-v0.1.2-318-g5f4fdf4
-  strategy:
-    rollingUpdate:
-      maxSurge: 0
-      maxUnavailable: 1
+  strategy: {}
   template:
     metadata:
       creationTimestamp: null
       labels:
         app.kubernetes.io/component: api
-        app.kubernetes.io/instance: observatorium-xyz
+        app.kubernetes.io/instance: observatorium
         app.kubernetes.io/name: observatorium-api
         app.kubernetes.io/part-of: observatorium
+        app.kubernetes.io/version: latest
       namespace: observatorium
     spec:
       affinity:
@@ -39,6 +37,10 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchExpressions:
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - observatorium
                 - key: app.kubernetes.io/name
                   operator: In
                   values:
@@ -47,75 +49,69 @@ spec:
             weight: 100
       containers:
       - args:
-        - --web.listen=0.0.0.0:8080
-        - --web.internal.listen=0.0.0.0:8081
-        - --grpc.listen=0.0.0.0:8090
-        - --internal.tracing.endpoint=0.0.0.0:6831
         - --log.level=debug
-        - --rbac.config=/etc/observatorium/rbac.yaml
-        - --tenants.config=/etc/observatorium/tenants.yaml
-        - --middleware.rate-limiter.grpc-address=observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081
-        - --metrics.read.endpoint=http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090
-        - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291
-        - --metrics.rules.endpoint=http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080
         - --logs.read.endpoint=http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100
+        - --logs.rules.endpoint=http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100
         - --logs.tail.endpoint=http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100
         - --logs.write.endpoint=http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100
-        - --logs.rules.endpoint=http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100
+        - --metrics.read.endpoint=http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090
+        - --metrics.rules.endpoint=http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080
+        - --metrics.write.endpoint=http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291
+        - --middleware.rate-limiter.grpc-address=observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081
+        - --rbac.config=/etc/observatorium/rbac/config.yaml
+        - --tenants.config=/etc/observatorium/tenants/config.yaml
+        - --traces.read.endpoint=http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/
         - --traces.write.endpoint=observatorium-xyz-otel-collector:4317
-        - --experimental.traces.read.endpoint-template=http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/
-        image: quay.io/observatorium/api:main-2023-01-24-v0.1.2-318-g5f4fdf4
+        image: quay.io/observatorium/api:latest
         imagePullPolicy: IfNotPresent
         livenessProbe:
-          failureThreshold: 10
+          failureThreshold: 8
           httpGet:
             path: /live
-            port: 8080
-            scheme: HTTP
+            port: 8081
           periodSeconds: 30
+          timeoutSeconds: 1
         name: observatorium-api
         ports:
-        - containerPort: 8090
-          name: grpc-public
-        - containerPort: 8081
-          name: internal
         - containerPort: 8080
-          name: public
+          name: http-public
+          protocol: TCP
+        - containerPort: 8081
+          name: http-internal
+          protocol: TCP
+        - containerPort: 8090
+          name: grpc
+          protocol: TCP
         readinessProbe:
-          failureThreshold: 12
+          failureThreshold: 20
           httpGet:
             path: /ready
             port: 8081
-            scheme: HTTP
           periodSeconds: 5
         resources:
           limits:
             cpu: "3"
-            memory: 3000Mi
+            memory: 3Gi
           requests:
             cpu: "2"
-            memory: 2000Mi
+            memory: 2Gi
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
-        - mountPath: /etc/observatorium/rbac.yaml
-          name: rbac
+        - mountPath: /etc/observatorium/rbac
+          name: rbac-config
           readOnly: true
-          subPath: rbac.yaml
-        - mountPath: /etc/observatorium/tenants.yaml
+        - mountPath: /etc/observatorium/tenants
           name: tenants
           readOnly: true
-          subPath: tenants.yaml
       nodeSelector:
         kubernetes.io/os: linux
-      securityContext:
-        fsGroup: 65534
-        runAsUser: 65534
-      serviceAccountName: observatorium-xyz-observatorium-api
+      serviceAccountName: observatorium-xyz
+      terminationGracePeriodSeconds: 120
       volumes:
       - configMap:
-          name: observatorium-xyz-observatorium-api
-        name: rbac
+          name: observatorium-xyz-rbac
+        name: rbac-config
       - name: tenants
         secret:
-          secretName: observatorium-xyz-observatorium-api
+          secretName: observatorium-xyz-tenants
 status: {}

@@ -5,30 +5,30 @@ metadata:
   creationTimestamp: null
   labels:
     app.kubernetes.io/component: api
-    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/instance: observatorium
     app.kubernetes.io/name: observatorium-api
     app.kubernetes.io/part-of: observatorium
-  name: observatorium-xyz-observatorium-api
+    app.kubernetes.io/version: latest
+  name: observatorium-xyz
   namespace: observatorium
 spec:
   ports:
-  - appProtocol: h2c
-    name: grpc-public
-    port: 8090
-    targetPort: 8090
-  - appProtocol: http
-    name: internal
-    port: 8081
-    targetPort: 8081
-  - appProtocol: http
-    name: public
+  - name: http-public
     port: 8080
+    protocol: TCP
     targetPort: 8080
+  - name: http-internal
+    port: 8081
+    protocol: TCP
+    targetPort: 8081
+  - name: grpc
+    port: 8090
+    protocol: TCP
+    targetPort: 8090
   selector:
     app.kubernetes.io/component: api
-    app.kubernetes.io/instance: observatorium-xyz
+    app.kubernetes.io/instance: observatorium
     app.kubernetes.io/name: observatorium-api
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: main-2023-01-24-v0.1.2-318-g5f4fdf4
 status:
   loadBalancer: {}

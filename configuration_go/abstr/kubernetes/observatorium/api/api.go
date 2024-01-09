@@ -20,10 +20,10 @@ const (
 
 type rbacConfig = k8sutil.ConfigFile
 
-func NewRbacConfig(value *string) *rbacConfig {
+func NewRbacConfig(value *RBAC) *rbacConfig {
 	ret := k8sutil.NewConfigFile("/etc/observatorium/rbac", "config.yaml", "rbac-config", "observatorium-rbac")
 	if value != nil {
-		ret.WithValue(*value)
+		ret.WithValue(value.String())
 	}
 	return ret
 }
@@ -32,6 +32,7 @@ type tenantsConfig = k8sutil.ConfigFile
 
 func NewTenantsConfig(value *Tenants) *tenantsConfig {
 	ret := k8sutil.NewConfigFile("/etc/observatorium/tenants", "config.yaml", "tenants", "observatorium-tenants")
+	ret.AsSecret() // Is a secret by default.
 	if value != nil {
 		ret.WithValue(value.String())
 	}
@@ -103,6 +104,9 @@ type ObservatoriumAPIOptions struct {
 	WebHealthchecksURL                          string         `opt:"web.healthchecks.url"`
 	WebInternalListen                           *net.TCPAddr   `opt:"web.internal.listen"`
 	WebListen                                   *net.TCPAddr   `opt:"web.listen"`
+
+	// For setting extra options not listed above.
+	cmdopt.ExtraOpts
 }
 
 type ObservatoriumAPIDeployment struct {
@@ -154,11 +158,8 @@ func NewObservatoriumAPI(opts *ObservatoriumAPIOptions, namespace, imageTag stri
 				PeriodSeconds:    5,
 			}),
 			TerminationGracePeriodSeconds: 120,
-			Env: []corev1.EnvVar{
-				k8sutil.NewEnvFromField("POD_NAME", "metadata.name"),
-			},
-			ConfigMaps: make(map[string]map[string]string),
-			Secrets:    make(map[string]map[string][]byte),
+			ConfigMaps:                    make(map[string]map[string]string),
+			Secrets:                       make(map[string]map[string][]byte),
 		},
 	}
 }

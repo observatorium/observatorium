@@ -42,6 +42,13 @@ func (c *ConfigFile) AsSecret() *ConfigFile {
 	return c
 }
 
+// AsConfigMap specifies that the resource must be a configMap instead of a secret.
+// It is used when the config file is set as a secret by default.
+func (c *ConfigFile) AsConfigMap() *ConfigFile {
+	c.isSecret = false
+	return c
+}
+
 // WithExistingResource specifies the name of the resource (ConfigMap or Secret) and the key to use.
 // It is used when the resource already exists.
 func (c *ConfigFile) WithExistingResource(name, key string) *ConfigFile {
