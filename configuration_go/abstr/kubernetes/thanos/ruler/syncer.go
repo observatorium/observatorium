@@ -40,10 +40,7 @@ func NewRulesSyncerContainer(opts *RulesSyncerOptions) *k8sutil.Container {
 		opts = &RulesSyncerOptions{}
 	}
 
-	internalPort := defaultSyncerInternalPort
-	if opts.WebInternalListen != nil && opts.WebInternalListen.Port != 0 {
-		internalPort = opts.WebInternalListen.Port
-	}
+	internalPort := k8sutil.GetPortOrDefault(defaultSyncerInternalPort, opts.WebInternalListen)
 
 	ret := &k8sutil.Container{}
 	ret.Image = "quay.io/observatorium/observatorium-rules-syncer"

@@ -133,7 +133,7 @@ func (u *UpDeployment) Manifests() k8sutil.ObjectMap {
 func (u *UpDeployment) makeContainer() *k8sutil.Container {
 	ret := u.ToContainer()
 	ret.Name = "observatorium-up"
-	serverPort := getPort(8080, u.options.Listen)
+	serverPort := k8sutil.GetPortOrDefault(8080, u.options.Listen)
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "http",
@@ -158,11 +158,4 @@ func (u *UpDeployment) makeContainer() *k8sutil.Container {
 
 	ret.Args = cmdopt.GetOpts(u.options)
 	return ret
-}
-
-func getPort(defaultValue int, addr *net.TCPAddr) int {
-	if addr != nil {
-		return addr.Port
-	}
-	return defaultValue
 }

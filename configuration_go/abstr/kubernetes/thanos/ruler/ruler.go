@@ -1,7 +1,6 @@
 package ruler
 
 import (
-	"fmt"
 	"net"
 	"path/filepath"
 	"strings"
@@ -245,29 +244,11 @@ func (r *RulerStatefulSet) Manifests() k8sutil.ObjectMap {
 }
 
 func (s *RulerStatefulSet) makeContainer() *k8sutil.Container {
-	if s.options == nil {
-		s.options = &RulerOptions{}
-	}
+	httpPort := k8sutil.GetPortOrDefault(defaultHTTPPort, s.options.HttpAddress)
+	grpcPort := k8sutil.GetPortOrDefault(defaultGRPCPort, s.options.GrpcAddress)
 
-	httpPort := defaultHTTPPort
-	if s.options.HttpAddress != nil && s.options.HttpAddress.Port != 0 {
-		httpPort = s.options.HttpAddress.Port
-	}
-
-	grpcPort := defaultGRPCPort
-	if s.options.GrpcAddress != nil && s.options.GrpcAddress.Port != 0 {
-		grpcPort = s.options.GrpcAddress.Port
-	}
-
-	livenessPort := s.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if livenessPort != int32(httpPort) {
-		panic(fmt.Sprintf(`liveness probe port %d does not match http port %d`, livenessPort, httpPort))
-	}
-
-	readinessPort := s.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if readinessPort != int32(httpPort) {
-		panic(fmt.Sprintf(`readiness probe port %d does not match http port %d`, readinessPort, httpPort))
-	}
+	k8sutil.CheckProbePort(httpPort, s.LivenessProbe)
+	k8sutil.CheckProbePort(httpPort, s.ReadinessProbe)
 
 	if s.options.DataDir == "" {
 		panic(`data directory is not specified for the statefulset.`)
