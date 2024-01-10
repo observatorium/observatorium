@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net"
 	"time"
 
@@ -132,7 +131,7 @@ func NewObservatoriumAPI(opts *ObservatoriumAPIOptions, namespace, imageTag stri
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
-	httpInternalPort := getPort(defaultHTTPInternalPort, opts.WebInternalListen)
+	httpInternalPort := k8sutil.GetPortOrDefault(defaultHTTPInternalPort, opts.WebInternalListen)
 
 	return &ObservatoriumAPIDeployment{
 		options: opts,
@@ -173,12 +172,12 @@ func (s *ObservatoriumAPIDeployment) Manifests() k8sutil.ObjectMap {
 }
 
 func (s *ObservatoriumAPIDeployment) makeContainer() *k8sutil.Container {
-	httpPublicPort := getPort(defaultHTTPPublicPort, s.options.WebListen)
-	httpInternalPort := getPort(defaultHTTPInternalPort, s.options.WebInternalListen)
-	grpcPort := getPort(defaultGRPCPort, s.options.GrpcListen)
+	httpPublicPort := k8sutil.GetPortOrDefault(defaultHTTPPublicPort, s.options.WebListen)
+	httpInternalPort := k8sutil.GetPortOrDefault(defaultHTTPInternalPort, s.options.WebInternalListen)
+	grpcPort := k8sutil.GetPortOrDefault(defaultGRPCPort, s.options.GrpcListen)
 
-	checkProbePort(httpInternalPort, s.LivenessProbe)
-	checkProbePort(httpInternalPort, s.ReadinessProbe)
+	k8sutil.CheckProbePort(httpInternalPort, s.LivenessProbe)
+	k8sutil.CheckProbePort(httpInternalPort, s.ReadinessProbe)
 
 	ret := s.ToContainer()
 	ret.Name = "observatorium-api"
@@ -221,26 +220,4 @@ func (s *ObservatoriumAPIDeployment) makeContainer() *k8sutil.Container {
 	}
 
 	return ret
-}
-
-func getPort(defaultValue int, addr *net.TCPAddr) int {
-	if addr != nil {
-		return addr.Port
-	}
-	return defaultValue
-}
-
-func checkProbePort(port int, probe *corev1.Probe) {
-	if probe == nil {
-		return
-	}
-
-	if probe.ProbeHandler.HTTPGet == nil {
-		return
-	}
-
-	probePort := probe.ProbeHandler.HTTPGet.Port.IntVal
-	if int(probePort) != port {
-		panic(fmt.Sprintf(`probe port %d does not match http port %d`, probePort, port))
-	}
 }
