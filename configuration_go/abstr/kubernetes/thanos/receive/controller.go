@@ -28,7 +28,7 @@ type Controller struct {
 	k8sutil.DeploymentGenericConfig
 }
 
-func NewControllerOptions() *ControllerOptions {
+func NewControllerDefaultOptions() *ControllerOptions {
 	return &ControllerOptions{
 		ConfigMapName:          "observatorium-thanos-receive-controller",
 		ConfigMapGeneratedName: "observatorium-thanos-receive-controller-generated",
@@ -39,7 +39,7 @@ func NewControllerOptions() *ControllerOptions {
 
 func NewController(opts *ControllerOptions, namespace, imageTag string) *Controller {
 	if opts == nil {
-		opts = NewControllerOptions()
+		opts = NewControllerDefaultOptions()
 	}
 
 	commonLabels := map[string]string{
@@ -56,6 +56,7 @@ func NewController(opts *ControllerOptions, namespace, imageTag string) *Control
 			Name:            fmt.Sprintf("%s-%s", commonLabels[k8sutil.InstanceLabel], commonLabels[k8sutil.NameLabel]),
 			Image:           ThanosReceiveControllerImage,
 			ImageTag:        imageTag,
+			Namespace:       namespace,
 			Replicas:        1,
 			CommonLabels:    commonLabels,
 			ImagePullPolicy: corev1.PullIfNotPresent,

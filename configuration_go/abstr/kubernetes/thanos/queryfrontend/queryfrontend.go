@@ -180,7 +180,7 @@ func (q *QueryFrontendDeployment) Manifests() k8sutil.ObjectMap {
 	container := q.makeContainer()
 
 	ret := k8sutil.ObjectMap{}
-	ret.AddAll(q.GenerateObjectsStatefulSet(container))
+	ret.AddAll(q.GenerateObjects(container))
 
 	return ret
 }

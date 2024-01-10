@@ -67,7 +67,7 @@ func NewRulesObjstore(opts *RulesObjstoreOptions, namespace, imageTag string) *R
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
-	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.WebInternalListen)
+	probePort := k8sutil.GetPortOrDefault(defaultInternalPort, opts.WebInternalListen)
 
 	return &RulesObjstoreDeployment{
 		options: opts,

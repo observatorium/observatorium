@@ -215,7 +215,7 @@ func NewRouter(opts *ReceiveOptions, namespace, imageTag string) *Router {
 
 // Manifests returns the manifests for the Router.
 func (r *Router) Manifests() k8sutil.ObjectMap {
-	r.withRouterContainer()
+	r.makeContainer(r.withRouterContainer())
 	return r.baseReceive.manifests()
 }
 
@@ -258,7 +258,7 @@ func NewIngestor(opts *ReceiveOptions, namespace, imageTag string) *Ingestor {
 
 // Manifests returns the manifests for the Ingestor.
 func (i *Ingestor) Manifests() k8sutil.ObjectMap {
-	i.withIngestorContainer(i.VolumeType, i.VolumeSize)
+	i.makeContainer(i.withIngestorContainer(i.VolumeType, i.VolumeSize))
 	return i.baseReceive.manifests()
 }
 
@@ -308,8 +308,10 @@ func (ir *IngestorRouter) Manifests() k8sutil.ObjectMap {
 	// Set the local endpoint at Manifests time, as it depends on the name of the resource and gRPC port.
 	// This option, in addition to the router and receive options, is required to be set for the IngestorRouter.
 	ir.options.ReceiveLocalEndpoint = fmt.Sprintf("$(NAME).%s.$(NAMESPACE).svc.cluster.local:%d", ir.Name, ir.options.GrpcAddress.Port)
-	ir.withIngestorContainer(ir.VolumeType, ir.VolumeSize)
-	ir.withRouterContainer()
+	ir.makeContainer(
+		ir.withIngestorContainer(ir.VolumeType, ir.VolumeSize),
+		ir.withRouterContainer(),
+	)
 	return ir.baseReceive.manifests()
 }
 
@@ -359,43 +361,43 @@ func newBaseReceive(opts *ReceiveOptions, namespace, imageTag string, commonLabe
 	}
 }
 
-func (br *baseReceive) withRouterContainer() {
-	if br.options.ReceiveHashringsFile == nil {
-		panic(`hashrings file is not specified for the statefulset.`)
+func (br *baseReceive) withRouterContainer() ContainerOption {
+	return func(container *k8sutil.Container) {
+		if br.options.ReceiveHashringsFile == nil {
+			panic(`hashrings file is not specified for the statefulset.`)
+		}
+
+		br.options.ReceiveHashringsFile.AddToContainer(container)
+
+		if br.options.ReceiveLimitsConfigFile != nil {
+			br.options.ReceiveLimitsConfigFile.AddToContainer(container)
+		}
 	}
-
-	container := br.makeContainer()
-
-	br.options.ReceiveHashringsFile.AddToContainer(container)
-
-	if br.options.ReceiveLimitsConfigFile != nil {
-		br.options.ReceiveLimitsConfigFile.AddToContainer(container)
-	}
-
-	br.container = container
 }
 
-func (br *baseReceive) withIngestorContainer(volumeType string, volumeSize string) {
-	if br.options.TsdbPath == "" {
-		panic(`data directory is not specified for the statefulset.`)
-	}
+func (br *baseReceive) withIngestorContainer(volumeType string, volumeSize string) ContainerOption {
+	return func(container *k8sutil.Container) {
+		if br.options.TsdbPath == "" {
+			panic(`data directory is not specified for the statefulset.`)
+		}
 
-	container := br.makeContainer()
-	container.VolumeMounts = []corev1.VolumeMount{
-		{
-			Name:      dataVolumeName,
-			MountPath: br.options.TsdbPath,
-		},
+		container.VolumeMounts = []corev1.VolumeMount{
+			{
+				Name:      dataVolumeName,
+				MountPath: br.options.TsdbPath,
+			},
+		}
+		container.VolumeClaims = []k8sutil.VolumeClaim{
+			k8sutil.NewVolumeClaimProvider(dataVolumeName, volumeType, volumeSize),
+		}
 	}
-	container.VolumeClaims = []k8sutil.VolumeClaim{
-		k8sutil.NewVolumeClaimProvider(dataVolumeName, volumeType, volumeSize),
-	}
-
-	br.container = container
 }
 
 func (br *baseReceive) manifests() k8sutil.ObjectMap {
-	container := br.makeContainer()
+	container := br.container
+	if container == nil {
+		panic("container is not initialized")
+	}
 
 	ret := k8sutil.ObjectMap{}
 
@@ -409,7 +411,7 @@ func (br *baseReceive) manifests() k8sutil.ObjectMap {
 	return ret
 }
 
-func (br *baseReceive) makeContainer() *k8sutil.Container {
+func (br *baseReceive) makeContainer(opts ...ContainerOption) {
 	httpPort := k8sutil.GetPortOrDefault(defaultHTTPPort, br.options.HttpAddress)
 	k8sutil.CheckProbePort(httpPort, br.LivenessProbe)
 	k8sutil.CheckProbePort(httpPort, br.ReadinessProbe)
@@ -448,5 +450,11 @@ func (br *baseReceive) makeContainer() *k8sutil.Container {
 		},
 	}
 
-	return ret
+	for _, opt := range opts {
+		opt(ret)
+	}
+
+	br.container = ret
 }
+
+type ContainerOption func(*k8sutil.Container)

@@ -219,7 +219,7 @@ func (q *QueryDeployment) makeContainer() *k8sutil.Container {
 		q.options.RequestLoggingConfigFile.AddToContainer(ret)
 	}
 
-	if q.options.TracingConfig != nil {
+	if q.options.TracingConfigFile != nil {
 		q.options.TracingConfigFile.AddToContainer(ret)
 	}
 
