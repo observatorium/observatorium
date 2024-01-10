@@ -68,7 +68,7 @@ func NewAvalanche(opts *AvalancheOptions, namespace, imageTag string) *Avalanche
 func (u *AvalancheDeployment) Manifests() k8sutil.ObjectMap {
 	container := u.makeContainer()
 	ret := k8sutil.ObjectMap{}
-	ret.AddAll(u.GenerateObjects(container))
+	ret.AddAll(u.GenerateObjectsDeployment(container))
 
 	return ret
 }

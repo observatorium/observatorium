@@ -94,7 +94,7 @@ func (g *GubernatorDeployment) Manifests() k8sutil.ObjectMap {
 
 	ret := k8sutil.ObjectMap{}
 
-	ret.AddAll(g.GenerateObjects(container))
+	ret.AddAll(g.GenerateObjectsDeployment(container))
 	k8sutil.GetObject[*corev1.Service](ret, g.Name).Spec.ClusterIP = corev1.ClusterIPNone
 
 	rbacRole := &rbacv1.Role{

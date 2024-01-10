@@ -88,7 +88,7 @@ func (s *MemcachedDeployment) Manifests() k8sutil.ObjectMap {
 
 	container := s.makeContainer()
 	ret := k8sutil.ObjectMap{}
-	ret.AddAll(s.GenerateObjects(container))
+	ret.AddAll(s.GenerateObjectsDeployment(container))
 
 	// Set headless service to get stable network ID.
 	service := k8sutil.GetObject[*corev1.Service](ret, "")

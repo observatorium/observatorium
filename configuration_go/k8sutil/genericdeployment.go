@@ -70,8 +70,8 @@ func (d DeploymentGenericConfig) ToContainer() *Container {
 	}
 }
 
-// GenerateObjects returns the list of runtime objects for the given container in a Deployment.
-func (d DeploymentGenericConfig) GenerateObjects(container *Container) []runtime.Object {
+// GenerateObjectsDeployment returns the list of runtime objects for the given container in a Deployment.
+func (d DeploymentGenericConfig) GenerateObjectsDeployment(container *Container) []runtime.Object {
 	pod := d.Pod(container)
 	ret := d.generateCommonObjects(pod)
 	ret = append(ret, d.Deployment(pod))

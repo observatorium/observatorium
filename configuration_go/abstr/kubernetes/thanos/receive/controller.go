@@ -74,7 +74,7 @@ func (c *Controller) Manifests() k8sutil.ObjectMap {
 	container := c.makeContainer()
 
 	ret := k8sutil.ObjectMap{}
-	ret.AddAll(c.GenerateObjects(container))
+	ret.AddAll(c.GenerateObjectsDeployment(container))
 
 	// create role
 	ret.Add(&rbacv1.Role{

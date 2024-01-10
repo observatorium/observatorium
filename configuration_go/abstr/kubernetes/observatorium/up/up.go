@@ -125,7 +125,7 @@ func NewUp(opts *UpOptions, namespace, imageTag string) *UpDeployment {
 func (u *UpDeployment) Manifests() k8sutil.ObjectMap {
 	container := u.makeContainer()
 	ret := k8sutil.ObjectMap{}
-	ret.AddAll(u.GenerateObjects(container))
+	ret.AddAll(u.GenerateObjectsDeployment(container))
 
 	return ret
 }

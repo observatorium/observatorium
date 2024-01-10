@@ -177,7 +177,7 @@ func (q *QueryDeployment) Manifests() k8sutil.ObjectMap {
 	container := q.makeContainer()
 
 	ret := k8sutil.ObjectMap{}
-	ret.AddAll(q.GenerateObjects(container))
+	ret.AddAll(q.GenerateObjectsDeployment(container))
 
 	return ret
 }

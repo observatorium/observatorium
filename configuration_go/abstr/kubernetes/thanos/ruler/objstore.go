@@ -107,7 +107,7 @@ func (r *RulesObjstoreDeployment) Manifests() k8sutil.ObjectMap {
 	container := r.makeContainer()
 
 	ret := k8sutil.ObjectMap{}
-	ret.AddAll(r.GenerateObjects(container))
+	ret.AddAll(r.GenerateObjectsDeployment(container))
 
 	return ret
 }

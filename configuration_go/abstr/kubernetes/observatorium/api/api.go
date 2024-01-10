@@ -167,7 +167,7 @@ func NewObservatoriumAPI(opts *ObservatoriumAPIOptions, namespace, imageTag stri
 func (s *ObservatoriumAPIDeployment) Manifests() k8sutil.ObjectMap {
 	container := s.makeContainer()
 	ret := k8sutil.ObjectMap{}
-	ret.AddAll(s.GenerateObjects(container))
+	ret.AddAll(s.GenerateObjectsDeployment(container))
 
 	return ret
 }

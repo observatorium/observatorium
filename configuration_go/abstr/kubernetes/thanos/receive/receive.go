@@ -405,7 +405,7 @@ func (br *baseReceive) manifests() k8sutil.ObjectMap {
 	if br.options.TsdbPath != "" {
 		ret.AddAll(br.GenerateObjectsStatefulSet(container))
 	} else {
-		ret.AddAll(br.GenerateObjects(container))
+		ret.AddAll(br.GenerateObjectsDeployment(container))
 	}
 
 	return ret
