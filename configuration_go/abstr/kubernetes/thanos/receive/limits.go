@@ -10,10 +10,6 @@ type ReceiveLimitsConfig struct {
 	WriteLimits WriteLimitsConfig `yaml:"write,omitempty"`
 }
 
-func NewReceiveLimitsConfig() ReceiveLimitsConfig {
-	return ReceiveLimitsConfig{}
-}
-
 // String returns a string representation of the RootLimitsConfig as JSON.
 // It implements the Stringer interface that is used by the cmdopt package.
 func (r ReceiveLimitsConfig) String() string {

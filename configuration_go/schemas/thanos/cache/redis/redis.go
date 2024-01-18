@@ -80,6 +80,9 @@ type RedisClientConfig struct {
 
 	// MaxAsyncConcurrency specifies the maximum number of SetAsync goroutines.
 	MaxAsyncConcurrency int `yaml:"max_async_concurrency,omitempty"`
+
+	// Expiration specifies the default expiration time for items. Only valid for response cache type. Ignored otherwise.
+	Expiration time.Duration `yaml:"expiration,omitempty"`
 }
 
 func (c RedisClientConfig) Type() string {

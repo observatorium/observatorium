@@ -1,14 +1,13 @@
 package store
 
 import (
-	"fmt"
 	"net"
 	"time"
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache"
-	thanoslog "github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	thanostime "github.com/observatorium/observatorium/configuration_go/schemas/thanos/time"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
@@ -19,12 +18,9 @@ import (
 )
 
 const (
-	dataVolumeName   string = "data"
-	defaultHTTPPort  int    = 10902
-	defaultGRPCPort  int    = 10901
-	defaultNamespace string = "observatorium"
-	defaultImage     string = "quay.io/thanos/thanos"
-	defaultImageTag  string = "v0.32.2"
+	dataVolumeName  string = "data"
+	defaultHTTPPort int    = 10902
+	defaultGRPCPort int    = 10901
 )
 
 // StoreOptions represents the options/flags for the store.
@@ -33,7 +29,7 @@ type StoreOptions struct {
 	BlockMetaFetchConcurrency        int                             `opt:"block-meta-fetch-concurrency"`
 	BlockSyncConcurrency             int                             `opt:"block-sync-concurrency"`
 	BucketWebLabel                   string                          `opt:"bucket-web-label"`
-	CacheIndexHeader                 bool                            `opt:"cache-index-header"`
+	CacheIndexHeader                 bool                            `opt:"cache-index-header,noval"`
 	ChunkPoolSize                    units.Bytes                     `opt:"chunk-pool-size"`
 	ConsistencyDelay                 time.Duration                   `opt:"consistency-delay"`
 	DataDir                          string                          `opt:"data-dir"`
@@ -50,8 +46,8 @@ type StoreOptions struct {
 	IndexCacheSize                   units.Bytes                     `opt:"index-cache-size"`
 	IndexCacheConfig                 *cache.IndexCacheConfig         `opt:"index-cache.config"`
 	IndexCacheConfigFile             string                          `opt:"index-cache.config-file"`
-	LogFormat                        thanoslog.LogFormat             `opt:"log.format"`
-	LogLevel                         thanoslog.LogLevel              `opt:"log.level"`
+	LogFormat                        log.LogFormat                   `opt:"log.format"`
+	LogLevel                         log.LogLevel                    `opt:"log.level"`
 	MaxTime                          *thanostime.TimeOrDurationValue `opt:"max-time"`
 	MinTime                          *thanostime.TimeOrDurationValue `opt:"min-time"`
 	ObjstoreConfig                   string                          `opt:"objstore.config"`
@@ -60,8 +56,8 @@ type StoreOptions struct {
 	RequestLoggingConfigFile         string                          `opt:"request.logging-config-file"`
 	SelectorRelabelConfig            *relabel.Config                 `opt:"selector.relabel-config"`
 	SelectorRelabelConfigFile        string                          `opt:"selector.relabel-config-file"`
-	StoreEnableIndexHeaderLazyReader bool                            `opt:"store.enable-index-header-lazy-reader"`
-	StoreEnableLazyExpandedPostings  bool                            `opt:"store.enable-lazy-expanded-postings"`
+	StoreEnableIndexHeaderLazyReader bool                            `opt:"store.enable-index-header-lazy-reader,noval"`
+	StoreEnableLazyExpandedPostings  bool                            `opt:"store.enable-lazy-expanded-postings,noval"`
 	StoreGrpcDownloadedBytesLimit    units.Bytes                     `opt:"store.grps.downloaded-bytes-limit"`
 	StoreGrpcSeriesMaxConcurrency    int                             `opt:"store.grps.series-max-concurrency"`
 	StoreLimitsRequestSamples        int                             `opt:"store.limits.request-samples"`
@@ -69,8 +65,8 @@ type StoreOptions struct {
 	SyncBlockDuration                time.Duration                   `opt:"sync-block-duration"`
 	TracingConfig                    *trclient.TracingConfig         `opt:"tracing.config"`
 	TracingConfigFile                string                          `opt:"tracing.config-file"`
-	WebDisable                       bool                            `opt:"web.disable"`
-	WebDisableCors                   bool                            `opt:"web.disable-cors"`
+	WebDisable                       bool                            `opt:"web.disable,noval"`
+	WebDisableCors                   bool                            `opt:"web.disable-cors,noval"`
 	WebExternalPrefix                string                          `opt:"web.external-prefix"`
 	WebPrefixHeader                  string                          `opt:"web.prefix-header"`
 
@@ -79,20 +75,26 @@ type StoreOptions struct {
 }
 
 type StoreStatefulSet struct {
-	Options    *StoreOptions
+	options    *StoreOptions
 	VolumeType string
 	VolumeSize string
 
 	k8sutil.DeploymentGenericConfig
 }
 
-func NewStore() *StoreStatefulSet {
-	opts := &StoreOptions{
+func NewDefaultOptions() *StoreOptions {
+	return &StoreOptions{
 		LogLevel:                 "warn",
 		LogFormat:                "logfmt",
 		DataDir:                  "/var/thanos/store",
 		ObjstoreConfig:           "$(OBJSTORE_CONFIG)",
 		IgnoreDeletionMarksDelay: 24 * time.Hour,
+	}
+}
+
+func NewStore(opts *StoreOptions, namespace, imageTag string) *StoreStatefulSet {
+	if opts == nil {
+		opts = NewDefaultOptions()
 	}
 
 	commonLabels := map[string]string{
@@ -100,6 +102,7 @@ func NewStore() *StoreStatefulSet {
 		k8sutil.InstanceLabel:  "observatorium",
 		k8sutil.PartOfLabel:    "observatorium",
 		k8sutil.ComponentLabel: "object-store-gateway",
+		k8sutil.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
@@ -107,26 +110,28 @@ func NewStore() *StoreStatefulSet {
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
+	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
+
 	return &StoreStatefulSet{
-		Options: opts,
+		options: opts,
 		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
-			Image:                defaultImage,
-			ImageTag:             defaultImageTag,
+			Image:                "quay.io/thanos/thanos",
+			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-thanos-store",
-			Namespace:            defaultNamespace,
+			Namespace:            namespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("500m", "1", "200Mi", "400Mi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "1", "200Mi", "400Mi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
+			LivenessProbe: k8sutil.NewProbe("/-/healthy", probePort, k8sutil.ProbeConfig{
 				FailureThreshold: 8,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/-/ready", defaultHTTPPort, k8sutil.ProbeConfig{
+			ReadinessProbe: k8sutil.NewProbe("/-/ready", probePort, k8sutil.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
@@ -145,106 +150,26 @@ func NewStore() *StoreStatefulSet {
 func (s *StoreStatefulSet) Manifests() k8sutil.ObjectMap {
 	container := s.makeContainer()
 
-	commonObjectMeta := k8sutil.MetaConfig{
-		Name:      s.Name,
-		Labels:    s.CommonLabels,
-		Namespace: s.Namespace,
-	}
-	commonObjectMeta.Labels[k8sutil.VersionLabel] = container.ImageTag
-
-	pod := &k8sutil.Pod{
-		TerminationGracePeriodSeconds: &s.TerminationGracePeriodSeconds,
-		Affinity:                      s.Affinity,
-		SecurityContext:               s.SecurityContext,
-		ServiceAccountName:            commonObjectMeta.Name,
-		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, s.Sidecars...),
-	}
-
-	statefulset := &k8sutil.StatefulSet{
-		MetaConfig: commonObjectMeta.Clone(),
-		Replicas:   s.Replicas,
-		Pod:        pod,
-	}
-
-	ret := k8sutil.ObjectMap{
-		"store-statefulSet": statefulset.MakeManifest(),
-	}
-
-	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta.Clone(),
-		ServicePorts: pod,
-	}
-	ret["store-service"] = service.MakeManifest()
-
-	if s.EnableServiceMonitor {
-		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta.Clone(),
-			ServiceMonitorEndpoints: pod,
-		}
-		ret["store-serviceMonitor"] = serviceMonitor.MakeManifest()
-	}
-
-	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta.Clone(),
-		Name:       pod.ServiceAccountName,
-	}
-	ret["store-serviceAccount"] = serviceAccount.MakeManifest()
-
-	// Create configMaps required by the containers
-	for name, config := range pod.GetConfigMaps() {
-		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       config,
-		}
-		configMap.MetaConfig.Name = name
-		ret["store-configMap-"+name] = configMap.MakeManifest()
-	}
-
-	// Create secrets required by the containers
-	for name, secret := range pod.GetSecrets() {
-		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       secret,
-		}
-		secret.MetaConfig.Name = name
-		ret["store-secret-"+name] = secret.MakeManifest()
-	}
+	ret := k8sutil.ObjectMap{}
+	ret.AddAll(s.GenerateObjectsStatefulSet(container))
 
 	return ret
 }
 
 func (s *StoreStatefulSet) makeContainer() *k8sutil.Container {
-	if s.Options == nil {
-		s.Options = &StoreOptions{}
-	}
+	httpPort := k8sutil.GetPortOrDefault(defaultHTTPPort, s.options.HttpAddress)
+	k8sutil.CheckProbePort(httpPort, s.LivenessProbe)
+	k8sutil.CheckProbePort(httpPort, s.ReadinessProbe)
 
-	httpPort := defaultHTTPPort
-	if s.Options.HttpAddress != nil && s.Options.HttpAddress.Port != 0 {
-		httpPort = s.Options.HttpAddress.Port
-	}
+	grpcPort := k8sutil.GetPortOrDefault(defaultGRPCPort, s.options.GrpcAddress)
 
-	grpcPort := defaultGRPCPort
-	if s.Options.GrpcAddress != nil && s.Options.GrpcAddress.Port != 0 {
-		grpcPort = s.Options.GrpcAddress.Port
-	}
-
-	livenessPort := s.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if livenessPort != int32(httpPort) {
-		panic(fmt.Sprintf(`liveness probe port %d does not match http port %d`, livenessPort, httpPort))
-	}
-
-	readinessPort := s.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if readinessPort != int32(httpPort) {
-		panic(fmt.Sprintf(`readiness probe port %d does not match http port %d`, readinessPort, httpPort))
-	}
-
-	if s.Options.DataDir == "" {
+	if s.options.DataDir == "" {
 		panic(`data directory is not specified for the statefulset.`)
 	}
 
 	ret := s.ToContainer()
 	ret.Name = "thanos"
-	ret.Args = append([]string{"store"}, cmdopt.GetOpts(s.Options)...)
+	ret.Args = append([]string{"store"}, cmdopt.GetOpts(s.options)...)
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "http",
@@ -273,7 +198,7 @@ func (s *StoreStatefulSet) makeContainer() *k8sutil.Container {
 	ret.VolumeMounts = []corev1.VolumeMount{
 		{
 			Name:      dataVolumeName,
-			MountPath: s.Options.DataDir,
+			MountPath: s.options.DataDir,
 		},
 	}
 

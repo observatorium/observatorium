@@ -18,6 +18,32 @@ const (
 	ExpandedPostings IndexCacheEnabledItem = "ExpandedPostings"
 )
 
+type CacheConfig interface {
+	redis.RedisClientConfig | memcached.MemcachedClientConfig | memory.MemoryCacheConfig
+	Type() string
+}
+
+func NewIndexCacheConfig[T CacheConfig](c T) *IndexCacheConfig {
+	return &IndexCacheConfig{
+		ConfigType: c.Type(),
+		Config:     c,
+	}
+}
+
+func NewBucketCacheConfig[T CacheConfig](c T) *BucketCacheConfig {
+	return &BucketCacheConfig{
+		Type:   c.Type(),
+		Config: c,
+	}
+}
+
+func NewResponseCacheConfig[T CacheConfig](c T) *ResponseCacheConfig {
+	return &ResponseCacheConfig{
+		Type:   c.Type(),
+		Config: c,
+	}
+}
+
 // IndexCacheConfig specifies the index cache config.
 type IndexCacheConfig struct {
 	ConfigType string      `yaml:"type"`
@@ -37,25 +63,6 @@ func (c IndexCacheConfig) String() string {
 		panic(fmt.Sprintf("error mashalling IndexCacheConfig to yaml: %v", err))
 	}
 	return string(ret)
-}
-
-type CacheConfig interface {
-	redis.RedisClientConfig | memcached.MemcachedClientConfig | memory.MemoryCacheConfig
-	Type() string
-}
-
-func NewIndexCacheConfig[T CacheConfig](c T) *IndexCacheConfig {
-	return &IndexCacheConfig{
-		ConfigType: c.Type(),
-		Config:     c,
-	}
-}
-
-func NewBucketCacheConfig[T CacheConfig](c T) *BucketCacheConfig {
-	return &BucketCacheConfig{
-		Type:   c.Type(),
-		Config: c,
-	}
 }
 
 // Taken from https://github.com/thanos-io/thanos/blob/release-0.32/pkg/store/cache/caching_bucket_factory.go#L37
@@ -92,6 +99,21 @@ func (c BucketCacheConfig) String() string {
 	ret, err := yaml.Marshal(c)
 	if err != nil {
 		panic(fmt.Sprintf("error mashalling BucketCacheConfig to yaml: %v", err))
+	}
+	return string(ret)
+}
+
+type ResponseCacheConfig struct {
+	Type   string      `yaml:"type"`
+	Config interface{} `yaml:"config"`
+}
+
+// String returns a string representation of the ResponseCacheConfig as YAML.
+// We use "gopkg.in/yaml.v2" instead of "github.com/ghodss/yaml" for correct formatting of this config.
+func (c ResponseCacheConfig) String() string {
+	ret, err := yaml.Marshal(c)
+	if err != nil {
+		panic(fmt.Sprintf("error mashalling ResponseCacheConfig to yaml: %v", err))
 	}
 	return string(ret)
 }

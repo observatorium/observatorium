@@ -4,24 +4,16 @@ import (
 	"time"
 
 	"github.com/bwplotka/mimic"
-	"github.com/ghodss/yaml"
-	api "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/observatoriumapi"
-	"github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/thanos/compactor"
-	query "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/thanos/query"
+
+	obsrbac "github.com/observatorium/api/rbac"
+	"github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/observatorium/api"
 	"github.com/observatorium/observatorium/configuration_go/generator"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
 	"github.com/observatorium/observatorium/configuration_go/openshift"
-	apiprovider "github.com/observatorium/observatorium/configuration_go/providers/api"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore/s3"
-	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
-	jaeger "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/jaeger"
-
-	obsrbac "github.com/observatorium/api/rbac"
+	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	templatev1 "github.com/openshift/api/template/v1"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -36,7 +28,7 @@ func main() {
 	defer g.Generate()
 
 	// Create rbac.
-	rbac := apiprovider.RBAC{
+	rbac := &api.RBAC{
 		Roles: []obsrbac.Role{
 			{
 				Name:        "read-write",
@@ -59,88 +51,71 @@ func main() {
 		},
 	}
 
-	rbacData, err := yaml.Marshal(rbac)
-	mimic.PanicOnErr(err)
-
 	// Create tenants. Ideally, this should come from secret management tool like vault.
-	tenants := apiprovider.Tenants{
-		Tenants: []*apiprovider.Tenant{
+	tenants := &api.Tenants{
+		Tenants: []api.Tenant{
 			{
 				Name: "test-oidc",
 				ID:   "1610b0c3-c509-4592-a256-a1871353dbfa",
-				OIDC: &apiprovider.OIDC{
+				OIDC: &api.TenantOIDC{
 					ClientID:  "observatorium",
 					IssuerURL: "http://hydra.hydra.svc.cluster.local:4444/",
 				},
-				RateLimits: []*apiprovider.Ratelimits{
+				RateLimits: []api.TenantRateLimits{
 					{
 						Endpoint: "/api/metrics/v1/.+/api/v1/receive",
 						Limit:    1000,
-						Window:   apiprovider.Duration(time.Second),
+						Window:   time.Duration(time.Second),
 					},
 					{
 						Endpoint: "/api/logs/v1/.*",
 						Limit:    1000,
-						Window:   apiprovider.Duration(time.Second),
+						Window:   time.Duration(time.Second),
 					},
 				},
 			},
 		},
 	}
 
-	tenantsData, err := yaml.Marshal(tenants)
-	mimic.PanicOnErr(err)
-
-	// Define API pod resources.
-	apiResources := corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("3"),
-			corev1.ResourceMemory: resource.MustParse("3000Mi"),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("2"),
-			corev1.ResourceMemory: resource.MustParse("2000Mi"),
-		},
-	}
-
 	// Example 1.
 	// Observatorium API with no sidecar and a serviceMonitor.
-	generator.GenerateWithMimic(
-		g,
-		api.NewObservatoriumAPI(
-			api.WithLogLevel("debug"),
-			api.WithMetrics(api.MetricsBackend{
-				ReadEndpoint:  "http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090",
-				WriteEndpoint: "http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291",
-				RulesEndpoint: "http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080",
-			}),
-			api.WithLogs(api.LogsBackend{
-				ReadEndpoint:  "http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100",
-				WriteEndpoint: "http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100",
-				RulesEndpoint: "http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100",
-				TailEndpoint:  "http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100",
-			}),
-			api.WithTraces(api.TracesBackend{
-				ReadEndpoint:  "http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/",
-				WriteEndpoint: "observatorium-xyz-otel-collector:4317",
-			}),
-			api.WithRateLimiter("observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081"),
-			api.WithRBACYAML(string(rbacData)),
-			api.WithTenantsSecret(map[string]string{"tenants.yaml": string(tenantsData)}),
-		).K8sConfig(
-			k8sutil.WithImage("quay.io/observatorium/api", "main-2023-01-24-v0.1.2-318-g5f4fdf4"),
-			k8sutil.WithName("observatorium-xyz"),
-			k8sutil.WithNamespace("observatorium"),
-			k8sutil.WithReplicas(3),
-			k8sutil.WithResources(apiResources),
-			k8sutil.WithServiceMonitor(),
-		).Manifests(),
-		"config",
-	)
+
+	// Configure Observatorium API application.
+	apiOpts := &api.ObservatoriumAPIOptions{
+		LogLevel: log.LogLevelDebug,
+		// Metrics endpoints.
+		MetricsReadEndpoint:  "http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090",
+		MetricsWriteEndpoint: "http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291",
+		MetricsRulesEndpoint: "http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080",
+		// Logs endpoints.
+		LogsReadEndpoint:  "http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100",
+		LogsWriteEndpoint: "http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100",
+		LogsRulesEndpoint: "http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100",
+		LogsTailEndpoint:  "http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100",
+		// Traces endpoints.
+		TracesReadEndpoint:  "http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/",
+		TracesWriteEndpoint: "observatorium-xyz-otel-collector:4317",
+		// Rate limiter.
+		MiddlewareRateLimiterGrpcAddress: "observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081",
+		// RBAC and tenants.
+		RbacConfig:    api.NewRbacConfig(rbac).WithResourceName("observatorium-xyz-rbac"),
+		TenantsConfig: api.NewTenantsConfig(tenants).WithResourceName("observatorium-xyz-tenants"),
+	}
+
+	// Configure Kubernetes resources.
+	apiK8s := api.NewObservatoriumAPI(apiOpts, "observatorium", "latest")
+	apiK8s.Name = "observatorium-xyz"
+	apiK8s.Replicas = 3
+	apiK8s.ContainerResources = k8sutil.NewResourcesRequirements("2", "3", "2Gi", "3Gi")
+
+	// Generate manifests.
+	generator.GenerateWithMimic(g, apiK8s.Manifests(), "config-new")
 
 	// Example 2
 	// Create sidecar container.
-	dummyContainer := k8sutil.Container{
+	// It uses k8sutil Container provider that encapsulates all resources needed for a container.
+	// Including configMaps, volumes, servicePorts, etc.
+	dummyContainer := &k8sutil.Container{
 		Name:            "dummy-sidecar",
 		Image:           "docker.io/dummy",
 		ImageTag:        "latest",
@@ -184,7 +159,7 @@ func main() {
 				TargetPort: intstr.FromInt(7080),
 			},
 		},
-		Volumes: []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config", "dummy-sidecar-config")},
+		Volumes: []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config", "dummy-sidecar-config-new")},
 		MonitorPorts: []monv1.Endpoint{
 			{
 				Port: "dummy-metrics",
@@ -197,190 +172,62 @@ func main() {
 		},
 	}
 
-	// Observatorium API with a dummy sidecar and a serviceMonitor.
-	generator.GenerateWithMimic(
-		g,
-		api.NewObservatoriumAPI(
-			api.WithLogLevel("debug"),
-			api.WithMetrics(api.MetricsBackend{
-				ReadEndpoint:  "http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090",
-				WriteEndpoint: "http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291",
-				RulesEndpoint: "http://observatorium-xyz-rules-objstore.observatorium.svc.cluster.local:8080",
-			}),
-			api.WithLogs(api.LogsBackend{
-				ReadEndpoint:  "http://observatorium-xyz-loki-query-frontend-http.observatorium.svc.cluster.local:3100",
-				WriteEndpoint: "http://observatorium-xyz-loki-distributor-http.observatorium.svc.cluster.local:3100",
-				RulesEndpoint: "http://observatorium-xyz-loki-ruler-http.observatorium.svc.cluster.local:3100",
-				TailEndpoint:  "http://observatorium-xyz-loki-querier-http.observatorium.svc.cluster.local:3100",
-			}),
-			api.WithTraces(api.TracesBackend{
-				ReadEndpoint:  "http://observatorium-xyz-jaeger-query.observatorium.svc.cluster.local:16686/",
-				WriteEndpoint: "observatorium-xyz-otel-collector:4317",
-			}),
-			api.WithRateLimiter("observatorium-xyz-gubernator.observatorium.svc.cluster.local:8081"),
-			api.WithRBACYAML(string(rbacData)),
-			api.WithTenantsSecret(map[string]string{"tenants.yaml": string(tenantsData)}),
-		).K8sConfig(
-			k8sutil.WithImage("quay.io/observatorium/api", "main-2023-01-24-v0.1.2-318-g5f4fdf4"),
-			k8sutil.WithName("observatorium-xyz"),
-			k8sutil.WithNamespace("observatorium"),
-			k8sutil.WithReplicas(3),
-			k8sutil.WithResources(apiResources),
-			k8sutil.WithServiceMonitor(),
-			// Add dummy-sidecar stuff
-			k8sutil.WithSidecars(&dummyContainer),
-		).Manifests(),
-		"config-w-sidecar",
-	)
+	// Reusing the same API config as above for simplicity.
+	// And adding the dummy sidecar.
+	apiK8s.Sidecars = append(apiK8s.Sidecars, dummyContainer)
 
-	// Thanos Query sample deployment.
-	generator.GenerateWithMimic(
-		g,
-		query.NewThanosQuery(
-			query.WithGRPCOptions(query.GRPCOptions{
-				ServerAddress: "0.0.0.0:10901",
-				ProxyStrategy: "eager",
-			}),
-			query.WithHTTPOptions(query.HTTPOptions{
-				BindAddress: "0.0.0.0:9090",
-			}),
-			query.WithLogging("debug", "logfmt"),
-			query.WithReplicaLabels([]string{"replica", "rule_replica", "prometheus_replica"}),
-			query.WithWebOptions(query.WebOptions{
-				PrefixHeaderName: "X-Forwarded-Prefix",
-			}),
-			query.WithEndpoints([]string{
-				"dnssrv+_grpc._tcp.observatorium-thanos-store-shard-0.observatorium.svc.cluster.local",
-				"dnssrv+_grpc._tcp.observatorium-thanos-store-shard-1.observatorium.svc.cluster.local",
-				"dnssrv+_grpc._tcp.observatorium-thanos-store-shard-2.observatorium.svc.cluster.local",
-				"dnssrv+_grpc._tcp.observatorium-thanos-receive.observatorium.svc.cluster.local",
-			}...),
-			query.WithQueryTimeout("15m"),
-			query.WithLookbackDelta("15m"),
-			query.WithAutoDownsampling(),
-			query.WithMaxConcurrentQueries(20),
-			query.WithEngine("prometheus"),
-			query.WithTracingConfig(trclient.TracingConfig{
-				Type: trclient.Jaeger,
-				Config: jaeger.Config{
-					SamplerParam: 2,
-					SamplerType:  jaeger.SamplerTypeRateLimiting,
-					ServiceName:  "thanos-query",
-				},
-			}),
-			query.WithStoreOptions(query.StoreOptions{
-				SDFiles: []query.SDFile{{
-					Name: "rule-sd",
-					Data: "dnssrv+_grpc._tcp.observatorium-thanos-rule.observatorium.svc.cluster.local",
-				}},
-			}),
-			query.WithQueryTelemetry(query.QueryTelemetry{
-				DurationQuantiles: []float64{0.1, 0.25, 0.75, 1.25, 1.75, 2, 3, 5, 10, 15, 30, 60, 120},
-			}),
-		).K8sConfig(
-			k8sutil.WithImage("quay.io/thanos-io/thanos", "v0.31"),
-			k8sutil.WithName("observatorium-xyz"),
-			k8sutil.WithNamespace("observatorium"),
-			k8sutil.WithReplicas(3),
-			k8sutil.WithResources(apiResources),
-			k8sutil.WithServiceMonitor(),
-			// Add dummy-sidecar stuff
-			k8sutil.WithSidecars(&dummyContainer),
-		).Manifests(),
-		"config-w-sidecar",
-	)
-
-	// Example
-	// Thanos Compactor deployment as statefulSet with sidecar.
-
-	// Set the compactor options.
-	compactorSatefulset := compactor.NewCompactor()
-	compactorSatefulset.Options.LogLevel = "debug"
-	compactorSatefulset.Options.AddExtraOpts("--debug.accept-malformed-index")
-
-	// Add secrets.
-	bucketConfig := objstore.BucketConfig{
-		Type: objstore.S3,
-		Config: s3.Config{
-			Bucket:    "dummy",
-			Endpoint:  "s3.us-east-1.amazonaws.com",
-			Region:    "us-east-1",
-			AccessKey: "aws_access_key_id",
-			SecretKey: "aws_secret_access_key",
-		},
-	}
-
-	objstoreConfig, err := yaml.Marshal(&bucketConfig)
-	mimic.PanicOnErr(err)
-
-	compactorSatefulset.Secrets["objectStore-secret"] = map[string][]byte{
-		"thanos.yaml": objstoreConfig,
-	}
-
-	// Add a dummy sidecar.
-	compactorSatefulset.Sidecars = append(compactorSatefulset.Sidecars, &dummyContainer)
-
-	// Generate manifests and do some post processing.
-	compactorManifests := compactorSatefulset.Manifests()
-	compactorManifests["compactor-serviceMonitor"].(*monv1.ServiceMonitor).ObjectMeta.Namespace = "openshift-monitoring"
-	generator.GenerateWithMimic(g, compactorManifests, "compactor")
+	// Generate manifests.
+	generator.GenerateWithMimic(g, apiK8s.Manifests(), "config-w-sidecar")
 
 	// Example 3
 	// Observatorium API with no sidecar, packaged as Observatorium template.
-	generator.GenerateWithMimic(
-		g,
-		openshift.WrapInTemplate(
-			"observatorium-template",
-			api.NewObservatoriumAPI(
-				api.WithLogLevel("${OBSERVATORIUM_API_LOG_LEVEL}"),
-				api.WithMetrics(api.MetricsBackend{
-					ReadEndpoint:  "http://observatorium-xyz-thanos-query-frontend.${NAMESPACE}.svc.cluster.local:9090",
-					WriteEndpoint: "http://observatorium-xyz-thanos-receive.${NAMESPACE}.svc.cluster.local:19291",
-					RulesEndpoint: "http://observatorium-xyz-rules-objstore.${NAMESPACE}.svc.cluster.local:8080",
-				}),
-				api.WithLogs(api.LogsBackend{
-					ReadEndpoint:  "http://observatorium-xyz-loki-query-frontend-http.${NAMESPACE}.svc.cluster.local:3100",
-					WriteEndpoint: "http://observatorium-xyz-loki-distributor-http.${NAMESPACE}.svc.cluster.local:3100",
-					RulesEndpoint: "http://observatorium-xyz-loki-ruler-http.${NAMESPACE}.svc.cluster.local:3100",
-					TailEndpoint:  "http://observatorium-xyz-loki-querier-http.${NAMESPACE}.svc.cluster.local:3100",
-				}),
-				api.WithTraces(api.TracesBackend{
-					ReadEndpoint:  "http://observatorium-xyz-jaeger-query.${NAMESPACE}.svc.cluster.local:16686/",
-					WriteEndpoint: "observatorium-xyz-otel-collector:4317",
-				}),
-				api.WithRateLimiter("observatorium-xyz-gubernator.${NAMESPACE}.svc.cluster.local:8081"),
-				api.WithRBACYAML(string(rbacData)),
-				api.WithTenantsSecret(map[string]string{"tenants.yaml": string(tenantsData)}),
-			).K8sConfig(
-				k8sutil.WithImage("${OBSERVATORIUM_API_IMAGE}", "${OBSERVATORIUM_API_IMAGE_TAG}"),
-				k8sutil.WithName("observatorium-xyz"),
-				k8sutil.WithNamespace("${NAMESPACE}"),
-				k8sutil.WithResources(apiResources),
-				k8sutil.WithReplicas(3),
-				k8sutil.WithServiceMonitor(),
-			).Manifests(),
-			metav1.ObjectMeta{
-				Name: "observatorium",
-			},
-			[]templatev1.Parameter{
-				{
-					Name:  "OBSERVATORIUM_API_IMAGE",
-					Value: "quay.io/observatorium/api",
-				},
-				{
-					Name:  "OBSERVATORIUM_API_IMAGE_TAG",
-					Value: "main-2023-01-24-v0.1.2-318-g5f4fdf4",
-				},
-				{
-					Name:  "NAMESPACE",
-					Value: "observatorium",
-				},
-				{
-					Name:  "OBSERVATORIUM_API_LOG_LEVEL",
-					Value: "debug",
-				},
-			},
-		),
-		"openshift-config",
-	)
+
+	apiOpts = &api.ObservatoriumAPIOptions{
+		// Metrics endpoints.
+		MetricsReadEndpoint:  "http://observatorium-xyz-thanos-query-frontend.${NAMESPACE}.svc.cluster.local:9090",
+		MetricsWriteEndpoint: "http://observatorium-xyz-thanos-receive.${NAMESPACE}.svc.cluster.local:19291",
+		MetricsRulesEndpoint: "http://observatorium-xyz-rules-objstore.${NAMESPACE}.svc.cluster.local:8080",
+		// Logs endpoints.
+		LogsReadEndpoint:  "http://observatorium-xyz-loki-query-frontend-http.${NAMESPACE}.svc.cluster.local:3100",
+		LogsWriteEndpoint: "http://observatorium-xyz-loki-distributor-http.${NAMESPACE}.svc.cluster.local:3100",
+		LogsRulesEndpoint: "http://observatorium-xyz-loki-ruler-http.${NAMESPACE}.svc.cluster.local:3100",
+		LogsTailEndpoint:  "http://observatorium-xyz-loki-querier-http.${NAMESPACE}.svc.cluster.local:3100",
+		// Traces endpoints.
+		TracesReadEndpoint:  "http://observatorium-xyz-jaeger-query.${NAMESPACE}.svc.cluster.local:16686/",
+		TracesWriteEndpoint: "observatorium-xyz-otel-collector:4317",
+		// Rate limiter.
+		MiddlewareRateLimiterGrpcAddress: "observatorium-xyz-gubernator.${NAMESPACE}.svc.cluster.local:8081",
+		// RBAC and tenants.
+		RbacConfig:    api.NewRbacConfig(rbac),
+		TenantsConfig: api.NewTenantsConfig(tenants),
+	}
+	apiOpts.AddExtraOpts("--log-level=${OBSERVATORIUM_API_LOG_LEVEL}")
+
+	// Configure Kubernetes resources.
+	apiK8s = api.NewObservatoriumAPI(apiOpts, "${NAMESPACE}", "${OBSERVATORIUM_API_IMAGE_TAG}")
+	apiK8s.Replicas = 3
+	apiK8s.ContainerResources = k8sutil.NewResourcesRequirements("2", "3", "2Gi", "3Gi")
+	apiK8s.Image = "${OBSERVATORIUM_API_IMAGE}"
+
+	// Generate manifests.
+	generator.GenerateWithMimic(g, openshift.WrapInTemplate("observatorium-template", apiK8s.Manifests(), metav1.ObjectMeta{
+		Name: "observatorium",
+	}, []templatev1.Parameter{
+		{
+			Name:  "OBSERVATORIUM_API_IMAGE",
+			Value: "quay.io/observatorium/api",
+		},
+		{
+			Name:  "OBSERVATORIUM_API_IMAGE_TAG",
+			Value: "main-2023-01-24-v0.1.2-318-g5f4fdf4",
+		},
+		{
+			Name:  "NAMESPACE",
+			Value: "observatorium",
+		},
+		{
+			Name:  "OBSERVATORIUM_API_LOG_LEVEL",
+			Value: "debug",
+		},
+	}), "openshift-config-new")
 }

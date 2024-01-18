@@ -8,8 +8,7 @@ import (
 
 	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
 	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/log"
-	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/option"
+	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -22,8 +21,6 @@ const (
 	defaultHTTPPort    int    = 10902
 	defaultGRPCPort    int    = 10901
 	defaultReceivePort int    = 19291
-	defaultNamespace   string = "observatorium"
-	defaultImage       string = "quay.io/thanos/thanos"
 )
 
 type GrpcCompressionType string
@@ -75,18 +72,26 @@ func (h HashRingsConfig) String() string {
 	return string(ret)
 }
 
-type receiveLimitsConfigFile = option.ConfigFile[ReceiveLimitsConfig]
+type receiveLimitsConfigFile = k8sutil.ConfigFile
 
 // NewReceiveLimitsConfigFile returns a new receive limits config file option.
-func NewReceiveLimitsConfigFile(name string, value ReceiveLimitsConfig) *receiveLimitsConfigFile {
-	return option.NewConfigFile("/etc/thanos/receive-limits", "limits.yaml", name, value)
+func NewReceiveLimitsConfigFile(value *ReceiveLimitsConfig) *receiveLimitsConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/receive-limits", "limits.yaml", "receive-limits", "observatorium-thanos-receive-limits")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
-type receiveHashringConfigFile = option.ConfigFile[HashRingsConfig]
+type receiveHashringConfigFile = k8sutil.ConfigFile
 
 // NewReceiveHashringConfigFile returns a new receive hashring config file option.
-func NewReceiveHashringConfigFile(name string, value HashRingsConfig) *receiveHashringConfigFile {
-	return option.NewConfigFile("/etc/thanos/hashring", "hashring.json", name, value)
+func NewReceiveHashringConfigFile(value *HashRingsConfig) *receiveHashringConfigFile {
+	ret := k8sutil.NewConfigFile("/etc/thanos/hashring", "hashrings.json", "hashring", "observatorium-thanos-receive-hashring")
+	if value != nil {
+		ret.WithValue(value.String())
+	}
+	return ret
 }
 
 // ReceiveOptions represents the options/flags for the receive.
@@ -149,23 +154,59 @@ type ReceiveOptions struct {
 	cmdopt.ExtraOpts
 }
 
+func (ro *ReceiveOptions) withDefaultRouterOptions() *ReceiveOptions {
+	ro.ReceiveHashringsFile = NewReceiveHashringConfigFile(nil)
+	ro.ReceiveHashringsFileRefreshInterval = 5 * time.Second
+	ro.ReceiveHashringsAlgorithm = "ketama"
+	ro.Label = append(ro.Label, Label{Key: "receive", Value: "\"true\""})
+
+	return ro
+}
+
+func (ro *ReceiveOptions) withDefaultIngestorOptions() *ReceiveOptions {
+	ro.TsdbPath = "/var/thanos/receive"
+	ro.Label = append(ro.Label, Label{Key: "replica", Value: "\"$(POD_NAME)\""})
+	ro.ObjstoreConfig = "$(OBJSTORE_CONFIG)"
+
+	return ro
+}
+
+func (ro *ReceiveOptions) withBaseOptions() *ReceiveOptions {
+	ro.LogLevel = log.LogLevelWarn
+	ro.LogFormat = log.LogFormatLogfmt
+	ro.HttpAddress = &net.TCPAddr{Port: defaultHTTPPort, IP: net.ParseIP("0.0.0.0")}
+	ro.GrpcAddress = &net.TCPAddr{Port: defaultGRPCPort, IP: net.ParseIP("0.0.0.0")}
+	ro.RemoteWriteAddress = &net.TCPAddr{Port: defaultReceivePort, IP: net.ParseIP("0.0.0.0")}
+
+	return ro
+}
+
 // Router represents a receive component with router configuration.
 // It is deployed as a Deployment.
 type Router struct {
 	baseReceive
 }
 
+func NewDefaultRouterOptions() *ReceiveOptions {
+	ret := &ReceiveOptions{}
+	return ret.withBaseOptions().withDefaultRouterOptions()
+}
+
 // NewRouter returns a new Router with default configuration.
-func NewRouter() *Router {
+func NewRouter(opts *ReceiveOptions, namespace, imageTag string) *Router {
+	if opts == nil {
+		opts = NewDefaultRouterOptions()
+	}
+
 	commonLabels := map[string]string{
 		k8sutil.NameLabel:      "thanos-receive-router",
 		k8sutil.InstanceLabel:  "observatorium",
 		k8sutil.PartOfLabel:    "observatorium",
 		k8sutil.ComponentLabel: "database-write-hashring-router",
+		k8sutil.VersionLabel:   imageTag,
 	}
 
-	baseReceive := newBaseReceive(commonLabels)
-	baseReceive.withRouterConfig()
+	baseReceive := newBaseReceive(opts, namespace, imageTag, commonLabels)
 
 	return &Router{
 		baseReceive: *baseReceive,
@@ -174,7 +215,7 @@ func NewRouter() *Router {
 
 // Manifests returns the manifests for the Router.
 func (r *Router) Manifests() k8sutil.ObjectMap {
-	r.withRouterContainer()
+	r.makeContainer(r.withRouterContainer())
 	return r.baseReceive.manifests()
 }
 
@@ -186,27 +227,38 @@ type Ingestor struct {
 	VolumeSize string
 }
 
+func NewDefaultIngestorOptions() *ReceiveOptions {
+	ret := &ReceiveOptions{}
+	return ret.withBaseOptions().withDefaultIngestorOptions()
+}
+
 // NewIngestor returns a new Ingestor with default configuration.
-func NewIngestor() *Ingestor {
+func NewIngestor(opts *ReceiveOptions, namespace, imageTag string) *Ingestor {
+	if opts == nil {
+		opts = NewDefaultIngestorOptions()
+	}
+
 	commonLabels := map[string]string{
 		k8sutil.NameLabel:      "thanos-receive-ingestor",
 		k8sutil.InstanceLabel:  "observatorium",
 		k8sutil.PartOfLabel:    "observatorium",
 		k8sutil.ComponentLabel: "database-write-hashring-ingestor",
+		k8sutil.VersionLabel:   imageTag,
 	}
 
-	baseReceive := newBaseReceive(commonLabels)
-	baseReceive.withIngestorConfig()
+	baseReceive := newBaseReceive(opts, namespace, imageTag, commonLabels)
+	baseReceive.Env = append(baseReceive.Env, k8sutil.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
+	baseReceive.Env = append(baseReceive.Env, k8sutil.NewEnvFromField("POD_NAME", "metadata.name"))
 
 	return &Ingestor{
 		baseReceive: *baseReceive,
-		VolumeSize:  "100Gi",
+		VolumeSize:  "50Gi",
 	}
 }
 
 // Manifests returns the manifests for the Ingestor.
 func (i *Ingestor) Manifests() k8sutil.ObjectMap {
-	i.withIngestorContainer(i.VolumeType, i.VolumeSize)
+	i.makeContainer(i.withIngestorContainer(i.VolumeType, i.VolumeSize))
 	return i.baseReceive.manifests()
 }
 
@@ -218,24 +270,36 @@ type IngestorRouter struct {
 	baseReceive
 }
 
+func NewDefaultIngestorRouterOptions() *ReceiveOptions {
+	ret := &ReceiveOptions{}
+	return ret.withBaseOptions().
+		withDefaultRouterOptions().
+		withDefaultIngestorOptions()
+}
+
 // NewIngestorRouter returns a new IngestorRouter with default configuration.
-func NewIngestorRouter() *IngestorRouter {
+func NewIngestorRouter(opts *ReceiveOptions, namespace, imageTag string) *IngestorRouter {
+	if opts == nil {
+		opts = NewDefaultIngestorRouterOptions()
+	}
+
 	commonLabels := map[string]string{
 		k8sutil.NameLabel:      "thanos-receive-ingestorrouter",
 		k8sutil.InstanceLabel:  "observatorium",
 		k8sutil.PartOfLabel:    "observatorium",
 		k8sutil.ComponentLabel: "database-write-hashring-ingestor-router",
+		k8sutil.VersionLabel:   imageTag,
 	}
 
-	baseReceive := newBaseReceive(commonLabels)
-	baseReceive.withIngestorConfig()
-	baseReceive.withRouterConfig()
+	baseReceive := newBaseReceive(opts, namespace, imageTag, commonLabels)
+	baseReceive.Env = append(baseReceive.Env, k8sutil.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
 	baseReceive.Env = append(baseReceive.Env, k8sutil.NewEnvFromField("NAME", "metadata.name"))
 	baseReceive.Env = append(baseReceive.Env, k8sutil.NewEnvFromField("NAMESPACE", "metadata.namespace"))
+	baseReceive.Env = append(baseReceive.Env, k8sutil.NewEnvFromField("POD_NAME", "metadata.name"))
 
 	return &IngestorRouter{
 		baseReceive: *baseReceive,
-		VolumeSize:  "100Gi",
+		VolumeSize:  "50Gi",
 	}
 }
 
@@ -243,52 +307,49 @@ func NewIngestorRouter() *IngestorRouter {
 func (ir *IngestorRouter) Manifests() k8sutil.ObjectMap {
 	// Set the local endpoint at Manifests time, as it depends on the name of the resource and gRPC port.
 	// This option, in addition to the router and receive options, is required to be set for the IngestorRouter.
-	ir.Options.ReceiveLocalEndpoint = fmt.Sprintf("$(NAME).%s.$(NAMESPACE).svc.cluster.local:%d", ir.Name, ir.Options.GrpcAddress.Port)
-	ir.withIngestorContainer(ir.VolumeType, ir.VolumeSize)
-	ir.withRouterContainer()
+	ir.options.ReceiveLocalEndpoint = fmt.Sprintf("$(NAME).%s.$(NAMESPACE).svc.cluster.local:%d", ir.Name, ir.options.GrpcAddress.Port)
+	ir.makeContainer(
+		ir.withIngestorContainer(ir.VolumeType, ir.VolumeSize),
+		ir.withRouterContainer(),
+	)
 	return ir.baseReceive.manifests()
 }
 
 // baseReceive is the base struct for all receive components.
 // It contains their common configuration.
 type baseReceive struct {
-	Options *ReceiveOptions
+	options *ReceiveOptions
 	k8sutil.DeploymentGenericConfig
 	container *k8sutil.Container
 }
 
-func newBaseReceive(commonLabels map[string]string) *baseReceive {
-	opts := &ReceiveOptions{
-		LogLevel:           log.LogLevelWarn,
-		LogFormat:          log.LogFormatLogfmt,
-		HttpAddress:        &net.TCPAddr{Port: defaultHTTPPort, IP: net.ParseIP("0.0.0.0")},
-		GrpcAddress:        &net.TCPAddr{Port: defaultGRPCPort, IP: net.ParseIP("0.0.0.0")},
-		RemoteWriteAddress: &net.TCPAddr{Port: defaultReceivePort, IP: net.ParseIP("0.0.0.0")},
-	}
-
+func newBaseReceive(opts *ReceiveOptions, namespace, imageTag string, commonLabels map[string]string) *baseReceive {
 	labelSelectors := map[string]string{
 		k8sutil.NameLabel:     commonLabels[k8sutil.NameLabel],
 		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
 	}
 
+	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
+
 	return &baseReceive{
-		Options: opts,
+		options: opts,
 		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
-			Image:                defaultImage,
+			Image:                "quay.io/thanos/thanos",
+			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 fmt.Sprintf("%s-%s", commonLabels[k8sutil.InstanceLabel], commonLabels[k8sutil.NameLabel]),
-			Namespace:            defaultNamespace,
+			Namespace:            namespace,
 			CommonLabels:         commonLabels,
 			Replicas:             1,
-			PodResources:         k8sutil.NewResourcesRequirements("1", "2", "10Gi", "20Gi"),
+			ContainerResources:   k8sutil.NewResourcesRequirements("1", "2", "10Gi", "20Gi"),
 			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
-			LivenessProbe: k8sutil.NewProbe("/-/healthy", defaultHTTPPort, k8sutil.ProbeConfig{
+			LivenessProbe: k8sutil.NewProbe("/-/healthy", probePort, k8sutil.ProbeConfig{
 				FailureThreshold: 8,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/-/ready", defaultHTTPPort, k8sutil.ProbeConfig{
+			ReadinessProbe: k8sutil.NewProbe("/-/ready", probePort, k8sutil.ProbeConfig{
 				FailureThreshold:    20,
 				InitialDelaySeconds: 60,
 				PeriodSeconds:       5,
@@ -300,187 +361,66 @@ func newBaseReceive(commonLabels map[string]string) *baseReceive {
 	}
 }
 
-func (br *baseReceive) withRouterConfig() {
-	br.Options.ReceiveHashringsFile = NewReceiveHashringConfigFile(br.Name+"-hashring", HashRingsConfig{})
-	br.Options.ReceiveHashringsFileRefreshInterval = 5 * time.Second
-	br.Options.ReceiveHashringsAlgorithm = "ketama"
-}
-
-func (br *baseReceive) withRouterContainer() {
-	if br.Options.ReceiveHashringsFile == nil {
-		panic(`hashrings file is not specified for the statefulset.`)
-	}
-
-	container := br.makeContainer()
-
-	// The configmap can be dyamically generated by the controller
-	// We only create the config map if it is defined in the options.
-	if len(br.Options.ReceiveHashringsFile.Value) > 0 {
-		container.ConfigMaps[br.Options.ReceiveHashringsFile.Name] = map[string]string{
-			br.Options.ReceiveHashringsFile.FileName(): br.Options.ReceiveHashringsFile.Value.String(),
-		}
-	}
-
-	container.Volumes = append(container.Volumes, k8sutil.NewPodVolumeFromConfigMap("hashring-config", br.Options.ReceiveHashringsFile.Name))
-	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
-		Name:      "hashring-config",
-		MountPath: br.Options.ReceiveHashringsFile.MountPath(),
-	})
-
-	if br.Options.ReceiveLimitsConfigFile != nil {
-		container.ConfigMaps[br.Options.ReceiveLimitsConfigFile.Name] = map[string]string{
-			br.Options.ReceiveLimitsConfigFile.FileName(): br.Options.ReceiveLimitsConfigFile.Value.String(),
+func (br *baseReceive) withRouterContainer() ContainerOption {
+	return func(container *k8sutil.Container) {
+		if br.options.ReceiveHashringsFile == nil {
+			panic(`hashrings file is not specified for the statefulset.`)
 		}
 
-		container.Volumes = append(container.Volumes, k8sutil.NewPodVolumeFromConfigMap("receive-limits-config", br.Options.ReceiveLimitsConfigFile.Name))
-		container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
-			Name:      "receive-limits-config",
-			MountPath: br.Options.ReceiveLimitsConfigFile.MountPath(),
-		})
-	}
+		br.options.ReceiveHashringsFile.AddToContainer(container)
 
-	br.container = container
+		if br.options.ReceiveLimitsConfigFile != nil {
+			br.options.ReceiveLimitsConfigFile.AddToContainer(container)
+		}
+	}
 }
 
-func (br *baseReceive) withIngestorConfig() {
-	br.Options.TsdbPath = "/var/thanos/receive"
-	br.Options.Label = []Label{{Key: "receive", Value: "true"}, {Key: "receive-replica", Value: "$(NAME)"}}
-	br.Options.ObjstoreConfig = "$(OBJSTORE_CONFIG)"
+func (br *baseReceive) withIngestorContainer(volumeType string, volumeSize string) ContainerOption {
+	return func(container *k8sutil.Container) {
+		if br.options.TsdbPath == "" {
+			panic(`data directory is not specified for the statefulset.`)
+		}
 
-	br.Env = append(br.Env, k8sutil.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
-}
-
-func (br *baseReceive) withIngestorContainer(volumeType string, volumeSize string) {
-	if br.Options.TsdbPath == "" {
-		panic(`data directory is not specified for the statefulset.`)
+		container.VolumeMounts = []corev1.VolumeMount{
+			{
+				Name:      dataVolumeName,
+				MountPath: br.options.TsdbPath,
+			},
+		}
+		container.VolumeClaims = []k8sutil.VolumeClaim{
+			k8sutil.NewVolumeClaimProvider(dataVolumeName, volumeType, volumeSize),
+		}
 	}
-
-	container := br.makeContainer()
-	container.VolumeMounts = []corev1.VolumeMount{
-		{
-			Name:      dataVolumeName,
-			MountPath: br.Options.TsdbPath,
-		},
-	}
-	container.VolumeClaims = []k8sutil.VolumeClaim{
-		k8sutil.NewVolumeClaimProvider(dataVolumeName, volumeType, volumeSize),
-	}
-
-	br.container = container
 }
 
 func (br *baseReceive) manifests() k8sutil.ObjectMap {
 	container := br.container
 	if container == nil {
-		panic(`container is not initialized`)
-	}
-
-	commonObjectMeta := k8sutil.MetaConfig{
-		Name:      br.Name,
-		Labels:    br.CommonLabels,
-		Namespace: br.Namespace,
-	}
-	commonObjectMeta.Labels[k8sutil.VersionLabel] = container.ImageTag
-
-	pod := &k8sutil.Pod{
-		TerminationGracePeriodSeconds: &br.TerminationGracePeriodSeconds,
-		Affinity:                      br.Affinity,
-		SecurityContext:               br.SecurityContext,
-		ServiceAccountName:            commonObjectMeta.Name,
-		ContainerProviders:            append([]k8sutil.ContainerProvider{container}, br.Sidecars...),
+		panic("container is not initialized")
 	}
 
 	ret := k8sutil.ObjectMap{}
+
 	// Create the statefulset or deployment based on the presence of the TSDB path.
-	if br.Options.TsdbPath != "" {
-		statefulset := &k8sutil.StatefulSet{
-			MetaConfig: commonObjectMeta.Clone(),
-			Replicas:   br.Replicas,
-			Pod:        pod,
-		}
-
-		ret["receive-statefulSet"] = statefulset.MakeManifest()
+	if br.options.TsdbPath != "" {
+		ret.AddAll(br.GenerateObjectsStatefulSet(container))
 	} else {
-		deployment := &k8sutil.Deployment{
-			MetaConfig: commonObjectMeta.Clone(),
-			Replicas:   br.Replicas,
-			Pod:        pod,
-		}
-
-		ret["receive-deployment"] = deployment.MakeManifest()
-	}
-
-	service := &k8sutil.Service{
-		MetaConfig:   commonObjectMeta.Clone(),
-		ServicePorts: pod,
-	}
-	ret["receive-service"] = service.MakeManifest()
-
-	if br.EnableServiceMonitor {
-		serviceMonitor := &k8sutil.ServiceMonitor{
-			MetaConfig:              commonObjectMeta.Clone(),
-			ServiceMonitorEndpoints: pod,
-		}
-		ret["receive-serviceMonitor"] = serviceMonitor.MakeManifest()
-	}
-
-	serviceAccount := &k8sutil.ServiceAccount{
-		MetaConfig: commonObjectMeta.Clone(),
-		Name:       pod.ServiceAccountName,
-	}
-	ret["receive-serviceAccount"] = serviceAccount.MakeManifest()
-
-	// Create configMaps required by the containers
-	for name, config := range pod.GetConfigMaps() {
-		configMap := &k8sutil.ConfigMap{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       config,
-		}
-		configMap.MetaConfig.Name = name
-		ret["receive-configMap-"+name] = configMap.MakeManifest()
-	}
-
-	// Create secrets required by the containers
-	for name, secret := range pod.GetSecrets() {
-		secret := &k8sutil.Secret{
-			MetaConfig: commonObjectMeta.Clone(),
-			Data:       secret,
-		}
-		secret.MetaConfig.Name = name
-		ret["receive-secret-"+name] = secret.MakeManifest()
+		ret.AddAll(br.GenerateObjectsDeployment(container))
 	}
 
 	return ret
 }
 
-func (br *baseReceive) makeContainer() *k8sutil.Container {
-	if br.Options == nil {
-		br.Options = &ReceiveOptions{}
-	}
+func (br *baseReceive) makeContainer(opts ...ContainerOption) {
+	httpPort := k8sutil.GetPortOrDefault(defaultHTTPPort, br.options.HttpAddress)
+	k8sutil.CheckProbePort(httpPort, br.LivenessProbe)
+	k8sutil.CheckProbePort(httpPort, br.ReadinessProbe)
 
-	httpPort := defaultHTTPPort
-	if br.Options.HttpAddress != nil && br.Options.HttpAddress.Port != 0 {
-		httpPort = br.Options.HttpAddress.Port
-	}
-
-	grpcPort := defaultGRPCPort
-	if br.Options.GrpcAddress != nil && br.Options.GrpcAddress.Port != 0 {
-		grpcPort = br.Options.GrpcAddress.Port
-	}
-
-	livenessPort := br.LivenessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if livenessPort != int32(httpPort) {
-		panic(fmt.Sprintf(`liveness probe port %d does not match http port %d`, livenessPort, httpPort))
-	}
-
-	readinessPort := br.ReadinessProbe.ProbeHandler.HTTPGet.Port.IntVal
-	if readinessPort != int32(httpPort) {
-		panic(fmt.Sprintf(`readiness probe port %d does not match http port %d`, readinessPort, httpPort))
-	}
+	grpcPort := k8sutil.GetPortOrDefault(defaultGRPCPort, br.options.GrpcAddress)
 
 	ret := br.ToContainer()
 	ret.Name = "thanos"
-	ret.Args = append([]string{"receive"}, cmdopt.GetOpts(br.Options)...)
+	ret.Args = append([]string{"receive"}, cmdopt.GetOpts(br.options)...)
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "http",
@@ -494,14 +434,14 @@ func (br *baseReceive) makeContainer() *k8sutil.Container {
 		},
 		{
 			Name:          "remote-write",
-			ContainerPort: int32(br.Options.RemoteWriteAddress.Port),
+			ContainerPort: int32(br.options.RemoteWriteAddress.Port),
 			Protocol:      corev1.ProtocolTCP,
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
 		k8sutil.NewServicePort("http", httpPort, httpPort),
 		k8sutil.NewServicePort("grpc", grpcPort, grpcPort),
-		k8sutil.NewServicePort("remote-write", br.Options.RemoteWriteAddress.Port, br.Options.RemoteWriteAddress.Port),
+		k8sutil.NewServicePort("remote-write", br.options.RemoteWriteAddress.Port, br.options.RemoteWriteAddress.Port),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
@@ -510,5 +450,11 @@ func (br *baseReceive) makeContainer() *k8sutil.Container {
 		},
 	}
 
-	return ret
+	for _, opt := range opts {
+		opt(ret)
+	}
+
+	br.container = ret
 }
+
+type ContainerOption func(*k8sutil.Container)
