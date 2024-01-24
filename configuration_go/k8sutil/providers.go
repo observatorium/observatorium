@@ -175,12 +175,14 @@ type Pod struct {
 	SecurityContext               *corev1.PodSecurityContext
 	ServiceAccountName            string
 
-	ContainerProviders []ContainerProvider
+	ContainerProviders      []ContainerProvider
+	InitContainersProviders []ContainerProvider
 }
 
 // MakePodSpec returns a Kubernetes PodSpec.
 func (p *Pod) MakePodSpec() corev1.PodSpec {
 	containers := []corev1.Container{}
+	initContainers := []corev1.Container{}
 	volumes := []corev1.Volume{}
 
 	for _, cp := range p.ContainerProviders {
@@ -188,10 +190,16 @@ func (p *Pod) MakePodSpec() corev1.PodSpec {
 		volumes = append(volumes, cp.GetVolumes()...)
 	}
 
+	for _, cp := range p.InitContainersProviders {
+		initContainers = append(initContainers, cp.GetContainer())
+		volumes = append(volumes, cp.GetVolumes()...)
+	}
+
 	return corev1.PodSpec{
 		TerminationGracePeriodSeconds: p.TerminationGracePeriodSeconds,
 		Affinity:                      p.Affinity,
 		Containers:                    containers,
+		InitContainers:                initContainers,
 		ServiceAccountName:            p.ServiceAccountName,
 		SecurityContext:               p.SecurityContext,
 		NodeSelector: map[string]string{
