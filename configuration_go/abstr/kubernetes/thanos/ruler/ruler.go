@@ -30,10 +30,8 @@ const (
 	baseRulesDir        string          = "/etc/thanos/rules"
 )
 
-type alertRelabelConfigFile = k8sutil.ConfigFile
-
 // NewAlertRelabelConfigFile returns a new alertRelabelConfigFile option
-func NewAlertRelabelConfigFile(value *relabel.Config) *alertRelabelConfigFile {
+func NewAlertRelabelConfigFile(value *relabel.Config) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/relabel", "config.yaml", "relabel", "observatorium-rule-relabel")
 	if value != nil {
 		valueYaml, err := yaml.Marshal(value)
@@ -46,10 +44,8 @@ func NewAlertRelabelConfigFile(value *relabel.Config) *alertRelabelConfigFile {
 	return ret
 }
 
-type alertmanagersConfigFile = k8sutil.ConfigFile
-
 // NewAlertmanagersConfigFile returns a new alertmanagersConfigFile option
-func NewAlertmanagersConfigFile(value *AlertingConfig) *alertmanagersConfigFile {
+func NewAlertmanagersConfigFile(value *AlertingConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/alertmanagers", "config.yaml", "alertmanagers", "observatorium-rule-alertmanagers")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -57,10 +53,8 @@ func NewAlertmanagersConfigFile(value *AlertingConfig) *alertmanagersConfigFile 
 	return ret
 }
 
-type tracingConfigFile = k8sutil.ConfigFile
-
 // NewTracingConfigFile returns a new tracing config file k8sutil.
-func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
+func NewTracingConfigFile(value *trclient.TracingConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-rule-tracing")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -68,10 +62,8 @@ func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
 	return ret
 }
 
-type objstoreConfigFile = k8sutil.ConfigFile
-
 // NewObjstoreConfigFile returns a new alertRelabelConfigFile option
-func NewObjstoreConfigFile(value *objstore.BucketConfig) *objstoreConfigFile {
+func NewObjstoreConfigFile(value *objstore.BucketConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/objstore", "config.yaml", "objstore", "observatorium-rule-objstore")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -107,9 +99,9 @@ type RulerOptions struct {
 	AlertQeuryTemplate         string                   `opt:"alert.query-template"`
 	AlertQueryUrl              string                   `opt:"alert.query-url"`
 	AlertRelabelConfig         *relabel.Config          `opt:"alert.relabel-config"`
-	AlertRelabelConfigFile     *alertRelabelConfigFile  `opt:"alert.relabel-config-file"`
+	AlertRelabelConfigFile     k8sutil.ContainerUpdater `opt:"alert.relabel-config-file"`
 	AlertmanagersConfig        *AlertingConfig          `opt:"alertmanagers.config"` // check
-	AlertmanagersConfigFile    *alertmanagersConfigFile `opt:"alertmanagers.config-file"`
+	AlertmanagersConfigFile    k8sutil.ContainerUpdater `opt:"alertmanagers.config-file"`
 	AlertmanagersSdDnsInterval time.Duration            `opt:"alertmanagers.sd-dns-interval"`
 	AlertmanagersSendTimeout   time.Duration            `opt:"alertmanagers.send-timeout"`
 	AlertmanagersUrl           []string                 `opt:"alertmanagers.url"`
@@ -131,7 +123,7 @@ type RulerOptions struct {
 	LogFormat                  log.LogFormat            `opt:"log.format"`
 	LogLevel                   log.LogLevel             `opt:"log.level"`
 	ObjstoreConfig             string                   `opt:"objstore.config"`
-	ObjstoreConfigFile         *objstoreConfigFile      `opt:"objstore.config-file"`
+	ObjstoreConfigFile         k8sutil.ContainerUpdater `opt:"objstore.config-file"`
 	Query                      []string                 `opt:"query"`
 	QueryConfig                string                   `opt:"query.config"`      //todo
 	QueryConfigFile            string                   `opt:"query.config-file"` //todo
@@ -152,7 +144,7 @@ type RulerOptions struct {
 	StoreLimitsRequestSamples  int                      `opt:"store.limits.request-samples"`
 	StoreLimitsRequestSeries   int                      `opt:"store.limits.request-series"`
 	TracingConfig              *trclient.TracingConfig  `opt:"tracing.config"`      //todo
-	TracingConfigFile          *tracingConfigFile       `opt:"tracing.config-file"` //todo
+	TracingConfigFile          k8sutil.ContainerUpdater `opt:"tracing.config-file"` //todo
 	TsdbBlockDuration          time.Duration            `opt:"tsdb.block-duration"`
 	TsdbNoLockfile             bool                     `opt:"tsdb.no-lockfile,noval"`
 	TsdbRetention              time.Duration            `opt:"tsdb.retention"`
@@ -290,19 +282,19 @@ func (s *RulerStatefulSet) makeContainer() *k8sutil.Container {
 	}
 
 	if s.options.AlertRelabelConfigFile != nil {
-		s.options.AlertRelabelConfigFile.AddToContainer(ret)
+		s.options.AlertRelabelConfigFile.Update(ret)
 	}
 
 	if s.options.AlertmanagersConfigFile != nil {
-		s.options.AlertmanagersConfigFile.AddToContainer(ret)
+		s.options.AlertmanagersConfigFile.Update(ret)
 	}
 
 	if s.options.TracingConfigFile != nil {
-		s.options.TracingConfigFile.AddToContainer(ret)
+		s.options.TracingConfigFile.Update(ret)
 	}
 
 	if s.options.ObjstoreConfigFile != nil {
-		s.options.ObjstoreConfigFile.AddToContainer(ret)
+		s.options.ObjstoreConfigFile.Update(ret)
 	}
 
 	for _, ruleFile := range s.options.RuleFile {

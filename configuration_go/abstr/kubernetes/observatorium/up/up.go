@@ -35,11 +35,8 @@ func (q QueriesFile) String() string {
 	return string(res)
 }
 
-type queriesFileOption = k8sutil.ConfigFile
-
 // NewQueriesFileOption creates a new queries file option with the given value.
-// If the related configmap already exists, you can pass nil to val and call WithExistingCM.
-func NewQueriesFileOption(value *QueriesFile) *queriesFileOption {
+func NewQueriesFileOption(value *QueriesFile) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/up/config/queries", "queries.yaml", "queries-file", "observatorium-up-queries")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -47,9 +44,8 @@ func NewQueriesFileOption(value *QueriesFile) *queriesFileOption {
 	return ret
 }
 
-type tokenFileOption = k8sutil.ConfigFile
-
-func NewTokenFileOption(value *string) *tokenFileOption {
+// NewTokenFileOption creates a new token file option with the given value.
+func NewTokenFileOption(value *string) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/up/config/token", "token", "token-file", "observatorium-up-token")
 	if value != nil {
 		ret.WithValue(*value)
@@ -58,29 +54,29 @@ func NewTokenFileOption(value *string) *tokenFileOption {
 }
 
 type UpOptions struct {
-	Duration                *time.Duration     `opt:"duration"`
-	EndpointRead            string             `opt:"endpoint-read"`
-	EndpointType            EndpointType       `opt:"endpoint-type"`
-	EndpointWrite           string             `opt:"endpoint-write"`
-	InitialQueryDelay       *time.Duration     `opt:"initial-query-delay"`
-	Labels                  []string           `opt:"labels"`
-	Latency                 time.Duration      `opt:"latency"`
-	Listen                  *net.TCPAddr       `opt:"listen"`
-	LogLevel                log.LogLevel       `opt:"log.level"`
-	Logs                    []string           `opt:"logs"`
-	LogsFile                string             `opt:"logs-file"` // TODO: support this
-	Name                    string             `opt:"name"`
-	Period                  time.Duration      `opt:"period"`
-	QueriesFile             *queriesFileOption `opt:"queries-file"`
-	Step                    time.Duration      `opt:"step"`
-	Tenant                  string             `opt:"tenant"`
-	TenantHeader            string             `opt:"tenant-header"`
-	Threshold               float64            `opt:"threshold"`
-	TLSClientCertFile       string             `opt:"tls-client-cert-file"`
-	TLSClientPrivateKeyFile string             `opt:"tls-client-private-key-file"`
-	TLSCAFile               string             `opt:"tls-ca-file"`
-	Token                   string             `opt:"token"`
-	TokenFile               *tokenFileOption   `opt:"token-file"`
+	Duration                *time.Duration           `opt:"duration"`
+	EndpointRead            string                   `opt:"endpoint-read"`
+	EndpointType            EndpointType             `opt:"endpoint-type"`
+	EndpointWrite           string                   `opt:"endpoint-write"`
+	InitialQueryDelay       *time.Duration           `opt:"initial-query-delay"`
+	Labels                  []string                 `opt:"labels"`
+	Latency                 time.Duration            `opt:"latency"`
+	Listen                  *net.TCPAddr             `opt:"listen"`
+	LogLevel                log.LogLevel             `opt:"log.level"`
+	Logs                    []string                 `opt:"logs"`
+	LogsFile                string                   `opt:"logs-file"` // TODO: support this
+	Name                    string                   `opt:"name"`
+	Period                  time.Duration            `opt:"period"`
+	QueriesFile             k8sutil.ContainerUpdater `opt:"queries-file"`
+	Step                    time.Duration            `opt:"step"`
+	Tenant                  string                   `opt:"tenant"`
+	TenantHeader            string                   `opt:"tenant-header"`
+	Threshold               float64                  `opt:"threshold"`
+	TLSClientCertFile       string                   `opt:"tls-client-cert-file"`
+	TLSClientPrivateKeyFile string                   `opt:"tls-client-private-key-file"`
+	TLSCAFile               string                   `opt:"tls-ca-file"`
+	Token                   string                   `opt:"token"`
+	TokenFile               k8sutil.ContainerUpdater `opt:"token-file"`
 }
 
 type UpDeployment struct {
@@ -150,10 +146,10 @@ func (u *UpDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 	if u.options.QueriesFile != nil {
-		u.options.QueriesFile.AddToContainer(ret)
+		u.options.QueriesFile.Update(ret)
 	}
 	if u.options.TokenFile != nil {
-		u.options.TokenFile.AddToContainer(ret)
+		u.options.TokenFile.Update(ret)
 	}
 
 	ret.Args = cmdopt.GetOpts(u.options)

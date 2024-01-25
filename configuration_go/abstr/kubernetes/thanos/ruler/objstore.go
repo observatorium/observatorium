@@ -15,10 +15,8 @@ const (
 	defaultPublicPort   = 8080
 )
 
-type rulesObjstoreConfigFile = k8sutil.ConfigFile
-
-// NewAlertRelabelConfigFile returns a new alertRelabelConfigFile option
-func NewRulesObjstoreConfigFile(value *objstore.BucketConfig) *rulesObjstoreConfigFile {
+// NewRulesObjstoreConfigFile creates a new ConfigFile option for the rules-objstore configuration file.
+func NewRulesObjstoreConfigFile(value *objstore.BucketConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/rules-objstore/objstore", "config.yaml", "objstore", "observatorium-rules-objstore")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -30,7 +28,7 @@ type RulesObjstoreOptions struct {
 	DebugName          string                   `opt:"debug.name,single-hyphen"`
 	LogFormat          string                   `opt:"log.format,single-hyphen"`
 	LogLevel           string                   `opt:"log.level,single-hyphen"`
-	ObjstoreConfigFile *rulesObjstoreConfigFile `opt:"objstore.config-file,single-hyphen"`
+	ObjstoreConfigFile k8sutil.ContainerUpdater `opt:"objstore.config-file,single-hyphen"`
 	WebHealthchecksURL string                   `opt:"web.healthchecks.url,single-hyphen"`
 	WebInternalListen  *net.TCPAddr             `opt:"web.internal.listen,single-hyphen"`
 	WebListen          *net.TCPAddr             `opt:"web.listen,single-hyphen"`
@@ -146,7 +144,7 @@ func (r *RulesObjstoreDeployment) makeContainer() *k8sutil.Container {
 	}
 
 	if r.options.ObjstoreConfigFile != nil {
-		r.options.ObjstoreConfigFile.AddToContainer(ret)
+		r.options.ObjstoreConfigFile.Update(ret)
 	}
 
 	return ret

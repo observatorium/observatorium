@@ -17,9 +17,8 @@ const (
 	defaultGRPCPort         int = 8090
 )
 
-type rbacConfig = k8sutil.ConfigFile
-
-func NewRbacConfig(value *RBAC) *rbacConfig {
+// NewRbacConfig returns a new RBAC config file option.
+func NewRbacConfig(value *RBAC) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/observatorium/rbac", "config.yaml", "rbac-config", "observatorium-rbac")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -27,9 +26,8 @@ func NewRbacConfig(value *RBAC) *rbacConfig {
 	return ret
 }
 
-type tenantsConfig = k8sutil.ConfigFile
-
-func NewTenantsConfig(value *Tenants) *tenantsConfig {
+// NewTenantsConfig returns a new tenants config file option.
+func NewTenantsConfig(value *Tenants) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/observatorium/tenants", "config.yaml", "tenants", "observatorium-tenants")
 	ret.AsSecret() // Is a secret by default.
 	if value != nil {
@@ -39,70 +37,70 @@ func NewTenantsConfig(value *Tenants) *tenantsConfig {
 }
 
 type ObservatoriumAPIOptions struct {
-	DebugBlockProfileRate                       int            `opt:"debug.block-profile-rate"`
-	DebugMutexProfileRate                       int            `opt:"debug.mutex-profile-fraction"`
-	DebugName                                   string         `opt:"debug.name"`
-	GrpcListen                                  *net.TCPAddr   `opt:"grpc.listen"`
-	InternalTracingEndpoint                     string         `opt:"internal.tracing.endpoint"`
-	InternalTracingEndpointType                 string         `opt:"internal.tracing.endpoint-type"`
-	InternalTracingSamplingFraction             float64        `opt:"internal.tracing.sampling-fraction"`
-	InternalTracingServiceName                  string         `opt:"internal.tracing.service-name"`
-	LogFormat                                   log.LogFormat  `opt:"log.format"`
-	LogLevel                                    log.LogLevel   `opt:"log.level"`
-	LogsAuthExtractSelectors                    string         `opt:"logs.auth.extract-selectors"`
-	LogsReadEndpoint                            string         `opt:"logs.read.endpoint"`
-	LogsRulesEndpoint                           string         `opt:"logs.rules.endpoint"`
-	LogsRulesLabelFilters                       string         `opt:"logs.rules.label-filters"`
-	LogsRulesReadOnly                           bool           `opt:"logs.rules.read-only,noval"`
-	LogsRulesTenantLabel                        string         `opt:"logs.rules.tenant-label"`
-	LogsTailEndpoint                            string         `opt:"logs.tail.endpoint"`
-	LogsTenantHeader                            string         `opt:"logs.tenant-header"`
-	LogsTlsCaFile                               string         `opt:"logs.tls.ca-file"`
-	LogsTlsCertFile                             string         `opt:"logs.tls.cert-file"`
-	LogsTlsKeyFile                              string         `opt:"logs.tls.key-file"`
-	LogsWriteTimeout                            time.Duration  `opt:"logs.write-timeout"`
-	LogsWriteEndpoint                           string         `opt:"logs.write.endpoint"`
-	MetricsAlertmanagerEndpoint                 string         `opt:"metrics.alertmanager.endpoint"`
-	MetricsReadEndpoint                         string         `opt:"metrics.read.endpoint"`
-	MetricsRulesEndpoint                        string         `opt:"metrics.rules.endpoint"`
-	MetricsTenantHeader                         string         `opt:"metrics.tenant-header"`
-	MetricsTenantLabel                          string         `opt:"metrics.tenant-label"`
-	MetricsTlsCaFile                            string         `opt:"metrics.tls.ca-file"`
-	MetricsTlsCertFile                          string         `opt:"metrics.tls.cert-file"`
-	MetricsTlsKeyFile                           string         `opt:"metrics.tls.key-file"`
-	MetricsWriteTimeout                         time.Duration  `opt:"metrics.write-timeout"`
-	MetricsWriteEndpoint                        string         `opt:"metrics.write.endpoint"`
-	MiddlewareBacklogDurationConcurrentRequests time.Duration  `opt:"middleware.backlog-duration-concurrent-requests"`
-	MiddlewareBacklogLimitConcurrentRequests    int            `opt:"middleware.backlog-limit-concurrent-requests"`
-	MiddlewareConcurrentRequestLimit            int            `opt:"middleware.concurrent-request-limit"`
-	MiddlewareRateLimiterGrpcAddress            string         `opt:"middleware.rate-limiter.grpc-address"`
-	RbacConfig                                  *rbacConfig    `opt:"rbac.config"`
-	ServerReadHeaderTimeout                     time.Duration  `opt:"server.read-header-timeout"`
-	ServerReadTimeout                           time.Duration  `opt:"server.read-timeout"`
-	ServerWriteTimeout                          time.Duration  `opt:"server.write-timeout"`
-	TenantsConfig                               *tenantsConfig `opt:"tenants.config"`
-	TlsCipherSuites                             string         `opt:"tls.cipher-suites"`
-	TlsClientAuthType                           string         `opt:"tls.client-auth-type"`
-	TlsHealthchecksServerCaFile                 string         `opt:"tls.healthchecks.server-ca-file"`
-	TlsHealthchecksServerName                   string         `opt:"tls.healthchecks.server-name"`
-	TlsInternalServerCertFile                   string         `opt:"tls.internal.server.cert-file"`
-	TlsInternalServerKeyFile                    string         `opt:"tls.internal.server.key-file"`
-	TlsMaxVersion                               string         `opt:"tls.max-version"`
-	TlsMinVersion                               string         `opt:"tls.min-version"`
-	TlsReloadInterval                           time.Duration  `opt:"tls.reload-interval"`
-	TlsServerCertFile                           string         `opt:"tls.server.cert-file"`
-	TlsServerKeyFile                            string         `opt:"tls.server.key-file"`
-	TracesReadEndpoint                          string         `opt:"traces.read.endpoint"`
-	TracesTempoEndpoint                         string         `opt:"traces.tempo.endpoint"`
-	TracesTenantHeader                          string         `opt:"traces.tenant-header"`
-	TracesTlsCaFile                             string         `opt:"traces.tls.ca-file"`
-	TracesTlsCertFile                           string         `opt:"traces.tls.cert-file"`
-	TracesTlsKeyFile                            string         `opt:"traces.tls.key-file"`
-	TracesWriteTimeout                          time.Duration  `opt:"traces.write-timeout"`
-	TracesWriteEndpoint                         string         `opt:"traces.write.endpoint"`
-	WebHealthchecksURL                          string         `opt:"web.healthchecks.url"`
-	WebInternalListen                           *net.TCPAddr   `opt:"web.internal.listen"`
-	WebListen                                   *net.TCPAddr   `opt:"web.listen"`
+	DebugBlockProfileRate                       int                      `opt:"debug.block-profile-rate"`
+	DebugMutexProfileRate                       int                      `opt:"debug.mutex-profile-fraction"`
+	DebugName                                   string                   `opt:"debug.name"`
+	GrpcListen                                  *net.TCPAddr             `opt:"grpc.listen"`
+	InternalTracingEndpoint                     string                   `opt:"internal.tracing.endpoint"`
+	InternalTracingEndpointType                 string                   `opt:"internal.tracing.endpoint-type"`
+	InternalTracingSamplingFraction             float64                  `opt:"internal.tracing.sampling-fraction"`
+	InternalTracingServiceName                  string                   `opt:"internal.tracing.service-name"`
+	LogFormat                                   log.LogFormat            `opt:"log.format"`
+	LogLevel                                    log.LogLevel             `opt:"log.level"`
+	LogsAuthExtractSelectors                    string                   `opt:"logs.auth.extract-selectors"`
+	LogsReadEndpoint                            string                   `opt:"logs.read.endpoint"`
+	LogsRulesEndpoint                           string                   `opt:"logs.rules.endpoint"`
+	LogsRulesLabelFilters                       string                   `opt:"logs.rules.label-filters"`
+	LogsRulesReadOnly                           bool                     `opt:"logs.rules.read-only,noval"`
+	LogsRulesTenantLabel                        string                   `opt:"logs.rules.tenant-label"`
+	LogsTailEndpoint                            string                   `opt:"logs.tail.endpoint"`
+	LogsTenantHeader                            string                   `opt:"logs.tenant-header"`
+	LogsTlsCaFile                               string                   `opt:"logs.tls.ca-file"`
+	LogsTlsCertFile                             string                   `opt:"logs.tls.cert-file"`
+	LogsTlsKeyFile                              string                   `opt:"logs.tls.key-file"`
+	LogsWriteTimeout                            time.Duration            `opt:"logs.write-timeout"`
+	LogsWriteEndpoint                           string                   `opt:"logs.write.endpoint"`
+	MetricsAlertmanagerEndpoint                 string                   `opt:"metrics.alertmanager.endpoint"`
+	MetricsReadEndpoint                         string                   `opt:"metrics.read.endpoint"`
+	MetricsRulesEndpoint                        string                   `opt:"metrics.rules.endpoint"`
+	MetricsTenantHeader                         string                   `opt:"metrics.tenant-header"`
+	MetricsTenantLabel                          string                   `opt:"metrics.tenant-label"`
+	MetricsTlsCaFile                            string                   `opt:"metrics.tls.ca-file"`
+	MetricsTlsCertFile                          string                   `opt:"metrics.tls.cert-file"`
+	MetricsTlsKeyFile                           string                   `opt:"metrics.tls.key-file"`
+	MetricsWriteTimeout                         time.Duration            `opt:"metrics.write-timeout"`
+	MetricsWriteEndpoint                        string                   `opt:"metrics.write.endpoint"`
+	MiddlewareBacklogDurationConcurrentRequests time.Duration            `opt:"middleware.backlog-duration-concurrent-requests"`
+	MiddlewareBacklogLimitConcurrentRequests    int                      `opt:"middleware.backlog-limit-concurrent-requests"`
+	MiddlewareConcurrentRequestLimit            int                      `opt:"middleware.concurrent-request-limit"`
+	MiddlewareRateLimiterGrpcAddress            string                   `opt:"middleware.rate-limiter.grpc-address"`
+	RbacConfig                                  k8sutil.ContainerUpdater `opt:"rbac.config"`
+	ServerReadHeaderTimeout                     time.Duration            `opt:"server.read-header-timeout"`
+	ServerReadTimeout                           time.Duration            `opt:"server.read-timeout"`
+	ServerWriteTimeout                          time.Duration            `opt:"server.write-timeout"`
+	TenantsConfig                               k8sutil.ContainerUpdater `opt:"tenants.config"`
+	TlsCipherSuites                             string                   `opt:"tls.cipher-suites"`
+	TlsClientAuthType                           string                   `opt:"tls.client-auth-type"`
+	TlsHealthchecksServerCaFile                 string                   `opt:"tls.healthchecks.server-ca-file"`
+	TlsHealthchecksServerName                   string                   `opt:"tls.healthchecks.server-name"`
+	TlsInternalServerCertFile                   string                   `opt:"tls.internal.server.cert-file"`
+	TlsInternalServerKeyFile                    string                   `opt:"tls.internal.server.key-file"`
+	TlsMaxVersion                               string                   `opt:"tls.max-version"`
+	TlsMinVersion                               string                   `opt:"tls.min-version"`
+	TlsReloadInterval                           time.Duration            `opt:"tls.reload-interval"`
+	TlsServerCertFile                           string                   `opt:"tls.server.cert-file"`
+	TlsServerKeyFile                            string                   `opt:"tls.server.key-file"`
+	TracesReadEndpoint                          string                   `opt:"traces.read.endpoint"`
+	TracesTempoEndpoint                         string                   `opt:"traces.tempo.endpoint"`
+	TracesTenantHeader                          string                   `opt:"traces.tenant-header"`
+	TracesTlsCaFile                             string                   `opt:"traces.tls.ca-file"`
+	TracesTlsCertFile                           string                   `opt:"traces.tls.cert-file"`
+	TracesTlsKeyFile                            string                   `opt:"traces.tls.key-file"`
+	TracesWriteTimeout                          time.Duration            `opt:"traces.write-timeout"`
+	TracesWriteEndpoint                         string                   `opt:"traces.write.endpoint"`
+	WebHealthchecksURL                          string                   `opt:"web.healthchecks.url"`
+	WebInternalListen                           *net.TCPAddr             `opt:"web.internal.listen"`
+	WebListen                                   *net.TCPAddr             `opt:"web.listen"`
 
 	// For setting extra options not listed above.
 	cmdopt.ExtraOpts
@@ -212,11 +210,11 @@ func (s *ObservatoriumAPIDeployment) makeContainer() *k8sutil.Container {
 	}
 
 	if s.options.RbacConfig != nil {
-		s.options.RbacConfig.AddToContainer(ret)
+		s.options.RbacConfig.Update(ret)
 	}
 
 	if s.options.TenantsConfig != nil {
-		s.options.TenantsConfig.AddToContainer(ret)
+		s.options.TenantsConfig.Update(ret)
 	}
 
 	return ret

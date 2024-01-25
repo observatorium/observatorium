@@ -24,10 +24,8 @@ const (
 	CacheCompressionTypeSnappy CacheCompressionType = "snappy"
 )
 
-type tracingConfigFile = k8sutil.ConfigFile
-
 // NewTracingConfigFile returns a new tracing config file option.
-func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
+func NewTracingConfigFile(value *trclient.TracingConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-thanos-query-tracing")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -35,10 +33,8 @@ func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
 	return ret
 }
 
-type requestLoggingConfigFile = k8sutil.ConfigFile
-
 // NewRequestLoggingConfigFile returns a new request logging config file option.
-func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *requestLoggingConfigFile {
+func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/request-logging", "config.yaml", "request-logging", "observatorium-thanos-query-request-logging")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -46,10 +42,8 @@ func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *requestLoggin
 	return ret
 }
 
-type labelsResponseCacheConfig = k8sutil.ConfigFile
-
 // NewLabelsResponseCacheConfigFile returns a new labels response cache config file option.
-func NewLabelsResponseCacheConfigFile(value *cache.ResponseCacheConfig) *labelsResponseCacheConfig {
+func NewLabelsResponseCacheConfigFile(value *cache.ResponseCacheConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/labels-response-cache", "config.yaml", "labels-response-cache", "observatorium-thanos-query-labels-response-cache")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -57,10 +51,8 @@ func NewLabelsResponseCacheConfigFile(value *cache.ResponseCacheConfig) *labelsR
 	return ret
 }
 
-type queryRangeResponseCacheConfig = k8sutil.ConfigFile
-
 // NewQueryRangeResponseCacheConfigFile returns a new query range response cache config file option.
-func NewQueryRangeResponseCacheConfigFile(value *cache.ResponseCacheConfig) *queryRangeResponseCacheConfig {
+func NewQueryRangeResponseCacheConfigFile(value *cache.ResponseCacheConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/query-range-response-cache", "config.yaml", "query-range-response-cache", "observatorium-thanos-query-query-range-response-cache")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -69,44 +61,47 @@ func NewQueryRangeResponseCacheConfigFile(value *cache.ResponseCacheConfig) *que
 }
 
 type QueryFrontendOptions struct {
-	CacheCompressionType                 CacheCompressionType           `opt:"cache-compression-type"`
-	HttpAddress                          *net.TCPAddr                   `opt:"http-address"`
-	HttpGracePeriod                      time.Duration                  `opt:"http-grace-period"`
-	HttpConfig                           string                         `opt:"http.config"`
-	LabelsDefaultTimeRange               time.Duration                  `opt:"labels.default-time-range"`
-	LabelsMaxQueryParallelism            int                            `opt:"labels.max-query-parallelism"`
-	LabelsMaxRetriesPerRequest           *int                           `opt:"labels.max-retries-per-request"`
-	LabelsPartialResponse                bool                           `opt:"labels.partial-response,noval"`
-	LabelsResponseCacheConfig            *cache.ResponseCacheConfig     `opt:"labels.response-cache-config"`
-	LabelsResponseCacheConfigFile        *labelsResponseCacheConfig     `opt:"labels.response-cache-config-file"`
-	LabelsResponseMaxFreshness           string                         `opt:"labels.response-cache-max-freshness"`
-	LabelsSplitInterval                  time.Duration                  `opt:"labels.split-interval"`
-	LogFormat                            log.LogFormat                  `opt:"log.format"`
-	LogLevel                             log.LogLevel                   `opt:"log.level"`
-	QueryFrontendCompressResponses       bool                           `opt:"query-frontend.compress-responses,noval"`
-	QueryFrontendDownstreamTripperConfig *DownstreamTripperConfig       `opt:"query-frontend.downstream-tripper-config"`
-	QueryFrontendDownstreamURL           string                         `opt:"query-frontend.downstream-url"`
-	QueryFrontendForwardHeader           []string                       `opt:"query-frontend.forward-header"`
-	QueryFrontendLogQueriesLongerThan    time.Duration                  `opt:"query-frontend.log-queries-longer-than"`
-	QueryFrontendVerticalShards          int                            `opt:"query-frontend.vertical-shards"`
-	QueryRangeAlignRangeWithStep         bool                           `opt:"query-range.align-range-with-step,noval"`
-	QueryRangeHorizontalShards           int                            `opt:"query-range.horizontal-shards"`
-	QueryRangeMaxQueryLength             time.Duration                  `opt:"query-range.max-query-length"`
-	QueryRangeMaxQueryParallelism        int                            `opt:"query-range.max-query-parallelism"`
-	QueryRangeMaxRetriesPerRequest       *int                           `opt:"query-range.max-retries-per-request"`
-	QueryRangeMaxSplitInterval           time.Duration                  `opt:"query-range.max-split-interval"`
-	QueryRangeMinSplitInterval           time.Duration                  `opt:"query-range.min-split-interval"`
-	QueryRangePartialResponse            bool                           `opt:"query-range.partial-response,noval"`
-	QueryRangeRequestDownsampled         bool                           `opt:"query-range.request-downsampled,noval"`
-	QueryRangeResponseCacheConfig        *cache.ResponseCacheConfig     `opt:"query-range.response-cache-config"`
-	QueryRangeResponseCacheConfigFile    *queryRangeResponseCacheConfig `opt:"query-range.response-cache-config-file"`
-	QueryRangeResponseCacheMaxFreshness  time.Duration                  `opt:"query-range.response-cache-max-freshness"`
-	QueryRangeSplitInterval              time.Duration                  `opt:"query-range.split-interval"`
-	RequestLoggingConfig                 *reqlogging.RequestConfig      `opt:"request.logging-config"`
-	RequestLoggingConfigFile             *requestLoggingConfigFile      `opt:"request.logging-config-file"`
-	TracingConfig                        *trclient.TracingConfig        `opt:"tracing.config"`
-	TracingConfigFile                    *tracingConfigFile             `opt:"tracing.config-file"`
-	WebDisableCORS                       bool                           `opt:"web.disable-cors,noval"`
+	CacheCompressionType                 CacheCompressionType       `opt:"cache-compression-type"`
+	HttpAddress                          *net.TCPAddr               `opt:"http-address"`
+	HttpGracePeriod                      time.Duration              `opt:"http-grace-period"`
+	HttpConfig                           string                     `opt:"http.config"`
+	LabelsDefaultTimeRange               time.Duration              `opt:"labels.default-time-range"`
+	LabelsMaxQueryParallelism            int                        `opt:"labels.max-query-parallelism"`
+	LabelsMaxRetriesPerRequest           *int                       `opt:"labels.max-retries-per-request"`
+	LabelsPartialResponse                bool                       `opt:"labels.partial-response,noval"`
+	LabelsResponseCacheConfig            *cache.ResponseCacheConfig `opt:"labels.response-cache-config"`
+	LabelsResponseCacheConfigFile        k8sutil.ContainerUpdater   `opt:"labels.response-cache-config-file"`
+	LabelsResponseMaxFreshness           string                     `opt:"labels.response-cache-max-freshness"`
+	LabelsSplitInterval                  time.Duration              `opt:"labels.split-interval"`
+	LogFormat                            log.LogFormat              `opt:"log.format"`
+	LogLevel                             log.LogLevel               `opt:"log.level"`
+	QueryFrontendCompressResponses       bool                       `opt:"query-frontend.compress-responses,noval"`
+	QueryFrontendDownstreamTripperConfig *DownstreamTripperConfig   `opt:"query-frontend.downstream-tripper-config"`
+	QueryFrontendDownstreamURL           string                     `opt:"query-frontend.downstream-url"`
+	QueryFrontendForwardHeader           []string                   `opt:"query-frontend.forward-header"`
+	QueryFrontendLogQueriesLongerThan    time.Duration              `opt:"query-frontend.log-queries-longer-than"`
+	QueryFrontendVerticalShards          int                        `opt:"query-frontend.vertical-shards"`
+	QueryRangeAlignRangeWithStep         bool                       `opt:"query-range.align-range-with-step,noval"`
+	QueryRangeHorizontalShards           int                        `opt:"query-range.horizontal-shards"`
+	QueryRangeMaxQueryLength             time.Duration              `opt:"query-range.max-query-length"`
+	QueryRangeMaxQueryParallelism        int                        `opt:"query-range.max-query-parallelism"`
+	QueryRangeMaxRetriesPerRequest       *int                       `opt:"query-range.max-retries-per-request"`
+	QueryRangeMaxSplitInterval           time.Duration              `opt:"query-range.max-split-interval"`
+	QueryRangeMinSplitInterval           time.Duration              `opt:"query-range.min-split-interval"`
+	QueryRangePartialResponse            bool                       `opt:"query-range.partial-response,noval"`
+	QueryRangeRequestDownsampled         bool                       `opt:"query-range.request-downsampled,noval"`
+	QueryRangeResponseCacheConfig        *cache.ResponseCacheConfig `opt:"query-range.response-cache-config"`
+	QueryRangeResponseCacheConfigFile    k8sutil.ContainerUpdater   `opt:"query-range.response-cache-config-file"`
+	QueryRangeResponseCacheMaxFreshness  time.Duration              `opt:"query-range.response-cache-max-freshness"`
+	QueryRangeSplitInterval              time.Duration              `opt:"query-range.split-interval"`
+	RequestLoggingConfig                 *reqlogging.RequestConfig  `opt:"request.logging-config"`
+	RequestLoggingConfigFile             k8sutil.ContainerUpdater   `opt:"request.logging-config-file"`
+	TracingConfig                        *trclient.TracingConfig    `opt:"tracing.config"`
+	TracingConfigFile                    k8sutil.ContainerUpdater   `opt:"tracing.config-file"`
+	WebDisableCORS                       bool                       `opt:"web.disable-cors,noval"`
+
+	// Extra options not officially supported.
+	cmdopt.ExtraOpts
 }
 
 type QueryFrontendDeployment struct {
@@ -211,19 +206,19 @@ func (q *QueryFrontendDeployment) makeContainer() *k8sutil.Container {
 	}
 
 	if q.options.RequestLoggingConfigFile != nil {
-		q.options.RequestLoggingConfigFile.AddToContainer(ret)
+		q.options.RequestLoggingConfigFile.Update(ret)
 	}
 
 	if q.options.TracingConfigFile != nil {
-		q.options.TracingConfigFile.AddToContainer(ret)
+		q.options.TracingConfigFile.Update(ret)
 	}
 
 	if q.options.LabelsResponseCacheConfigFile != nil {
-		q.options.LabelsResponseCacheConfigFile.AddToContainer(ret)
+		q.options.LabelsResponseCacheConfigFile.Update(ret)
 	}
 
 	if q.options.QueryRangeResponseCacheConfigFile != nil {
-		q.options.QueryRangeResponseCacheConfigFile.AddToContainer(ret)
+		q.options.QueryRangeResponseCacheConfigFile.Update(ret)
 	}
 
 	return ret

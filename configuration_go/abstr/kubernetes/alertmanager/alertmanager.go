@@ -21,9 +21,8 @@ const (
 	dataVolumeName     = "alertmanager-data"
 )
 
-type configFileOption = k8sutil.ConfigFile
-
-func NewConfigFile(value *string) *configFileOption {
+// NewConfigFile returns a new config file option.
+func NewConfigFile(value *string) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/alertmanager/config", "config.yaml", "config-file", "alertmanager-config")
 	if value != nil {
 		ret.WithValue(*value)
@@ -32,29 +31,29 @@ func NewConfigFile(value *string) *configFileOption {
 }
 
 type AlertManagerOptions struct {
-	ConfigFile               *configFileOption `opt:"config.file"`
-	StoragePath              string            `opt:"storage.path"`
-	DataRetention            time.Duration     `opt:"data.retention"`
-	DataMaintenanceInterval  time.Duration     `opt:"data.maintenance-interval"`
-	AlertsGCInterval         time.Duration     `opt:"alerts.gc-interval"`
-	WebListenAddress         *net.TCPAddr      `opt:"web.listen-address"`
-	WebExternalURL           string            `opt:"web.external-url"`
-	WebRoutePrefix           string            `opt:"web.route-prefix"`
-	WebGetConcurrency        int               `opt:"web.get-concurrency"`
-	WebTimeout               time.Duration     `opt:"web.timeout"`
-	ClusterListenAddress     string            `opt:"cluster.listen-address"`
-	ClusterPeer              []string          `opt:"cluster.peer"`
-	ClusterPeerTimeout       time.Duration     `opt:"cluster.peer-timeout"`
-	ClusterGossipInterval    time.Duration     `opt:"cluster.gossip-interval"`
-	ClusterPushPullInterval  time.Duration     `opt:"cluster.pushpull-interval"`
-	ClusterTCPTimeout        time.Duration     `opt:"cluster.tcp-timeout"`
-	ClusterProbeTimeout      time.Duration     `opt:"cluster.probe-timeout"`
-	ClusterProbeInterval     time.Duration     `opt:"cluster.probe-interval"`
-	ClusterSettleTimeout     time.Duration     `opt:"cluster.settle-timeout"`
-	ClusterReconnectInterval time.Duration     `opt:"cluster.reconnect-interval"`
-	ClusterReconnectTimeout  time.Duration     `opt:"cluster.reconnect-timeout"`
-	LogLevel                 log.LogLevel      `opt:"log.level"`
-	LogFormat                log.LogFormat     `opt:"log.format"`
+	ConfigFile               k8sutil.ContainerUpdater `opt:"config.file"`
+	StoragePath              string                   `opt:"storage.path"`
+	DataRetention            time.Duration            `opt:"data.retention"`
+	DataMaintenanceInterval  time.Duration            `opt:"data.maintenance-interval"`
+	AlertsGCInterval         time.Duration            `opt:"alerts.gc-interval"`
+	WebListenAddress         *net.TCPAddr             `opt:"web.listen-address"`
+	WebExternalURL           string                   `opt:"web.external-url"`
+	WebRoutePrefix           string                   `opt:"web.route-prefix"`
+	WebGetConcurrency        int                      `opt:"web.get-concurrency"`
+	WebTimeout               time.Duration            `opt:"web.timeout"`
+	ClusterListenAddress     string                   `opt:"cluster.listen-address"`
+	ClusterPeer              []string                 `opt:"cluster.peer"`
+	ClusterPeerTimeout       time.Duration            `opt:"cluster.peer-timeout"`
+	ClusterGossipInterval    time.Duration            `opt:"cluster.gossip-interval"`
+	ClusterPushPullInterval  time.Duration            `opt:"cluster.pushpull-interval"`
+	ClusterTCPTimeout        time.Duration            `opt:"cluster.tcp-timeout"`
+	ClusterProbeTimeout      time.Duration            `opt:"cluster.probe-timeout"`
+	ClusterProbeInterval     time.Duration            `opt:"cluster.probe-interval"`
+	ClusterSettleTimeout     time.Duration            `opt:"cluster.settle-timeout"`
+	ClusterReconnectInterval time.Duration            `opt:"cluster.reconnect-interval"`
+	ClusterReconnectTimeout  time.Duration            `opt:"cluster.reconnect-timeout"`
+	LogLevel                 log.LogLevel             `opt:"log.level"`
+	LogFormat                log.LogFormat            `opt:"log.format"`
 }
 
 type AlertManagerStatefulSet struct {
@@ -208,7 +207,7 @@ func (s *AlertManagerStatefulSet) makeContainer() *k8sutil.Container {
 	}
 
 	if s.options.ConfigFile != nil {
-		s.options.ConfigFile.AddToContainer(ret)
+		s.options.ConfigFile.Update(ret)
 	}
 
 	return ret

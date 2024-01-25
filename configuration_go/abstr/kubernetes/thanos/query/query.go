@@ -23,10 +23,8 @@ const (
 	GrpcCompressionNone   GrpcCompressionType = "none"
 )
 
-type tracingConfigFile = k8sutil.ConfigFile
-
 // NewTracingConfigFile returns a new tracing config file option.
-func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
+func NewTracingConfigFile(value *trclient.TracingConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-thanos-query-tracing")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -34,10 +32,8 @@ func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
 	return ret
 }
 
-type requestLoggingConfigFile = k8sutil.ConfigFile
-
 // NewRequestLoggingConfigFile returns a new request logging config file option.
-func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *requestLoggingConfigFile {
+func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *k8sutil.ConfigFile {
 	ret := k8sutil.NewConfigFile("/etc/thanos/request-logging", "config.yaml", "request-logging", "observatorium-thanos-query-request-logging")
 	if value != nil {
 		ret.WithValue(value.String())
@@ -90,7 +86,7 @@ type QueryOptions struct {
 	QueryTenantHeader                             string                    `opt:"query.tenant-header"`
 	QueryTimeout                                  time.Duration             `opt:"query.timeout"`
 	RequestLoggingConfig                          *reqlogging.RequestConfig `opt:"request.logging-config"`
-	RequestLoggingConfigFile                      *requestLoggingConfigFile `opt:"request.logging-config-file"`
+	RequestLoggingConfigFile                      k8sutil.ContainerUpdater  `opt:"request.logging-config-file"`
 	SelectorLabel                                 []string                  `opt:"selector-label"`
 	StoreLimitsRequestSamples                     int                       `opt:"store.limits.request-samples"`
 	StoreLimitsRequestSeries                      int                       `opt:"store.limits.request-series"`
@@ -100,11 +96,14 @@ type QueryOptions struct {
 	StoreSDInterval                               time.Duration             `opt:"store.sd-interval"`
 	StoreUnhealthyTimeout                         time.Duration             `opt:"store.unhealthy-timeout"`
 	TracingConfig                                 *trclient.TracingConfig   `opt:"tracing.config"`
-	TracingConfigFile                             *tracingConfigFile        `opt:"tracing.config-file"`
+	TracingConfigFile                             k8sutil.ContainerUpdater  `opt:"tracing.config-file"`
 	WebDisableCORS                                bool                      `opt:"web.disable-cors,noval"`
 	WebExternalPrefix                             string                    `opt:"web.external-prefix"`
 	WebPrefixHeader                               string                    `opt:"web.prefix-header"`
 	WebRoutePrefix                                string                    `opt:"web.route-prefix"`
+
+	// Extra options not officially supported.
+	cmdopt.ExtraOpts
 }
 
 type QueryDeployment struct {
@@ -216,11 +215,11 @@ func (q *QueryDeployment) makeContainer() *k8sutil.Container {
 	}
 
 	if q.options.RequestLoggingConfig != nil {
-		q.options.RequestLoggingConfigFile.AddToContainer(ret)
+		q.options.RequestLoggingConfigFile.Update(ret)
 	}
 
 	if q.options.TracingConfigFile != nil {
-		q.options.TracingConfigFile.AddToContainer(ret)
+		q.options.TracingConfigFile.Update(ret)
 	}
 
 	return ret

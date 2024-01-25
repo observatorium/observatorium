@@ -125,7 +125,7 @@ func TestConfigFile(t *testing.T) {
 
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
-			testCase.option.AddToContainer(testCase.container)
+			testCase.option.Update(testCase.container)
 			compareContainers(testCase.container, testCase.expectedContainer, t)
 		})
 	}

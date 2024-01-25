@@ -79,6 +79,7 @@ type Container struct {
 	LivenessProbe   *corev1.Probe
 	ReadinessProbe  *corev1.Probe
 	Args            []string
+	Command         []string
 	Ports           []corev1.ContainerPort
 	VolumeMounts    []corev1.VolumeMount
 
@@ -102,6 +103,7 @@ func (c *Container) GetContainer() corev1.Container {
 		LivenessProbe:            c.LivenessProbe,
 		ReadinessProbe:           c.ReadinessProbe,
 		Args:                     c.Args,
+		Command:                  c.Command,
 		Ports:                    c.Ports,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		VolumeMounts:             c.VolumeMounts,
