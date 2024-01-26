@@ -64,8 +64,8 @@ type QueryOptions struct {
 	HttpAddress                                   *net.TCPAddr              `opt:"http-address"`
 	HttpGracePeriod                               time.Duration             `opt:"http-grace-period"`
 	HttpConfig                                    string                    `opt:"http-config"`
-	LogFormat                                     log.LogFormat             `opt:"log.format"`
-	LogLevel                                      log.LogLevel              `opt:"log.level"`
+	LogFormat                                     log.Format                `opt:"log.format"`
+	LogLevel                                      log.Level                 `opt:"log.level"`
 	QueryActiveQueryPath                          string                    `opt:"query.active-query-path"`
 	QueryAutoDownsampling                         bool                      `opt:"query.auto-downsampling,noval"`
 	QueryConnMetricLabel                          []string                  `opt:"query.conn-metric.label"`

@@ -104,8 +104,8 @@ type ReceiveOptions struct {
 	HttpGracePeriod                     time.Duration             `opt:"http-grace-period"`
 	HttpConfig                          string                    `opt:"http.config"`
 	Label                               []Label                   `opt:"label"`
-	LogFormat                           log.LogFormat             `opt:"log.format"`
-	LogLevel                            log.LogLevel              `opt:"log.level"`
+	LogFormat                           log.Format                `opt:"log.format"`
+	LogLevel                            log.Level                 `opt:"log.level"`
 	ObjstoreConfig                      string                    `opt:"objstore.config"`
 	ObjstoreConfigFile                  string                    `opt:"objstore.config-file"`
 	ReceiveDefaultTenantID              string                    `opt:"receive.default-tenant-id"`
@@ -168,8 +168,8 @@ func (ro *ReceiveOptions) withDefaultIngestorOptions() *ReceiveOptions {
 }
 
 func (ro *ReceiveOptions) withBaseOptions() *ReceiveOptions {
-	ro.LogLevel = log.LogLevelWarn
-	ro.LogFormat = log.LogFormatLogfmt
+	ro.LogLevel = log.LevelWarn
+	ro.LogFormat = log.FormatLogfmt
 	ro.HttpAddress = &net.TCPAddr{Port: defaultHTTPPort, IP: net.ParseIP("0.0.0.0")}
 	ro.GrpcAddress = &net.TCPAddr{Port: defaultGRPCPort, IP: net.ParseIP("0.0.0.0")}
 	ro.RemoteWriteAddress = &net.TCPAddr{Port: defaultReceivePort, IP: net.ParseIP("0.0.0.0")}

@@ -73,8 +73,8 @@ type QueryFrontendOptions struct {
 	LabelsResponseCacheConfigFile        k8sutil.ContainerUpdater   `opt:"labels.response-cache-config-file"`
 	LabelsResponseMaxFreshness           string                     `opt:"labels.response-cache-max-freshness"`
 	LabelsSplitInterval                  time.Duration              `opt:"labels.split-interval"`
-	LogFormat                            log.LogFormat              `opt:"log.format"`
-	LogLevel                             log.LogLevel               `opt:"log.level"`
+	LogFormat                            log.Format                 `opt:"log.format"`
+	LogLevel                             log.Level                  `opt:"log.level"`
 	QueryFrontendCompressResponses       bool                       `opt:"query-frontend.compress-responses,noval"`
 	QueryFrontendDownstreamTripperConfig *DownstreamTripperConfig   `opt:"query-frontend.downstream-tripper-config"`
 	QueryFrontendDownstreamURL           string                     `opt:"query-frontend.downstream-url"`

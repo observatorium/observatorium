@@ -40,8 +40,8 @@ type CompactorOptions struct {
 	HttpAddress                        *net.TCPAddr                    `opt:"http-address"`
 	HttpGracePeriod                    time.Duration                   `opt:"http-grace-period"`
 	HttpConfig                         string                          `opt:"http.config"`
-	LogFormat                          log.LogFormat                   `opt:"log.format"`
-	LogLevel                           log.LogLevel                    `opt:"log.level"`
+	LogFormat                          log.Format                      `opt:"log.format"`
+	LogLevel                           log.Level                       `opt:"log.level"`
 	MaxTime                            *thanostime.TimeOrDurationValue `opt:"max-time"`
 	MinTime                            *thanostime.TimeOrDurationValue `opt:"min-time"`
 	ObjstoreConfig                     string                          `opt:"objstore.config"`

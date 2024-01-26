@@ -1,17 +1,17 @@
 package log
 
-type LogLevel string
+type Level string
 
 const (
-	LogLevelDebug LogLevel = "debug"
-	LogLevelInfo  LogLevel = "info"
-	LogLevelWarn  LogLevel = "warn"
-	LogLevelError LogLevel = "error"
+	LevelDebug Level = "debug"
+	LevelInfo  Level = "info"
+	LevelWarn  Level = "warn"
+	LevelError Level = "error"
 )
 
-type LogFormat string
+type Format string
 
 const (
-	LogFormatLogfmt LogFormat = "logfmt"
-	LogFormatJSON   LogFormat = "json"
+	FormatLogfmt Format = "logfmt"
+	FormatJSON   Format = "json"
 )

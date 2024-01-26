@@ -52,8 +52,8 @@ type AlertManagerOptions struct {
 	ClusterSettleTimeout     time.Duration            `opt:"cluster.settle-timeout"`
 	ClusterReconnectInterval time.Duration            `opt:"cluster.reconnect-interval"`
 	ClusterReconnectTimeout  time.Duration            `opt:"cluster.reconnect-timeout"`
-	LogLevel                 log.LogLevel             `opt:"log.level"`
-	LogFormat                log.LogFormat            `opt:"log.format"`
+	LogLevel                 log.Level                `opt:"log.level"`
+	LogFormat                log.Format               `opt:"log.format"`
 }
 
 type AlertManagerStatefulSet struct {
@@ -66,8 +66,8 @@ type AlertManagerStatefulSet struct {
 
 func NewDefaultOptions() *AlertManagerOptions {
 	return &AlertManagerOptions{
-		LogLevel:    log.LogLevelWarn,
-		LogFormat:   log.LogFormatLogfmt,
+		LogLevel:    log.LevelWarn,
+		LogFormat:   log.FormatLogfmt,
 		StoragePath: "/data",
 	}
 }

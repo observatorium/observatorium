@@ -45,8 +45,8 @@ type ObservatoriumAPIOptions struct {
 	InternalTracingEndpointType                 string                   `opt:"internal.tracing.endpoint-type"`
 	InternalTracingSamplingFraction             float64                  `opt:"internal.tracing.sampling-fraction"`
 	InternalTracingServiceName                  string                   `opt:"internal.tracing.service-name"`
-	LogFormat                                   log.LogFormat            `opt:"log.format"`
-	LogLevel                                    log.LogLevel             `opt:"log.level"`
+	LogFormat                                   log.Format               `opt:"log.format"`
+	LogLevel                                    log.Level                `opt:"log.level"`
 	LogsAuthExtractSelectors                    string                   `opt:"logs.auth.extract-selectors"`
 	LogsReadEndpoint                            string                   `opt:"logs.read.endpoint"`
 	LogsRulesEndpoint                           string                   `opt:"logs.rules.endpoint"`

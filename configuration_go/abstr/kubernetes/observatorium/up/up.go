@@ -62,7 +62,7 @@ type UpOptions struct {
 	Labels                  []string                 `opt:"labels"`
 	Latency                 time.Duration            `opt:"latency"`
 	Listen                  *net.TCPAddr             `opt:"listen"`
-	LogLevel                log.LogLevel             `opt:"log.level"`
+	LogLevel                log.Level                `opt:"log.level"`
 	Logs                    []string                 `opt:"logs"`
 	LogsFile                string                   `opt:"logs-file"` // TODO: support this
 	Name                    string                   `opt:"name"`

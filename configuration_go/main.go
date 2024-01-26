@@ -82,7 +82,7 @@ func main() {
 
 	// Configure Observatorium API application.
 	apiOpts := &api.ObservatoriumAPIOptions{
-		LogLevel: log.LogLevelDebug,
+		LogLevel: log.LevelDebug,
 		// Metrics endpoints.
 		MetricsReadEndpoint:  "http://observatorium-xyz-thanos-query-frontend.observatorium.svc.cluster.local:9090",
 		MetricsWriteEndpoint: "http://observatorium-xyz-thanos-receive.observatorium.svc.cluster.local:19291",

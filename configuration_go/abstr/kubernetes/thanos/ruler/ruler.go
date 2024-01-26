@@ -120,8 +120,8 @@ type RulerOptions struct {
 	HttpGracePeriod            time.Duration            `opt:"http-grace-period"`
 	HttpConfig                 string                   `opt:"http.config"`
 	Label                      []Label                  `opt:"label"`
-	LogFormat                  log.LogFormat            `opt:"log.format"`
-	LogLevel                   log.LogLevel             `opt:"log.level"`
+	LogFormat                  log.Format               `opt:"log.format"`
+	LogLevel                   log.Level                `opt:"log.level"`
 	ObjstoreConfig             string                   `opt:"objstore.config"`
 	ObjstoreConfigFile         k8sutil.ContainerUpdater `opt:"objstore.config-file"`
 	Query                      []string                 `opt:"query"`

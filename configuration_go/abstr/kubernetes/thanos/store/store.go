@@ -46,8 +46,8 @@ type StoreOptions struct {
 	IndexCacheSize                   units.Bytes                     `opt:"index-cache-size"`
 	IndexCacheConfig                 *cache.IndexCacheConfig         `opt:"index-cache.config"`
 	IndexCacheConfigFile             string                          `opt:"index-cache.config-file"`
-	LogFormat                        log.LogFormat                   `opt:"log.format"`
-	LogLevel                         log.LogLevel                    `opt:"log.level"`
+	LogFormat                        log.Format                      `opt:"log.format"`
+	LogLevel                         log.Level                       `opt:"log.level"`
 	MaxTime                          *thanostime.TimeOrDurationValue `opt:"max-time"`
 	MinTime                          *thanostime.TimeOrDurationValue `opt:"min-time"`
 	ObjstoreConfig                   string                          `opt:"objstore.config"`
