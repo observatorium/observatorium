@@ -4,8 +4,9 @@ import (
 	"net"
 	"time"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
@@ -15,6 +16,7 @@ import (
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/prometheus/model/relabel"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -75,11 +77,8 @@ type StoreOptions struct {
 }
 
 type StoreStatefulSet struct {
-	options    *StoreOptions
-	VolumeType string
-	VolumeSize string
-
-	k8sutil.DeploymentGenericConfig
+	options *StoreOptions
+	workload.StatefulSetWorkload
 }
 
 func NewDefaultOptions() *StoreOptions {
@@ -98,70 +97,70 @@ func NewStore(opts *StoreOptions, namespace, imageTag string) *StoreStatefulSet 
 	}
 
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "thanos-store",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "object-store-gateway",
-		k8sutil.VersionLabel:   imageTag,
+		workload.NameLabel:      "thanos-store",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "object-store-gateway",
+		workload.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
-		k8sutil.NameLabel:     commonLabels[k8sutil.NameLabel],
-		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
+		workload.NameLabel:     commonLabels[workload.NameLabel],
+		workload.InstanceLabel: commonLabels[workload.InstanceLabel],
 	}
 
-	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
+	probePort := kghelpers.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
 
-	return &StoreStatefulSet{
-		options: opts,
-		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+	ssWorkload := workload.StatefulSetWorkload{
+		Replicas:   1,
+		VolumeSize: "50Gi",
+		PodConfig: workload.PodConfig{
 			Image:                "quay.io/thanos/thanos",
 			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-thanos-store",
 			Namespace:            namespace,
 			CommonLabels:         commonLabels,
-			Replicas:             1,
-			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "1", "200Mi", "400Mi"),
-			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
+			ContainerResources:   kghelpers.NewResourcesRequirements("500m", "1", "200Mi", "400Mi"),
+			Affinity:             kghelpers.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/-/healthy", probePort, k8sutil.ProbeConfig{
+			LivenessProbe: kghelpers.NewProbe("/-/healthy", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 8,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/-/ready", probePort, k8sutil.ProbeConfig{
+			ReadinessProbe: kghelpers.NewProbe("/-/ready", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
 			TerminationGracePeriodSeconds: 120,
 			Env: []corev1.EnvVar{
-				k8sutil.NewEnvFromSecret("OBJSTORE_CONFIG", "objectStore-secret", "thanos.yaml"),
-				k8sutil.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
+				kghelpers.NewEnvFromSecret("OBJSTORE_CONFIG", "objectStore-secret", "thanos.yaml"),
+				kghelpers.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 			},
 			ConfigMaps: make(map[string]map[string]string),
 			Secrets:    make(map[string]map[string][]byte),
 		},
-		VolumeSize: "50Gi",
+	}
+
+	return &StoreStatefulSet{
+		options:             opts,
+		StatefulSetWorkload: ssWorkload,
 	}
 }
 
-func (s *StoreStatefulSet) Manifests() k8sutil.ObjectMap {
+func (s *StoreStatefulSet) Objects() []runtime.Object {
 	container := s.makeContainer()
-
-	ret := k8sutil.ObjectMap{}
-	ret.AddAll(s.GenerateObjectsStatefulSet(container))
-
-	return ret
+	return s.StatefulSetWorkload.Objects(container)
 }
 
-func (s *StoreStatefulSet) makeContainer() *k8sutil.Container {
-	httpPort := k8sutil.GetPortOrDefault(defaultHTTPPort, s.options.HttpAddress)
-	k8sutil.CheckProbePort(httpPort, s.LivenessProbe)
-	k8sutil.CheckProbePort(httpPort, s.ReadinessProbe)
+func (s *StoreStatefulSet) makeContainer() *workload.Container {
+	httpPort := kghelpers.GetPortOrDefault(defaultHTTPPort, s.options.HttpAddress)
+	kghelpers.CheckProbePort(httpPort, s.LivenessProbe)
+	kghelpers.CheckProbePort(httpPort, s.ReadinessProbe)
 
-	grpcPort := k8sutil.GetPortOrDefault(defaultGRPCPort, s.options.GrpcAddress)
+	grpcPort := kghelpers.GetPortOrDefault(defaultGRPCPort, s.options.GrpcAddress)
 
 	if s.options.DataDir == "" {
 		panic(`data directory is not specified for the statefulset.`)
@@ -183,18 +182,20 @@ func (s *StoreStatefulSet) makeContainer() *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("http", httpPort, httpPort),
-		k8sutil.NewServicePort("grpc", grpcPort, grpcPort),
+		kghelpers.NewServicePort("http", httpPort, httpPort),
+		kghelpers.NewServicePort("grpc", grpcPort, grpcPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
 			Port:           "http",
-			RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
+			RelabelConfigs: kghelpers.GetDefaultServiceMonitorRelabelConfig(),
 		},
 	}
-	ret.VolumeClaims = []k8sutil.VolumeClaim{
-		k8sutil.NewVolumeClaimProvider(dataVolumeName, s.VolumeType, s.VolumeSize),
-	}
+	ret.VolumeClaims = append(ret.VolumeClaims, workload.PersistentVolumeClaim{
+		Name:  dataVolumeName,
+		Size:  s.VolumeSize,
+		Class: s.VolumeType,
+	})
 	ret.VolumeMounts = []corev1.VolumeMount{
 		{
 			Name:      dataVolumeName,

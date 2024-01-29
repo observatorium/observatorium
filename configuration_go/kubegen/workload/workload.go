@@ -1,4 +1,4 @@
-package k8sutil
+package workload
 
 import (
 	"maps"
@@ -9,22 +9,64 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// DeploymentGenericConfig represents a generic deployment configuration with common options set by end users.
-// It groups those option fields in a flat structure for all the different Kubernetes objects that are created.
-// It also provides helpers to generate the runtime objects from the configuration.
-//
-// Usage example:
-//
-//	// Create a new DeploymentGenericConfig object with your desired options
-//	deploymentConfig := k8sutil.DeploymentGenericConfig{}
-//
-//	// Create the main container from the DeploymentGenericConfig object
-//	// Customize the container if needed (e.g., add volumes, ports)
-//	container := deploymentConfig.ToContainer()
-//
-//	// Generate the runtime objects from the DeploymentGenericConfig object
-//	runtimeObjects := deploymentConfig.GenerateObjects(container)
-type DeploymentGenericConfig struct {
+// DeploymentWorkload represents a generic deployment workload with most commonly used options.
+type DeploymentWorkload struct {
+	DeploymentStrategy appsv1.DeploymentStrategy
+	Replicas           int32
+
+	PodConfig
+}
+
+// Objects returns the list of runtime objects for the given workload.
+func (d DeploymentWorkload) Objects(container *Container) []runtime.Object {
+	pod := d.Pod(container)
+	ret := d.generateCommonObjects(pod)
+	ret = append(ret, d.deployment(pod))
+
+	return ret
+}
+
+func (d DeploymentWorkload) deployment(pod *Pod) runtime.Object {
+	dep := &Deployment{
+		MetaConfig: *d.ObjectMeta(),
+		Replicas:   int32(d.Replicas),
+		Strategy:   d.DeploymentStrategy,
+		Pod:        pod,
+	}
+
+	return dep.Object()
+}
+
+// StatefulSetWorkload represents a generic statefulset workload with most commonly used options.
+type StatefulSetWorkload struct {
+	Replicas   int32
+	VolumeType string
+	VolumeSize string
+
+	PodConfig
+}
+
+// Objects returns the list of runtime objects for the given workload.
+func (s StatefulSetWorkload) Objects(container *Container) []runtime.Object {
+	pod := s.Pod(container)
+	ret := s.generateCommonObjects(pod)
+	ret = append(ret, s.statefulSet(pod))
+
+	return ret
+}
+
+func (s StatefulSetWorkload) statefulSet(pod *Pod) runtime.Object {
+	statefulset := &StatefulSet{
+		MetaConfig: *s.ObjectMeta(),
+		Replicas:   int32(s.Replicas),
+		Pod:        pod,
+	}
+
+	return statefulset.Object()
+}
+
+// PodConfig represents a generic pod configuration with most commonly used options.
+type PodConfig struct {
 	// Container fields
 	ContainerResources corev1.ResourceRequirements
 	Env                []corev1.EnvVar
@@ -39,12 +81,10 @@ type DeploymentGenericConfig struct {
 	SecurityContext               *corev1.PodSecurityContext
 	TerminationGracePeriodSeconds int64
 
-	// Deployment fields
-	CommonLabels       map[string]string
-	DeploymentStrategy appsv1.DeploymentStrategy // Only applies to Deployment kind
-	Name               string
-	Namespace          string
-	Replicas           int32
+	// Workload fields
+	CommonLabels map[string]string
+	Name         string
+	Namespace    string
 
 	EnableServiceMonitor bool
 
@@ -56,7 +96,8 @@ type DeploymentGenericConfig struct {
 	InitContainers []ContainerProvider
 }
 
-func (d DeploymentGenericConfig) ToContainer() *Container {
+// ToContainer returns the main Container object of the pod with the given pod configuration.
+func (d PodConfig) ToContainer() *Container {
 	return &Container{
 		Name:            d.Name,
 		Image:           d.Image,
@@ -71,25 +112,8 @@ func (d DeploymentGenericConfig) ToContainer() *Container {
 	}
 }
 
-// GenerateObjectsDeployment returns the list of runtime objects for the given container in a Deployment.
-func (d DeploymentGenericConfig) GenerateObjectsDeployment(container *Container) []runtime.Object {
-	pod := d.Pod(container)
-	ret := d.generateCommonObjects(pod)
-	ret = append(ret, d.Deployment(pod))
-
-	return ret
-}
-
-// GenerateObjectsStatefulSet returns the list of runtime objects for the given container in a StatefulSet.
-func (d DeploymentGenericConfig) GenerateObjectsStatefulSet(container *Container) []runtime.Object {
-	pod := d.Pod(container)
-	ret := d.generateCommonObjects(pod)
-	ret = append(ret, d.StatefulSet(pod))
-
-	return ret
-}
-
-func (d DeploymentGenericConfig) ObjectMeta() *MetaConfig {
+// ObjectMeta returns the ObjectMeta object of the pod with the given pod configuration.
+func (d PodConfig) ObjectMeta() *MetaConfig {
 	labels := maps.Clone(d.CommonLabels)
 	if d.ImageTag != "" {
 		labels[VersionLabel] = d.ImageTag
@@ -103,7 +127,7 @@ func (d DeploymentGenericConfig) ObjectMeta() *MetaConfig {
 }
 
 // Pod returns a Pod object with the given container and sidecars.
-func (d DeploymentGenericConfig) Pod(container *Container) *Pod {
+func (d PodConfig) Pod(container *Container) *Pod {
 	return &Pod{
 		TerminationGracePeriodSeconds: &d.TerminationGracePeriodSeconds,
 		Affinity:                      d.Affinity,
@@ -114,63 +138,45 @@ func (d DeploymentGenericConfig) Pod(container *Container) *Pod {
 	}
 }
 
-// Deployment returns a Deployment object with the given pod.
-func (d DeploymentGenericConfig) Deployment(pod *Pod) runtime.Object {
-	dep := &Deployment{
-		MetaConfig: *d.ObjectMeta(),
-		Replicas:   int32(d.Replicas),
-		Pod:        pod,
-	}
-
-	return dep.MakeManifest()
-}
-
-// StatefulSet returns a StatefulSet object with the given pod.
-func (d DeploymentGenericConfig) StatefulSet(pod *Pod) runtime.Object {
-	statefulset := &StatefulSet{
-		MetaConfig: *d.ObjectMeta(),
-		Replicas:   int32(d.Replicas),
-		Pod:        pod,
-	}
-
-	return statefulset.MakeManifest()
-}
-
 // Service returns a Service object for the given pod.
-func (d DeploymentGenericConfig) Service(pod *Pod) runtime.Object {
+func (d PodConfig) Service(pod *Pod) runtime.Object {
 	service := &Service{
 		MetaConfig:   *d.ObjectMeta(),
 		ServicePorts: pod,
 	}
 
-	return service.MakeManifest()
+	return service.Object()
 }
 
 // ServiceMonitor returns a ServiceMonitor object for the given pod.
-func (d DeploymentGenericConfig) ServiceMonitor(pod *Pod) runtime.Object {
+func (d PodConfig) ServiceMonitor(pod *Pod) runtime.Object {
 	serviceMonitor := &ServiceMonitor{
 		MetaConfig:              *d.ObjectMeta(),
 		ServiceMonitorEndpoints: pod,
 	}
 
-	return serviceMonitor.MakeManifest()
+	return serviceMonitor.Object()
 }
 
 // ServiceAccount returns a ServiceAccount object.
-func (d DeploymentGenericConfig) ServiceAccount() runtime.Object {
+func (d PodConfig) ServiceAccount() runtime.Object {
+	metaCfg := d.ObjectMeta().MakeMeta()
+	delete(metaCfg.Labels, VersionLabel)
 	return &corev1.ServiceAccount{
 		TypeMeta:   ServiceAccountMeta,
-		ObjectMeta: d.ObjectMeta().MakeMeta(),
+		ObjectMeta: metaCfg,
 	}
 }
 
 // ConfigMapsAndSecrets returns the list of ConfigMap and Secret objects for the given pod.
-func (d DeploymentGenericConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object {
+func (d PodConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object {
 	ret := []runtime.Object{}
 	for name, data := range pod.GetConfigMaps() {
+		metaCfg := d.ObjectMeta().MakeMeta()
+		delete(metaCfg.Labels, VersionLabel)
 		cm := &corev1.ConfigMap{
 			TypeMeta:   ConfigMapMeta,
-			ObjectMeta: d.ObjectMeta().MakeMeta(),
+			ObjectMeta: metaCfg,
 			Data:       data,
 		}
 		cm.Name = name
@@ -178,9 +184,11 @@ func (d DeploymentGenericConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object
 	}
 
 	for name, data := range pod.GetSecrets() {
+		metaCfg := d.ObjectMeta().MakeMeta()
+		delete(metaCfg.Labels, VersionLabel)
 		secret := &corev1.Secret{
 			TypeMeta:   SecretMeta,
-			ObjectMeta: d.ObjectMeta().MakeMeta(),
+			ObjectMeta: metaCfg,
 		}
 		secret.Name = name
 
@@ -207,7 +215,7 @@ func (d DeploymentGenericConfig) ConfigMapsAndSecrets(pod *Pod) []runtime.Object
 	return ret
 }
 
-func (d DeploymentGenericConfig) generateCommonObjects(pod *Pod) []runtime.Object {
+func (d PodConfig) generateCommonObjects(pod *Pod) []runtime.Object {
 	ret := []runtime.Object{
 		d.ServiceAccount(),
 	}

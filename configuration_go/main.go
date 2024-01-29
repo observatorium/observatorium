@@ -7,14 +7,16 @@ import (
 
 	obsrbac "github.com/observatorium/api/rbac"
 	"github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/observatorium/api"
-	"github.com/observatorium/observatorium/configuration_go/generator"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
-	"github.com/observatorium/observatorium/configuration_go/openshift"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/kubeyaml"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/openshift"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	templatev1 "github.com/openshift/api/template/v1"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -106,16 +108,16 @@ func main() {
 	apiK8s := api.NewObservatoriumAPI(apiOpts, "observatorium", "latest")
 	apiK8s.Name = "observatorium-xyz"
 	apiK8s.Replicas = 3
-	apiK8s.ContainerResources = k8sutil.NewResourcesRequirements("2", "3", "2Gi", "3Gi")
+	apiK8s.ContainerResources = kghelpers.NewResourcesRequirements("2", "3", "2Gi", "3Gi")
 
 	// Generate manifests.
-	generator.GenerateWithMimic(g, apiK8s.Manifests(), "config-new")
+	kubeyaml.GenerateWithMimic(g, apiK8s.Objects(), "config-new")
 
 	// Example 2
 	// Create sidecar container.
 	// It uses k8sutil Container provider that encapsulates all resources needed for a container.
 	// Including configMaps, volumes, servicePorts, etc.
-	dummyContainer := &k8sutil.Container{
+	dummyContainer := &workload.Container{
 		Name:            "dummy-sidecar",
 		Image:           "docker.io/dummy",
 		ImageTag:        "latest",
@@ -159,7 +161,7 @@ func main() {
 				TargetPort: intstr.FromInt(7080),
 			},
 		},
-		Volumes: []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config", "dummy-sidecar-config-new")},
+		Volumes: []corev1.Volume{kghelpers.NewPodVolumeFromConfigMap("config", "dummy-sidecar-config-new")},
 		MonitorPorts: []monv1.Endpoint{
 			{
 				Port: "dummy-metrics",
@@ -177,7 +179,7 @@ func main() {
 	apiK8s.Sidecars = append(apiK8s.Sidecars, dummyContainer)
 
 	// Generate manifests.
-	generator.GenerateWithMimic(g, apiK8s.Manifests(), "config-w-sidecar")
+	kubeyaml.GenerateWithMimic(g, apiK8s.Objects(), "config-w-sidecar")
 
 	// Example 3
 	// Observatorium API with no sidecar, packaged as Observatorium template.
@@ -206,28 +208,31 @@ func main() {
 	// Configure Kubernetes resources.
 	apiK8s = api.NewObservatoriumAPI(apiOpts, "${NAMESPACE}", "${OBSERVATORIUM_API_IMAGE_TAG}")
 	apiK8s.Replicas = 3
-	apiK8s.ContainerResources = k8sutil.NewResourcesRequirements("2", "3", "2Gi", "3Gi")
+	apiK8s.ContainerResources = kghelpers.NewResourcesRequirements("2", "3", "2Gi", "3Gi")
 	apiK8s.Image = "${OBSERVATORIUM_API_IMAGE}"
 
 	// Generate manifests.
-	generator.GenerateWithMimic(g, openshift.WrapInTemplate("observatorium-template", apiK8s.Manifests(), metav1.ObjectMeta{
-		Name: "observatorium",
-	}, []templatev1.Parameter{
-		{
-			Name:  "OBSERVATORIUM_API_IMAGE",
-			Value: "quay.io/observatorium/api",
-		},
-		{
-			Name:  "OBSERVATORIUM_API_IMAGE_TAG",
-			Value: "main-2023-01-24-v0.1.2-318-g5f4fdf4",
-		},
-		{
-			Name:  "NAMESPACE",
-			Value: "observatorium",
-		},
-		{
-			Name:  "OBSERVATORIUM_API_LOG_LEVEL",
-			Value: "debug",
-		},
-	}), "openshift-config-new")
+	objects := []runtime.Object{
+		openshift.WrapInTemplate(apiK8s.Objects(), metav1.ObjectMeta{
+			Name: "observatorium",
+		}, []templatev1.Parameter{
+			{
+				Name:  "OBSERVATORIUM_API_IMAGE",
+				Value: "quay.io/observatorium/api",
+			},
+			{
+				Name:  "OBSERVATORIUM_API_IMAGE_TAG",
+				Value: "main-2023-01-24-v0.1.2-318-g5f4fdf4",
+			},
+			{
+				Name:  "NAMESPACE",
+				Value: "observatorium",
+			},
+			{
+				Name:  "OBSERVATORIUM_API_LOG_LEVEL",
+				Value: "debug",
+			},
+		}),
+	}
+	kubeyaml.GenerateWithMimic(g, objects, "openshift-config-new")
 }

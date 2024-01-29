@@ -5,13 +5,16 @@ import (
 	"net"
 	"time"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/containeropts"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	upoptions "github.com/observatorium/up/pkg/options"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type EndpointType string
@@ -36,8 +39,8 @@ func (q QueriesFile) String() string {
 }
 
 // NewQueriesFileOption creates a new queries file option with the given value.
-func NewQueriesFileOption(value *QueriesFile) *k8sutil.ConfigFile {
-	ret := k8sutil.NewConfigFile("/etc/up/config/queries", "queries.yaml", "queries-file", "observatorium-up-queries")
+func NewQueriesFileOption(value *QueriesFile) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/up/config/queries", "queries.yaml", "queries-file", "observatorium-up-queries")
 	if value != nil {
 		ret.WithValue(value.String())
 	}
@@ -45,8 +48,8 @@ func NewQueriesFileOption(value *QueriesFile) *k8sutil.ConfigFile {
 }
 
 // NewTokenFileOption creates a new token file option with the given value.
-func NewTokenFileOption(value *string) *k8sutil.ConfigFile {
-	ret := k8sutil.NewConfigFile("/etc/up/config/token", "token", "token-file", "observatorium-up-token")
+func NewTokenFileOption(value *string) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/up/config/token", "token", "token-file", "observatorium-up-token")
 	if value != nil {
 		ret.WithValue(*value)
 	}
@@ -54,34 +57,34 @@ func NewTokenFileOption(value *string) *k8sutil.ConfigFile {
 }
 
 type UpOptions struct {
-	Duration                *time.Duration           `opt:"duration"`
-	EndpointRead            string                   `opt:"endpoint-read"`
-	EndpointType            EndpointType             `opt:"endpoint-type"`
-	EndpointWrite           string                   `opt:"endpoint-write"`
-	InitialQueryDelay       *time.Duration           `opt:"initial-query-delay"`
-	Labels                  []string                 `opt:"labels"`
-	Latency                 time.Duration            `opt:"latency"`
-	Listen                  *net.TCPAddr             `opt:"listen"`
-	LogLevel                log.Level                `opt:"log.level"`
-	Logs                    []string                 `opt:"logs"`
-	LogsFile                string                   `opt:"logs-file"` // TODO: support this
-	Name                    string                   `opt:"name"`
-	Period                  time.Duration            `opt:"period"`
-	QueriesFile             k8sutil.ContainerUpdater `opt:"queries-file"`
-	Step                    time.Duration            `opt:"step"`
-	Tenant                  string                   `opt:"tenant"`
-	TenantHeader            string                   `opt:"tenant-header"`
-	Threshold               float64                  `opt:"threshold"`
-	TLSClientCertFile       string                   `opt:"tls-client-cert-file"`
-	TLSClientPrivateKeyFile string                   `opt:"tls-client-private-key-file"`
-	TLSCAFile               string                   `opt:"tls-ca-file"`
-	Token                   string                   `opt:"token"`
-	TokenFile               k8sutil.ContainerUpdater `opt:"token-file"`
+	Duration                *time.Duration                 `opt:"duration"`
+	EndpointRead            string                         `opt:"endpoint-read"`
+	EndpointType            EndpointType                   `opt:"endpoint-type"`
+	EndpointWrite           string                         `opt:"endpoint-write"`
+	InitialQueryDelay       *time.Duration                 `opt:"initial-query-delay"`
+	Labels                  []string                       `opt:"labels"`
+	Latency                 time.Duration                  `opt:"latency"`
+	Listen                  *net.TCPAddr                   `opt:"listen"`
+	LogLevel                log.Level                      `opt:"log.level"`
+	Logs                    []string                       `opt:"logs"`
+	LogsFile                string                         `opt:"logs-file"` // TODO: support this
+	Name                    string                         `opt:"name"`
+	Period                  time.Duration                  `opt:"period"`
+	QueriesFile             containeropts.ContainerUpdater `opt:"queries-file"`
+	Step                    time.Duration                  `opt:"step"`
+	Tenant                  string                         `opt:"tenant"`
+	TenantHeader            string                         `opt:"tenant-header"`
+	Threshold               float64                        `opt:"threshold"`
+	TLSClientCertFile       string                         `opt:"tls-client-cert-file"`
+	TLSClientPrivateKeyFile string                         `opt:"tls-client-private-key-file"`
+	TLSCAFile               string                         `opt:"tls-ca-file"`
+	Token                   string                         `opt:"token"`
+	TokenFile               containeropts.ContainerUpdater `opt:"token-file"`
 }
 
 type UpDeployment struct {
 	options *UpOptions
-	k8sutil.DeploymentGenericConfig
+	workload.DeploymentWorkload
 }
 
 // NewUp creates a new UpDeployment with standard defaults.
@@ -91,24 +94,23 @@ func NewUp(opts *UpOptions, namespace, imageTag string) *UpDeployment {
 	}
 
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "observatorium-up",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "blackbox-prober",
-		k8sutil.VersionLabel:   imageTag,
+		workload.NameLabel:      "observatorium-up",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "blackbox-prober",
+		workload.VersionLabel:   imageTag,
 	}
 
-	return &UpDeployment{
-		options: opts,
-		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+	depWorkload := workload.DeploymentWorkload{
+		Replicas: 1,
+		PodConfig: workload.PodConfig{
 			Name:                          "observatorium-up",
 			Image:                         "quay.io/observatorium/up",
 			ImageTag:                      imageTag,
 			ImagePullPolicy:               corev1.PullIfNotPresent,
 			Namespace:                     namespace,
 			CommonLabels:                  commonLabels,
-			Replicas:                      1,
-			ContainerResources:            k8sutil.NewResourcesRequirements("100m", "500m", "1Gi", "2Gi"),
+			ContainerResources:            kghelpers.NewResourcesRequirements("100m", "500m", "1Gi", "2Gi"),
 			EnableServiceMonitor:          true,
 			TerminationGracePeriodSeconds: 30,
 			Env:                           []corev1.EnvVar{},
@@ -116,20 +118,22 @@ func NewUp(opts *UpOptions, namespace, imageTag string) *UpDeployment {
 			Secrets:                       make(map[string]map[string][]byte),
 		},
 	}
+
+	return &UpDeployment{
+		options:            opts,
+		DeploymentWorkload: depWorkload,
+	}
 }
 
-func (u *UpDeployment) Manifests() k8sutil.ObjectMap {
+func (u *UpDeployment) Objects() []runtime.Object {
 	container := u.makeContainer()
-	ret := k8sutil.ObjectMap{}
-	ret.AddAll(u.GenerateObjectsDeployment(container))
-
-	return ret
+	return u.DeploymentWorkload.Objects(container)
 }
 
-func (u *UpDeployment) makeContainer() *k8sutil.Container {
+func (u *UpDeployment) makeContainer() *workload.Container {
 	ret := u.ToContainer()
 	ret.Name = "observatorium-up"
-	serverPort := k8sutil.GetPortOrDefault(8080, u.options.Listen)
+	serverPort := kghelpers.GetPortOrDefault(8080, u.options.Listen)
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "http",
@@ -138,7 +142,7 @@ func (u *UpDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("http", serverPort, serverPort),
+		kghelpers.NewServicePort("http", serverPort, serverPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{

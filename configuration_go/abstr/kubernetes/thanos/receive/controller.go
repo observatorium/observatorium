@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -24,8 +26,7 @@ type ControllerOptions struct {
 
 type Controller struct {
 	options *ControllerOptions
-
-	k8sutil.DeploymentGenericConfig
+	workload.DeploymentWorkload
 }
 
 func NewControllerDefaultOptions() *ControllerOptions {
@@ -43,42 +44,45 @@ func NewController(opts *ControllerOptions, namespace, imageTag string) *Control
 	}
 
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "thanos-receive-controller",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "kubernetes-controller",
-		k8sutil.VersionLabel:   imageTag,
+		workload.NameLabel:      "thanos-receive-controller",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "kubernetes-controller",
+		workload.VersionLabel:   imageTag,
 	}
 
-	return &Controller{
-		options: opts,
-		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
-			Name:            fmt.Sprintf("%s-%s", commonLabels[k8sutil.InstanceLabel], commonLabels[k8sutil.NameLabel]),
+	depWorkload := workload.DeploymentWorkload{
+		Replicas: 1,
+		PodConfig: workload.PodConfig{
+			Name:            fmt.Sprintf("%s-%s", commonLabels[workload.InstanceLabel], commonLabels[workload.NameLabel]),
 			Image:           ThanosReceiveControllerImage,
 			ImageTag:        imageTag,
 			Namespace:       namespace,
-			Replicas:        1,
 			CommonLabels:    commonLabels,
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			Env: []corev1.EnvVar{
-				k8sutil.NewEnvFromField("NAMESPACE", "metadata.namespace"),
+				kghelpers.NewEnvFromField("NAMESPACE", "metadata.namespace"),
 			},
-			ContainerResources: k8sutil.NewResourcesRequirements("10m", "24Mi", "64m", "128Mi"),
+			ContainerResources: kghelpers.NewResourcesRequirements("10m", "24Mi", "64m", "128Mi"),
 			ConfigMaps:         map[string]map[string]string{},
 			Secrets:            map[string]map[string][]byte{},
 		},
 	}
+
+	return &Controller{
+		options:            opts,
+		DeploymentWorkload: depWorkload,
+	}
 }
 
-func (c *Controller) Manifests() k8sutil.ObjectMap {
+func (c *Controller) Objects() []runtime.Object {
 	container := c.makeContainer()
 
-	ret := k8sutil.ObjectMap{}
-	ret.AddAll(c.GenerateObjectsDeployment(container))
+	ret := c.DeploymentWorkload.Objects(container)
 
 	// create role
-	ret.Add(&rbacv1.Role{
-		TypeMeta: k8sutil.RoleMeta,
+	ret = append(ret, &rbacv1.Role{
+		TypeMeta: workload.RoleMeta,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.Name,
 			Labels:    c.CommonLabels,
@@ -105,9 +109,9 @@ func (c *Controller) Manifests() k8sutil.ObjectMap {
 	})
 
 	// create role binding
-	apiGroup := strings.Split(k8sutil.RoleMeta.APIVersion, "/")[0]
-	ret.Add(&rbacv1.RoleBinding{
-		TypeMeta: k8sutil.RoleBindingMeta,
+	apiGroup := strings.Split(workload.RoleMeta.APIVersion, "/")[0]
+	ret = append(ret, &rbacv1.RoleBinding{
+		TypeMeta: workload.RoleBindingMeta,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.Name,
 			Labels:    c.CommonLabels,
@@ -121,7 +125,7 @@ func (c *Controller) Manifests() k8sutil.ObjectMap {
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
-			Kind:     k8sutil.RoleMeta.Kind,
+			Kind:     workload.RoleMeta.Kind,
 			Name:     c.Name,
 			APIGroup: apiGroup,
 		},
@@ -130,9 +134,9 @@ func (c *Controller) Manifests() k8sutil.ObjectMap {
 	return ret
 }
 
-func (c *Controller) makeContainer() *k8sutil.Container {
-	container := c.DeploymentGenericConfig.ToContainer()
-	container.Env = append(container.Env, k8sutil.NewEnvFromField("NAMESPACE", "metadata.namespace"))
+func (c *Controller) makeContainer() *workload.Container {
+	container := c.ToContainer()
+	container.Env = append(container.Env, kghelpers.NewEnvFromField("NAMESPACE", "metadata.namespace"))
 
 	container.Args = cmdopt.GetOpts(c.options)
 

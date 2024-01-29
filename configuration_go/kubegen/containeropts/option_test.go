@@ -1,45 +1,47 @@
-package k8sutil_test
+package containeropts_test
 
 import (
 	"fmt"
 	"reflect"
 	"testing"
 
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/containeropts"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func TestConfigFile(t *testing.T) {
 	testCases := map[string]struct {
-		container         *k8sutil.Container
-		option            *k8sutil.ConfigFile
-		expectedContainer *k8sutil.Container
+		container         *workload.Container
+		option            *containeropts.ConfigResourceAsFile
+		expectedContainer *workload.Container
 		expectedPath      string
 	}{
 		"empty container and no option value": {
-			container: &k8sutil.Container{},
-			option:    k8sutil.NewConfigFile("/etc/config", "config.yaml", "config-volume", "configmap-name"),
-			expectedContainer: &k8sutil.Container{
+			container: &workload.Container{},
+			option:    containeropts.NewConfigResourceAsFile("/etc/config", "config.yaml", "config-volume", "configmap-name"),
+			expectedContainer: &workload.Container{
 				VolumeMounts: []corev1.VolumeMount{makeVolumeMount("config-volume", "/etc/config")},
-				Volumes:      []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
+				Volumes:      []corev1.Volume{helpers.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
 			},
 			expectedPath: "/etc/config/config.yaml",
 		},
 		"empty container, no option value, as secret": {
-			container: &k8sutil.Container{},
-			option:    k8sutil.NewConfigFile("/etc/config", "config.yaml", "config-volume", "configmap-name").AsSecret(),
-			expectedContainer: &k8sutil.Container{
+			container: &workload.Container{},
+			option:    containeropts.NewConfigResourceAsFile("/etc/config", "config.yaml", "config-volume", "configmap-name").AsSecret(),
+			expectedContainer: &workload.Container{
 				VolumeMounts: []corev1.VolumeMount{makeVolumeMount("config-volume", "/etc/config")},
-				Volumes:      []corev1.Volume{k8sutil.NewPodVolumeFromSecret("config-volume", "configmap-name")},
+				Volumes:      []corev1.Volume{helpers.NewPodVolumeFromSecret("config-volume", "configmap-name")},
 			},
 			expectedPath: "/etc/config/config.yaml",
 		},
 		"empty container and option value as cm": {
-			container: &k8sutil.Container{},
-			option:    k8sutil.NewConfigFile("/etc/config", "config.yaml", "config-volume", "configmap-name").WithValue("value"),
-			expectedContainer: &k8sutil.Container{
+			container: &workload.Container{},
+			option:    containeropts.NewConfigResourceAsFile("/etc/config", "config.yaml", "config-volume", "configmap-name").WithValue("value"),
+			expectedContainer: &workload.Container{
 				VolumeMounts: []corev1.VolumeMount{makeVolumeMount("config-volume", "/etc/config")},
-				Volumes:      []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
+				Volumes:      []corev1.Volume{helpers.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
 				ConfigMaps: map[string]map[string]string{
 					"configmap-name": {
 						"config.yaml": "value",
@@ -49,11 +51,11 @@ func TestConfigFile(t *testing.T) {
 			expectedPath: "/etc/config/config.yaml",
 		},
 		"empty container and option value as secret": {
-			container: &k8sutil.Container{},
-			option:    k8sutil.NewConfigFile("/etc/config", "config.yaml", "config-volume", "configmap-name").AsSecret().WithValue("value"),
-			expectedContainer: &k8sutil.Container{
+			container: &workload.Container{},
+			option:    containeropts.NewConfigResourceAsFile("/etc/config", "config.yaml", "config-volume", "configmap-name").AsSecret().WithValue("value"),
+			expectedContainer: &workload.Container{
 				VolumeMounts: []corev1.VolumeMount{makeVolumeMount("config-volume", "/etc/config")},
-				Volumes:      []corev1.Volume{k8sutil.NewPodVolumeFromSecret("config-volume", "configmap-name")},
+				Volumes:      []corev1.Volume{helpers.NewPodVolumeFromSecret("config-volume", "configmap-name")},
 				Secrets: map[string]map[string][]byte{
 					"configmap-name": {
 						"config.yaml": []byte("value"),
@@ -63,12 +65,12 @@ func TestConfigFile(t *testing.T) {
 			expectedPath: "/etc/config/config.yaml",
 		},
 		"already existing volume": {
-			container: &k8sutil.Container{
-				Volumes: []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
+			container: &workload.Container{
+				Volumes: []corev1.Volume{helpers.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
 			},
-			option: k8sutil.NewConfigFile("/etc/config", "config.yaml", "config-volume-other", "configmap-name"),
-			expectedContainer: &k8sutil.Container{
-				Volumes: []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
+			option: containeropts.NewConfigResourceAsFile("/etc/config", "config.yaml", "config-volume-other", "configmap-name"),
+			expectedContainer: &workload.Container{
+				Volumes: []corev1.Volume{helpers.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
 				VolumeMounts: []corev1.VolumeMount{
 					makeVolumeMount("config-volume", "/etc/config"),
 				},
@@ -76,12 +78,12 @@ func TestConfigFile(t *testing.T) {
 			expectedPath: "/etc/config/config.yaml",
 		},
 		"already existing volume, as secret": {
-			container: &k8sutil.Container{
-				Volumes: []corev1.Volume{k8sutil.NewPodVolumeFromSecret("config-volume", "configmap-name")},
+			container: &workload.Container{
+				Volumes: []corev1.Volume{helpers.NewPodVolumeFromSecret("config-volume", "configmap-name")},
 			},
-			option: k8sutil.NewConfigFile("/etc/config", "config.yaml", "config-volume-other", "configmap-name").AsSecret(),
-			expectedContainer: &k8sutil.Container{
-				Volumes: []corev1.Volume{k8sutil.NewPodVolumeFromSecret("config-volume", "configmap-name")},
+			option: containeropts.NewConfigResourceAsFile("/etc/config", "config.yaml", "config-volume-other", "configmap-name").AsSecret(),
+			expectedContainer: &workload.Container{
+				Volumes: []corev1.Volume{helpers.NewPodVolumeFromSecret("config-volume", "configmap-name")},
 				VolumeMounts: []corev1.VolumeMount{
 					makeVolumeMount("config-volume", "/etc/config"),
 				},
@@ -89,35 +91,35 @@ func TestConfigFile(t *testing.T) {
 			expectedPath: "/etc/config/config.yaml",
 		},
 		"already existing volume and mount": { // check that the mount path is updated
-			container: &k8sutil.Container{
-				Volumes:      []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
+			container: &workload.Container{
+				Volumes:      []corev1.Volume{helpers.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
 				VolumeMounts: []corev1.VolumeMount{makeVolumeMount("config-volume", "/etc/config")},
 			},
-			option: k8sutil.NewConfigFile("/etc/config-other-path", "other-config.yaml", "config-volume", "configmap-name"),
-			expectedContainer: &k8sutil.Container{
+			option: containeropts.NewConfigResourceAsFile("/etc/config-other-path", "other-config.yaml", "config-volume", "configmap-name"),
+			expectedContainer: &workload.Container{
 				VolumeMounts: []corev1.VolumeMount{makeVolumeMount("config-volume", "/etc/config")},
-				Volumes:      []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
+				Volumes:      []corev1.Volume{helpers.NewPodVolumeFromConfigMap("config-volume", "configmap-name")},
 			},
 			expectedPath: "/etc/config/other-config.yaml",
 		},
 		"already existing volume and mount as secret": { // check that the mount path is updated
-			container: &k8sutil.Container{
-				Volumes:      []corev1.Volume{k8sutil.NewPodVolumeFromSecret("config-volume", "configmap-name")},
+			container: &workload.Container{
+				Volumes:      []corev1.Volume{helpers.NewPodVolumeFromSecret("config-volume", "configmap-name")},
 				VolumeMounts: []corev1.VolumeMount{makeVolumeMount("config-volume", "/etc/config")},
 			},
-			option: k8sutil.NewConfigFile("/etc/config-other-path", "other-config.yaml", "config-volume", "configmap-name").AsSecret(),
-			expectedContainer: &k8sutil.Container{
+			option: containeropts.NewConfigResourceAsFile("/etc/config-other-path", "other-config.yaml", "config-volume", "configmap-name").AsSecret(),
+			expectedContainer: &workload.Container{
 				VolumeMounts: []corev1.VolumeMount{makeVolumeMount("config-volume", "/etc/config")},
-				Volumes:      []corev1.Volume{k8sutil.NewPodVolumeFromSecret("config-volume", "configmap-name")},
+				Volumes:      []corev1.Volume{helpers.NewPodVolumeFromSecret("config-volume", "configmap-name")},
 			},
 			expectedPath: "/etc/config/other-config.yaml",
 		},
 		"with existing config map": {
-			container: &k8sutil.Container{},
-			option:    k8sutil.NewConfigFile("/etc/config", "config.yaml", "config-volume", "configmap-name").WithExistingResource("myconfig", "myconfig.yaml"),
-			expectedContainer: &k8sutil.Container{
+			container: &workload.Container{},
+			option:    containeropts.NewConfigResourceAsFile("/etc/config", "config.yaml", "config-volume", "configmap-name").WithExistingResource("myconfig", "myconfig.yaml"),
+			expectedContainer: &workload.Container{
 				VolumeMounts: []corev1.VolumeMount{makeVolumeMount("config-volume", "/etc/config")},
-				Volumes:      []corev1.Volume{k8sutil.NewPodVolumeFromConfigMap("config-volume", "myconfig")},
+				Volumes:      []corev1.Volume{helpers.NewPodVolumeFromConfigMap("config-volume", "myconfig")},
 			},
 			expectedPath: "/etc/config/myconfig.yaml",
 		},
@@ -154,7 +156,7 @@ func compareCMOrSecret[T string | []byte](have, expect map[string]map[string]T, 
 	}
 }
 
-func compareContainers(have, expect *k8sutil.Container, t *testing.T) {
+func compareContainers(have, expect *workload.Container, t *testing.T) {
 	if len(have.VolumeMounts) != len(expect.VolumeMounts) {
 		t.Fatalf("expected %d volume mounts, got %d", len(expect.VolumeMounts), len(have.VolumeMounts))
 	}

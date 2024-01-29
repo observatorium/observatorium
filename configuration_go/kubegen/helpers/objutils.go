@@ -1,36 +1,47 @@
-package k8sutil
+package helpers
 
 import (
 	"fmt"
-	"net"
 	"sort"
 
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// GetDefaultServiceMonitorRelabelConfig returns the default relabel config for a ServiceMonitor.
-func GetDefaultServiceMonitorRelabelConfig() []*monv1.RelabelConfig {
-	return []*monv1.RelabelConfig{
-		{
-			Action:       "replace",
-			Separator:    "/",
-			SourceLabels: []monv1.LabelName{"namespace", "pod"},
-			TargetLabel:  "instance",
-		},
-	}
-}
+const hostnameLabel string = "kubernetes.io/hostname"
 
-// GetDefaultSecurityContext returns the default security context for a container.
-func GetDefaultSecurityContext() *corev1.PodSecurityContext {
-	val := int64(65534)
-	return &corev1.PodSecurityContext{
-		RunAsUser: &val,
-		FSGroup:   &val,
+// GetObject returns the object of type T from the given list of kubernetes objects.
+// When specifying a name, it will return the object with the given name.
+// This helper can be used for doing post processing on the objects.
+func GetObject[T metav1.Object](objects []runtime.Object, name string) T {
+	var ret T
+	found := false
+
+	for _, obj := range objects {
+		if typedObject, ok := obj.(T); ok {
+			if name != "" && typedObject.GetName() != name {
+				continue
+			}
+
+			// Check if we already found an object of this type. If so, panic.
+			if found {
+				panic(fmt.Sprintf("found multiple objects of type %T", *new(T)))
+			}
+
+			ret = typedObject
+			found = true
+		}
 	}
+
+	if !found {
+		panic(fmt.Sprintf("could not find object of type %T", *new(T)))
+	}
+
+	return ret
 }
 
 // NewResourcesRequirements returns a new resource requirements object for a container.
@@ -105,7 +116,7 @@ func NewAntiAffinity(namespaces []string, labelSelectors map[string]string) *cor
 				{
 					Weight: 100,
 					PodAffinityTerm: corev1.PodAffinityTerm{
-						TopologyKey: HostnameLabel,
+						TopologyKey: hostnameLabel,
 						LabelSelector: &metav1.LabelSelector{
 							MatchExpressions: matchExpressions,
 						},
@@ -181,44 +192,14 @@ func NewServicePort(name string, port, targetPort int) corev1.ServicePort {
 	}
 }
 
-// NewVolumeClaimProvider returns a new volume claim.
-func NewVolumeClaimProvider(name, volumeType, size string) VolumeClaim {
-	return VolumeClaim{
-		Name: name,
-		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				corev1.ReadWriteOnce,
-			},
-			Resources: corev1.VolumeResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceStorage: resource.MustParse(size),
-				},
-			},
-			StorageClassName: &volumeType,
+// GetDefaultServiceMonitorRelabelConfig returns the default relabel config for a ServiceMonitor.
+func GetDefaultServiceMonitorRelabelConfig() []*monv1.RelabelConfig {
+	return []*monv1.RelabelConfig{
+		{
+			Action:       "replace",
+			Separator:    "/",
+			SourceLabels: []monv1.LabelName{"namespace", "pod"},
+			TargetLabel:  "instance",
 		},
-	}
-}
-
-// GetPortOrDefault returns the port from an address or a default value.
-func GetPortOrDefault(defaultValue int, addr *net.TCPAddr) int {
-	if addr != nil {
-		return addr.Port
-	}
-	return defaultValue
-}
-
-// CheckProbePort checks that the probe port matches the http port.
-func CheckProbePort(port int, probe *corev1.Probe) {
-	if probe == nil {
-		return
-	}
-
-	if probe.ProbeHandler.HTTPGet == nil {
-		return
-	}
-
-	probePort := probe.ProbeHandler.HTTPGet.Port.IntVal
-	if int(probePort) != port {
-		panic(fmt.Sprintf(`probe port %d does not match http port %d`, probePort, port))
 	}
 }

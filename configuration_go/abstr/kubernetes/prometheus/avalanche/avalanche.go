@@ -3,10 +3,12 @@ package avalanche
 import (
 	"time"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type AvalancheOptions struct {
@@ -33,29 +35,28 @@ type AvalancheOptions struct {
 
 type AvalancheDeployment struct {
 	options *AvalancheOptions
-	k8sutil.DeploymentGenericConfig
+	workload.DeploymentWorkload
 }
 
 func NewAvalanche(opts *AvalancheOptions, namespace, imageTag string) *AvalancheDeployment {
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "avalanche",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "avalanche",
-		k8sutil.VersionLabel:   imageTag,
+		workload.NameLabel:      "avalanche",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "avalanche",
+		workload.VersionLabel:   imageTag,
 	}
 
-	return &AvalancheDeployment{
-		options: opts,
-		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+	dedWorkload := workload.DeploymentWorkload{
+		Replicas: 1,
+		PodConfig: workload.PodConfig{
 			Name:                          "avalanche",
 			Image:                         "quay.io/prometheuscommunity/avalanche",
 			ImageTag:                      imageTag,
 			ImagePullPolicy:               corev1.PullIfNotPresent,
 			Namespace:                     namespace,
 			CommonLabels:                  commonLabels,
-			Replicas:                      1,
-			ContainerResources:            k8sutil.NewResourcesRequirements("100m", "500m", "1Gi", "2Gi"),
+			ContainerResources:            kghelpers.NewResourcesRequirements("100m", "500m", "1Gi", "2Gi"),
 			EnableServiceMonitor:          true,
 			TerminationGracePeriodSeconds: 30,
 			Env:                           []corev1.EnvVar{},
@@ -63,22 +64,24 @@ func NewAvalanche(opts *AvalancheOptions, namespace, imageTag string) *Avalanche
 			Secrets:                       make(map[string]map[string][]byte),
 		},
 	}
+
+	return &AvalancheDeployment{
+		options:            opts,
+		DeploymentWorkload: dedWorkload,
+	}
 }
 
-func (u *AvalancheDeployment) Manifests() k8sutil.ObjectMap {
-	container := u.makeContainer()
-	ret := k8sutil.ObjectMap{}
-	ret.AddAll(u.GenerateObjectsDeployment(container))
-
-	return ret
+func (a *AvalancheDeployment) Objects() []runtime.Object {
+	container := a.makeContainer()
+	return a.DeploymentWorkload.Objects(container)
 }
 
-func (u *AvalancheDeployment) makeContainer() *k8sutil.Container {
-	ret := u.ToContainer()
+func (a *AvalancheDeployment) makeContainer() *workload.Container {
+	ret := a.ToContainer()
 	ret.Name = "avalanche"
 	serverPort := 9001
-	if u.options.Port != 0 {
-		serverPort = u.options.Port
+	if a.options.Port != 0 {
+		serverPort = a.options.Port
 	}
 
 	ret.Ports = []corev1.ContainerPort{
@@ -89,7 +92,7 @@ func (u *AvalancheDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("http", serverPort, serverPort),
+		kghelpers.NewServicePort("http", serverPort, serverPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
@@ -97,6 +100,6 @@ func (u *AvalancheDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 
-	ret.Args = cmdopt.GetOpts(u.options)
+	ret.Args = cmdopt.GetOpts(a.options)
 	return ret
 }

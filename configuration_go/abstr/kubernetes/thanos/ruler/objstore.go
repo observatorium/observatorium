@@ -3,11 +3,14 @@ package ruler
 import (
 	"net"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/containeropts"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/objstore"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -16,8 +19,8 @@ const (
 )
 
 // NewRulesObjstoreConfigFile creates a new ConfigFile option for the rules-objstore configuration file.
-func NewRulesObjstoreConfigFile(value *objstore.BucketConfig) *k8sutil.ConfigFile {
-	ret := k8sutil.NewConfigFile("/etc/rules-objstore/objstore", "config.yaml", "objstore", "observatorium-rules-objstore")
+func NewRulesObjstoreConfigFile(value *objstore.BucketConfig) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/rules-objstore/objstore", "config.yaml", "objstore", "observatorium-rules-objstore")
 	if value != nil {
 		ret.WithValue(value.String())
 	}
@@ -25,19 +28,18 @@ func NewRulesObjstoreConfigFile(value *objstore.BucketConfig) *k8sutil.ConfigFil
 }
 
 type RulesObjstoreOptions struct {
-	DebugName          string                   `opt:"debug.name,single-hyphen"`
-	LogFormat          string                   `opt:"log.format,single-hyphen"`
-	LogLevel           string                   `opt:"log.level,single-hyphen"`
-	ObjstoreConfigFile k8sutil.ContainerUpdater `opt:"objstore.config-file,single-hyphen"`
-	WebHealthchecksURL string                   `opt:"web.healthchecks.url,single-hyphen"`
-	WebInternalListen  *net.TCPAddr             `opt:"web.internal.listen,single-hyphen"`
-	WebListen          *net.TCPAddr             `opt:"web.listen,single-hyphen"`
+	DebugName          string                         `opt:"debug.name,single-hyphen"`
+	LogFormat          string                         `opt:"log.format,single-hyphen"`
+	LogLevel           string                         `opt:"log.level,single-hyphen"`
+	ObjstoreConfigFile containeropts.ContainerUpdater `opt:"objstore.config-file,single-hyphen"`
+	WebHealthchecksURL string                         `opt:"web.healthchecks.url,single-hyphen"`
+	WebInternalListen  *net.TCPAddr                   `opt:"web.internal.listen,single-hyphen"`
+	WebListen          *net.TCPAddr                   `opt:"web.listen,single-hyphen"`
 }
 
 type RulesObjstoreDeployment struct {
 	options *RulesObjstoreOptions
-
-	k8sutil.DeploymentGenericConfig
+	workload.DeploymentWorkload
 }
 
 func NewRulesObjstoreDefaultOptions() *RulesObjstoreOptions {
@@ -53,41 +55,40 @@ func NewRulesObjstore(opts *RulesObjstoreOptions, namespace, imageTag string) *R
 	}
 
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "rules-objstore",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "rules-storage",
-		k8sutil.VersionLabel:   imageTag,
+		workload.NameLabel:      "rules-objstore",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "rules-storage",
+		workload.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
-		k8sutil.NameLabel:     commonLabels[k8sutil.NameLabel],
-		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
+		workload.NameLabel:     commonLabels[workload.NameLabel],
+		workload.InstanceLabel: commonLabels[workload.InstanceLabel],
 	}
 
-	probePort := k8sutil.GetPortOrDefault(defaultInternalPort, opts.WebInternalListen)
+	probePort := kghelpers.GetPortOrDefault(defaultInternalPort, opts.WebInternalListen)
 
-	return &RulesObjstoreDeployment{
-		options: opts,
-		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+	depWorkload := workload.DeploymentWorkload{
+		Replicas: 1,
+		PodConfig: workload.PodConfig{
 			Image:                "quay.io/observatorium/rules-objstore",
 			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-rules-objstore",
 			Namespace:            namespace,
 			CommonLabels:         commonLabels,
-			Replicas:             1,
-			ContainerResources:   k8sutil.NewResourcesRequirements("50m", "1", "200Mi", "400Mi"),
-			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
+			ContainerResources:   kghelpers.NewResourcesRequirements("50m", "1", "200Mi", "400Mi"),
+			Affinity:             kghelpers.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/live", probePort, k8sutil.ProbeConfig{
+			LivenessProbe: kghelpers.NewProbe("/live", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 10,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 				SuccessThreshold: 1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/ready", probePort, k8sutil.ProbeConfig{
+			ReadinessProbe: kghelpers.NewProbe("/ready", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 12,
 				PeriodSeconds:    5,
 				TimeoutSeconds:   1,
@@ -99,23 +100,24 @@ func NewRulesObjstore(opts *RulesObjstoreOptions, namespace, imageTag string) *R
 			Secrets:                       make(map[string]map[string][]byte),
 		},
 	}
+
+	return &RulesObjstoreDeployment{
+		options:            opts,
+		DeploymentWorkload: depWorkload,
+	}
 }
 
-func (r *RulesObjstoreDeployment) Manifests() k8sutil.ObjectMap {
+func (r *RulesObjstoreDeployment) Objects() []runtime.Object {
 	container := r.makeContainer()
-
-	ret := k8sutil.ObjectMap{}
-	ret.AddAll(r.GenerateObjectsDeployment(container))
-
-	return ret
+	return r.DeploymentWorkload.Objects(container)
 }
 
-func (r *RulesObjstoreDeployment) makeContainer() *k8sutil.Container {
-	internalPort := k8sutil.GetPortOrDefault(defaultInternalPort, r.options.WebInternalListen)
-	k8sutil.CheckProbePort(internalPort, r.LivenessProbe)
-	k8sutil.CheckProbePort(internalPort, r.ReadinessProbe)
+func (r *RulesObjstoreDeployment) makeContainer() *workload.Container {
+	internalPort := kghelpers.GetPortOrDefault(defaultInternalPort, r.options.WebInternalListen)
+	kghelpers.CheckProbePort(internalPort, r.LivenessProbe)
+	kghelpers.CheckProbePort(internalPort, r.ReadinessProbe)
 
-	publicPort := k8sutil.GetPortOrDefault(defaultPublicPort, r.options.WebListen)
+	publicPort := kghelpers.GetPortOrDefault(defaultPublicPort, r.options.WebListen)
 
 	ret := r.ToContainer()
 	ret.Name = "thanos"
@@ -133,13 +135,13 @@ func (r *RulesObjstoreDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("internal", internalPort, internalPort),
-		k8sutil.NewServicePort("public", publicPort, publicPort),
+		kghelpers.NewServicePort("internal", internalPort, internalPort),
+		kghelpers.NewServicePort("public", publicPort, publicPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
 			Port:           "internal",
-			RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
+			RelabelConfigs: kghelpers.GetDefaultServiceMonitorRelabelConfig(),
 		},
 	}
 
