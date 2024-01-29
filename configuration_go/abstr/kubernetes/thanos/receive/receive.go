@@ -206,11 +206,11 @@ func NewRouter(opts *ReceiveOptions, namespace, imageTag string) *Router {
 		workload.VersionLabel:   imageTag,
 	}
 
-	baseReceive := newBaseReceive(opts, namespace, imageTag, commonLabels)
+	baseReceive, podConfig := newBaseReceive(opts, namespace, imageTag, commonLabels)
 
 	depWorkload := workload.DeploymentWorkload{
 		Replicas:  1,
-		PodConfig: baseReceive.podConfig,
+		PodConfig: podConfig,
 	}
 
 	return &Router{
@@ -221,8 +221,8 @@ func NewRouter(opts *ReceiveOptions, namespace, imageTag string) *Router {
 
 // Manifests returns the manifests for the Router.
 func (r *Router) Objects() []runtime.Object {
-	r.makeContainer(r.withRouterContainer())
-	return r.DeploymentWorkload.Objects(r.container)
+	container := r.makeContainer(&r.PodConfig, r.withRouterContainer())
+	return r.DeploymentWorkload.Objects(container)
 }
 
 // Ingestor represents a receive component with ingestor configuration.
@@ -251,14 +251,14 @@ func NewIngestor(opts *ReceiveOptions, namespace, imageTag string) *Ingestor {
 		workload.VersionLabel:   imageTag,
 	}
 
-	baseReceive := newBaseReceive(opts, namespace, imageTag, commonLabels)
-	baseReceive.podConfig.Env = append(baseReceive.podConfig.Env, kghelpers.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
-	baseReceive.podConfig.Env = append(baseReceive.podConfig.Env, kghelpers.NewEnvFromField("POD_NAME", "metadata.name"))
+	baseReceive, podConfig := newBaseReceive(opts, namespace, imageTag, commonLabels)
+	podConfig.Env = append(podConfig.Env, kghelpers.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
+	podConfig.Env = append(podConfig.Env, kghelpers.NewEnvFromField("POD_NAME", "metadata.name"))
 
 	ssWorkload := workload.StatefulSetWorkload{
 		Replicas:   1,
 		VolumeSize: "50Gi",
-		PodConfig:  baseReceive.podConfig,
+		PodConfig:  podConfig,
 	}
 
 	return &Ingestor{
@@ -269,15 +269,15 @@ func NewIngestor(opts *ReceiveOptions, namespace, imageTag string) *Ingestor {
 
 // Manifests returns the manifests for the Ingestor.
 func (i *Ingestor) Objects() []runtime.Object {
-	i.makeContainer(i.withIngestorContainer(i.VolumeType, i.VolumeSize))
-	return i.StatefulSetWorkload.Objects(i.container)
+	container := i.makeContainer(&i.PodConfig, i.withIngestorContainer(i.VolumeType, i.VolumeSize))
+	return i.StatefulSetWorkload.Objects(container)
 }
 
 // IngestorRouter represents a receive component with ingestor and router configuration.
 // It is deployed as a StatefulSet.
 type IngestorRouter struct {
-	workload.StatefulSetWorkload
 	baseReceive
+	workload.StatefulSetWorkload
 }
 
 func NewDefaultIngestorRouterOptions() *ReceiveOptions {
@@ -301,11 +301,11 @@ func NewIngestorRouter(opts *ReceiveOptions, namespace, imageTag string) *Ingest
 		workload.VersionLabel:   imageTag,
 	}
 
-	baseReceive := newBaseReceive(opts, namespace, imageTag, commonLabels)
-	baseReceive.podConfig.Env = append(baseReceive.podConfig.Env, kghelpers.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
-	baseReceive.podConfig.Env = append(baseReceive.podConfig.Env, kghelpers.NewEnvFromField("NAME", "metadata.name"))
-	baseReceive.podConfig.Env = append(baseReceive.podConfig.Env, kghelpers.NewEnvFromField("NAMESPACE", "metadata.namespace"))
-	baseReceive.podConfig.Env = append(baseReceive.podConfig.Env, kghelpers.NewEnvFromField("POD_NAME", "metadata.name"))
+	baseReceive, podConfig := newBaseReceive(opts, namespace, imageTag, commonLabels)
+	podConfig.Env = append(podConfig.Env, kghelpers.NewEnvFromField("OBJSTORE_CONFIG", "objectStore-secret"))
+	podConfig.Env = append(podConfig.Env, kghelpers.NewEnvFromField("NAME", "metadata.name"))
+	podConfig.Env = append(podConfig.Env, kghelpers.NewEnvFromField("NAMESPACE", "metadata.namespace"))
+	podConfig.Env = append(podConfig.Env, kghelpers.NewEnvFromField("POD_NAME", "metadata.name"))
 
 	return &IngestorRouter{
 		baseReceive: *baseReceive,
@@ -320,22 +320,21 @@ func (ir *IngestorRouter) Objects() []runtime.Object {
 	// Set the local endpoint at Manifests time, as it depends on the name of the resource and gRPC port.
 	// This option, in addition to the router and receive options, is required to be set for the IngestorRouter.
 	ir.options.ReceiveLocalEndpoint = fmt.Sprintf("$(NAME).%s.$(NAMESPACE).svc.cluster.local:%d", ir.Name, ir.options.GrpcAddress.Port)
-	ir.makeContainer(
+	container := ir.makeContainer(
+		&ir.PodConfig,
 		ir.withIngestorContainer(ir.VolumeType, ir.VolumeSize),
 		ir.withRouterContainer(),
 	)
-	return ir.StatefulSetWorkload.Objects(ir.container)
+	return ir.StatefulSetWorkload.Objects(container)
 }
 
 // baseReceive is the base struct for all receive components.
 // It contains their common configuration.
 type baseReceive struct {
-	options   *ReceiveOptions
-	podConfig workload.PodConfig
-	container *workload.Container
+	options *ReceiveOptions
 }
 
-func newBaseReceive(opts *ReceiveOptions, namespace, imageTag string, commonLabels map[string]string) *baseReceive {
+func newBaseReceive(opts *ReceiveOptions, namespace, imageTag string, commonLabels map[string]string) (*baseReceive, workload.PodConfig) {
 	labelSelectors := map[string]string{
 		workload.NameLabel:     commonLabels[workload.NameLabel],
 		workload.InstanceLabel: commonLabels[workload.InstanceLabel],
@@ -369,9 +368,8 @@ func newBaseReceive(opts *ReceiveOptions, namespace, imageTag string, commonLabe
 	}
 
 	return &baseReceive{
-		options:   opts,
-		podConfig: podCfg,
-	}
+		options: opts,
+	}, podCfg
 }
 
 func (br *baseReceive) withRouterContainer() ContainerOption {
@@ -408,30 +406,14 @@ func (br *baseReceive) withIngestorContainer(volumeType string, volumeSize strin
 	}
 }
 
-// func (br *baseReceive) manifests() []runtime.Object {
-// 	container := br.container
-// 	if container == nil {
-// 		panic("container is not initialized")
-// 	}
-
-// 	// Create the statefulset or deployment based on the presence of the TSDB path.
-// 	if br.options.TsdbPath != "" {
-
-// 		return br.StatefulSetWorkload.Objects(container)
-// 		ret.AddAll(br.GenerateObjectsStatefulSet(container))
-// 	} else {
-// 		return br.DeploymentWorkload.Objects(container)
-// 	}
-// }
-
-func (br *baseReceive) makeContainer(opts ...ContainerOption) {
+func (br *baseReceive) makeContainer(podConfig *workload.PodConfig, opts ...ContainerOption) *workload.Container {
 	httpPort := kghelpers.GetPortOrDefault(defaultHTTPPort, br.options.HttpAddress)
-	kghelpers.CheckProbePort(httpPort, br.podConfig.LivenessProbe)
-	kghelpers.CheckProbePort(httpPort, br.podConfig.ReadinessProbe)
+	kghelpers.CheckProbePort(httpPort, podConfig.LivenessProbe)
+	kghelpers.CheckProbePort(httpPort, podConfig.ReadinessProbe)
 
 	grpcPort := kghelpers.GetPortOrDefault(defaultGRPCPort, br.options.GrpcAddress)
 
-	ret := br.podConfig.ToContainer()
+	ret := podConfig.ToContainer()
 	ret.Name = "thanos"
 	ret.Args = append([]string{"receive"}, cmdopt.GetOpts(br.options)...)
 	ret.Ports = []corev1.ContainerPort{
@@ -467,7 +449,7 @@ func (br *baseReceive) makeContainer(opts ...ContainerOption) {
 		opt(ret)
 	}
 
-	br.container = ret
+	return ret
 }
 
 type ContainerOption func(*workload.Container)
