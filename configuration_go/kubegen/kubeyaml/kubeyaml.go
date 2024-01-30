@@ -2,7 +2,6 @@ package kubeyaml
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -56,18 +55,18 @@ func WriteObjectsInDir(objects []runtime.Object, dir string) {
 func WriteObjectsInDirWithSerializer(objects []runtime.Object, dir string, enc ObjectSerializer) {
 	for _, obj := range objects {
 		name := KubeObjectNameAndKind(obj)
-		path := filepath.Join(dir, name)
+		path := filepath.Join(dir, name) + ".yaml"
 		data, err := yaml.Marshal(obj)
 		if err != nil {
-			slog.Error("failed to marshal manifest", "name", name, "error", err)
+			panic(fmt.Sprintf("failed to marshal manifest %s: %v", name, err))
 		}
 
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			slog.Error("failed to create directory", "dir", dir, "error", err)
+			panic(fmt.Sprintf("failed to create directory %s: %v", dir, err))
 		}
 
 		if err := os.WriteFile(path, data, 0644); err != nil {
-			slog.Error("failed to write manifest", "path", path, "error", err)
+			panic(fmt.Sprintf("failed to write manifest %s: %v", name, err))
 		}
 	}
 }
