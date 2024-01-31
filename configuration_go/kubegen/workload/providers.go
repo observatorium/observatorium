@@ -276,8 +276,10 @@ func (p *Pod) GetPVCs() []PersistentVolumeClaimProvider {
 // GetConfigMaps returns the config maps that the pod requires.
 func (p *Pod) GetConfigMaps() map[string]map[string]string {
 	ret := map[string]map[string]string{}
+	containerProviders := append([]ContainerProvider{}, p.ContainerProviders...)
+	containerProviders = append(containerProviders, p.InitContainersProviders...)
 
-	for _, cp := range p.ContainerProviders {
+	for _, cp := range containerProviders {
 		for k, v := range cp.GetConfigMaps() {
 			ret[k] = v
 		}
@@ -289,8 +291,10 @@ func (p *Pod) GetConfigMaps() map[string]map[string]string {
 // GetSecrets returns the secrets that the pod requires.
 func (p *Pod) GetSecrets() map[string]map[string][]byte {
 	ret := map[string]map[string][]byte{}
+	containerProviders := append([]ContainerProvider{}, p.ContainerProviders...)
+	containerProviders = append(containerProviders, p.InitContainersProviders...)
 
-	for _, cp := range p.ContainerProviders {
+	for _, cp := range containerProviders {
 		for k, v := range cp.GetSecrets() {
 			ret[k] = v
 		}
