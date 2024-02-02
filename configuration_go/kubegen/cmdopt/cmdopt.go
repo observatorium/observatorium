@@ -183,6 +183,14 @@ func getOptValue(kind reflect.Kind, rValue reflect.Value) []string {
 		for i := 0; i < rValue.Len(); i++ {
 			ret = append(ret, getOptValue(rValue.Index(i).Kind(), rValue.Index(i))...)
 		}
+	// use stringer interface if interface
+	case reflect.Interface:
+		str := getStringerValue(kind, rValue)
+		if str == "" {
+			return ret
+		}
+
+		ret = append(ret, str)
 	default:
 		log.Printf("unsupported type %q by cmdopt is ignored", kind)
 	}

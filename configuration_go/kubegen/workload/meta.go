@@ -1,78 +1,15 @@
-package k8sutil
+package workload
 
 import (
 	"fmt"
 
 	mon "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+
 	rbacv1 "k8s.io/api/rbac/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
-
-// ObjectMap represents a map of string to runtime.Objects. Usually used
-// to represent a collection of manifests.
-type ObjectMap map[string]runtime.Object
-
-func (o ObjectMap) Add(obj runtime.Object) {
-	metaObj, ok := obj.(metav1.Object)
-	if !ok {
-		panic(fmt.Sprintf("object %v has no name", obj))
-	}
-
-	objName := metaObj.GetName()
-	if objName == "" {
-		panic(fmt.Sprintf("object %v has no name", obj))
-	}
-
-	objType := obj.GetObjectKind().GroupVersionKind().Kind
-
-	if _, ok := o[objName]; ok {
-		panic(fmt.Sprintf("object %s_%s already exists", objType, objName))
-	}
-
-	o[o.makeKey(objType, objName)] = obj
-}
-
-func (o ObjectMap) makeKey(objType, objName string) string {
-	return fmt.Sprintf("%s_%s", objName, objType)
-}
-
-func (o ObjectMap) AddAll(objs []runtime.Object) {
-	for _, obj := range objs {
-		o.Add(obj)
-	}
-}
-
-// GetObject returns the object of type T from the given map of kubernetes objects.
-// When specifying a name, it will return the object with the given name.
-// This helper can be used for doing post processing on the objects.
-func GetObject[T metav1.Object](manifests ObjectMap, name string) T {
-	var ret T
-	found := false
-
-	for _, obj := range manifests {
-		if service, ok := obj.(T); ok {
-			if name != "" && service.GetName() != name {
-				continue
-			}
-
-			// Check if we already found an object of this type. If so, panic.
-			if found {
-				panic(fmt.Sprintf("found multiple objects of type %T", *new(T)))
-			}
-
-			ret = service
-			found = true
-		}
-	}
-
-	if !found {
-		panic(fmt.Sprintf("could not find object of type %T", *new(T)))
-	}
-
-	return ret
-}
 
 // Reusable K8s metadata definitions.
 

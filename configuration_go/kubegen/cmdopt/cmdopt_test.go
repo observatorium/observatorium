@@ -1,10 +1,11 @@
 package cmdopt_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
 )
 
 type SubStruct struct {
@@ -23,6 +24,12 @@ func (s *SubStructPtr) String() string {
 	return s.SubString
 }
 
+type Dummy struct{}
+
+func (d Dummy) GoString() string {
+	return "dummy"
+}
+
 type TestOptions struct {
 	String       string         `opt:"string"`
 	Int          int            `opt:"int"`    // Zero value is ignored
@@ -38,15 +45,17 @@ type TestOptions struct {
 	NoValue      bool           `opt:"no-value,noval"`
 	Repeat       []string       `opt:"repeat"`
 	SingleHyphen int            `opt:"single,single-hyphen"`
+	Interface    fmt.Stringer   `opt:"stringer"`
 
 	// Limits tests
-	DoubleType             string    `opt:"string,int"`
-	NovalWithoutBoolType   float64   `opt:"nobool,noval"`
-	PointerToSupportedType *string   `opt:"string"`
-	DoublePointer          **string  `opt:"string"`
-	RepeatToPointer        []*string `opt:"repeat"`
-	EmptyTag               string    `opt:""`
-	OtherTagName           string    `opts:"other"`
+	DoubleType             string         `opt:"string,int"`
+	NovalWithoutBoolType   float64        `opt:"nobool,noval"`
+	PointerToSupportedType *string        `opt:"string"`
+	DoublePointer          **string       `opt:"string"`
+	RepeatToPointer        []*string      `opt:"repeat"`
+	EmptyTag               string         `opt:""`
+	OtherTagName           string         `opts:"other"`
+	InvalidInterface       fmt.GoStringer `opt:"stringer"`
 
 	privateField string `opt:"string"`
 }
@@ -244,6 +253,20 @@ func TestCmdOptions(t *testing.T) {
 		"other tag ignored": {
 			options: TestOptions{
 				OtherTagName: "string",
+			},
+			expect: []string{},
+		},
+		"interface with stringer": {
+			options: TestOptions{
+				Interface: SubStruct{
+					SubString: "sub",
+				},
+			},
+			expect: []string{"--stringer=sub"},
+		},
+		"interface without stringer": {
+			options: TestOptions{
+				InvalidInterface: Dummy{},
 			},
 			expect: []string{},
 		},

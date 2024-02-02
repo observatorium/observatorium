@@ -4,12 +4,14 @@ import (
 	"net"
 	"time"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	thanostime "github.com/observatorium/observatorium/configuration_go/schemas/thanos/time"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -40,8 +42,8 @@ type CompactorOptions struct {
 	HttpAddress                        *net.TCPAddr                    `opt:"http-address"`
 	HttpGracePeriod                    time.Duration                   `opt:"http-grace-period"`
 	HttpConfig                         string                          `opt:"http.config"`
-	LogFormat                          log.LogFormat                   `opt:"log.format"`
-	LogLevel                           log.LogLevel                    `opt:"log.level"`
+	LogFormat                          log.Format                      `opt:"log.format"`
+	LogLevel                           log.Level                       `opt:"log.level"`
 	MaxTime                            *thanostime.TimeOrDurationValue `opt:"max-time"`
 	MinTime                            *thanostime.TimeOrDurationValue `opt:"min-time"`
 	ObjstoreConfig                     string                          `opt:"objstore.config"`
@@ -67,11 +69,8 @@ type CompactorOptions struct {
 }
 
 type CompactorStatefulSet struct {
-	options    *CompactorOptions
-	VolumeType string
-	VolumeSize string
-
-	k8sutil.DeploymentGenericConfig
+	options *CompactorOptions
+	workload.StatefulSetWorkload
 }
 
 func NewDefaultOptions() *CompactorOptions {
@@ -97,68 +96,68 @@ func NewCompactor(opts *CompactorOptions, namespace, imageTag string) *Compactor
 	}
 
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "thanos-compact",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "database-compactor",
-		k8sutil.VersionLabel:   imageTag,
+		workload.NameLabel:      "thanos-compact",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "database-compactor",
+		workload.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
-		k8sutil.NameLabel:     commonLabels[k8sutil.NameLabel],
-		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
+		workload.NameLabel:     commonLabels[workload.NameLabel],
+		workload.InstanceLabel: commonLabels[workload.InstanceLabel],
 	}
 
-	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
+	probePort := kghelpers.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
 
-	return &CompactorStatefulSet{
-		options: opts,
-		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+	ssWorkload := workload.StatefulSetWorkload{
+		Replicas:   1,
+		VolumeSize: "50Gi",
+		PodConfig: workload.PodConfig{
 			Image:                "quay.io/thanos/thanos",
 			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-thanos-compact",
 			Namespace:            namespace,
 			CommonLabels:         commonLabels,
-			Replicas:             1,
-			ContainerResources:   k8sutil.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
-			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
+			ContainerResources:   kghelpers.NewResourcesRequirements("2", "3", "2000Mi", "3000Mi"),
+			Affinity:             kghelpers.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
-			LivenessProbe: k8sutil.NewProbe("/-/healthy", probePort, k8sutil.ProbeConfig{
+			LivenessProbe: kghelpers.NewProbe("/-/healthy", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 4,
 				PeriodSeconds:    30,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/-/ready", probePort, k8sutil.ProbeConfig{
+			ReadinessProbe: kghelpers.NewProbe("/-/ready", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
 			TerminationGracePeriodSeconds: 120,
 			Env: []corev1.EnvVar{
-				k8sutil.NewEnvFromSecret("OBJSTORE_CONFIG", "objectStore-secret", "thanos.yaml"),
-				k8sutil.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
+				kghelpers.NewEnvFromSecret("OBJSTORE_CONFIG", "objectStore-secret", "thanos.yaml"),
+				kghelpers.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 			},
 			ConfigMaps: make(map[string]map[string]string),
 			Secrets:    make(map[string]map[string][]byte),
 		},
-		VolumeSize: "50Gi",
+	}
+
+	return &CompactorStatefulSet{
+		options:             opts,
+		StatefulSetWorkload: ssWorkload,
 	}
 }
 
 // Manifests returns the manifests for the compactor.
 // It includes the statefulset, the service, the service monitor, the service account and the config maps required by the containers.
-func (c *CompactorStatefulSet) Manifests() k8sutil.ObjectMap {
+func (c *CompactorStatefulSet) Objects() []runtime.Object {
 	container := c.makeContainer()
-
-	ret := k8sutil.ObjectMap{}
-	ret.AddAll(c.GenerateObjectsStatefulSet(container))
-
-	return ret
+	return c.StatefulSetWorkload.Objects(container)
 }
 
-func (c *CompactorStatefulSet) makeContainer() *k8sutil.Container {
-	httpPort := k8sutil.GetPortOrDefault(defaultHTTPPort, c.options.HttpAddress)
-	k8sutil.CheckProbePort(httpPort, c.LivenessProbe)
-	k8sutil.CheckProbePort(httpPort, c.ReadinessProbe)
+func (c *CompactorStatefulSet) makeContainer() *workload.Container {
+	httpPort := kghelpers.GetPortOrDefault(defaultHTTPPort, c.options.HttpAddress)
+	kghelpers.CheckProbePort(httpPort, c.LivenessProbe)
+	kghelpers.CheckProbePort(httpPort, c.ReadinessProbe)
 
 	// Print warning if data directory is not specified.
 	if c.options.DataDir == "" {
@@ -176,17 +175,19 @@ func (c *CompactorStatefulSet) makeContainer() *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("http", httpPort, httpPort),
+		kghelpers.NewServicePort("http", httpPort, httpPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
 			Port:           "http",
-			RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
+			RelabelConfigs: kghelpers.GetDefaultServiceMonitorRelabelConfig(),
 		},
 	}
-	ret.VolumeClaims = []k8sutil.VolumeClaim{
-		k8sutil.NewVolumeClaimProvider(dataVolumeName, c.VolumeType, c.VolumeSize),
-	}
+	ret.VolumeClaims = append(ret.VolumeClaims, workload.PersistentVolumeClaim{
+		Name:  dataVolumeName,
+		Size:  c.VolumeSize,
+		Class: c.VolumeType,
+	})
 	ret.VolumeMounts = []corev1.VolumeMount{
 		{
 			Name:      dataVolumeName,

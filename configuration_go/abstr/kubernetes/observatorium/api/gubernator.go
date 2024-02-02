@@ -3,9 +3,12 @@ package api
 import (
 	"fmt"
 
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	rbacv1 "k8s.io/api/rbac/v1"
 )
 
@@ -15,49 +18,49 @@ const (
 )
 
 type GubernatorDeployment struct {
-	k8sutil.DeploymentGenericConfig
+	workload.DeploymentWorkload
 }
 
 func NewGubernatorDeployment(namespace, imageTag string) *GubernatorDeployment {
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "gubernator",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "rate-limiter",
-		k8sutil.VersionLabel:   imageTag,
+		workload.NameLabel:      "gubernator",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "rate-limiter",
+		workload.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
-		k8sutil.NameLabel:     commonLabels[k8sutil.NameLabel],
-		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
+		workload.NameLabel:     commonLabels[workload.NameLabel],
+		workload.InstanceLabel: commonLabels[workload.InstanceLabel],
 	}
 
-	return &GubernatorDeployment{
-		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+	depWorkload := workload.DeploymentWorkload{
+		Replicas: 1,
+		PodConfig: workload.PodConfig{
 			Image:                "ghcr.io/mailgun/gubernator",
 			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-gubernator",
 			Namespace:            namespace,
 			CommonLabels:         commonLabels,
-			Replicas:             1,
-			ContainerResources:   k8sutil.NewResourcesRequirements("300m", "600m", "100Mi", "200Mi"),
-			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
+			ContainerResources:   kghelpers.NewResourcesRequirements("300m", "600m", "100Mi", "200Mi"),
+			Affinity:             kghelpers.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/-/healthy", gubernatorHttpPort, k8sutil.ProbeConfig{
+			LivenessProbe: kghelpers.NewProbe("/-/healthy", gubernatorHttpPort, kghelpers.ProbeConfig{
 				FailureThreshold: 8,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/-/ready", gubernatorHttpPort, k8sutil.ProbeConfig{
+			ReadinessProbe: kghelpers.NewProbe("/-/ready", gubernatorHttpPort, kghelpers.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
 			TerminationGracePeriodSeconds: 120,
 			Env: []corev1.EnvVar{
-				k8sutil.NewEnvFromField("GUBER_K8S_NAMESPACE", "metadata.namespace"),
-				k8sutil.NewEnvFromField("GUBER_K8S_POD_IP", "status.podIP"),
+				kghelpers.NewEnvFromField("GUBER_K8S_NAMESPACE", "metadata.namespace"),
+				kghelpers.NewEnvFromField("GUBER_K8S_POD_IP", "status.podIP"),
 				{
 					Name:  "GUBER_HTTP_ADDRESS",
 					Value: fmt.Sprintf("0.0.0.0:%d", gubernatorHttpPort),
@@ -87,18 +90,20 @@ func NewGubernatorDeployment(namespace, imageTag string) *GubernatorDeployment {
 			Secrets:    make(map[string]map[string][]byte),
 		},
 	}
+
+	return &GubernatorDeployment{
+		DeploymentWorkload: depWorkload,
+	}
 }
 
-func (g *GubernatorDeployment) Manifests() k8sutil.ObjectMap {
+func (g *GubernatorDeployment) Objects() []runtime.Object {
 	container := g.makeContainer()
+	ret := g.DeploymentWorkload.Objects(container)
 
-	ret := k8sutil.ObjectMap{}
-
-	ret.AddAll(g.GenerateObjectsDeployment(container))
-	k8sutil.GetObject[*corev1.Service](ret, g.Name).Spec.ClusterIP = corev1.ClusterIPNone
+	kghelpers.GetObject[*corev1.Service](ret, g.Name).Spec.ClusterIP = corev1.ClusterIPNone
 
 	rbacRole := &rbacv1.Role{
-		TypeMeta:   k8sutil.RoleMeta,
+		TypeMeta:   workload.RoleMeta,
 		ObjectMeta: g.ObjectMeta().MakeMeta(),
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -109,9 +114,9 @@ func (g *GubernatorDeployment) Manifests() k8sutil.ObjectMap {
 		},
 	}
 
-	sa := k8sutil.GetObject[*corev1.ServiceAccount](ret, g.Name)
+	sa := kghelpers.GetObject[*corev1.ServiceAccount](ret, g.Name)
 	roleBinding := &rbacv1.RoleBinding{
-		TypeMeta:   k8sutil.RoleBindingMeta,
+		TypeMeta:   workload.RoleBindingMeta,
 		ObjectMeta: g.ObjectMeta().MakeMeta(),
 		Subjects: []rbacv1.Subject{
 			{
@@ -127,13 +132,12 @@ func (g *GubernatorDeployment) Manifests() k8sutil.ObjectMap {
 		},
 	}
 
-	ret.Add(rbacRole)
-	ret.Add(roleBinding)
+	ret = append(ret, rbacRole, roleBinding)
 
 	return ret
 }
 
-func (s *GubernatorDeployment) makeContainer() *k8sutil.Container {
+func (s *GubernatorDeployment) makeContainer() *workload.Container {
 	ret := s.ToContainer()
 	ret.Name = "gubernator"
 	ret.Ports = []corev1.ContainerPort{
@@ -149,13 +153,13 @@ func (s *GubernatorDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("http", gubernatorHttpPort, gubernatorHttpPort),
-		k8sutil.NewServicePort("grpc", gubernatorGrpcPort, gubernatorGrpcPort),
+		kghelpers.NewServicePort("http", gubernatorHttpPort, gubernatorHttpPort),
+		kghelpers.NewServicePort("grpc", gubernatorGrpcPort, gubernatorGrpcPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
 			Port:           "http",
-			RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
+			RelabelConfigs: kghelpers.GetDefaultServiceMonitorRelabelConfig(),
 		},
 	}
 

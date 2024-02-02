@@ -3,10 +3,12 @@ package memcached
 import (
 	"fmt"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -34,7 +36,7 @@ type MemcachedOptions struct {
 // MemcachedDeployment is the memcached deployment.
 type MemcachedDeployment struct {
 	Options *MemcachedOptions
-	k8sutil.DeploymentGenericConfig
+	workload.DeploymentWorkload
 	ExporterImage    string
 	ExporterImageTag string
 }
@@ -44,72 +46,72 @@ func NewMemcached() *MemcachedDeployment {
 	options := MemcachedOptions{}
 
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "memcached",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "memcached",
+		workload.NameLabel:      "memcached",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "memcached",
 	}
 
 	labelSelectors := map[string]string{
-		k8sutil.NameLabel:     commonLabels[k8sutil.NameLabel],
-		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
+		workload.NameLabel:     commonLabels[workload.NameLabel],
+		workload.InstanceLabel: commonLabels[workload.InstanceLabel],
 	}
 
-	genericDeployment := k8sutil.DeploymentGenericConfig{
-		Name:                          "memcached",
-		Image:                         "docker.io/memcached",
-		ImageTag:                      "latest",
-		ImagePullPolicy:               corev1.PullIfNotPresent,
-		CommonLabels:                  commonLabels,
-		Replicas:                      1,
-		Env:                           []corev1.EnvVar{},
-		ContainerResources:            k8sutil.NewResourcesRequirements("500m", "3", "2Gi", "3Gi"),
-		Affinity:                      k8sutil.NewAntiAffinity(nil, labelSelectors),
-		EnableServiceMonitor:          true,
-		TerminationGracePeriodSeconds: 120,
-		SecurityContext:               k8sutil.GetDefaultSecurityContext(),
-		ConfigMaps:                    map[string]map[string]string{},
-		Secrets:                       map[string]map[string][]byte{},
+	depWorkload := workload.DeploymentWorkload{
+		Replicas: 1,
+		PodConfig: workload.PodConfig{
+			Name:                          "memcached",
+			Image:                         "docker.io/memcached",
+			ImageTag:                      "latest",
+			ImagePullPolicy:               corev1.PullIfNotPresent,
+			CommonLabels:                  commonLabels,
+			Env:                           []corev1.EnvVar{},
+			ContainerResources:            kghelpers.NewResourcesRequirements("500m", "3", "2Gi", "3Gi"),
+			Affinity:                      kghelpers.NewAntiAffinity(nil, labelSelectors),
+			EnableServiceMonitor:          true,
+			TerminationGracePeriodSeconds: 120,
+			ConfigMaps:                    map[string]map[string]string{},
+			Secrets:                       map[string]map[string][]byte{},
+		},
 	}
 
 	return &MemcachedDeployment{
-		Options:                 &options,
-		DeploymentGenericConfig: genericDeployment,
-		ExporterImage:           "quay.io/prometheus/memcached-exporter",
-		ExporterImageTag:        "latest",
+		Options:            &options,
+		DeploymentWorkload: depWorkload,
+		ExporterImage:      "quay.io/prometheus/memcached-exporter",
+		ExporterImageTag:   "latest",
 	}
 }
 
 // Manifests returns the manifests for the memcached deployment.
-func (s *MemcachedDeployment) Manifests() k8sutil.ObjectMap {
-	if s.EnableServiceMonitor {
-		s.Sidecars = append(s.Sidecars, s.makeExporterContainer())
+func (m *MemcachedDeployment) Objects() []runtime.Object {
+	if m.EnableServiceMonitor {
+		m.Sidecars = append(m.Sidecars, m.makeExporterContainer())
 	}
 
-	container := s.makeContainer()
-	ret := k8sutil.ObjectMap{}
-	ret.AddAll(s.GenerateObjectsDeployment(container))
+	container := m.makeContainer()
+	ret := m.DeploymentWorkload.Objects(container)
 
 	// Set headless service to get stable network ID.
-	service := k8sutil.GetObject[*corev1.Service](ret, "")
+	service := kghelpers.GetObject[*corev1.Service](ret, "")
 	service.Spec.ClusterIP = corev1.ClusterIPNone
 
 	return ret
 }
 
-func (s *MemcachedDeployment) makeContainer() *k8sutil.Container {
-	if s.Options == nil {
-		s.Options = &MemcachedOptions{}
+func (m *MemcachedDeployment) makeContainer() *workload.Container {
+	if m.Options == nil {
+		m.Options = &MemcachedOptions{}
 	}
 
 	httpPort := defaultPort
-	if s.Options.Port != 0 {
-		httpPort = s.Options.Port
+	if m.Options.Port != 0 {
+		httpPort = m.Options.Port
 	}
 
-	ret := s.ToContainer()
+	ret := m.ToContainer()
 	ret.Name = "memcached"
-	ret.Args = cmdopt.GetOpts(s.Options)
+	ret.Args = cmdopt.GetOpts(m.Options)
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "client",
@@ -118,21 +120,21 @@ func (s *MemcachedDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("client", httpPort, httpPort),
+		kghelpers.NewServicePort("client", httpPort, httpPort),
 	}
 
 	return ret
 }
 
-func (s *MemcachedDeployment) makeExporterContainer() *k8sutil.Container {
-	return &k8sutil.Container{
+func (m *MemcachedDeployment) makeExporterContainer() *workload.Container {
+	return &workload.Container{
 		Name:            "memcached-exporter",
-		Image:           s.ExporterImage,
-		ImageTag:        s.ExporterImageTag,
+		Image:           m.ExporterImage,
+		ImageTag:        m.ExporterImageTag,
 		ImagePullPolicy: corev1.PullIfNotPresent,
-		Resources:       k8sutil.NewResourcesRequirements("50m", "200m", "50Mi", "200Mi"),
+		Resources:       kghelpers.NewResourcesRequirements("50m", "200m", "50Mi", "200Mi"),
 		Args: []string{
-			fmt.Sprintf("--memcached.address=localhost:%d", s.Options.Port),
+			fmt.Sprintf("--memcached.address=localhost:%d", m.Options.Port),
 			fmt.Sprintf("--web.listen-address=:%d", exporterDefaultPort),
 		},
 		Ports: []corev1.ContainerPort{
@@ -143,12 +145,12 @@ func (s *MemcachedDeployment) makeExporterContainer() *k8sutil.Container {
 			},
 		},
 		ServicePorts: []corev1.ServicePort{
-			k8sutil.NewServicePort("metrics", exporterDefaultPort, exporterDefaultPort),
+			kghelpers.NewServicePort("metrics", exporterDefaultPort, exporterDefaultPort),
 		},
 		MonitorPorts: []monv1.Endpoint{
 			{
 				Port:           "metrics",
-				RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
+				RelabelConfigs: kghelpers.GetDefaultServiceMonitorRelabelConfig(),
 			},
 		},
 	}

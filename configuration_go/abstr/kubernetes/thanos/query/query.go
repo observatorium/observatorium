@@ -4,14 +4,17 @@ import (
 	"net"
 	"time"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/containeropts"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type GrpcCompressionType string
@@ -23,22 +26,18 @@ const (
 	GrpcCompressionNone   GrpcCompressionType = "none"
 )
 
-type tracingConfigFile = k8sutil.ConfigFile
-
 // NewTracingConfigFile returns a new tracing config file option.
-func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
-	ret := k8sutil.NewConfigFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-thanos-query-tracing")
+func NewTracingConfigFile(value *trclient.TracingConfig) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-thanos-query-tracing")
 	if value != nil {
 		ret.WithValue(value.String())
 	}
 	return ret
 }
 
-type requestLoggingConfigFile = k8sutil.ConfigFile
-
 // NewRequestLoggingConfigFile returns a new request logging config file option.
-func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *requestLoggingConfigFile {
-	ret := k8sutil.NewConfigFile("/etc/thanos/request-logging", "config.yaml", "request-logging", "observatorium-thanos-query-request-logging")
+func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/thanos/request-logging", "config.yaml", "request-logging", "observatorium-thanos-query-request-logging")
 	if value != nil {
 		ret.WithValue(value.String())
 	}
@@ -46,71 +45,73 @@ func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *requestLoggin
 }
 
 type QueryOptions struct {
-	AlertQueryURL                                 string                    `opt:"alert.query-url"`
-	EnableFeature                                 string                    `opt:"enable-feature"`
-	Endpoint                                      []string                  `opt:"endpoint"`
-	EndpointGroup                                 []string                  `opt:"endpoint-group"`
-	EndpointStrict                                []string                  `opt:"endpoint-strict"`
-	EndpointGroupStrict                           []string                  `opt:"endpoint-group-strict"`
-	GrpcAddress                                   *net.TCPAddr              `opt:"grpc-address"`
-	GrpcClientsServerName                         string                    `opt:"grpc-client-server-name"`
-	GrpcClientsTLSCA                              string                    `opt:"grpc-client-tls-ca"`
-	GrpcClientsTLSCert                            string                    `opt:"grpc-client-tls-cert"`
-	GrpcClientsTLSKey                             string                    `opt:"grpc-client-tls-key"`
-	GrpcClientsTLSSecure                          bool                      `opt:"grpc-client-tls-secure,noval"`
-	GrpcClientsTLSSkipVerify                      bool                      `opt:"grpc-client-tls-skip-verify,noval"`
-	GrpcClientsCompression                        GrpcCompressionType       `opt:"grpc-compression"`
-	GrpcGracePeriod                               time.Duration             `opt:"grpc-grace-period"`
-	GrpcMMaxConnectionAge                         time.Duration             `opt:"grpc-server-max-connection-age"`
-	GrpcServerTLSCert                             string                    `opt:"grpc-server-tls-cert"`
-	GrpcServerTLSClientCA                         string                    `opt:"grpc-server-tls-client-ca"`
-	GrpcServerTLSKey                              string                    `opt:"grpc-server-tls-key"`
-	HttpAddress                                   *net.TCPAddr              `opt:"http-address"`
-	HttpGracePeriod                               time.Duration             `opt:"http-grace-period"`
-	HttpConfig                                    string                    `opt:"http-config"`
-	LogFormat                                     log.LogFormat             `opt:"log.format"`
-	LogLevel                                      log.LogLevel              `opt:"log.level"`
-	QueryActiveQueryPath                          string                    `opt:"query.active-query-path"`
-	QueryAutoDownsampling                         bool                      `opt:"query.auto-downsampling,noval"`
-	QueryConnMetricLabel                          []string                  `opt:"query.conn-metric.label"`
-	QueryDefaultEvaluationInterval                time.Duration             `opt:"query.default-evaluation-interval"`
-	QueryDefaultStep                              time.Duration             `opt:"query.default-step"`
-	QueryDefaultTenantID                          string                    `opt:"query.default-tenant-id"`
-	QueryLookbackDelta                            time.Duration             `opt:"query.lookback-delta"`
-	QueryMaxConcurrent                            int                       `opt:"query.max-concurrent"`
-	QueryMaxConcurrentSelect                      int                       `opt:"query.max-concurrent-select"`
-	QueryMetadataDefaultTimeRange                 time.Duration             `opt:"query.metadata.default-time-range"`
-	QueryPartialResponse                          bool                      `opt:"query.partial-response,noval"`
-	QueryPromQLEngine                             string                    `opt:"query.promql-engine"`
-	QueryReplicaLabel                             []string                  `opt:"query.replica-label"`
-	QueryTelemetryRequestDurationSecondsQuantiles []float64                 `opt:"query.telemetry.request-duration-seconds-quantiles"`
-	QueryTelemetryRequestSamplesQuantiles         []float64                 `opt:"query.telemetry.request-samples-quantiles"`
-	QueryTelemetryRequestSeriesSecondsQuantiles   []float64                 `opt:"query.telemetry.request-series-seconds-quantiles"`
-	QueryTenantCertificateField                   string                    `opt:"query.tenant-certificate-field"`
-	QueryTenantHeader                             string                    `opt:"query.tenant-header"`
-	QueryTimeout                                  time.Duration             `opt:"query.timeout"`
-	RequestLoggingConfig                          *reqlogging.RequestConfig `opt:"request.logging-config"`
-	RequestLoggingConfigFile                      *requestLoggingConfigFile `opt:"request.logging-config-file"`
-	SelectorLabel                                 []string                  `opt:"selector-label"`
-	StoreLimitsRequestSamples                     int                       `opt:"store.limits.request-samples"`
-	StoreLimitsRequestSeries                      int                       `opt:"store.limits.request-series"`
-	StoreResponseTimeout                          time.Duration             `opt:"store.response-timeout"`
-	StoreSDDNSInterval                            time.Duration             `opt:"store.sd-dns-interval"`
-	StoreSDFiles                                  []string                  `opt:"store.sd-files"`
-	StoreSDInterval                               time.Duration             `opt:"store.sd-interval"`
-	StoreUnhealthyTimeout                         time.Duration             `opt:"store.unhealthy-timeout"`
-	TracingConfig                                 *trclient.TracingConfig   `opt:"tracing.config"`
-	TracingConfigFile                             *tracingConfigFile        `opt:"tracing.config-file"`
-	WebDisableCORS                                bool                      `opt:"web.disable-cors,noval"`
-	WebExternalPrefix                             string                    `opt:"web.external-prefix"`
-	WebPrefixHeader                               string                    `opt:"web.prefix-header"`
-	WebRoutePrefix                                string                    `opt:"web.route-prefix"`
+	AlertQueryURL                                 string                         `opt:"alert.query-url"`
+	EnableFeature                                 string                         `opt:"enable-feature"`
+	Endpoint                                      []string                       `opt:"endpoint"`
+	EndpointGroup                                 []string                       `opt:"endpoint-group"`
+	EndpointStrict                                []string                       `opt:"endpoint-strict"`
+	EndpointGroupStrict                           []string                       `opt:"endpoint-group-strict"`
+	GrpcAddress                                   *net.TCPAddr                   `opt:"grpc-address"`
+	GrpcClientsServerName                         string                         `opt:"grpc-client-server-name"`
+	GrpcClientsTLSCA                              string                         `opt:"grpc-client-tls-ca"`
+	GrpcClientsTLSCert                            string                         `opt:"grpc-client-tls-cert"`
+	GrpcClientsTLSKey                             string                         `opt:"grpc-client-tls-key"`
+	GrpcClientsTLSSecure                          bool                           `opt:"grpc-client-tls-secure,noval"`
+	GrpcClientsTLSSkipVerify                      bool                           `opt:"grpc-client-tls-skip-verify,noval"`
+	GrpcClientsCompression                        GrpcCompressionType            `opt:"grpc-compression"`
+	GrpcGracePeriod                               time.Duration                  `opt:"grpc-grace-period"`
+	GrpcMMaxConnectionAge                         time.Duration                  `opt:"grpc-server-max-connection-age"`
+	GrpcServerTLSCert                             string                         `opt:"grpc-server-tls-cert"`
+	GrpcServerTLSClientCA                         string                         `opt:"grpc-server-tls-client-ca"`
+	GrpcServerTLSKey                              string                         `opt:"grpc-server-tls-key"`
+	HttpAddress                                   *net.TCPAddr                   `opt:"http-address"`
+	HttpGracePeriod                               time.Duration                  `opt:"http-grace-period"`
+	HttpConfig                                    string                         `opt:"http-config"`
+	LogFormat                                     log.Format                     `opt:"log.format"`
+	LogLevel                                      log.Level                      `opt:"log.level"`
+	QueryActiveQueryPath                          string                         `opt:"query.active-query-path"`
+	QueryAutoDownsampling                         bool                           `opt:"query.auto-downsampling,noval"`
+	QueryConnMetricLabel                          []string                       `opt:"query.conn-metric.label"`
+	QueryDefaultEvaluationInterval                time.Duration                  `opt:"query.default-evaluation-interval"`
+	QueryDefaultStep                              time.Duration                  `opt:"query.default-step"`
+	QueryDefaultTenantID                          string                         `opt:"query.default-tenant-id"`
+	QueryLookbackDelta                            time.Duration                  `opt:"query.lookback-delta"`
+	QueryMaxConcurrent                            int                            `opt:"query.max-concurrent"`
+	QueryMaxConcurrentSelect                      int                            `opt:"query.max-concurrent-select"`
+	QueryMetadataDefaultTimeRange                 time.Duration                  `opt:"query.metadata.default-time-range"`
+	QueryPartialResponse                          bool                           `opt:"query.partial-response,noval"`
+	QueryPromQLEngine                             string                         `opt:"query.promql-engine"`
+	QueryReplicaLabel                             []string                       `opt:"query.replica-label"`
+	QueryTelemetryRequestDurationSecondsQuantiles []float64                      `opt:"query.telemetry.request-duration-seconds-quantiles"`
+	QueryTelemetryRequestSamplesQuantiles         []float64                      `opt:"query.telemetry.request-samples-quantiles"`
+	QueryTelemetryRequestSeriesSecondsQuantiles   []float64                      `opt:"query.telemetry.request-series-seconds-quantiles"`
+	QueryTenantCertificateField                   string                         `opt:"query.tenant-certificate-field"`
+	QueryTenantHeader                             string                         `opt:"query.tenant-header"`
+	QueryTimeout                                  time.Duration                  `opt:"query.timeout"`
+	RequestLoggingConfig                          *reqlogging.RequestConfig      `opt:"request.logging-config"`
+	RequestLoggingConfigFile                      containeropts.ContainerUpdater `opt:"request.logging-config-file"`
+	SelectorLabel                                 []string                       `opt:"selector-label"`
+	StoreLimitsRequestSamples                     int                            `opt:"store.limits.request-samples"`
+	StoreLimitsRequestSeries                      int                            `opt:"store.limits.request-series"`
+	StoreResponseTimeout                          time.Duration                  `opt:"store.response-timeout"`
+	StoreSDDNSInterval                            time.Duration                  `opt:"store.sd-dns-interval"`
+	StoreSDFiles                                  []string                       `opt:"store.sd-files"`
+	StoreSDInterval                               time.Duration                  `opt:"store.sd-interval"`
+	StoreUnhealthyTimeout                         time.Duration                  `opt:"store.unhealthy-timeout"`
+	TracingConfig                                 *trclient.TracingConfig        `opt:"tracing.config"`
+	TracingConfigFile                             containeropts.ContainerUpdater `opt:"tracing.config-file"`
+	WebDisableCORS                                bool                           `opt:"web.disable-cors,noval"`
+	WebExternalPrefix                             string                         `opt:"web.external-prefix"`
+	WebPrefixHeader                               string                         `opt:"web.prefix-header"`
+	WebRoutePrefix                                string                         `opt:"web.route-prefix"`
+
+	// Extra options not officially supported.
+	cmdopt.ExtraOpts
 }
 
 type QueryDeployment struct {
 	options *QueryOptions
-
-	k8sutil.DeploymentGenericConfig
+	workload.DeploymentWorkload
 }
 
 func NewDefaultOptions() *QueryOptions {
@@ -126,68 +127,68 @@ func NewQuery(opts *QueryOptions, namespace, imageTag string) *QueryDeployment {
 	}
 
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "thanos-query",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "query-layer",
-		k8sutil.VersionLabel:   imageTag,
+		workload.NameLabel:      "thanos-query",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "query-layer",
+		workload.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
-		k8sutil.NameLabel:     commonLabels[k8sutil.NameLabel],
-		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
+		workload.NameLabel:     commonLabels[workload.NameLabel],
+		workload.InstanceLabel: commonLabels[workload.InstanceLabel],
 	}
 
-	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
+	probePort := kghelpers.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
 
-	return &QueryDeployment{
-		options: opts,
-		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+	depWorkload := workload.DeploymentWorkload{
+		Replicas: 1,
+		PodConfig: workload.PodConfig{
 			Image:                "quay.io/thanos/thanos",
 			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-thanos-query",
 			Namespace:            namespace,
 			CommonLabels:         commonLabels,
-			Replicas:             1,
-			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "2", "1Gi", "8Gi"),
-			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
+			ContainerResources:   kghelpers.NewResourcesRequirements("500m", "2", "1Gi", "8Gi"),
+			Affinity:             kghelpers.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/-/healthy", probePort, k8sutil.ProbeConfig{
+			LivenessProbe: kghelpers.NewProbe("/-/healthy", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 8,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/-/ready", probePort, k8sutil.ProbeConfig{
+			ReadinessProbe: kghelpers.NewProbe("/-/ready", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
 			TerminationGracePeriodSeconds: 120,
 			Env: []corev1.EnvVar{
-				k8sutil.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
+				kghelpers.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 			},
 			ConfigMaps: make(map[string]map[string]string),
 			Secrets:    make(map[string]map[string][]byte),
 		},
 	}
+
+	return &QueryDeployment{
+		options:            opts,
+		DeploymentWorkload: depWorkload,
+	}
 }
 
-func (q *QueryDeployment) Manifests() k8sutil.ObjectMap {
+func (q *QueryDeployment) Objects() []runtime.Object {
 	container := q.makeContainer()
-
-	ret := k8sutil.ObjectMap{}
-	ret.AddAll(q.GenerateObjectsDeployment(container))
-
-	return ret
+	return q.DeploymentWorkload.Objects(container)
 }
 
-func (q *QueryDeployment) makeContainer() *k8sutil.Container {
-	httpPort := k8sutil.GetPortOrDefault(defaultHTTPPort, q.options.HttpAddress)
-	k8sutil.CheckProbePort(httpPort, q.LivenessProbe)
-	k8sutil.CheckProbePort(httpPort, q.ReadinessProbe)
+func (q *QueryDeployment) makeContainer() *workload.Container {
+	httpPort := kghelpers.GetPortOrDefault(defaultHTTPPort, q.options.HttpAddress)
+	kghelpers.CheckProbePort(httpPort, q.LivenessProbe)
+	kghelpers.CheckProbePort(httpPort, q.ReadinessProbe)
 
-	grpcPort := k8sutil.GetPortOrDefault(defaultGRPCPort, q.options.GrpcAddress)
+	grpcPort := kghelpers.GetPortOrDefault(defaultGRPCPort, q.options.GrpcAddress)
 
 	ret := q.ToContainer()
 	ret.Name = "thanos"
@@ -205,22 +206,22 @@ func (q *QueryDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("http", httpPort, httpPort),
-		k8sutil.NewServicePort("grpc", grpcPort, grpcPort),
+		kghelpers.NewServicePort("http", httpPort, httpPort),
+		kghelpers.NewServicePort("grpc", grpcPort, grpcPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
 			Port:           "http",
-			RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
+			RelabelConfigs: kghelpers.GetDefaultServiceMonitorRelabelConfig(),
 		},
 	}
 
 	if q.options.RequestLoggingConfig != nil {
-		q.options.RequestLoggingConfigFile.AddToContainer(ret)
+		q.options.RequestLoggingConfigFile.Update(ret)
 	}
 
 	if q.options.TracingConfigFile != nil {
-		q.options.TracingConfigFile.AddToContainer(ret)
+		q.options.TracingConfigFile.Update(ret)
 	}
 
 	return ret

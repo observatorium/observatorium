@@ -130,7 +130,6 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: observatorium-api
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: ${OBSERVATORIUM_API_IMAGE_TAG}
     name: observatorium-api
     namespace: ${NAMESPACE}
   spec:
@@ -163,7 +162,6 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: observatorium-api
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: ${OBSERVATORIUM_API_IMAGE_TAG}
     name: observatorium-api
     namespace: ${NAMESPACE}
 - apiVersion: monitoring.coreos.com/v1
@@ -175,14 +173,11 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: observatorium-api
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: ${OBSERVATORIUM_API_IMAGE_TAG}
     name: observatorium-api
     namespace: ${NAMESPACE}
   spec:
     endpoints:
-    - bearerTokenSecret:
-        key: ""
-      port: http-internal
+    - port: http-internal
       relabelings:
       - action: replace
         separator: /
@@ -226,7 +221,6 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: observatorium-api
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: ${OBSERVATORIUM_API_IMAGE_TAG}
     name: observatorium-rbac
     namespace: ${NAMESPACE}
 - apiVersion: v1
@@ -238,7 +232,6 @@ objects:
       app.kubernetes.io/instance: observatorium
       app.kubernetes.io/name: observatorium-api
       app.kubernetes.io/part-of: observatorium
-      app.kubernetes.io/version: ${OBSERVATORIUM_API_IMAGE_TAG}
     name: observatorium-tenants
     namespace: ${NAMESPACE}
   stringData:

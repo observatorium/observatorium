@@ -8,14 +8,11 @@ metadata:
     app.kubernetes.io/instance: observatorium
     app.kubernetes.io/name: observatorium-api
     app.kubernetes.io/part-of: observatorium
-    app.kubernetes.io/version: latest
   name: observatorium-xyz
   namespace: observatorium
 spec:
   endpoints:
-  - bearerTokenSecret:
-      key: ""
-    port: http-internal
+  - port: http-internal
     relabelings:
     - action: replace
       separator: /

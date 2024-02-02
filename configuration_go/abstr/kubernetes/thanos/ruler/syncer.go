@@ -4,8 +4,9 @@ import (
 	"net"
 	"path/filepath"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -32,21 +33,21 @@ type RulesSyncerOptions struct {
 type RulesSyncerContainer struct {
 	Options *RulesSyncerOptions
 
-	k8sutil.Container
+	workload.Container
 }
 
-func NewRulesSyncerContainer(opts *RulesSyncerOptions) *k8sutil.Container {
+func NewRulesSyncerContainer(opts *RulesSyncerOptions) *workload.Container {
 	if opts == nil {
 		opts = &RulesSyncerOptions{}
 	}
 
-	internalPort := k8sutil.GetPortOrDefault(defaultSyncerInternalPort, opts.WebInternalListen)
+	internalPort := kghelpers.GetPortOrDefault(defaultSyncerInternalPort, opts.WebInternalListen)
 
-	ret := &k8sutil.Container{}
+	ret := &workload.Container{}
 	ret.Image = "quay.io/observatorium/observatorium-rules-syncer"
 	ret.Name = "observatorium-rules-syncer"
 	ret.Args = cmdopt.GetOpts(opts)
-	ret.Resources = k8sutil.NewResourcesRequirements("32m", "128m", "64Mi", "128Mi")
+	ret.Resources = kghelpers.NewResourcesRequirements("32m", "128m", "64Mi", "128Mi")
 	ret.Ports = []corev1.ContainerPort{
 		{
 			Name:          "internal",
@@ -55,12 +56,12 @@ func NewRulesSyncerContainer(opts *RulesSyncerOptions) *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("internal", internalPort, internalPort),
+		kghelpers.NewServicePort("internal", internalPort, internalPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
 			Port:           "internal",
-			RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
+			RelabelConfigs: kghelpers.GetDefaultServiceMonitorRelabelConfig(),
 		},
 	}
 	ret.Volumes = []corev1.Volume{

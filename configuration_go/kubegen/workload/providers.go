@@ -1,15 +1,12 @@
 /*
-This file contains the Kubernetes manifest providers.
-These providers are simplified versions of some Kubernetes objects used to generate the manifests.
-They implement the ManifestProvider interface, which allows generating the Kubernetes manifests.
-
-Subcomponents provide methods required by higher-level components to generate their manifests.
-For example, a pod implements the PodProvider interface, which provides methods to retrieve required volumes,
-volume claims, config maps and secrets. These are, in turn, provided by the containers that are part of the pod.
-This design groups the dependencies of each container in a single place for better code organization.
+This file contains simplified Kubernetes object providers,
+offering essential methods for dependency generation in higher-level components.
+It features interfaces like PodProvider for streamlined access to pod-related dependencies
+such as volumes, volume claims, config maps, and secrets, centralizing container dependencies
+for improved code organization.
 */
 
-package k8sutil
+package workload
 
 import (
 	"fmt"
@@ -18,9 +15,15 @@ import (
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+// ObjectProvider is the interface that all final objects (deployment, statefulset, service etc.) must implement.
+type ObjectProvider interface {
+	Object() runtime.Object
+}
 
 // MetaConfig represents the configuration required to create a Kubernetes ObjectMeta.
 type MetaConfig struct {
@@ -62,7 +65,7 @@ type ContainerProvider interface {
 
 	ServiceProvider
 	ServiceMonitorProvider
-	PersistentVolumeClaimProvider
+	PersistentVolumeClaimsProvider
 	ConfigMapsAndSecretsProvider
 }
 
@@ -79,12 +82,13 @@ type Container struct {
 	LivenessProbe   *corev1.Probe
 	ReadinessProbe  *corev1.Probe
 	Args            []string
+	Command         []string
 	Ports           []corev1.ContainerPort
 	VolumeMounts    []corev1.VolumeMount
 
 	// Dependencies
 	Volumes      []corev1.Volume
-	VolumeClaims []VolumeClaim
+	VolumeClaims []PersistentVolumeClaimProvider
 	ServicePorts []corev1.ServicePort
 	MonitorPorts []monv1.Endpoint
 	ConfigMaps   map[string]map[string]string
@@ -102,6 +106,7 @@ func (c *Container) GetContainer() corev1.Container {
 		LivenessProbe:            c.LivenessProbe,
 		ReadinessProbe:           c.ReadinessProbe,
 		Args:                     c.Args,
+		Command:                  c.Command,
 		Ports:                    c.Ports,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 		VolumeMounts:             c.VolumeMounts,
@@ -124,7 +129,7 @@ func (c *Container) GetServiceMonitorEndpoints() []monv1.Endpoint {
 }
 
 // GetVolumeClaims returns the volume claims that the container requires.
-func (c *Container) GetVolumeClaims() []VolumeClaim {
+func (c *Container) GetPVCs() []PersistentVolumeClaimProvider {
 	return c.VolumeClaims
 }
 
@@ -146,15 +151,41 @@ func (c *Container) GetSecrets() map[string]map[string][]byte {
 	return c.Secrets
 }
 
-// VolumeClaim represents a volume claim.
-type VolumeClaim struct {
-	Name string
-	Spec corev1.PersistentVolumeClaimSpec
+// PersistentVolumeClaim represents a volume claim.
+type PersistentVolumeClaim struct {
+	Name  string
+	Class string
+	Size  string
+}
+
+// NewVolumeClaimProvider returns a new volume claim.
+func (vc PersistentVolumeClaim) GetSpec() corev1.PersistentVolumeClaimSpec {
+	return corev1.PersistentVolumeClaimSpec{
+		AccessModes: []corev1.PersistentVolumeAccessMode{
+			corev1.ReadWriteOnce,
+		},
+		Resources: corev1.VolumeResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceStorage: resource.MustParse(vc.Size),
+			},
+		},
+		StorageClassName: &vc.Class,
+	}
+
+}
+
+func (vc PersistentVolumeClaim) GetName() string {
+	return vc.Name
 }
 
 // PersistentVolumeClaimProvider is the interface to be implemented by pods that require volume claims.
 type PersistentVolumeClaimProvider interface {
-	GetVolumeClaims() []VolumeClaim
+	GetSpec() corev1.PersistentVolumeClaimSpec
+	GetName() string
+}
+
+type PersistentVolumeClaimsProvider interface {
+	GetPVCs() []PersistentVolumeClaimProvider
 }
 
 // PodProvider is the interface to be implemented by pods to be used in a StatefulSet or Deployment.
@@ -163,7 +194,7 @@ type PodProvider interface {
 
 	ServiceProvider
 	ServiceMonitorProvider
-	PersistentVolumeClaimProvider
+	PersistentVolumeClaimsProvider
 	ConfigMapsAndSecretsProvider
 }
 
@@ -175,12 +206,14 @@ type Pod struct {
 	SecurityContext               *corev1.PodSecurityContext
 	ServiceAccountName            string
 
-	ContainerProviders []ContainerProvider
+	ContainerProviders      []ContainerProvider
+	InitContainersProviders []ContainerProvider
 }
 
 // MakePodSpec returns a Kubernetes PodSpec.
 func (p *Pod) MakePodSpec() corev1.PodSpec {
 	containers := []corev1.Container{}
+	initContainers := []corev1.Container{}
 	volumes := []corev1.Volume{}
 
 	for _, cp := range p.ContainerProviders {
@@ -188,10 +221,16 @@ func (p *Pod) MakePodSpec() corev1.PodSpec {
 		volumes = append(volumes, cp.GetVolumes()...)
 	}
 
+	for _, cp := range p.InitContainersProviders {
+		initContainers = append(initContainers, cp.GetContainer())
+		volumes = append(volumes, cp.GetVolumes()...)
+	}
+
 	return corev1.PodSpec{
 		TerminationGracePeriodSeconds: p.TerminationGracePeriodSeconds,
 		Affinity:                      p.Affinity,
 		Containers:                    containers,
+		InitContainers:                initContainers,
 		ServiceAccountName:            p.ServiceAccountName,
 		SecurityContext:               p.SecurityContext,
 		NodeSelector: map[string]string{
@@ -224,11 +263,11 @@ func (p *Pod) GetServiceMonitorEndpoints() []monv1.Endpoint {
 }
 
 // GetVolumeClaims returns the volume claims that the pod requires.
-func (p *Pod) GetVolumeClaims() []VolumeClaim {
-	ret := []VolumeClaim{}
+func (p *Pod) GetPVCs() []PersistentVolumeClaimProvider {
+	ret := []PersistentVolumeClaimProvider{}
 
 	for _, cp := range p.ContainerProviders {
-		ret = append(ret, cp.GetVolumeClaims()...)
+		ret = append(ret, cp.GetPVCs()...)
 	}
 
 	return ret
@@ -237,8 +276,10 @@ func (p *Pod) GetVolumeClaims() []VolumeClaim {
 // GetConfigMaps returns the config maps that the pod requires.
 func (p *Pod) GetConfigMaps() map[string]map[string]string {
 	ret := map[string]map[string]string{}
+	containerProviders := append([]ContainerProvider{}, p.ContainerProviders...)
+	containerProviders = append(containerProviders, p.InitContainersProviders...)
 
-	for _, cp := range p.ContainerProviders {
+	for _, cp := range containerProviders {
 		for k, v := range cp.GetConfigMaps() {
 			ret[k] = v
 		}
@@ -250,8 +291,10 @@ func (p *Pod) GetConfigMaps() map[string]map[string]string {
 // GetSecrets returns the secrets that the pod requires.
 func (p *Pod) GetSecrets() map[string]map[string][]byte {
 	ret := map[string]map[string][]byte{}
+	containerProviders := append([]ContainerProvider{}, p.ContainerProviders...)
+	containerProviders = append(containerProviders, p.InitContainersProviders...)
 
-	for _, cp := range p.ContainerProviders {
+	for _, cp := range containerProviders {
 		for k, v := range cp.GetSecrets() {
 			ret[k] = v
 		}
@@ -265,10 +308,11 @@ type Deployment struct {
 	Replicas   int32
 	MetaConfig MetaConfig
 	Pod        PodProvider
+	Strategy   appsv1.DeploymentStrategy
 }
 
-// MakeManifest returns a Kubernetes Deployment.
-func (d *Deployment) MakeManifest() runtime.Object {
+// Object returns a Kubernetes Deployment.
+func (d *Deployment) Object() runtime.Object {
 	selectorMatcheLabels := maps.Clone(d.MetaConfig.Labels)
 	delete(selectorMatcheLabels, VersionLabel)
 
@@ -280,6 +324,7 @@ func (d *Deployment) MakeManifest() runtime.Object {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: selectorMatcheLabels,
 			},
+			Strategy: d.Strategy,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:    maps.Clone(d.MetaConfig.Labels),
@@ -298,17 +343,17 @@ type StatefulSet struct {
 	Pod        PodProvider
 }
 
-// MakeManifest returns a Kubernetes StatefulSet.
-func (s *StatefulSet) MakeManifest() runtime.Object {
-	vcs := []corev1.PersistentVolumeClaim{}
-	for _, vc := range s.Pod.GetVolumeClaims() {
-		vcs = append(vcs, corev1.PersistentVolumeClaim{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   vc.Name,
-				Labels: maps.Clone(s.MetaConfig.Labels),
-			},
-			Spec: vc.Spec,
+// Object returns a Kubernetes StatefulSet.
+func (s *StatefulSet) Object() runtime.Object {
+	volumeClaims := []corev1.PersistentVolumeClaim{}
+	for _, vc := range s.Pod.GetPVCs() {
+		meta := s.MetaConfig.Clone()
+		meta.Name = vc.GetName()
+		volumeClaims = append(volumeClaims, corev1.PersistentVolumeClaim{
+			ObjectMeta: meta.MakeMeta(),
+			Spec:       vc.GetSpec(),
 		})
+
 	}
 
 	selectorMatcheLabels := maps.Clone(s.MetaConfig.Labels)
@@ -330,7 +375,7 @@ func (s *StatefulSet) MakeManifest() runtime.Object {
 				},
 				Spec: s.Pod.MakePodSpec(),
 			},
-			VolumeClaimTemplates: vcs,
+			VolumeClaimTemplates: volumeClaims,
 		},
 	}
 }
@@ -361,14 +406,16 @@ func NewService(metaConfig MetaConfig, servicePorts ServiceProvider) *Service {
 	}
 }
 
-// MakeManifest returns a Kubernetes Service.
-func (s *Service) MakeManifest() runtime.Object {
+// Object returns a Kubernetes Service.
+func (s *Service) Object() runtime.Object {
 	selector := maps.Clone(s.MetaConfig.Labels)
 	delete(selector, VersionLabel)
+	metaCfg := s.MetaConfig.MakeMeta()
+	delete(metaCfg.Labels, VersionLabel)
 
 	return &corev1.Service{
 		TypeMeta:   ServiceMeta,
-		ObjectMeta: s.MetaConfig.MakeMeta(),
+		ObjectMeta: metaCfg,
 		Spec: corev1.ServiceSpec{
 			Ports:     s.ServicePorts.GetServicePorts(),
 			Selector:  selector,
@@ -396,11 +443,12 @@ func NewServiceMonitor(metaConfig MetaConfig, serviceMonitorEndpoints ServiceMon
 	}
 }
 
-// MakeManifest returns a Kubernetes ServiceMonitor.
-func (s *ServiceMonitor) MakeManifest() runtime.Object {
+// Object returns a Kubernetes ServiceMonitor.
+func (s *ServiceMonitor) Object() runtime.Object {
 	selector := maps.Clone(s.MetaConfig.Labels)
 	delete(selector, VersionLabel)
 	metaCfg := s.MetaConfig.MakeMeta()
+	delete(metaCfg.Labels, VersionLabel)
 
 	return &monv1.ServiceMonitor{
 		TypeMeta:   ServiceMonitorMeta,
@@ -412,9 +460,4 @@ func (s *ServiceMonitor) MakeManifest() runtime.Object {
 			Endpoints: s.ServiceMonitorEndpoints.GetServiceMonitorEndpoints(),
 		},
 	}
-}
-
-// ManifestProvider is the interface to be implemented to generate a Kubernetes manifest for a resource.
-type ManifestProvider interface {
-	MakeManifest() runtime.Object
 }

@@ -4,14 +4,17 @@ import (
 	"net"
 	"time"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/containeropts"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	"github.com/observatorium/observatorium/configuration_go/schemas/log"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/cache"
 	"github.com/observatorium/observatorium/configuration_go/schemas/thanos/reqlogging"
 	trclient "github.com/observatorium/observatorium/configuration_go/schemas/thanos/tracing/client"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -24,44 +27,36 @@ const (
 	CacheCompressionTypeSnappy CacheCompressionType = "snappy"
 )
 
-type tracingConfigFile = k8sutil.ConfigFile
-
 // NewTracingConfigFile returns a new tracing config file option.
-func NewTracingConfigFile(value *trclient.TracingConfig) *tracingConfigFile {
-	ret := k8sutil.NewConfigFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-thanos-query-tracing")
+func NewTracingConfigFile(value *trclient.TracingConfig) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/thanos/tracing", "config.yaml", "tracing", "observatorium-thanos-query-tracing")
 	if value != nil {
 		ret.WithValue(value.String())
 	}
 	return ret
 }
-
-type requestLoggingConfigFile = k8sutil.ConfigFile
 
 // NewRequestLoggingConfigFile returns a new request logging config file option.
-func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *requestLoggingConfigFile {
-	ret := k8sutil.NewConfigFile("/etc/thanos/request-logging", "config.yaml", "request-logging", "observatorium-thanos-query-request-logging")
+func NewRequestLoggingConfigFile(value *reqlogging.RequestConfig) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/thanos/request-logging", "config.yaml", "request-logging", "observatorium-thanos-query-request-logging")
 	if value != nil {
 		ret.WithValue(value.String())
 	}
 	return ret
 }
-
-type labelsResponseCacheConfig = k8sutil.ConfigFile
 
 // NewLabelsResponseCacheConfigFile returns a new labels response cache config file option.
-func NewLabelsResponseCacheConfigFile(value *cache.ResponseCacheConfig) *labelsResponseCacheConfig {
-	ret := k8sutil.NewConfigFile("/etc/thanos/labels-response-cache", "config.yaml", "labels-response-cache", "observatorium-thanos-query-labels-response-cache")
+func NewLabelsResponseCacheConfigFile(value *cache.ResponseCacheConfig) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/thanos/labels-response-cache", "config.yaml", "labels-response-cache", "observatorium-thanos-query-labels-response-cache")
 	if value != nil {
 		ret.WithValue(value.String())
 	}
 	return ret
 }
 
-type queryRangeResponseCacheConfig = k8sutil.ConfigFile
-
 // NewQueryRangeResponseCacheConfigFile returns a new query range response cache config file option.
-func NewQueryRangeResponseCacheConfigFile(value *cache.ResponseCacheConfig) *queryRangeResponseCacheConfig {
-	ret := k8sutil.NewConfigFile("/etc/thanos/query-range-response-cache", "config.yaml", "query-range-response-cache", "observatorium-thanos-query-query-range-response-cache")
+func NewQueryRangeResponseCacheConfigFile(value *cache.ResponseCacheConfig) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/thanos/query-range-response-cache", "config.yaml", "query-range-response-cache", "observatorium-thanos-query-query-range-response-cache")
 	if value != nil {
 		ret.WithValue(value.String())
 	}
@@ -78,11 +73,11 @@ type QueryFrontendOptions struct {
 	LabelsMaxRetriesPerRequest           *int                           `opt:"labels.max-retries-per-request"`
 	LabelsPartialResponse                bool                           `opt:"labels.partial-response,noval"`
 	LabelsResponseCacheConfig            *cache.ResponseCacheConfig     `opt:"labels.response-cache-config"`
-	LabelsResponseCacheConfigFile        *labelsResponseCacheConfig     `opt:"labels.response-cache-config-file"`
+	LabelsResponseCacheConfigFile        containeropts.ContainerUpdater `opt:"labels.response-cache-config-file"`
 	LabelsResponseMaxFreshness           string                         `opt:"labels.response-cache-max-freshness"`
 	LabelsSplitInterval                  time.Duration                  `opt:"labels.split-interval"`
-	LogFormat                            log.LogFormat                  `opt:"log.format"`
-	LogLevel                             log.LogLevel                   `opt:"log.level"`
+	LogFormat                            log.Format                     `opt:"log.format"`
+	LogLevel                             log.Level                      `opt:"log.level"`
 	QueryFrontendCompressResponses       bool                           `opt:"query-frontend.compress-responses,noval"`
 	QueryFrontendDownstreamTripperConfig *DownstreamTripperConfig       `opt:"query-frontend.downstream-tripper-config"`
 	QueryFrontendDownstreamURL           string                         `opt:"query-frontend.downstream-url"`
@@ -99,20 +94,22 @@ type QueryFrontendOptions struct {
 	QueryRangePartialResponse            bool                           `opt:"query-range.partial-response,noval"`
 	QueryRangeRequestDownsampled         bool                           `opt:"query-range.request-downsampled,noval"`
 	QueryRangeResponseCacheConfig        *cache.ResponseCacheConfig     `opt:"query-range.response-cache-config"`
-	QueryRangeResponseCacheConfigFile    *queryRangeResponseCacheConfig `opt:"query-range.response-cache-config-file"`
+	QueryRangeResponseCacheConfigFile    containeropts.ContainerUpdater `opt:"query-range.response-cache-config-file"`
 	QueryRangeResponseCacheMaxFreshness  time.Duration                  `opt:"query-range.response-cache-max-freshness"`
 	QueryRangeSplitInterval              time.Duration                  `opt:"query-range.split-interval"`
 	RequestLoggingConfig                 *reqlogging.RequestConfig      `opt:"request.logging-config"`
-	RequestLoggingConfigFile             *requestLoggingConfigFile      `opt:"request.logging-config-file"`
+	RequestLoggingConfigFile             containeropts.ContainerUpdater `opt:"request.logging-config-file"`
 	TracingConfig                        *trclient.TracingConfig        `opt:"tracing.config"`
-	TracingConfigFile                    *tracingConfigFile             `opt:"tracing.config-file"`
+	TracingConfigFile                    containeropts.ContainerUpdater `opt:"tracing.config-file"`
 	WebDisableCORS                       bool                           `opt:"web.disable-cors,noval"`
+
+	// Extra options not officially supported.
+	cmdopt.ExtraOpts
 }
 
 type QueryFrontendDeployment struct {
 	options *QueryFrontendOptions
-
-	k8sutil.DeploymentGenericConfig
+	workload.DeploymentWorkload
 }
 
 func NewDefaultOptions() *QueryFrontendOptions {
@@ -128,67 +125,66 @@ func NewQueryFrontend(opts *QueryFrontendOptions, namespace, imageTag string) *Q
 	}
 
 	commonLabels := map[string]string{
-		k8sutil.NameLabel:      "thanos-query-frontend",
-		k8sutil.InstanceLabel:  "observatorium",
-		k8sutil.PartOfLabel:    "observatorium",
-		k8sutil.ComponentLabel: "query-cache",
-		k8sutil.VersionLabel:   imageTag,
+		workload.NameLabel:      "thanos-query-frontend",
+		workload.InstanceLabel:  "observatorium",
+		workload.PartOfLabel:    "observatorium",
+		workload.ComponentLabel: "query-cache",
+		workload.VersionLabel:   imageTag,
 	}
 
 	labelSelectors := map[string]string{
-		k8sutil.NameLabel:     commonLabels[k8sutil.NameLabel],
-		k8sutil.InstanceLabel: commonLabels[k8sutil.InstanceLabel],
+		workload.NameLabel:     commonLabels[workload.NameLabel],
+		workload.InstanceLabel: commonLabels[workload.InstanceLabel],
 	}
 
-	probePort := k8sutil.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
+	probePort := kghelpers.GetPortOrDefault(defaultHTTPPort, opts.HttpAddress)
 
-	return &QueryFrontendDeployment{
-		options: opts,
-		DeploymentGenericConfig: k8sutil.DeploymentGenericConfig{
+	depWorkload := workload.DeploymentWorkload{
+		Replicas: 1,
+		PodConfig: workload.PodConfig{
 			Image:                "quay.io/thanos/thanos",
 			ImageTag:             imageTag,
 			ImagePullPolicy:      corev1.PullIfNotPresent,
 			Name:                 "observatorium-thanos-query-frontend",
 			Namespace:            namespace,
 			CommonLabels:         commonLabels,
-			Replicas:             1,
-			ContainerResources:   k8sutil.NewResourcesRequirements("500m", "2", "1Gi", "2Gi"),
-			Affinity:             k8sutil.NewAntiAffinity(nil, labelSelectors),
+			ContainerResources:   kghelpers.NewResourcesRequirements("500m", "2", "1Gi", "2Gi"),
+			Affinity:             kghelpers.NewAntiAffinity(nil, labelSelectors),
 			EnableServiceMonitor: true,
 
-			LivenessProbe: k8sutil.NewProbe("/-/healthy", probePort, k8sutil.ProbeConfig{
+			LivenessProbe: kghelpers.NewProbe("/-/healthy", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 8,
 				PeriodSeconds:    30,
 				TimeoutSeconds:   1,
 			}),
-			ReadinessProbe: k8sutil.NewProbe("/-/ready", probePort, k8sutil.ProbeConfig{
+			ReadinessProbe: kghelpers.NewProbe("/-/ready", probePort, kghelpers.ProbeConfig{
 				FailureThreshold: 20,
 				PeriodSeconds:    5,
 			}),
 			TerminationGracePeriodSeconds: 120,
 			Env: []corev1.EnvVar{
-				k8sutil.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
+				kghelpers.NewEnvFromField("HOST_IP_ADDRESS", "status.hostIP"),
 			},
 			ConfigMaps: make(map[string]map[string]string),
 			Secrets:    make(map[string]map[string][]byte),
 		},
 	}
+
+	return &QueryFrontendDeployment{
+		options:            opts,
+		DeploymentWorkload: depWorkload,
+	}
 }
 
-func (q *QueryFrontendDeployment) Manifests() k8sutil.ObjectMap {
-
+func (q *QueryFrontendDeployment) Objects() []runtime.Object {
 	container := q.makeContainer()
-
-	ret := k8sutil.ObjectMap{}
-	ret.AddAll(q.GenerateObjectsDeployment(container))
-
-	return ret
+	return q.DeploymentWorkload.Objects(container)
 }
 
-func (q *QueryFrontendDeployment) makeContainer() *k8sutil.Container {
-	httpPort := k8sutil.GetPortOrDefault(defaultHTTPPort, q.options.HttpAddress)
-	k8sutil.CheckProbePort(httpPort, q.LivenessProbe)
-	k8sutil.CheckProbePort(httpPort, q.ReadinessProbe)
+func (q *QueryFrontendDeployment) makeContainer() *workload.Container {
+	httpPort := kghelpers.GetPortOrDefault(defaultHTTPPort, q.options.HttpAddress)
+	kghelpers.CheckProbePort(httpPort, q.LivenessProbe)
+	kghelpers.CheckProbePort(httpPort, q.ReadinessProbe)
 
 	ret := q.ToContainer()
 	ret.Name = "thanos"
@@ -201,29 +197,29 @@ func (q *QueryFrontendDeployment) makeContainer() *k8sutil.Container {
 		},
 	}
 	ret.ServicePorts = []corev1.ServicePort{
-		k8sutil.NewServicePort("http", httpPort, httpPort),
+		kghelpers.NewServicePort("http", httpPort, httpPort),
 	}
 	ret.MonitorPorts = []monv1.Endpoint{
 		{
 			Port:           "http",
-			RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
+			RelabelConfigs: kghelpers.GetDefaultServiceMonitorRelabelConfig(),
 		},
 	}
 
 	if q.options.RequestLoggingConfigFile != nil {
-		q.options.RequestLoggingConfigFile.AddToContainer(ret)
+		q.options.RequestLoggingConfigFile.Update(ret)
 	}
 
 	if q.options.TracingConfigFile != nil {
-		q.options.TracingConfigFile.AddToContainer(ret)
+		q.options.TracingConfigFile.Update(ret)
 	}
 
 	if q.options.LabelsResponseCacheConfigFile != nil {
-		q.options.LabelsResponseCacheConfigFile.AddToContainer(ret)
+		q.options.LabelsResponseCacheConfigFile.Update(ret)
 	}
 
 	if q.options.QueryRangeResponseCacheConfigFile != nil {
-		q.options.QueryRangeResponseCacheConfigFile.AddToContainer(ret)
+		q.options.QueryRangeResponseCacheConfigFile.Update(ret)
 	}
 
 	return ret

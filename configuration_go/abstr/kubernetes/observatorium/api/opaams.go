@@ -3,8 +3,9 @@ package api
 import (
 	"net"
 
-	cmdopt "github.com/observatorium/observatorium/configuration_go/abstr/kubernetes/cmdoption"
-	"github.com/observatorium/observatorium/configuration_go/k8sutil"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -32,7 +33,7 @@ type OpaAmsOptions struct {
 	WebListen               *net.TCPAddr `opt:"web.listen"`
 }
 
-func MakeOpaAms(opts *OpaAmsOptions, enableMonitor bool) *k8sutil.Container {
+func MakeOpaAms(opts *OpaAmsOptions, enableMonitor bool) *workload.Container {
 	webInternalListen, _ := net.ResolveTCPAddr("tcp", ":8081")
 	if opts.WebInternalListen != nil {
 		webInternalListen = opts.WebInternalListen
@@ -43,23 +44,23 @@ func MakeOpaAms(opts *OpaAmsOptions, enableMonitor bool) *k8sutil.Container {
 		webListen = opts.WebListen
 	}
 
-	ret := &k8sutil.Container{
+	ret := &workload.Container{
 		Name:  "opa-ams",
 		Image: "quay.io/observatorium/opa-ams",
 		Args:  cmdopt.GetOpts(opts),
-		LivenessProbe: k8sutil.NewProbe("/live", webInternalListen.Port, k8sutil.ProbeConfig{
+		LivenessProbe: kghelpers.NewProbe("/live", webInternalListen.Port, kghelpers.ProbeConfig{
 			PeriodSeconds:    30,
 			SuccessThreshold: 1,
 			FailureThreshold: 10,
 			TimeoutSeconds:   1,
 		}),
-		ReadinessProbe: k8sutil.NewProbe("/ready", webInternalListen.Port, k8sutil.ProbeConfig{
+		ReadinessProbe: kghelpers.NewProbe("/ready", webInternalListen.Port, kghelpers.ProbeConfig{
 			PeriodSeconds:    5,
 			SuccessThreshold: 1,
 			FailureThreshold: 12,
 			TimeoutSeconds:   1,
 		}),
-		Resources: k8sutil.NewResourcesRequirements("100m", "200m", "100Mi", "200Mi"),
+		Resources: kghelpers.NewResourcesRequirements("100m", "200m", "100Mi", "200Mi"),
 		Ports: []corev1.ContainerPort{
 			{
 				Name:          "opa-ams-api",
@@ -68,7 +69,7 @@ func MakeOpaAms(opts *OpaAmsOptions, enableMonitor bool) *k8sutil.Container {
 			},
 		},
 		ServicePorts: []corev1.ServicePort{
-			k8sutil.NewServicePort("opa-ams-api", webListen.Port, webListen.Port),
+			kghelpers.NewServicePort("opa-ams-api", webListen.Port, webListen.Port),
 		},
 	}
 
@@ -78,11 +79,11 @@ func MakeOpaAms(opts *OpaAmsOptions, enableMonitor bool) *k8sutil.Container {
 			ContainerPort: int32(webInternalListen.Port),
 			Protocol:      corev1.ProtocolTCP,
 		})
-		ret.ServicePorts = append(ret.ServicePorts, k8sutil.NewServicePort("opa-ams-metrics", webInternalListen.Port, webInternalListen.Port))
+		ret.ServicePorts = append(ret.ServicePorts, kghelpers.NewServicePort("opa-ams-metrics", webInternalListen.Port, webInternalListen.Port))
 		ret.MonitorPorts = []monv1.Endpoint{
 			{
 				Port:           "opa-ams-metrics",
-				RelabelConfigs: k8sutil.GetDefaultServiceMonitorRelabelConfig(),
+				RelabelConfigs: kghelpers.GetDefaultServiceMonitorRelabelConfig(),
 			},
 		}
 	}
