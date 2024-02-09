@@ -25,7 +25,7 @@ type TenantConfig struct {
 	ID string `yaml:"id"`
 }
 
-func NewTenantsFileOption(value *TenantsConfig) *containeropts.ConfigResourceAsFile {
+func NewTenantsFile(value *TenantsConfig) *containeropts.ConfigResourceAsFile {
 	ret := containeropts.NewConfigResourceAsFile("/etc/thanos-rules-syncer/tenants", "config.yaml", "objstore", "observatorium-rules-syncer-tenants")
 	if value != nil {
 		valueBytes, err := yaml.Marshal(value)
