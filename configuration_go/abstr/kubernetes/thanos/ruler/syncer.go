@@ -5,9 +5,11 @@ import (
 	"path/filepath"
 
 	"github.com/observatorium/observatorium/configuration_go/kubegen/cmdopt"
+	"github.com/observatorium/observatorium/configuration_go/kubegen/containeropts"
 	kghelpers "github.com/observatorium/observatorium/configuration_go/kubegen/helpers"
 	"github.com/observatorium/observatorium/configuration_go/kubegen/workload"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -15,19 +17,40 @@ const (
 	defaultSyncerInternalPort = 8083
 )
 
+type TenantsConfig struct {
+	Tenants []TenantConfig `yaml:"tenants"`
+}
+
+type TenantConfig struct {
+	ID string `yaml:"id"`
+}
+
+func NewTenantsConfigFile(value *TenantsConfig) *containeropts.ConfigResourceAsFile {
+	ret := containeropts.NewConfigResourceAsFile("/etc/thanos-rules-syncer/tenants", "config.yaml", "objstore", "observatorium-rules-syncer-tenants")
+	if value != nil {
+		valueBytes, err := yaml.Marshal(value)
+		if err != nil {
+			panic(err)
+		}
+		ret.WithValue(string(valueBytes))
+	}
+	return ret
+}
+
 type RulesSyncerOptions struct {
-	File                string       `opt:"file,single-hyphen"`
-	Interval            int          `opt:"interval,single-hyphen"`
-	ObservatoriumApiUrl string       `opt:"observatorium-api-url,single-hyphen"`
-	ObservatoriumCa     string       `opt:"observatorium-ca,single-hyphen"`
-	OidcAudience        string       `opt:"oidc.audience,single-hyphen"`
-	OidcClientId        string       `opt:"oidc.client-id,single-hyphen"`
-	OidcClientSecret    string       `opt:"oidc.client-secret,single-hyphen"`
-	OidcIssuerUrl       string       `opt:"oidc.issuer-url,single-hyphen"`
-	RulesBackendUrl     string       `opt:"rules-backend-url,single-hyphen"`
-	Tenant              string       `opt:"tenant,single-hyphen"`
-	ThanosRuleUrl       *net.TCPAddr `opt:"thanos-rule-url,single-hyphen"`
-	WebInternalListen   *net.TCPAddr `opt:"web.internal.listen,single-hyphen"`
+	File                string                         `opt:"file,single-hyphen"`
+	Interval            int                            `opt:"interval,single-hyphen"`
+	ObservatoriumApiUrl string                         `opt:"observatorium-api-url,single-hyphen"`
+	ObservatoriumCa     string                         `opt:"observatorium-ca,single-hyphen"`
+	OidcAudience        string                         `opt:"oidc.audience,single-hyphen"`
+	OidcClientId        string                         `opt:"oidc.client-id,single-hyphen"`
+	OidcClientSecret    string                         `opt:"oidc.client-secret,single-hyphen"`
+	OidcIssuerUrl       string                         `opt:"oidc.issuer-url,single-hyphen"`
+	RulesBackendUrl     string                         `opt:"rules-backend-url,single-hyphen"`
+	Tenant              string                         `opt:"tenant,single-hyphen"`
+	TenantsFile         containeropts.ContainerUpdater `opt:"tenants-file,single-hyphen"`
+	ThanosRuleUrl       *net.TCPAddr                   `opt:"thanos-rule-url,single-hyphen"`
+	WebInternalListen   *net.TCPAddr                   `opt:"web.internal.listen,single-hyphen"`
 }
 
 type RulesSyncerContainer struct {
@@ -77,6 +100,10 @@ func NewRulesSyncerContainer(opts *RulesSyncerOptions) *workload.Container {
 			Name:      "rule-syncer",
 			MountPath: filepath.Dir(opts.File),
 		},
+	}
+
+	if opts.TenantsFile != nil {
+		opts.TenantsFile.Update(ret)
 	}
 
 	return ret
