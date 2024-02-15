@@ -813,24 +813,6 @@ function(params) {
       },
     },
 
-  // newHttpService creates a http service for a component
-  // TODO: delete this function once we have merged and deployed https://github.com/rhobs/configuration/pull/450
-  local newHttpService(component) = {
-    apiVersion: 'v1',
-    kind: 'Service',
-    metadata: {
-      name: loki.config.name + '-' + normalizedName(component) + '-http',
-      namespace: loki.config.namespace,
-      labels: newCommonLabels(component),
-    },
-    spec: {
-      ports: [
-        { name: 'metrics', targetPort: 3100, port: 3100 },
-      ],
-      selector: newPodLabelsSelector(component),
-    },
-  },
-
   // newHeadlessService for a given component, generate its headless service using the loki mixins
   // headless services are usually required for DNS SRV dicovery
   local newHeadlessService(component) =
@@ -898,12 +880,6 @@ function(params) {
     [normalizedName(component) + '-headless-service']: newHeadlessService(component)
     for component in std.objectFields(loki.config.components)
     if std.member(['query_scheduler'], component)
-  } + {
-    // Create the old http services
-    // TODO: delete this function once we have merged and deployed https://github.com/rhobs/configuration/pull/450
-    [normalizedName(component) + '-http-service']: newHttpService(component)
-    for component in std.objectFields(loki.config.components)
-    if std.member(['query_frontend', 'querier', 'distributor', 'ruler'], component)
   } + (
     // Service generation for gossip ring
     if loki.config.memberlist != {} then {
