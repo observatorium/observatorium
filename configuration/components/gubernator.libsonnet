@@ -126,6 +126,7 @@ function(params) {
         { name: 'GUBER_K8S_ENDPOINTS_SELECTOR', value: 'app.kubernetes.io/name=gubernator' },
         { name: 'GUBER_PEER_DISCOVERY_TYPE', value: 'k8s' },
         { name: 'GUBER_LOG_LEVEL', value: gubernator.config.logLevel },
+        { name: 'OTEL_TRACES_EXPORTER', value: 'none' },
       ],
       ports: [
         { name: port.name, containerPort: port.port }
