@@ -85,6 +85,10 @@ func NewGubernatorDeployment(namespace, imageTag string) *GubernatorDeployment {
 					Name:  "GUBER_LOG_LEVEL",
 					Value: "info",
 				},
+				{
+					Name:  "OTEL_TRACES_EXPORTER",
+					Value: "none",
+				},
 			},
 			ConfigMaps: make(map[string]map[string]string),
 			Secrets:    make(map[string]map[string][]byte),
