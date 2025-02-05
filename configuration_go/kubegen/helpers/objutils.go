@@ -193,11 +193,12 @@ func NewServicePort(name string, port, targetPort int) corev1.ServicePort {
 }
 
 // GetDefaultServiceMonitorRelabelConfig returns the default relabel config for a ServiceMonitor.
-func GetDefaultServiceMonitorRelabelConfig() []*monv1.RelabelConfig {
-	return []*monv1.RelabelConfig{
+func GetDefaultServiceMonitorRelabelConfig() []monv1.RelabelConfig {
+	separator := "/"
+	return []monv1.RelabelConfig{
 		{
 			Action:       "replace",
-			Separator:    "/",
+			Separator:    &separator,
 			SourceLabels: []monv1.LabelName{"namespace", "pod"},
 			TargetLabel:  "instance",
 		},
